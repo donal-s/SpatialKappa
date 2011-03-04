@@ -1,0 +1,167 @@
+\chapter{Spatial Kappa Grammar}
+\label{chap:spatialGrammar}
+
+
+
+The following is a cut down version of the Antlr grammar used in the Kappa simulator. The syntax has been trimmed for readability, as the original Antlr grammar has artificial constructs for dealing with left recursion, etc. It is read basically as BNF notation with assignments (\verb|variable=bnfConstruct|). The existing basic Kappa grammar is shown in \verb|black|, with the spatial constructs shown as \SaveVerb{Verb}|blue| \newbnf{\UseVerb{Verb}}. 
+
+
+\begin{bnfsource}
+prog :
+  (line)+
+
+line :
+  ruleExpr NEWLINE!
+  | \newbnf{compartmentExpr NEWLINE!}
+  | \newbnf{compartmentLinkExpr NEWLINE!}
+  | \newbnf{transportExpr NEWLINE!}
+  | initExpr NEWLINE!
+  | obsExpr NEWLINE!
+  | varExpr NEWLINE!
+  | modExpr NEWLINE!
+  | COMMENT!
+  | NEWLINE!
+
+ruleExpr :
+  LABEL? transformExpr transformKineticExpr 
+  | \newbnf{LABEL locationExpr transformExpr transformKineticExpr} 
+
+transformExpr :
+  (a=agentGroup)? transformTransition (b=agentGroup)?
+
+\newbnf{transportExpr :}
+  \newbnf{'\%transport:' (transportName=LABEL)? linkName=LABEL (agentGroup)?}
+    \newbnf{transportKineticExpr}
+
+agentGroup :
+  agent (',' agent)*
+
+agent :
+  id '(' (iface (',' iface)*)? ')'
+
+iface :
+  id stateExpr? linkExpr?
+
+stateExpr :
+  '~' marker
+
+linkExpr :
+  ( '!' INT | '!' '_'  | '?' )
+
+transformKineticExpr :
+  '@' a=rateValueExpr (',' b=rateValueExpr)?
+
+\newbnf{transportKineticExpr :}
+  \newbnf{'@' rateValueExpr}
+
+rateValueExpr :
+  a=number
+  | b='\$INF'
+
+initExpr :
+  '\%init:' INT '*' '(' agentGroup ')'
+  | \newbnf{'\%init:' locationExpr INT '*' '(' agentGroup ')'}
+
+\newbnf{compartmentExpr :}
+  \newbnf{'\%compartment:' LABEL ('[' INT ']')*}
+
+\newbnf{compartmentLinkExpr :}
+  \newbnf{'\%link:' linkName=LABEL sourceCompartment=locationExpr transportTransition}
+     \newbnf{targetCompartment=locationExpr}
+
+\newbnf{locationExpr :}
+  \newbnf{sourceCompartment=LABEL compartmentIndexExpr*}
+
+\newbnf{compartmentIndexExpr :}
+  \newbnf{'[' mathExpr ']'}
+
+obsExpr :
+  '\%obs:' LABEL? agentGroup
+  | \newbnf{'\%obs:' LABEL locationExpr agentGroup}
+  | '\%obs:' LABEL
+
+varExpr :
+  '\%var:' LABEL agentGroup
+
+modExpr :
+  '\%mod:' concentrationInequality 'do' assignment
+  | '\%mod:' timeInequality 'do' assignment
+  
+timeInequality :
+  '\$T' '>' number
+  
+concentrationInequality :
+  concentrationExpression '>' concentrationExpression
+  | concentrationExpression '<' concentrationExpression
+  
+
+assignment :
+  LABEL ':=' '\$INF'
+  | LABEL ':=' a=concentrationExpression
+
+concentrationExpression :
+  '(' concentrationExpression ')'
+  | LABEL operator concentrationExpression
+  | number operator concentrationExpression
+  | LABEL
+  | number
+  
+\newbnf{mathExpr :}
+  \newbnf{a=mathAtom operator b=mathAtom}
+  \newbnf{| a=mathAtom}
+  
+\newbnf{mathAtom :}
+  \newbnf{'(' mathExpr ')'}
+  \newbnf{| INT}
+  \newbnf{| VARIABLE_NAME}
+  
+id :
+  ALPHANUMERIC ( ALPHANUMERIC | '_' | '^' | '-' )*
+
+marker :
+  ALPHANUMERIC
+
+number :
+  ( INT | FLOAT )
+  
+operator :
+  ( '+' | '*' | '-' | '/' | '\%' )
+
+transformTransition :
+  ( '->' | '<->' )
+
+\newbnf{transportTransition :}
+  \newbnf{( '->' | '<-' | '<->' )}
+
+INT :
+  NUMERIC
+
+FLOAT :
+    NUMERIC '.' NUMERIC EXPONENT?
+    | '.' NUMERIC EXPONENT?
+    | NUMERIC EXPONENT
+
+\newbnf{VARIABLE_NAME :}
+  \newbnf{('a'..'z' | 'A'..'Z') ('a'..'z' | 'A'..'Z' | '0'..'9')*}
+
+ALPHANUMERIC :
+  ( NUMERIC | 'a'..'z' | 'A'..'Z' )+
+
+NUMERIC :
+  ('0'..'9')+
+  
+EXPONENT :
+  ('e'|'E') ('+'|'-')? NUMERIC
+
+LABEL :
+  '{\textbackslash}'' .* '{\textbackslash}''
+
+COMMENT :
+  '#' ~( '{\textbackslash}n' | '{\textbackslash}r' )* NEWLINE
+
+NEWLINE :
+  '{\textbackslash}r'? '{\textbackslash}n' | '{\textbackslash}r'
+
+WS :
+  ( ' ' | '{\textbackslash}t' )+
+\end{bnfsource}

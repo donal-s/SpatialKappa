@@ -1,0 +1,161 @@
+\chapter{Spatial Kappa Examples}
+\label{chap:resources}
+
+\section{Spatial Kappa patterns}
+\label{sec:spatialPatterns}
+
+The following are generic shapes, with their equivalent Spatial Kappa representations. These are intended to be copied during model development.
+
+
+\subsection{1 dimensional patterns}
+
+\subsubsection{Linear array}
+
+\begin{kappasource}
+%compartment: 'array' [n] # Replace n with length of array
+%link: 'intra-array' 'array' [x] <-> 'array' [x+1]
+\end{kappasource}
+
+\subsubsection{Circle}
+
+\begin{kappasource}
+%compartment: 'circle' [n] # Replace n with number of cells in circle
+%link: 'intra-circle' 'circle' [x] <-> 'circle' [x+1]
+%link: 'intra-circle' 'circle' [n-1] <-> 'circle' [0] # Replace n-1 as above
+\end{kappasource}
+
+
+\subsection{2 dimensional surfaces}
+
+\subsubsection{Rectangular mesh}
+
+There are 2 variants here, 4-way linked and 8-way linked.
+
+\begin{kappasource}
+%compartment: 'mesh' [n][m] # Replace n and m with dimensions of mesh
+
+# 4-way diffusion
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y] 
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x][y+1] 
+
+# or 8-way diffusion
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y] 
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x][y+1] 
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y+1] 
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y-1] 
+\end{kappasource}
+
+\subsubsection{Hexagonal mesh}
+
+Again, 2 variants depending on what overall shape is required. The first form has a simpler representation of intra-compartment links, but the overall structure is rhomboid, whereas the second produces an overall rectangular shape at the expense of more complicated link statements.
+
+The second variant demonstrates handling of alternate odd-even linkage depending on the column of the structure.
+
+\begin{kappasource}
+%compartment: 'mesh' [n][m] # Replace n and m with dimensions of mesh
+
+# Variant 1 - rhomboid mesh
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x][y+1] 
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y] 
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y+1] 
+
+# Variant 2 - rectangular mesh
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x][y+1] 
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y] 
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][(y+1)-(2*(x%2))] 
+# The above statement alternates [x+1][y+1] and [x+1][y-1] as x increases
+\end{kappasource}
+
+
+\subsubsection{Cylinder and torus}
+
+By connecting together the top and bottom edges of a mesh as described above, we get a cylinder. By also connecting together the left and right edges we get a torus.
+
+\begin{kappasource}
+%compartment: 'mesh' [n][m] # Replace n and m with dimensions of mesh
+
+# 4-way diffusion
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y] 
+%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x][y+1] 
+
+# add this to get a cylinder
+%link: 'intra-mesh' 'mesh' [x][m-1] <-> 'mesh' [x+1][0] # Replace m-1 as above 
+
+# add this to get a torus
+%link: 'intra-mesh' 'mesh' [n-1][y] <-> 'mesh' [0][y] # Replace n-1 as above 
+\end{kappasource}
+
+\newpage
+\section{Sample Spatial Kappa models}
+
+The following are a couple of simple spatial kappa models to demonstrate the use of the language features.
+
+
+
+\subsection{2d diffusion model}
+\label{sec:2dDiffusion}
+
+This model shows simple diffusion from a point for three distinct species. It was developed as a test for the Compartment view pane. Note again that the current implementation of the Compartment view works only for observations labelled \verb|'Red'|, \verb|'Blue'| and \verb|'Green'| in a compartment labelled \verb|'Cytosol'|.
+
+
+\begin{kappasource}
+%compartment: 'cytosol' [30][30] 
+
+# 6-way diffusion
+%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x+1][y] 
+%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x][y+1] 
+%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x+1][(y+1)-(2*(x%2))] 
+
+%transport: 'diffusion' '6way' A() @ 0.4 
+%transport: 'diffusion' '6way' B() @ 0.4 
+%transport: 'diffusion' '6way' C() @ 0.4 
+
+%init: 'cytosol'[10][10] 10000 * (A()) 
+%init: 'cytosol'[10][14] 10000 * (B()) 
+%init: 'cytosol'[14][14] 10000 * (C()) 
+
+%obs: 'Red' 'cytosol' A()  
+%obs: 'Green' 'cytosol' B()  
+%obs: 'Blue' 'cytosol' C()  
+\end{kappasource}
+
+
+\subsection{Bi-trivalent binding model}
+\label{sec:bitrivalent}
+
+
+A variant of bi-trivalent binding test model \citep{yang2008kinetic}. This spatial model allows unbound species to diffuse through the compartment, but bound species remain within a cell of the compartment. When run in the compartment view, this demonstrates the aggregation of the species involved.
+
+
+\begin{kappasource}
+%compartment: 'cytosol' [20][20] 
+
+# 6-way diffusion
+%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x+1][y] 
+%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x][y+1] 
+%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x+1][(y+1)-(2*(x%2))] 
+
+%transport: 'diffusion' '6way' A(bindings~0) @ 0.1 
+%transport: 'diffusion' '6way' B(a,b,c) @ 1 
+
+A(a,b,bindings~0), B(a) <-> A(a!1,b,bindings~1),B(a!1) @ 1,0.01
+A(a,b,bindings~0), B(b) <-> A(a!1,b,bindings~1),B(b!1) @ 1,0.01
+A(a,b,bindings~0), B(c) <-> A(a!1,b,bindings~1),B(c!1) @ 1,0.01
+A(a,b,bindings~0), B(a) <-> A(a,b!1,bindings~1),B(a!1) @ 1,0.01
+A(a,b,bindings~0), B(b) <-> A(a,b!1,bindings~1),B(b!1) @ 1,0.01
+A(a,b,bindings~0), B(c) <-> A(a,b!1,bindings~1),B(c!1) @ 1,0.01
+A(a,b!_,bindings~1), B(a) <-> A(a!1,b!_,bindings~2),B(a!1) @ 1,0.01
+A(a,b!_,bindings~1), B(b) <-> A(a!1,b!_,bindings~2),B(b!1) @ 1,0.01
+A(a,b!_,bindings~1), B(c) <-> A(a!1,b!_,bindings~2),B(c!1) @ 1,0.01
+A(a!_,b,bindings~1), B(a) <-> A(a!_,b!1,bindings~2),B(a!1) @ 1,0.01
+A(a!_,b,bindings~1), B(b) <-> A(a!_,b!1,bindings~2),B(b!1) @ 1,0.01
+A(a!_,b,bindings~1), B(c) <-> A(a!_,b!1,bindings~2),B(c!1) @ 1,0.01
+
+%init: 'cytosol'       600 * (A(a,b,bindings~0)) 
+%init: 'cytosol'       400 * (B(a,b,c)) 
+
+%obs: 'Red' 'cytosol' A(bindings~2) 
+%obs: 'Green' 'cytosol' A(bindings~1) 
+%obs: 'Blue' 'cytosol' A(bindings~0) 
+\end{kappasource}
+
