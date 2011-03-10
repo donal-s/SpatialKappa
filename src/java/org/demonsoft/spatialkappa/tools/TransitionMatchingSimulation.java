@@ -20,16 +20,16 @@ import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.ComplexMapping;
 import org.demonsoft.spatialkappa.model.ComplexMatcher;
 import org.demonsoft.spatialkappa.model.ComplexStore;
-import org.demonsoft.spatialkappa.model.KappaModel;
+import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.LocatedComplex;
 import org.demonsoft.spatialkappa.model.LocatedComplexMap;
-import org.demonsoft.spatialkappa.model.LocatedObservable;
 import org.demonsoft.spatialkappa.model.LocatedTransition;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.Transform;
 import org.demonsoft.spatialkappa.model.Transport;
 import org.demonsoft.spatialkappa.model.Utils;
+import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
 import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
 import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
@@ -50,7 +50,7 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
         super();
     }
 
-    public TransitionMatchingSimulation(KappaModel kappaModel) {
+    public TransitionMatchingSimulation(IKappaModel kappaModel) {
         super(kappaModel);
     }
 
@@ -343,37 +343,35 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
     }
 
     @Override
-    public ObservationElement getComplexQuantity(LocatedObservable observable) {
-        if (observable == null) {
+    public ObservationElement getComplexQuantity(Variable variable) {
+        if (variable == null) {
             throw new NullPointerException();
         }
         int value = 0;
         int[] dimensions = null;
         Serializable cellValues = null;
         boolean partition = false;
-        if (observable.observable.complex != null) {
-            List<ObservableMapValue> complexes = observableComplexMap.get(observable);
-            if (complexes != null) {
-                if (observable.location != null) {
-                    Compartment compartment = observable.location.getReferencedCompartment(kappaModel.getCompartments());
-                    if (compartment.getDimensions().length != observable.location.getIndices().length) {
-                        partition = true;
-                        dimensions = compartment.getDimensions();
-                        cellValues = compartment.createValueArray();
-                    }
+        List<ObservableMapValue> complexes = observableComplexMap.get(variable);
+        if (complexes != null) {
+            if (variable.location != null) {
+                Compartment compartment = variable.location.getReferencedCompartment(kappaModel.getCompartments());
+                if (compartment.getDimensions().length != variable.location.getIndices().length) {
+                    partition = true;
+                    dimensions = compartment.getDimensions();
+                    cellValues = compartment.createValueArray();
+                }
 
-                    for (ObservableMapValue current : complexes) {
-                        int quantity = current.count;
-                        value += quantity;
-                        if (partition) {
-                            addCellValue(cellValues, quantity, current.location.getIndices());
-                        }
+                for (ObservableMapValue current : complexes) {
+                    int quantity = current.count;
+                    value += quantity;
+                    if (partition) {
+                        addCellValue(cellValues, quantity, current.location.getIndices());
                     }
                 }
-                else { // No compartment
-                    for (ObservableMapValue current : complexes) {
-                        value += current.count;
-                    }
+            }
+            else { // No compartment
+                for (ObservableMapValue current : complexes) {
+                    value += current.count;
                 }
             }
         }
@@ -382,6 +380,5 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
         }
         return new ObservationElement(value);
     }
-
 
 }

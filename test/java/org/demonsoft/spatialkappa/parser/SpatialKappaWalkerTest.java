@@ -1,5 +1,10 @@
 package org.demonsoft.spatialkappa.parser;
 
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -7,6 +12,7 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.antlr.runtime.ANTLRInputStream;
@@ -14,60 +20,181 @@ import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.Parser;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
-import org.antlr.runtime.tree.TreeParser;
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
-import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.CompartmentLink;
-import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.Direction;
-import org.demonsoft.spatialkappa.model.KappaModel;
-import org.demonsoft.spatialkappa.model.KappaModelTest;
+import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.MathExpression;
-import org.demonsoft.spatialkappa.model.Transform;
-import org.demonsoft.spatialkappa.model.TransformTest;
-import org.demonsoft.spatialkappa.model.Transport;
+import org.demonsoft.spatialkappa.model.VariableExpression;
+import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
+import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
+import org.demonsoft.spatialkappa.model.VariableReference;
+import org.easymock.Capture;
+import org.easymock.EasyMock;
 import org.junit.Test;
 
 public class SpatialKappaWalkerTest {
 
+    private IKappaModel kappaModel = EasyMock.createMock(IKappaModel.class);
+    
+    // To deal with Agent not having equals()
+    private Capture<List<Agent>> lhsAgents = new Capture<List<Agent>>();
+    private Capture<List<Agent>> rhsAgents = new Capture<List<Agent>>();
+
+    private Object[] mocks = { kappaModel };
+    
     @Test
     public void testRuleExpr() throws Exception {
-        List<Complex> leftComplexes = TransformTest.getComplexes(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("x", null, "1")));
-        List<Complex> rightComplexes = TransformTest.getComplexes(new Agent("A", new AgentSite("s", null, null)), new Agent("B", new AgentSite("x", null, null)));
 
-        checkTransforms(new Transform[] {
-            new Transform(null, leftComplexes, rightComplexes, "1")
-        }, (KappaModel) runParserRule("ruleExpr", "A(s!1),B(x!1)   -> A(s),  B(x) @ 1"));
-        checkTransforms(new Transform[] {
-                new Transform(null, leftComplexes, rightComplexes, "1"), new Transform(null, rightComplexes, leftComplexes, "2")
-        }, (KappaModel) runParserRule("ruleExpr", "A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2"));
-        checkTransforms(new Transform[] {
-            new Transform("label", leftComplexes, rightComplexes, "1")
-        }, (KappaModel) runParserRule("ruleExpr", "'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 1"));
-        checkTransforms(new Transform[] {
-                new Transform("label", leftComplexes, rightComplexes, "1"), new Transform("label", rightComplexes, leftComplexes, "2")
-        }, (KappaModel) runParserRule("ruleExpr", "'label' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2"));
+        checkRuleExpr("A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+                Direction.FORWARD, null, "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null, null);
 
-        leftComplexes.clear();
-        rightComplexes = TransformTest.getComplexes(new Agent("IPTG", new AgentSite("laci", null, null)));
-        checkTransforms(new Transform[] {
-                new Transform("IPTG addition{77331}", leftComplexes, rightComplexes, "0.0")
-            }, (KappaModel) runParserRule("ruleExpr", "'IPTG addition{77331}'  -> IPTG(laci) @ 0.0"));
+        checkRuleExpr("A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
+                Direction.BIDIRECTIONAL, null, "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), new VariableExpression(2), null);
 
-        leftComplexes = TransformTest.getComplexes(new Agent("CRY", new AgentSite("clk", null, null)), new Agent("EBOX-CLK-BMAL1", new AgentSite("cry", null, null)));
-        rightComplexes = TransformTest.getComplexes(new Agent("CRY", new AgentSite("clk", null, "2")), new Agent("EBOX-CLK-BMAL1", new AgentSite("cry", null, "2")));
-        checkTransforms(new Transform[] {
-                new Transform("bin", leftComplexes, rightComplexes, "127.2862")
-            }, (KappaModel) runParserRule("ruleExpr", "'bin' CRY(clk),EBOX-CLK-BMAL1(cry) -> CRY(clk!2), EBOX-CLK-BMAL1(cry!2) @ 127.2862"));
+        checkRuleExpr("'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+                Direction.FORWARD, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null, null);
+
+        checkRuleExpr("'label' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
+                Direction.BIDIRECTIONAL, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), new VariableExpression(2), null);
+
+        checkRuleExpr("'label' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1+2,'x'+[inf]", 
+                Direction.BIDIRECTIONAL, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", 
+                new VariableExpression(new VariableExpression(1f), Operator.PLUS, new VariableExpression(2f)), 
+                new VariableExpression(new VariableExpression(new VariableReference("x")), Operator.PLUS, new VariableExpression(Constant.INFINITY)), null);
+
+        checkRuleExpr("'IPTG addition{77331}'  -> IPTG(laci) @ 0.0", 
+                Direction.FORWARD, "IPTG addition{77331}", null, "[IPTG(laci)]", new VariableExpression(0), null, null);
+
+        checkRuleExpr("'bin' CRY(clk),EBOX-CLK-BMAL1(cry) -> CRY(clk!2), EBOX-CLK-BMAL1(cry!2) @ 127.2862", 
+                Direction.FORWARD, "bin", "[CRY(clk), EBOX-CLK-BMAL1(cry)]", "[CRY(clk!2), EBOX-CLK-BMAL1(cry!2)]", 
+                new VariableExpression(127.2862f), null, null);
+
+    }
+
+    @Test
+    public void testRuleExpr_spatial() throws Exception {
+
+        Location location = new Location("cytosol");
+
+        checkRuleExpr("'label' 'cytosol' A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+                Direction.FORWARD, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null, location);
+
+        checkRuleExpr("'label' 'cytosol' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
+                Direction.BIDIRECTIONAL, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), new VariableExpression(2), location);
+
+        location = new Location("cytosol", new MathExpression("0"), new MathExpression("1"));
+
+        checkRuleExpr("'label' 'cytosol'[0][1] A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+                Direction.FORWARD, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null, location);
+
+        checkRuleExpr("'label' 'cytosol'[0][1] A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
+                Direction.BIDIRECTIONAL, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), new VariableExpression(2), location);
+    }
+    
+    private void checkRuleExpr(String inputText, Direction direction, String label, String leftSideAgents, String rightSideAgents, VariableExpression forwardRate, VariableExpression backwardRate, Location location) throws Exception {
+        lhsAgents.reset();
+        rhsAgents.reset();
+        reset(mocks);
+        kappaModel.addTransform(eq(direction), eq(label), capture(lhsAgents), capture(rhsAgents), eq(forwardRate), eq(backwardRate), eq(location));
+        replay(mocks);
+        runParserRule("ruleExpr", inputText);
+        verify(mocks);
+        assertEquals(leftSideAgents, lhsAgents.getValue() == null ? null : lhsAgents.getValue().toString());
+        assertEquals(rightSideAgents, rhsAgents.getValue() == null ? null : rhsAgents.getValue().toString());
+    }
+
+    @Test
+    public void testInitExpr() throws Exception {
+        checkInitExpr_value("%init: 5 (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", 5, null);
         
+        checkInitExpr_reference("%init: 'label' (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", "label", null);
     }
 
-    private void checkTransforms(Transform[] expected, KappaModel kappaModel) {
-        KappaModelTest.checkTransforms(kappaModel, expected);
+    @Test
+    public void testInitExpr_spatial() throws Exception {
+
+        checkInitExpr_value("%init: 'cytosol' 5 (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", 5, new Location("cytosol"));
+        checkInitExpr_value("%init: 'cytosol'[0][1] 5 (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", 5, 
+                new Location("cytosol", new MathExpression("0"), new MathExpression("1")));
+        
+        checkInitExpr_reference("%init: 'cytosol' 'label' (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", "label", new Location("cytosol"));
+        checkInitExpr_reference("%init: 'cytosol'[0][1] 'label' (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", "label", 
+                new Location("cytosol", new MathExpression("0"), new MathExpression("1")));
     }
 
+    private void checkInitExpr_reference(String inputText, String leftSideAgents, String label, Location location) throws Exception {
+        lhsAgents.reset();
+        reset(mocks);
+        kappaModel.addInitialValue(capture(lhsAgents), eq(new VariableReference(label)), eq(location));
+        replay(mocks);
+        runParserRule("initExpr", inputText);
+        verify(mocks);
+        assertEquals(leftSideAgents, lhsAgents.getValue().toString());
+    }
+
+    private void checkInitExpr_value(String inputText, String leftSideAgents, int value, Location location) throws Exception {
+        lhsAgents.reset();
+        reset(mocks);
+        kappaModel.addInitialValue(capture(lhsAgents), eq("" + value), eq(location));
+        replay(mocks);
+        runParserRule("initExpr", inputText);
+        verify(mocks);
+        assertEquals(leftSideAgents, lhsAgents.getValue().toString());
+    }
+
+    @Test
+    public void testCompartmentExpr() throws Exception {
+        checkCompartmentExpr("%compartment: 'label'", "label", new Integer[0]);
+        checkCompartmentExpr("%compartment: 'label'[1]", "label", new Integer[] {1});
+        checkCompartmentExpr("%compartment: 'label'[1][20]", "label", new Integer[] {1, 20});
+        checkCompartmentExpr("%compartment: 'complex label-with-!�$%'", "complex label-with-!�$%", new Integer[0]);
+
+        try {
+            runParserRule("compartmentExpr", "%compartment: 'label'[0]");
+            fail("invalid should have failed");
+        }
+        catch (Exception ex) {
+            // Expected exception
+        }
+    }
+    
+    private void checkCompartmentExpr(String inputText, String name, Integer[] dimensions) throws Exception {
+        reset(mocks);
+        kappaModel.addCompartment(eq(name), eq(Arrays.asList(dimensions)));
+        replay(mocks);
+        runParserRule("compartmentExpr", inputText);
+        verify(mocks);
+    }
+
+    @Test
+    public void testCompartmentLinkExpr() throws Exception {
+        // Forward
+        checkCompartmentLinkExpr("%link: 'label' 'compartment1' -> 'compartment2'", "label: compartment1 -> compartment2");
+        checkCompartmentLinkExpr("%link: 'label' 'compartment1'['x'] -> 'compartment2'[2]['x'+1]", "label: compartment1['x'] -> compartment2[2][('x' + 1)]");
+        
+        // Back
+        checkCompartmentLinkExpr("%link: 'label' 'compartment1' <- 'compartment2'", "label: compartment1 <- compartment2");
+        checkCompartmentLinkExpr("%link: 'label' 'compartment1'['x'] <- 'compartment2'[2]['x'+1]", "label: compartment1['x'] <- compartment2[2][('x' + 1)]");
+        
+        // Both
+        checkCompartmentLinkExpr("%link: 'label' 'compartment1' <-> 'compartment2'", "label: compartment1 <-> compartment2");
+        checkCompartmentLinkExpr("%link: 'label' 'compartment1'['x'] <-> 'compartment2'[2]['x'+1]", "label: compartment1['x'] <-> compartment2[2][('x' + 1)]");
+    }
+    
+    private void checkCompartmentLinkExpr(String inputText, String linkText) throws Exception {
+        Capture<CompartmentLink> link = new Capture<CompartmentLink>();
+        reset(mocks);
+        kappaModel.addCompartmentLink(capture(link));
+        replay(mocks);
+        runParserRule("compartmentLinkExpr", inputText);
+        verify(mocks);
+        assertEquals(linkText, link.toString());
+    }
+
+    
     @Test
     public void testTransformExpr() throws Exception {
         List<Agent> leftAgents = new ArrayList<Agent>();
@@ -97,26 +224,83 @@ public class SpatialKappaWalkerTest {
         checkParserRule("linkExpr", "! _", "_");
     }
 
-    @Test
-    public void testInitExpr() throws Exception {
-        KappaModelTest.checkInitialValues((KappaModel) runParserRule("initExpr", "%init: 5 * (A(x~a,a!1),B(y~d,a!1))"), new Object[][] {
-            {
-                    "[A(a!1,x~a), B(a!1,y~d)]", 5, null
-            }
-        });
-    }
 
     @Test
     public void testObsExpr() throws Exception {
-        checkObservation("'label'", (KappaModel) runParserRule("obsExpr", "%obs: 'label'\n"));
-        checkObservation("'label' ([A(x~a), B(y~d)])", (KappaModel) runParserRule("obsExpr", "%obs: 'label' A(x~a),B(y~d)"));
-        checkObservation("'[A(x~a), B(y~d)]' ([A(x~a), B(y~d)])", (KappaModel) runParserRule("obsExpr", "%obs: A(x~a),B(y~d)"));
+        checkObsExpr("obsExpr", "%obs: A(x~a),B(y~d)\n", "[A(x~a), B(y~d)]", "[A(x~a), B(y~d)]", null, true);
+        checkObsExpr("obsExpr", "%obs: 'label' A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", null, true);
     }
 
-    private void checkObservation(String expected, KappaModel kappaModel) {
-        KappaModelTest.checkObservables(kappaModel, new String[] {
-            expected
-        });
+    @Test
+    public void testObsExpr_spatial() throws Exception {
+        checkObsExpr("obsExpr", "%obs: 'label' 'cytosol' A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol"), true);
+        checkObsExpr("obsExpr", "%obs: 'label' 'cytosol'[0][1] A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol", new MathExpression("0"), new MathExpression("1")), true);
+    }
+
+    private void checkObsExpr(String ruleName, String inputText, String label, String leftSideAgents, Location location, boolean inObservations) throws Exception {
+        lhsAgents.reset();
+        reset(mocks);
+        kappaModel.addVariable(capture(lhsAgents), eq(label), eq(location));
+        if (inObservations) {
+            kappaModel.addPlot(label);
+        }
+        replay(mocks);
+        runParserRule(ruleName, inputText);
+        verify(mocks);
+        assertEquals(leftSideAgents, lhsAgents.getValue().toString());
+    }
+
+    @Test
+    public void testPlotExpr() throws Exception {
+        checkPlotExpr("%plot: 'label'\n", "label");
+    }
+
+    private void checkPlotExpr(String inputText, String label) throws Exception {
+        reset(mocks);
+        kappaModel.addPlot(label);
+        replay(mocks);
+        runParserRule("plotExpr", inputText);
+        verify(mocks);
+    }
+
+    @Test
+    public void testTransportExpr() throws Exception {
+        checkTransportExpr("%transport: 'intra-cytosol' @ 0.1", 
+                null, "intra-cytosol", null, new VariableExpression(0.1f));
+        checkTransportExpr("%transport: 'transport-all' 'intra-cytosol' @ 0.1", 
+                "transport-all", "intra-cytosol", null, new VariableExpression(0.1f));
+        checkTransportExpr("%transport: 'intra-cytosol'  A(s),B(x) @ 0.1", 
+                null, "intra-cytosol", "[A(s), B(x)]", new VariableExpression(0.1f));
+        checkTransportExpr("%transport: 'transport-all' 'intra-cytosol'  A(s),B(x) @ 0.1", 
+                "transport-all", "intra-cytosol", "[A(s), B(x)]", new VariableExpression(0.1f));
+    }
+    
+    private void checkTransportExpr(String inputText, String label, String compartmentLinkName, String leftSideAgents, VariableExpression rate) throws Exception {
+        lhsAgents.reset();
+        reset(mocks);
+        kappaModel.addTransport(eq(label), eq(compartmentLinkName), capture(lhsAgents), eq(rate));
+        replay(mocks);
+        runParserRule("transportExpr", inputText);
+        verify(mocks);
+        assertEquals(leftSideAgents, lhsAgents.getValue() == null ? null : lhsAgents.getValue().toString());
+    }
+
+    @Test
+    public void testVarExpr() throws Exception {
+        checkObsExpr("varExpr", "%var: 'label' A(x~a),B(y~d)", "label", "[A(x~a), B(y~d)]", null, false);
+        checkVarExpr("%var: 'label' 2.55e4", "25500.0", "label");
+        checkVarExpr("%var: 'label' ('a' + 'b') * 2", "(('a' + 'b') * 2.0)", "label");
+        checkVarExpr("%var: 'label' [inf] * 2", "([inf] * 2.0)", "label");
+    }
+
+    private void checkVarExpr(String inputText, String expressionText, String label) throws Exception {
+        Capture<VariableExpression> expression = new Capture<VariableExpression>();
+        reset(mocks);
+        kappaModel.addVariable(capture(expression), eq(label));
+        replay(mocks);
+        runParserRule("varExpr", inputText);
+        verify(mocks);
+        assertEquals(expressionText, expression.getValue().toString());
     }
 
     private final void checkParserRule(String rulename, String inputText, String expectedOutput) throws Exception {
@@ -136,56 +320,52 @@ public class SpatialKappaWalkerTest {
 
         CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
         nodes.setTokenStream(tokens);
-        TreeParser walker = new SpatialKappaWalker(nodes);
+        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
+        walker.setKappaModel(kappaModel);
         ruleMethod = SpatialKappaWalker.class.getMethod(rulename, (Class[]) null);
         if (!"void".equals(ruleMethod.getReturnType().getName())) {
             return ruleMethod.invoke(walker, (Object[]) null);
         }
         ruleMethod.invoke(walker, (Object[]) null);
-        return ((SpatialKappaWalker) walker).kappaModel;
+        return walker.kappaModel;
     }
 
     @Test
     public void testMathExpr() throws Exception {
         checkMathExpression("1", (MathExpression) runParserRule("mathExpr", "1"));
-        checkMathExpression("x", (MathExpression) runParserRule("mathExpr", "x"));
+        checkMathExpression("'x'", (MathExpression) runParserRule("mathExpr", "'x'"));
         checkMathExpression("(2 + 3)", (MathExpression) runParserRule("mathExpr", "2 + 3"));
         checkMathExpression("(2 - 3)", (MathExpression) runParserRule("mathExpr", "2 - 3"));
         checkMathExpression("(2 / 3)", (MathExpression) runParserRule("mathExpr", "2 / 3"));
         checkMathExpression("(2 * 3)", (MathExpression) runParserRule("mathExpr", "2 * 3"));
         checkMathExpression("(2 % 3)", (MathExpression) runParserRule("mathExpr", "2 % 3"));
+        checkMathExpression("(2 ^ 3)", (MathExpression) runParserRule("mathExpr", "2 ^ 3"));
         checkMathExpression("(2 * 3)", (MathExpression) runParserRule("mathExpr", "2*3"));
         checkMathExpression("(2 * 3)", (MathExpression) runParserRule("mathExpr", "(2 * 3)"));
-        checkMathExpression("(x + (y * 2))", (MathExpression) runParserRule("mathExpr", "x + (y * 2)"));
+        checkMathExpression("('x' + ('y' * 2))", (MathExpression) runParserRule("mathExpr", "'x' + ('y' * 2)"));
     }
 
     @Test
-    public void testCompartmentExpr() throws Exception {
-        checkCompartment("label", (KappaModel) runParserRule("compartmentExpr", "%compartment: 'label'"));
-        checkCompartment("label[1]", (KappaModel) runParserRule("compartmentExpr", "%compartment: 'label'[1]"));
-        checkCompartment("label[1][20]", (KappaModel) runParserRule("compartmentExpr", "%compartment: 'label' [1][20]"));
-        checkCompartment("complex label-with-!�$%", (KappaModel) runParserRule("compartmentExpr", "%compartment: 'complex label-with-!�$%'"));
-
-        try {
-            runParserRule("compartmentExpr", "%compartment: 'label'[0]");
-            fail("invalid should have failed");
-        }
-        catch (Exception ex) {
-            // Expected exception
-        }
+    public void testAgent() throws Exception {
+        checkAgent("A()", "A()");
+        checkAgent("A(l!1,x~a)", "A(x~a,l!1)");
+        checkAgent("A_new()", "A_new()");
+        checkAgent("A-new()", "A-new()");
+        checkAgent("EBOX-CLK-BMAL1()", "EBOX-CLK-BMAL1()");
+        checkAgent("Predator(loc~domain,loc_index_1~0,loc_index_2~0)", "Predator(loc~domain,loc_index_1~0,loc_index_2~0)");
     }
     
-    private void checkCompartment(String expected, KappaModel kappaModel) {
-        List<Compartment> compartments = kappaModel.getCompartments();
-        assertEquals(1, compartments.size());
-        assertEquals(expected, compartments.get(0).toString());
+   
+
+    private void checkAgent(String expected, String input) throws Exception {
+        checkParserRule("agent", input, expected);
     }
 
     @Test
     public void testLocationExpr() throws Exception {
         checkCompartmentReference("label", (Location) runParserRule("locationExpr", "'label'"));
         checkCompartmentReference("label[1]", (Location) runParserRule("locationExpr", "'label'[1]"));
-        checkCompartmentReference("label[1][(20 + x)]", (Location) runParserRule("locationExpr", "'label'[1][20+x]"));
+        checkCompartmentReference("label[1][(20 + 'x')]", (Location) runParserRule("locationExpr", "'label'[1][20+'x']"));
     }
     
     private void checkCompartmentReference(String expected, Location actual) {
@@ -198,92 +378,6 @@ public class SpatialKappaWalkerTest {
         assertEquals(expected, actual.toString());
     }
 
-    @Test
-    public void testCompartmentLinkExpr() throws Exception {
-        // Forward
-        checkCompartmentLink("label: compartment1 -> compartment2", 
-                (KappaModel) runParserRule("compartmentLinkExpr", "%link: 'label' 'compartment1' -> 'compartment2'"));
-        checkCompartmentLink("label: compartment1[x] -> compartment2[2][(x + 1)]", 
-                (KappaModel) runParserRule("compartmentLinkExpr", "%link: 'label' 'compartment1'[x] -> 'compartment2'[2][x+1]"));
-        
-        // Back
-        checkCompartmentLink("label: compartment1 <- compartment2", 
-                (KappaModel) runParserRule("compartmentLinkExpr", "%link: 'label' 'compartment1' <- 'compartment2'"));
-        checkCompartmentLink("label: compartment1[x] <- compartment2[2][(x + 1)]", 
-                (KappaModel) runParserRule("compartmentLinkExpr", "%link: 'label' 'compartment1'[x] <- 'compartment2'[2][x+1]"));
-        
-        // Both
-        checkCompartmentLink("label: compartment1 <-> compartment2", 
-                (KappaModel) runParserRule("compartmentLinkExpr", "%link: 'label' 'compartment1' <-> 'compartment2'"));
-        checkCompartmentLink("label: compartment1[x] <-> compartment2[2][(x + 1)]", 
-                (KappaModel) runParserRule("compartmentLinkExpr", "%link: 'label' 'compartment1'[x] <-> 'compartment2'[2][x+1]"));
-    }
-    
-    private void checkCompartmentLink(String expected, KappaModel kappaModel) {
-        List<CompartmentLink> links = kappaModel.getCompartmentLinks();
-        assertEquals(1, links.size());
-        assertEquals(expected, links.get(0).toString());
-    }
-
-    @Test
-    public void testTransportExpr() throws Exception {
-        checkTransport("intra-cytosol @ 0.1", 
-                (KappaModel) runParserRule("transportExpr", "%transport: 'intra-cytosol' @ 0.1"));
-        checkTransport("transport-all: intra-cytosol @ 0.1", 
-                (KappaModel) runParserRule("transportExpr", "%transport: 'transport-all' 'intra-cytosol' @ 0.1"));
-        checkTransport("intra-cytosol A(s),B(x) @ 0.1", 
-                (KappaModel) runParserRule("transportExpr", "%transport: 'intra-cytosol'  A(s),B(x) @ 0.1"));
-        checkTransport("transport-A: intra-cytosol A(s),B(x) @ 0.1", 
-                (KappaModel) runParserRule("transportExpr", "%transport: 'transport-A' 'intra-cytosol'  A(s),B(x) @ 0.1"));
-    }
-    
-    private void checkTransport(String expected, KappaModel kappaModel) {
-        List<Transport> transports = kappaModel.getTransports();
-        assertEquals(1, transports.size());
-        assertEquals(expected, transports.get(0).toString());
-    }
-
-    @Test
-    public void testObsExpr_spatial() throws Exception {
-        checkObservation("'label' cytosol ([A(x~a), B(y~d)])", (KappaModel) runParserRule("obsExpr", "%obs: 'label' 'cytosol' A(x~a),B(y~d)"));
-        checkObservation("'label' cytosol[0][1] ([A(x~a), B(y~d)])", (KappaModel) runParserRule("obsExpr", "%obs: 'label' 'cytosol'[0][1] A(x~a),B(y~d)"));
-    }
-
-    @Test
-    public void testInitExpr_spatial() throws Exception {
-        KappaModelTest.checkInitialValues((KappaModel) runParserRule("initExpr", "%init: 'cytosol' 5 * (A(x~a,a!1),B(y~d,a!1))"), 
-                new Object[][] {{"[A(a!1,x~a), B(a!1,y~d)]", 5, new Location("cytosol")}});
-        KappaModelTest.checkInitialValues((KappaModel) runParserRule("initExpr", "%init: 'cytosol'[0][1] 5 * (A(x~a,a!1),B(y~d,a!1))"), 
-                new Object[][] {{"[A(a!1,x~a), B(a!1,y~d)]", 5, new Location("cytosol", new MathExpression("0"), new MathExpression("1"))}});
-    }
-
-    @Test
-    public void testRuleExpr_spatial() throws Exception {
-        Location location = new Location("cytosol");
-        
-        List<Complex> leftComplexes = TransformTest.getComplexes(
-                new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("x", null, "1")));
-        List<Complex> rightComplexes = TransformTest.getComplexes(
-                new Agent("A", new AgentSite("s", null, null)), new Agent("B", new AgentSite("x", null, null)));
-        
-        checkTransforms(new Transform[] {new Transform("label", leftComplexes, rightComplexes, "1")}, location, 
-                (KappaModel) runParserRule("ruleExpr", "'label' 'cytosol' A(s!1),B(x!1)   -> A(s),  B(x) @ 1"));
-        checkTransforms(new Transform[] {new Transform("label", leftComplexes, rightComplexes, "1"), 
-                new Transform("label", rightComplexes, leftComplexes, "2")}, location, 
-                (KappaModel) runParserRule("ruleExpr", "'label' 'cytosol' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2"));
-        
-        location = new Location("cytosol", new MathExpression("0"), new MathExpression("1"));
-        
-        checkTransforms(new Transform[] {new Transform("label", leftComplexes, rightComplexes, "1")}, location, 
-                (KappaModel) runParserRule("ruleExpr", "'label' 'cytosol'[0][1] A(s!1),B(x!1)   -> A(s),  B(x) @ 1"));
-        checkTransforms(new Transform[] {new Transform("label", leftComplexes, rightComplexes, "1"), 
-                new Transform("label", rightComplexes, leftComplexes, "2")}, location, 
-                (KappaModel) runParserRule("ruleExpr", "'label' 'cytosol'[0][1] A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2"));
-    }
-    
-    private void checkTransforms(Transform[] expected, Location location, KappaModel kappaModel) {
-        KappaModelTest.checkTransforms(kappaModel, location, expected);
-    }
 
     @Test
     public void testTransformExpr_spatial() throws Exception {
@@ -308,10 +402,22 @@ public class SpatialKappaWalkerTest {
         checkId("id", "EBOX-CLK-BMAL1", "EBOX-CLK-BMAL1");
     }
 
+    @Test
+    public void testLabel() throws Exception {
+        checkLabel("label", "'A'", "A");
+        checkLabel("label", "'2'", "2");
+        checkLabel("label", "''", "");
+        checkLabel("label", "'complicated__- string 234 \"£$'", "complicated__- string 234 \"£$");
+    }
+
     private void checkId(String rulename, String inputText, String expectedOutput) throws Exception {
         Object actual = runParserRule(rulename, inputText);
         assertEquals(expectedOutput, actual.getClass().getDeclaredField("result").get(actual));
     }
 
+    private void checkLabel(String rulename, String inputText, String expectedOutput) throws Exception {
+        Object actual = runParserRule(rulename, inputText);
+        assertEquals(expectedOutput, actual);
+    }
 
 }

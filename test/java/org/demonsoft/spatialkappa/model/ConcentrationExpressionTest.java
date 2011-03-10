@@ -144,7 +144,7 @@ public class ConcentrationExpressionTest {
         expression = new ConcentrationExpression(1f, "/", otherExpression);
         assertEquals(10f, expression.evaluate(simulation), 0.01f);
 
-        kappaModel.addTransform(new LocatedTransform(new Transform("label", TransformTest.getComplexes(new Agent("A")), null, "0.5"), null));
+        kappaModel.addTransform(new LocatedTransform(new Transform("label", TransformTest.getComplexes(new Agent("A")), null, 0.5f), null));
         simulation.initialise();
         
         expression = new ConcentrationExpression("label");
@@ -166,7 +166,7 @@ public class ConcentrationExpressionTest {
         ConcentrationExpression expression = new ConcentrationExpression("label");
         
         // Transform based expression - compartment irrelevant
-        Transform transform = new Transform("label", TransformTest.getComplexes(new Agent("A")), null, "0.6");
+        Transform transform = new Transform("label", TransformTest.getComplexes(new Agent("A")), null, 0.6f);
         KappaModel kappaModel = new KappaModel();
         ComplexMatchingSimulation simulation = new ComplexMatchingSimulation(kappaModel);
         kappaModel.addCompartment(compartment);
@@ -175,7 +175,7 @@ public class ConcentrationExpressionTest {
         assertEquals(0.6f, expression.evaluate(simulation), 0.01f);
 
         // Transform based expression - cell irrelevant
-        transform = new Transform("label", TransformTest.getComplexes(new Agent("A")), null, "0.6");
+        transform = new Transform("label", TransformTest.getComplexes(new Agent("A")), null, 0.6f);
         kappaModel = new KappaModel();
         simulation = new ComplexMatchingSimulation(kappaModel);
         kappaModel.addCompartment(compartment);
@@ -184,7 +184,7 @@ public class ConcentrationExpressionTest {
         assertEquals(0.6f, expression.evaluate(simulation), 0.01f);
         
         // Transport based expression - location irrelevant
-        Transport transport = new Transport("label", "link", getList(new Agent("A")), "0.6");
+        Transport transport = new Transport("label", "link", getList(new Agent("A")), 0.6f);
         kappaModel = new KappaModel();
         simulation = new ComplexMatchingSimulation(kappaModel);
         kappaModel.addCompartment(compartment);
@@ -205,7 +205,7 @@ public class ConcentrationExpressionTest {
         KappaModel kappaModel = new KappaModel();
         ComplexMatchingSimulation simulation = new ComplexMatchingSimulation(kappaModel);
         kappaModel.addCompartment(compartment);
-        kappaModel.addObservable(getList(new Agent("A")), "label", compartmentLocation, false);
+        kappaModel.addVariable(getList(new Agent("A")), "label", compartmentLocation);
         kappaModel.addInitialValue(getList(new Agent("A")), "100", compartmentLocation);
         simulation.initialise();
         assertEquals(100, expression.evaluate(simulation), 0.01f);
@@ -214,7 +214,7 @@ public class ConcentrationExpressionTest {
         kappaModel = new KappaModel();
         simulation = new ComplexMatchingSimulation(kappaModel);
         kappaModel.addCompartment(compartment);
-        kappaModel.addObservable(getList(new Agent("A")), "label", cellLocation, false);
+        kappaModel.addVariable(getList(new Agent("A")), "label", cellLocation);
         kappaModel.addInitialValue(getList(new Agent("A")), "100", cellLocation);
         simulation.initialise();
         assertEquals(100, expression.evaluate(simulation), 0.01f);

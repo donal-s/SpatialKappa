@@ -87,6 +87,22 @@ public class MathExpression implements Serializable {
             public String toString() {
                 return "%";
             }
+        },
+        EXPONENT {
+            @Override
+            float eval(float x, float y) {
+                return (float) Math.pow(x, y);
+            }
+
+            @Override
+            int eval(int x, int y) {
+                return (int) Math.pow(x, y);
+            }
+
+            @Override
+            public String toString() {
+                return "^";
+            }
         };
 
         abstract float eval(float x, float y);
@@ -108,6 +124,9 @@ public class MathExpression implements Serializable {
             }
             if ("%".equals(input)) {
                 return MODULUS;
+            }
+            if ("^".equals(input)) {
+                return EXPONENT;
             }
             throw new IllegalArgumentException(input);
         }
@@ -173,7 +192,7 @@ public class MathExpression implements Serializable {
     @Override
     public String toString() {
         if (variable != null) {
-            return variable;
+            return "'" + variable + "'";
         }
         if (operator != null) {
             return "(" + lhsExpression + " " + operator + " " + rhsExpression + ")";

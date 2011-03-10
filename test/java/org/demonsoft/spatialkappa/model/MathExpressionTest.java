@@ -60,7 +60,7 @@ public class MathExpressionTest {
         assertEquals(0, expr.getValue());
         assertEquals(null, expr.getLhsExpression());
         assertEquals(null, expr.getRhsExpression());
-        assertEquals("x", expr.toString());
+        assertEquals("'x'", expr.toString());
         assertFalse(expr.isConcrete());
         
         expr = new MathExpression("2");
@@ -78,7 +78,7 @@ public class MathExpressionTest {
         assertEquals(0, expr.getValue());
         assertEquals(expr1, expr.getLhsExpression());
         assertEquals(expr2, expr.getRhsExpression());
-        assertEquals("(x + 2)", expr.toString());
+        assertEquals("('x' + 2)", expr.toString());
         assertFalse(expr.isConcrete());
         
         expr = new MathExpression(expr2, Operator.PLUS, expr2);
@@ -130,6 +130,7 @@ public class MathExpressionTest {
         assertEquals(5, new MathExpression(new MathExpression("7"), Operator.MINUS, new MathExpression("2")).evaluate(variables));
         assertEquals(14, new MathExpression(new MathExpression("7"), Operator.MULTIPLY, new MathExpression("2")).evaluate(variables));
         assertEquals(3, new MathExpression(new MathExpression("7"), Operator.DIVIDE, new MathExpression("2")).evaluate(variables));
+        assertEquals(49, new MathExpression(new MathExpression("7"), Operator.EXPONENT, new MathExpression("2")).evaluate(variables));
         assertEquals(0, new MathExpression(new MathExpression("0"), Operator.MODULUS, new MathExpression("5")).evaluate(variables));
         assertEquals(2, new MathExpression(new MathExpression("7"), Operator.MODULUS, new MathExpression("5")).evaluate(variables));
         

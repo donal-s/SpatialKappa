@@ -20,6 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.CompartmentLink;
 import org.demonsoft.spatialkappa.model.Direction;
+import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.MathExpression;
@@ -137,7 +138,7 @@ public class SpatialTranslatorTest {
         CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
         nodes.setTokenStream(tokens);
         SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
-        KappaModel kappaModel =  walker.prog();
+        IKappaModel kappaModel =  walker.prog();
         
         translator = new SpatialTranslator(kappaModel);
         assertEquals(SIMPLE_TEST_OUTPUT, translator.translateToKappa());
@@ -361,16 +362,16 @@ public class SpatialTranslatorTest {
 
     private static final String SIMPLE_TEST_INPUT = 
         "%compartment: 'cytosol' [4]\n" + 
-        "%link: 'intra-cytosol' 'cytosol' [x] <-> 'cytosol' [x+1]\n" + 
+        "%link: 'intra-cytosol' 'cytosol' ['x'] <-> 'cytosol' ['x'+1]\n" + 
         "\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + 
         "%transport: 'diffusion-red' 'intra-cytosol' A(state~red) @ 0.1\n" + 
         "'heating' 'cytosol'[0] A(state~blue) -> A(state~red) @ 1.0\n" + 
         "'cooling' 'cytosol' A(state~red) -> A(state~blue) @ 0.05\n" + 
         "\n" + 
-        "%init: 'cytosol' 800 * (A(state~blue)) \n" + 
-        "%init: 800 * (A(state~green)) \n" + 
-        "%init: 'cytosol'[0] 800 * (A(state~red)) \n" + 
+        "%init: 'cytosol' 800 (A(state~blue)) \n" + 
+        "%init: 800 (A(state~green)) \n" + 
+        "%init: 'cytosol'[0] 800 (A(state~red)) \n" + 
         "%obs: 'all red' A(state~red)\n" + 
         "%obs: 'cytosol blue' 'cytosol' A(state~blue)\n" + 
         "%obs: 'red[0]' 'cytosol'[0] A(state~red) \n" + 
@@ -392,34 +393,40 @@ public class SpatialTranslatorTest {
         "'cooling-3' A(state~red,loc~cytosol,loc_index~2) -> A(state~blue,loc~cytosol,loc_index~2) @ 0.05\n" + 
         "'cooling-4' A(state~red,loc~cytosol,loc_index~3) -> A(state~blue,loc~cytosol,loc_index~3) @ 0.05\n" + 
         "\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~0))\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~1))\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~2))\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~3))\n" + 
-        "%init: 800 * (A(state~green))\n" + 
-        "%init: 800 * (A(state~red,loc~cytosol,loc_index~0))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~0))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~1))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~2))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~3))\n" + 
+        "%init: 800 (A(state~green))\n" + 
+        "%init: 800 (A(state~red,loc~cytosol,loc_index~0))\n" + 
         "\n" + 
-        "%obs: 'all red' A(state~red)\n" + 
-        "%obs: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
-        "%obs: 'red[0]' A(state~red,loc~cytosol,loc_index~0)\n" + 
-        "%obs: 'red[1]' A(state~red,loc~cytosol,loc_index~1)\n" + 
-        "%obs: 'red[2]' A(state~red,loc~cytosol,loc_index~2)\n" + 
-        "%obs: 'red[3]' A(state~red,loc~cytosol,loc_index~3)\n" + 
+        "%var: 'all red' A(state~red)\n" + 
+        "%var: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
+        "%var: 'red[0]' A(state~red,loc~cytosol,loc_index~0)\n" + 
+        "%var: 'red[1]' A(state~red,loc~cytosol,loc_index~1)\n" + 
+        "%var: 'red[2]' A(state~red,loc~cytosol,loc_index~2)\n" + 
+        "%var: 'red[3]' A(state~red,loc~cytosol,loc_index~3)\n" + 
+        "%plot: 'all red'\n" + 
+        "%plot: 'cytosol blue'\n" + 
+        "%plot: 'red[0]'\n" + 
+        "%plot: 'red[1]'\n" + 
+        "%plot: 'red[2]'\n" + 
+        "%plot: 'red[3]'\n" + 
         "\n" + 
         "";
 
     private static final String INFINITE_RATE_INPUT = 
         "%compartment: 'cytosol' [4]\n" + 
-        "%link: 'intra-cytosol' 'cytosol' [x] <-> 'cytosol' [x+1]\n" + 
+        "%link: 'intra-cytosol' 'cytosol' ['x'] <-> 'cytosol' ['x'+1]\n" + 
         "\n" + 
-        "%transport: 'diffusion-all' 'intra-cytosol' @ $INF\n" + 
-        "%transport: 'diffusion-red' 'intra-cytosol' A(state~red) @ $INF\n" + 
-        "'heating' 'cytosol'[0] A(state~blue) -> A(state~red) @ $INF\n" + 
-        "'cooling' 'cytosol' A(state~red) -> A(state~blue) @ $INF\n" + 
+        "%transport: 'diffusion-all' 'intra-cytosol' @ [inf]\n" + 
+        "%transport: 'diffusion-red' 'intra-cytosol' A(state~red) @ [inf]\n" + 
+        "'heating' 'cytosol'[0] A(state~blue) -> A(state~red) @ [inf]\n" + 
+        "'cooling' 'cytosol' A(state~red) -> A(state~blue) @ [inf]\n" + 
         "\n" + 
-        "%init: 'cytosol' 800 * (A(state~blue)) \n" + 
-        "%init: 800 * (A(state~green)) \n" + 
-        "%init: 'cytosol'[0] 800 * (A(state~red)) \n" + 
+        "%init: 'cytosol' 800 (A(state~blue)) \n" + 
+        "%init: 800 (A(state~green)) \n" + 
+        "%init: 'cytosol'[0] 800 (A(state~red)) \n" + 
         "%obs: 'all red' A(state~red)\n" + 
         "%obs: 'cytosol blue' 'cytosol' A(state~blue)\n" + 
         "%obs: 'red[0]' 'cytosol'[0] A(state~red) \n" + 
@@ -428,48 +435,54 @@ public class SpatialTranslatorTest {
         "%obs: 'red[3]' 'cytosol'[3] A(state~red) \n";
     
     private static final String INFINITE_RATE_OUTPUT = 
-        "'diffusion-all-1' A(loc~cytosol,loc_index~0) <-> A(loc~cytosol,loc_index~1) @ $INF,$INF\n" + 
-        "'diffusion-all-2' A(loc~cytosol,loc_index~1) <-> A(loc~cytosol,loc_index~2) @ $INF,$INF\n" + 
-        "'diffusion-all-3' A(loc~cytosol,loc_index~2) <-> A(loc~cytosol,loc_index~3) @ $INF,$INF\n" + 
-        "'diffusion-red-1' A(state~red,loc~cytosol,loc_index~0) <-> A(state~red,loc~cytosol,loc_index~1) @ $INF,$INF\n" + 
-        "'diffusion-red-2' A(state~red,loc~cytosol,loc_index~1) <-> A(state~red,loc~cytosol,loc_index~2) @ $INF,$INF\n" + 
-        "'diffusion-red-3' A(state~red,loc~cytosol,loc_index~2) <-> A(state~red,loc~cytosol,loc_index~3) @ $INF,$INF\n" + 
+        "'diffusion-all-1' A(loc~cytosol,loc_index~0) <-> A(loc~cytosol,loc_index~1) @ [inf],[inf]\n" + 
+        "'diffusion-all-2' A(loc~cytosol,loc_index~1) <-> A(loc~cytosol,loc_index~2) @ [inf],[inf]\n" + 
+        "'diffusion-all-3' A(loc~cytosol,loc_index~2) <-> A(loc~cytosol,loc_index~3) @ [inf],[inf]\n" + 
+        "'diffusion-red-1' A(state~red,loc~cytosol,loc_index~0) <-> A(state~red,loc~cytosol,loc_index~1) @ [inf],[inf]\n" + 
+        "'diffusion-red-2' A(state~red,loc~cytosol,loc_index~1) <-> A(state~red,loc~cytosol,loc_index~2) @ [inf],[inf]\n" + 
+        "'diffusion-red-3' A(state~red,loc~cytosol,loc_index~2) <-> A(state~red,loc~cytosol,loc_index~3) @ [inf],[inf]\n" + 
         "\n" + 
-        "'heating' A(state~blue,loc~cytosol,loc_index~0) -> A(state~red,loc~cytosol,loc_index~0) @ $INF\n" + 
-        "'cooling-1' A(state~red,loc~cytosol,loc_index~0) -> A(state~blue,loc~cytosol,loc_index~0) @ $INF\n" + 
-        "'cooling-2' A(state~red,loc~cytosol,loc_index~1) -> A(state~blue,loc~cytosol,loc_index~1) @ $INF\n" + 
-        "'cooling-3' A(state~red,loc~cytosol,loc_index~2) -> A(state~blue,loc~cytosol,loc_index~2) @ $INF\n" + 
-        "'cooling-4' A(state~red,loc~cytosol,loc_index~3) -> A(state~blue,loc~cytosol,loc_index~3) @ $INF\n" + 
+        "'heating' A(state~blue,loc~cytosol,loc_index~0) -> A(state~red,loc~cytosol,loc_index~0) @ [inf]\n" + 
+        "'cooling-1' A(state~red,loc~cytosol,loc_index~0) -> A(state~blue,loc~cytosol,loc_index~0) @ [inf]\n" + 
+        "'cooling-2' A(state~red,loc~cytosol,loc_index~1) -> A(state~blue,loc~cytosol,loc_index~1) @ [inf]\n" + 
+        "'cooling-3' A(state~red,loc~cytosol,loc_index~2) -> A(state~blue,loc~cytosol,loc_index~2) @ [inf]\n" + 
+        "'cooling-4' A(state~red,loc~cytosol,loc_index~3) -> A(state~blue,loc~cytosol,loc_index~3) @ [inf]\n" + 
         "\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~0))\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~1))\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~2))\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~3))\n" + 
-        "%init: 800 * (A(state~green))\n" + 
-        "%init: 800 * (A(state~red,loc~cytosol,loc_index~0))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~0))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~1))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~2))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~3))\n" + 
+        "%init: 800 (A(state~green))\n" + 
+        "%init: 800 (A(state~red,loc~cytosol,loc_index~0))\n" + 
         "\n" + 
-        "%obs: 'all red' A(state~red)\n" + 
-        "%obs: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
-        "%obs: 'red[0]' A(state~red,loc~cytosol,loc_index~0)\n" + 
-        "%obs: 'red[1]' A(state~red,loc~cytosol,loc_index~1)\n" + 
-        "%obs: 'red[2]' A(state~red,loc~cytosol,loc_index~2)\n" + 
-        "%obs: 'red[3]' A(state~red,loc~cytosol,loc_index~3)\n" + 
+        "%var: 'all red' A(state~red)\n" + 
+        "%var: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
+        "%var: 'red[0]' A(state~red,loc~cytosol,loc_index~0)\n" + 
+        "%var: 'red[1]' A(state~red,loc~cytosol,loc_index~1)\n" + 
+        "%var: 'red[2]' A(state~red,loc~cytosol,loc_index~2)\n" + 
+        "%var: 'red[3]' A(state~red,loc~cytosol,loc_index~3)\n" + 
+        "%plot: 'all red'\n" + 
+        "%plot: 'cytosol blue'\n" + 
+        "%plot: 'red[0]'\n" + 
+        "%plot: 'red[1]'\n" + 
+        "%plot: 'red[2]'\n" + 
+        "%plot: 'red[3]'\n" + 
         "\n" + 
         "";
 
     private static final String TRANSPORT_ONLY_INPUT = 
         "%compartment: 'cytosol' [4]\n" + 
         "%compartment: 'membrane' [4]\n" + 
-        "%link: 'intra-cytosol' 'cytosol' [x] <-> 'cytosol' [x+1]\n" + 
-        "%link: 'interface1' 'cytosol' [x] -> 'membrane' [x+2]\n" +
-        "%link: 'interface2' 'membrane' [x] <- 'cytosol' [x+2]\n" +
+        "%link: 'intra-cytosol' 'cytosol' ['x'] <-> 'cytosol' ['x'+1]\n" + 
+        "%link: 'interface1' 'cytosol' ['x'] -> 'membrane' ['x'+2]\n" +
+        "%link: 'interface2' 'membrane' ['x'] <- 'cytosol' ['x'+2]\n" +
         "\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + // TODO - remember only works for single agents
         "%transport: 'diffusion-red' 'intra-cytosol' A(state~red) @ 0.1\n" + 
         "%transport: 'diffusion-other' 'intra-cytosol' B() @ 0.1\n" + 
         "%transport: 'cell exit1' 'interface1' B() @ 0.2\n" + 
         "%transport: 'cell exit2' 'interface2' B() @ 0.3\n" + 
-        "%init: 800 * (A(state~red),B())\n" + 
+        "%init: 800 (A(state~red),B())\n" + 
         "\n" + 
         "";
     
@@ -492,7 +505,7 @@ public class SpatialTranslatorTest {
         "'cell exit2-2' B(loc~cytosol,loc_index~3) -> B(loc~membrane,loc_index~1) @ 0.3\n" + 
         "\n" + 
         "\n" + 
-        "%init: 800 * (A(state~red),B())\n" + 
+        "%init: 800 (A(state~red),B())\n" + 
         "\n" + 
         "\n" + 
         "";
@@ -506,15 +519,15 @@ public class SpatialTranslatorTest {
         "%compartment: 'nucleus'\n" + 
         "%link: 'interface1' 'nucleus' <-> 'membrane' [2]\n" +
         "%link: 'interface2' 'nucleus' <-> 'cytosol' [1][2]\n" +
-        "%link: 'interface3' 'membrane' [x] <-> 'cytosol' [x][x+2]\n" +
+        "%link: 'interface3' 'membrane' ['x'] <-> 'cytosol' ['x']['x'+2]\n" +
         "\n" + 
         "%transport: 'diffusion-blue' 'interface1'  A(state~blue) @ 0.1\n" + 
         "%transport: 'diffusion-red' 'interface2' A(state~red) @ 0.2\n" + 
         "%transport: 'diffusion-other' 'interface3' B() @ 0.3\n" + 
         "\n" +
-        "%init: 'nucleus' 800 * (A(state~blue)) \n" + 
-        "%init: 'nucleus' 800 * (A(state~red)) \n" + 
-        "%init: 'nucleus' 800 * (B()) \n" + 
+        "%init: 'nucleus' 800 (A(state~blue)) \n" + 
+        "%init: 'nucleus' 800 (A(state~red)) \n" + 
+        "%init: 'nucleus' 800 (B()) \n" + 
         "";
     
     private static final String TRANSPORT_DIFFERENT_DIMENSIONS_OUTPUT = 
@@ -525,9 +538,9 @@ public class SpatialTranslatorTest {
         "'diffusion-other-3' B(loc~membrane,loc_index_1~2,loc_index_2~0) <-> B(loc~cytosol,loc_index_1~2,loc_index_2~4) @ 0.3,0.3\n" + 
         "\n" + 
         "\n" + 
-        "%init: 800 * (A(state~blue,loc~nucleus))\n" + 
-        "%init: 800 * (A(state~red,loc~nucleus))\n" + 
-        "%init: 800 * (B(loc~nucleus))\n" + 
+        "%init: 800 (A(state~blue,loc~nucleus))\n" + 
+        "%init: 800 (A(state~red,loc~nucleus))\n" + 
+        "%init: 800 (B(loc~nucleus))\n" + 
         "\n" + 
         "\n" + 
         "";
@@ -556,7 +569,7 @@ public class SpatialTranslatorTest {
 
     private static final String TRANSPORT_LIMITED_LINKS_INPUT = 
         "%compartment: 'cytosol' [4]\n" + 
-        "%link: 'intra-cytosol' 'cytosol' [x] <-> 'cytosol' [x+1]\n" + 
+        "%link: 'intra-cytosol' 'cytosol' ['x'] <-> 'cytosol' ['x'+1]\n" + 
         "\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" +
         "%transport: 'diffusion-complex' 'intra-cytosol' A(l1!1),B(l1!1) @ 0.1\n" + 
@@ -590,7 +603,8 @@ public class SpatialTranslatorTest {
         "\n" + 
         "\n" + 
         "\n" + 
-        "%obs: A(l1!1,l2!2),B(l1!1),C(l1!2,l2!3),D(l1!3)\n" + 
+        "%var: '[A(l1!1,l2!2), B(l1!1), C(l1!2,l2!3), D(l1!3)]' A(l1!1,l2!2),B(l1!1),C(l1!2,l2!3),D(l1!3)\n" + 
+        "%plot: '[A(l1!1,l2!2), B(l1!1), C(l1!2,l2!3), D(l1!3)]'\n" + 
         "\n" + 
         "";
 
@@ -631,7 +645,6 @@ public class SpatialTranslatorTest {
 
     private static final String OBSERVATIONS_ONLY_INPUT = 
         "%compartment: 'cytosol' [4]\n" + 
-        "%obs: 'named transform'\n" + 
         "%obs: A(state~blue)\n" + 
         "%obs: 'all red' A(state~red)\n" + 
         "%obs: 'cytosol blue' 'cytosol' A(state~blue)\n" + 
@@ -644,33 +657,41 @@ public class SpatialTranslatorTest {
         "\n" + 
         "\n" + 
         "\n" + 
-        "%obs: 'named transform'\n" + 
-        "%obs: A(state~blue)\n" + 
-        "%obs: 'all red' A(state~red)\n" + 
-        "%obs: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
-        "%obs: 'red[0]' A(state~red,loc~cytosol,loc_index~0)\n" + 
-        "%obs: 'red[1]' A(state~red,loc~cytosol,loc_index~1)\n" + 
-        "%obs: 'red[2]' A(state~red,loc~cytosol,loc_index~2)\n" + 
-        "%obs: 'red[3]' A(state~red,loc~cytosol,loc_index~3)\n" + 
+        "%var: '[A(state~blue)]' A(state~blue)\n" + 
+        "%var: 'all red' A(state~red)\n" + 
+        "%var: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
+        "%var: 'red[0]' A(state~red,loc~cytosol,loc_index~0)\n" + 
+        "%var: 'red[1]' A(state~red,loc~cytosol,loc_index~1)\n" + 
+        "%var: 'red[2]' A(state~red,loc~cytosol,loc_index~2)\n" + 
+        "%var: 'red[3]' A(state~red,loc~cytosol,loc_index~3)\n" + 
+        "%plot: '[A(state~blue)]'\n" + 
+        "%plot: 'all red'\n" + 
+        "%plot: 'cytosol blue'\n" + 
+        "%plot: 'red[0]'\n" + 
+        "%plot: 'red[1]'\n" + 
+        "%plot: 'red[2]'\n" + 
+        "%plot: 'red[3]'\n" + 
         "\n" + 
         "";
     
+    // TODO handle plot of transport and transforms
+    
     private static final String INIT_ONLY_INPUT = 
         "%compartment: 'cytosol' [4]\n" + 
-        "%init: 'cytosol' 800 * (A(state~blue)) \n" + 
-        "%init: 800 * (A(state~green)) \n" + 
-        "%init: 'cytosol'[0] 800 * (A(state~red)) \n" +
+        "%init: 'cytosol' 800 (A(state~blue)) \n" + 
+        "%init: 800 (A(state~green)) \n" + 
+        "%init: 'cytosol'[0] 800 (A(state~red)) \n" +
         "";
     
     private static final String INIT_ONLY_OUTPUT = 
         "\n" + 
         "\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~0))\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~1))\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~2))\n" + 
-        "%init: 200 * (A(state~blue,loc~cytosol,loc_index~3))\n" + 
-        "%init: 800 * (A(state~green))\n" + 
-        "%init: 800 * (A(state~red,loc~cytosol,loc_index~0))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~0))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~1))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~2))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index~3))\n" + 
+        "%init: 800 (A(state~green))\n" + 
+        "%init: 800 (A(state~red,loc~cytosol,loc_index~0))\n" + 
         "\n" + 
         "\n" + 
         "";

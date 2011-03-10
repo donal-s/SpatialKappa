@@ -48,7 +48,7 @@ public class CompartmentReferenceTest {
         compartmentReference = new Location("label", expr1, expr2);
         assertEquals("label", compartmentReference.getName());
         assertArrayEquals(new MathExpression[] {expr1, expr2}, compartmentReference.getIndices());
-        assertEquals("label[2][x]", compartmentReference.toString());
+        assertEquals("label[2]['x']", compartmentReference.toString());
         assertFalse(compartmentReference.isConcreteLocation());
 
         compartmentReference = new Location("label", 
@@ -58,7 +58,7 @@ public class CompartmentReferenceTest {
         assertTrue(compartmentReference.isConcreteLocation());
 
         compartmentReference = new Location("label", new MathExpression("x"));
-        assertEquals("label[x]", compartmentReference.toString());
+        assertEquals("label['x']", compartmentReference.toString());
         assertFalse(compartmentReference.isConcreteLocation());
     }
     

@@ -66,7 +66,7 @@ public class ConditionTest {
         assertFalse(new Condition(new ConcentrationExpression(1), Inequality.LESS_THAN, new ConcentrationExpression(1)).isConditionMet(simulation));
         assertTrue(new Condition(new ConcentrationExpression(1), Inequality.LESS_THAN, new ConcentrationExpression(1.1f)).isConditionMet(simulation));
         
-        kappaModel.addTransform(new LocatedTransform(new Transform("label", TransformTest.getComplexes(new Agent("A")), null, "0.5"), null));
+        kappaModel.addTransform(new LocatedTransform(new Transform("label", TransformTest.getComplexes(new Agent("A")), null, 0.5f), null));
         simulation.initialise();
         assertTrue(new Condition(new ConcentrationExpression("label"), Inequality.GREATER_THAN, new ConcentrationExpression(0.1f)).isConditionMet(simulation));
         assertFalse(new Condition(new ConcentrationExpression("label"), Inequality.GREATER_THAN, new ConcentrationExpression(0.5f)).isConditionMet(simulation));

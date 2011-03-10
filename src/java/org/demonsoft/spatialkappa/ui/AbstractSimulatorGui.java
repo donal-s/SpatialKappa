@@ -36,7 +36,6 @@ import javax.swing.JToolBar;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
-import org.demonsoft.spatialkappa.model.LocatedObservable;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.ObservationListener;
@@ -290,6 +289,7 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
         catch (Exception e) {
             textStatus.setText(STATUS_ERROR_LOADING);
             handleException(e);
+            setToolbarMode(ToolbarMode.START);
         }
     }
 
@@ -372,25 +372,25 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
                 simulation.removeObservationListener((ObservationListener) component);
             }
             multiplePanel.removeAll();
-            for (LocatedObservable observable : simulation.getLocatedObservables()) {
+            for (String observable : observation.orderedObservables) {
                 ObservationElement element = observation.observables.get(observable);
-                int value = element.value;
-                XYSeries series = new XYSeries(observable.label);
+                int value = (int) element.value;
+                XYSeries series = new XYSeries(observable);
                 series.add(observation.time, value);
                 chartData.addSeries(series);
             }
 
-            LocatedObservable redObservable = null;
-            LocatedObservable greenObservable = null;
-            LocatedObservable blueObservable = null;
-            for (LocatedObservable observable : simulation.getLocatedObservables()) {
-                if (observable.label.equals("Red cytosol")) {
+            String redObservable = null;
+            String greenObservable = null;
+            String blueObservable = null;
+            for (String observable : observation.orderedObservables) {
+                if (observable.equals("Red cytosol")) {
                     redObservable = observable;
                 }
-                else if (observable.label.equals("Green cytosol")) {
+                else if (observable.equals("Green cytosol")) {
                     greenObservable = observable;
                 }
-                else if (observable.label.equals("Blue cytosol")) {
+                else if (observable.equals("Blue cytosol")) {
                     blueObservable = observable;
                 }
             }
@@ -402,8 +402,9 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
                 compartmentPanel.setCompartment(redObservable, greenObservable, blueObservable, observation);
             }
             else {
-                for (LocatedObservable observable : simulation.getLocatedObservables()) {
-                    if (observable.location !=  null) {
+                for (String observable : observation.orderedObservables) {
+                    ObservationElement element = observation.observables.get(observable);
+                    if (element.isCompartment) {
                         CompartmentViewPanel compartmentPanel = new CompartmentViewPanel();
                         simulation.addObservationListener(compartmentPanel);
                         multiplePanel.add(compartmentPanel);
@@ -583,9 +584,9 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
-                    for (Map.Entry<LocatedObservable, ObservationElement> entry : observation.observables.entrySet()) {
-                        String key = entry.getKey().label;
-                        int value = entry.getValue().value;
+                    for (Map.Entry<String, ObservationElement> entry : observation.observables.entrySet()) {
+                        String key = entry.getKey();
+                        int value = (int) entry.getValue().value;
                         XYSeries series = chartData.getSeries(key);
                         series.add(observation.time, value, !replayRunning);
                     }

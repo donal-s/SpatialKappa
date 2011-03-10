@@ -19,7 +19,6 @@ import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
-import org.demonsoft.spatialkappa.model.LocatedObservable;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.ObservationListener;
@@ -58,9 +57,9 @@ public class ThreeChannelCompartmentViewPanel extends JPanel implements Observat
     private ChartPanel chartPanel;
     private boolean initialised = false;
 
-    LocatedObservable observableRed;
-    LocatedObservable observableGreen;
-    LocatedObservable observableBlue;
+    String observableRed;
+    String observableGreen;
+    String observableBlue;
     int rows;
     int columns;
 
@@ -158,7 +157,7 @@ public class ThreeChannelCompartmentViewPanel extends JPanel implements Observat
         chartPanel.chartChanged(null);
     }
 
-    public void setCompartment(LocatedObservable observableRed, LocatedObservable observableGreen, LocatedObservable observableBlue, Observation initialObservation) {
+    public void setCompartment(String observableRed, String observableGreen, String observableBlue, Observation initialObservation) {
         this.observableRed = observableRed;
         this.observableGreen = observableGreen;
         this.observableBlue = observableBlue;

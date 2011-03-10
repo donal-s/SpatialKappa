@@ -7,13 +7,13 @@ public class ObservationElement implements Serializable {
 
     private static final long serialVersionUID = 1L;
     
-    public final int value;
+    public final float value;
     public final boolean isCompartment;
     public final int[] dimensions;
     // int array of unknown dimension
     public final Serializable cellValues;
     
-    public ObservationElement(int value) {
+    public ObservationElement(float value) {
         this.value = value;
         this.isCompartment = false;
         this.dimensions = null;
@@ -42,6 +42,10 @@ public class ObservationElement implements Serializable {
         this.cellValues = cellValues;
     }
 
+    public boolean matchesDimensions(ObservationElement other) {
+        return isCompartment == other.isCompartment && Arrays.equals(dimensions, other.dimensions);
+    }
+    
     @Override
     public String toString() {
         if (dimensions == null) {
@@ -67,6 +71,7 @@ public class ObservationElement implements Serializable {
         return builder.toString();
     }
     
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -74,7 +79,7 @@ public class ObservationElement implements Serializable {
         result = prime * result + ((cellValues == null) ? 0 : cellValues.hashCode());
         result = prime * result + Arrays.hashCode(dimensions);
         result = prime * result + (isCompartment ? 1231 : 1237);
-        result = prime * result + value;
+        result = prime * result + Float.floatToIntBits(value);
         return result;
     }
 
@@ -97,7 +102,7 @@ public class ObservationElement implements Serializable {
             return false;
         if (isCompartment != other.isCompartment)
             return false;
-        if (value != other.value)
+        if (Float.floatToIntBits(value) != Float.floatToIntBits(other.value))
             return false;
         return true;
     }
@@ -114,6 +119,76 @@ public class ObservationElement implements Serializable {
             slice = ((Object[]) slice)[0];
         }
         return ((int[]) slice)[0];
+    }
+
+    public ObservationElement plus(ObservationElement y) {
+        if (isCompartment) {
+            if (y.isCompartment) {
+                throw new RuntimeException("not implemented");
+            }
+            throw new RuntimeException("not implemented");
+        }
+        if (y.isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement(value + y.value);
+    }
+
+    public ObservationElement minus(ObservationElement y) {
+        if (isCompartment) {
+            if (y.isCompartment) {
+                throw new RuntimeException("not implemented");
+            }
+            throw new RuntimeException("not implemented");
+        }
+        if (y.isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement(value - y.value);
+    }
+
+    public ObservationElement times(ObservationElement y) {
+        if (isCompartment) {
+            if (y.isCompartment) {
+                throw new RuntimeException("not implemented");
+            }
+            throw new RuntimeException("not implemented");
+        }
+        if (y.isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement(value * y.value);
+    }
+
+    public ObservationElement dividedBy(ObservationElement y) {
+        if (isCompartment) {
+            if (y.isCompartment) {
+                throw new RuntimeException("not implemented");
+            }
+            throw new RuntimeException("not implemented");
+        }
+        if (y.isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement(value / y.value);
+    }
+
+    public ObservationElement modulus(ObservationElement y) {
+        if (isCompartment) {
+            if (y.isCompartment) {
+                throw new RuntimeException("not implemented");
+            }
+            throw new RuntimeException("not implemented");
+        }
+        if (y.isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement(value % y.value);
     }
     
     

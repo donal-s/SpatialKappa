@@ -14,14 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.demonsoft.spatialkappa.model.Agent;
-import org.demonsoft.spatialkappa.model.AgentLink;
-import org.demonsoft.spatialkappa.model.AgentSite;
-import org.demonsoft.spatialkappa.model.Complex;
-import org.demonsoft.spatialkappa.model.Transform;
-import org.demonsoft.spatialkappa.model.TransformPrimitive;
-import org.demonsoft.spatialkappa.model.Transition;
-import org.demonsoft.spatialkappa.model.Utils;
+import org.demonsoft.spatialkappa.model.KappaModel.ModelOnlySimulationState;
+import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
 import org.junit.Test;
 
 public class TransformTest extends TransitionTest {
@@ -40,7 +34,7 @@ public class TransformTest extends TransitionTest {
         }
 
         try {
-            new Transform("label", (List<Complex>) null, (List<Complex>) null, "0.1");
+            new Transform("label", (List<Complex>) null, (List<Complex>) null, new VariableExpression(0.1f));
             fail("lhs and rhs null should have failed");
         }
         catch (IllegalArgumentException ex) {
@@ -48,55 +42,31 @@ public class TransformTest extends TransitionTest {
         }
 
         try {
-            new Transform("label", new ArrayList<Complex>(), new ArrayList<Complex>(), "0.1");
+            new Transform("label", new ArrayList<Complex>(), new ArrayList<Complex>(), new VariableExpression(0.1f));
             fail("lhs and rhs empty should have failed");
         }
         catch (IllegalArgumentException ex) {
             // Expected exception
         }
 
-        try {
-            new Transform("label", leftComplexes, rightComplexes, "");
-            fail("unknown rate should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-
-        try {
-            new Transform("label", leftComplexes, rightComplexes, "a");
-            fail("unknown rate should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-
-        try {
-            new Transform("label", leftComplexes, rightComplexes, "$inf");
-            fail("lowercase inf rate should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-
-        Transform transform = new Transform("label", leftComplexes, rightComplexes, "0.1");
+        Transform transform = new Transform("label", leftComplexes, rightComplexes, new VariableExpression(0.1f));
         checkTransform("label", leftComplexes, rightComplexes, 0.1f, false, transform);
 
-        transform = new Transform("label", leftComplexes, rightComplexes, "8.30269391581363e-07");
+        transform = new Transform("label", leftComplexes, rightComplexes, new VariableExpression(8.30269391581363e-07f));
         checkTransform("label", leftComplexes, rightComplexes, 0.000000830269391581363f, false, transform);
 
-        transform = new Transform("label", leftComplexes, rightComplexes, "$INF");
-        checkTransform("label", leftComplexes, rightComplexes, Transition.INFINITE_RATE, true, transform);
+        transform = new Transform("label", leftComplexes, rightComplexes, new VariableExpression(Constant.INFINITY));
+        checkTransform("label", leftComplexes, rightComplexes, 0f, true, transform);
 
-        // Ensure $INF is still shown in toString output
-        assertEquals("'label' : [agent1()] -> [agent2()] @ $INF\n" + "\tDELETE_AGENT(agent1())\n" + "\tCREATE_COMPLEX([agent2()])\n", transform.toString());
+        // Ensure [inf] is still shown in toString output
+        assertEquals("'label' : [agent1()] -> [agent2()] @ [inf]\n" + "\tDELETE_AGENT(agent1())\n" + "\tCREATE_COMPLEX([agent2()])\n", transform.toString());
 
         leftComplexes = getComplexes(new Agent("A", new AgentSite("state", "red", null), new AgentSite("loc", "cytosol", null), new AgentSite("loc_index", "0",
                 null)));
         rightComplexes = getComplexes(new Agent("A", new AgentSite("state", "red", null), new AgentSite("loc", "cytosol", null), new AgentSite("loc_index",
                 "1", null)));
 
-        transform = new Transform("diffusion-red-0", leftComplexes, rightComplexes, "0.1");
+        transform = new Transform("diffusion-red-0", leftComplexes, rightComplexes, new VariableExpression(0.1f));
         checkTransform("diffusion-red-0", leftComplexes, rightComplexes, 0.1f, false, transform);
 
         leftComplexes = getComplexes(new Agent("RNA", new AgentSite("d", null, "5")), new Agent("RNAP", new AgentSite("dna", null, "1"), new AgentSite("rna",
@@ -109,7 +79,7 @@ public class TransformTest extends TransitionTest {
                         "RNA", new AgentSite("d", null, "6"), new AgentSite("t", "x", null), new AgentSite("u", null, "2"), new AgentSite("b", null, null)),
                 new Agent("RNAP", new AgentSite("dna", null, "1"), new AgentSite("rna", null, "6")));
 
-        transform = new Transform("diffusion-red-0", leftComplexes, rightComplexes, "0.1");
+        transform = new Transform("diffusion-red-0", leftComplexes, rightComplexes, new VariableExpression(0.1f));
         checkTransform("diffusion-red-0", leftComplexes, rightComplexes, 0.1f, false, transform);
 
     }
@@ -131,7 +101,7 @@ public class TransformTest extends TransitionTest {
         
         List<Complex> rightComplexes = getComplexes(rightAgent1, rightAgent2, rightAgent3, rightAgent4, rightAgent5);
                 
-        Transform transform = new Transform("test", leftComplexes, rightComplexes, "10.0");
+        Transform transform = new Transform("test", leftComplexes, rightComplexes, 10.0f);
                 
         TransformPrimitive[] expected = new TransformPrimitive[] {
                 TransformPrimitive.getDeleteLink(getAgentLink(leftComplexes, "1")),
@@ -157,11 +127,14 @@ public class TransformTest extends TransitionTest {
     }
 
     private void checkTransform(String label, List<Complex> leftComplexes, List<Complex> rightComplexes, float rate, boolean isInfiniteRate, Transform transform) {
+        SimulationState state = new ModelOnlySimulationState(new HashMap<String, Variable>());
         assertEquals(label, transform.label);
         assertEquals(getComplexStrings(leftComplexes), getComplexStrings(transform.sourceComplexes));
         assertEquals(getComplexStrings(rightComplexes), getComplexStrings(transform.targetComplexes));
-        assertEquals(rate, transform.getRate(), 0.00000001);
-        assertEquals(isInfiniteRate, transform.isInfiniteRate());
+        if (!isInfiniteRate) {
+            assertEquals(rate, transform.getRate().evaluate(state).value, 0.00000001);
+        }
+        assertEquals(isInfiniteRate, transform.isInfiniteRate(new HashMap<String, Variable>()));
     }
 
     private Set<String> getComplexStrings(List<Complex> complexes) {
@@ -178,7 +151,7 @@ public class TransformTest extends TransitionTest {
         List<Agent> rightAgents = new ArrayList<Agent>();
         leftAgents.add(new Agent("agent1", new AgentSite("x", "s", null)));
         rightAgents.add(new Agent("agent1", new AgentSite("x", "t", null)));
-        Transform transform = new Transform(null, Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), "0.1");
+        Transform transform = new Transform(null, Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.1f);
 
         transform.bestPrimitives = null;
         leftAgents.clear();
@@ -265,7 +238,7 @@ public class TransformTest extends TransitionTest {
                 new Agent("RNAP", new AgentSite("dna", null, "1"), new AgentSite("rna", null, "6")) 
                 });
 
-        Transform transform = new Transform(null, Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), "0.1");
+        Transform transform = new Transform(null, Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.1f);
         
         transform.bestPrimitives = null;
         transform.createTransformMap(leftAgents, rightAgents);
@@ -277,7 +250,7 @@ public class TransformTest extends TransitionTest {
         List<Agent> rightAgents = new ArrayList<Agent>();
         leftAgents.add(new Agent("agent1", new AgentSite("x", "s", null)));
         rightAgents.add(new Agent("agent1", new AgentSite("x", "t", null)));
-        Transform transform = new Transform(null, Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), "0.1");
+        Transform transform = new Transform(null, Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.1f);
 
         // Test empty case
         Map<Agent, Agent> originalMap = new HashMap<Agent, Agent>();

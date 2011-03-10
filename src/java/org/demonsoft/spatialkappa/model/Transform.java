@@ -27,7 +27,7 @@ public class Transform extends Transition {
     public final List<Agent> rightAgents;
 
 
-    public Transform(String label, List<Complex> leftSideComplexes, List<Complex> rightSideComplexes, String rate) {
+    public Transform(String label, List<Complex> leftSideComplexes, List<Complex> rightSideComplexes, VariableExpression rate) {
         super(label, rate);
         if ((leftSideComplexes == null || leftSideComplexes.size() == 0) && (rightSideComplexes == null || rightSideComplexes.size() == 0)) {
             throw new IllegalArgumentException("Both left and right agent lists may not be empty");
@@ -45,7 +45,7 @@ public class Transform extends Transition {
         createTransformMap(leftAgents, rightAgents);
     }
 
-    public Transform(String label, List<Agent> leftAgents, List<Agent> rightAgents, String rate, boolean dummy) {
+    public Transform(String label, List<Agent> leftAgents, List<Agent> rightAgents, VariableExpression rate, boolean dummy) {
         super(label, rate);
         if ((leftAgents == null || leftAgents.size() == 0) && (rightAgents == null || rightAgents.size() == 0)) {
             throw new IllegalArgumentException("Both left and right agent lists may not be empty");
@@ -61,6 +61,16 @@ public class Transform extends Transition {
         this.leftAgents = (leftAgents != null) ? leftAgents : new ArrayList<Agent>();
         this.rightAgents = (rightAgents != null) ? rightAgents : new ArrayList<Agent>();
         createTransformMap(this.leftAgents, this.rightAgents);
+    }
+
+    // For unit tests
+    public Transform(String label, List<Complex> leftSideComplexes, List<Complex> rightSideComplexes, float rate) {
+        this(label, leftSideComplexes, rightSideComplexes, new VariableExpression(rate));
+    }
+
+    // For unit tests
+    public Transform(String label, List<Agent> leftAgents, List<Agent> rightAgents, float rate, boolean dummy) {
+        this(label, leftAgents, rightAgents, new VariableExpression(rate), dummy);
     }
 
     public static List<Agent> getAgents(List<Complex> complexes) {
@@ -494,7 +504,7 @@ public class Transform extends Transition {
         String rightText = targetComplexes.toString();
 
         String result = "'" + label + "' " + ": " + leftText.substring(1, leftText.length() - 1) + " -> " + rightText.substring(1, rightText.length() - 1)
-                + " @ " + (isInfiniteRate() ? INFINITE_RATE_TEXT : rate) + "\n";
+                + " @ " + rate + "\n";
         if (bestPrimitives != null) {
             for (TransformPrimitive primitive : bestPrimitives) {
                 result += "\t" + primitive + "\n";
@@ -601,6 +611,6 @@ public class Transform extends Transition {
     
     @Override
     protected Transform clone() {
-        return new Transform(label, sourceComplexes, targetComplexes, "" + rate);
+        return new Transform(label, sourceComplexes, targetComplexes, rate);
     }
 }

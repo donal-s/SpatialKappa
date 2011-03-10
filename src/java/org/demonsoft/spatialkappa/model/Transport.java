@@ -9,7 +9,7 @@ public class Transport extends Transition {
     private final String compartmentLinkName;
     private final List<Agent> agents;
     
-    public Transport(String label, String compartmentLinkName, List<Agent> agents, String rate) {
+    public Transport(String label, String compartmentLinkName, List<Agent> agents, VariableExpression rate) {
         super(label, rate);
         if (compartmentLinkName == null || rate == null) {
             throw new NullPointerException();
@@ -19,6 +19,10 @@ public class Transport extends Transition {
         if (agents != null) {
             sourceComplexes.addAll(Utils.getComplexes(agents));
         }
+    }
+
+    public Transport(String label, String compartmentLinkName, List<Agent> agents, float rate) {
+        this(label, compartmentLinkName, agents, new VariableExpression(rate));
     }
 
     public String getCompartmentLinkName() {
@@ -45,6 +49,6 @@ public class Transport extends Transition {
 
     @Override
     protected Transport clone() {
-        return new Transport(label, compartmentLinkName, agents, "" + rate);
+        return new Transport(label, compartmentLinkName, agents, rate);
     }
 }

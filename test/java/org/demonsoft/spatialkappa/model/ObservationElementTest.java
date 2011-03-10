@@ -10,7 +10,7 @@ public class ObservationElementTest {
     @Test
     public void testObservationElement_nonCompartment() {
         ObservationElement element = new ObservationElement(5);
-        assertEquals(5, element.value);
+        assertEquals(5f, element.value, 0.01f);
         assertFalse(element.isCompartment);
         assertNull(element.dimensions);
         assertNull(element.cellValues);
@@ -62,7 +62,7 @@ public class ObservationElementTest {
         }
         
         ObservationElement element = new ObservationElement(5, dimensions, cellValues);
-        assertEquals(5, element.value);
+        assertEquals(5f, element.value, 0.01f);
         assertTrue(element.isCompartment);
         assertEquals(dimensions, element.dimensions);
         assertEquals(cellValues, element.cellValues);

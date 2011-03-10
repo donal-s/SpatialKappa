@@ -15,11 +15,12 @@ import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
 import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.KappaModel;
-import org.demonsoft.spatialkappa.model.LocatedObservable;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.MathExpression;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
+import org.demonsoft.spatialkappa.model.Variable;
+import org.demonsoft.spatialkappa.model.VariableExpression;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,18 +48,19 @@ public abstract class AbstractSimulationTest {
         
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent2"));
-        kappaModel.addTransform(Direction.FORWARD, "label", agents, new ArrayList<Agent>(), "0.1", null, null);
-        kappaModel.addObservable("label");
+        kappaModel.addTransform(Direction.FORWARD, "label", agents, new ArrayList<Agent>(), new VariableExpression(0.1f), null, null);
+        kappaModel.addPlot("label");
         
         agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
-        kappaModel.addObservable(agents, "label2", null, true);
-        simulation.initialise();
+        kappaModel.addVariable(agents, "label2", null);
+        kappaModel.addPlot("label2");
         
         agents = new ArrayList<Agent>();
         agents.add(new Agent("agent2"));
-        kappaModel.addObservable(agents, "label3", null, false);
+        kappaModel.addVariable(agents, "label3", null);
         
+        simulation.initialise();
         observation = simulation.getCurrentObservation();
         checkObservation(observation, "label", "label2");
     }
@@ -72,18 +74,20 @@ public abstract class AbstractSimulationTest {
         
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
-        kappaModel.addObservable(agents, "observable1", new Location("cytosol"), true);
+        kappaModel.addVariable(agents, "observable1", new Location("cytosol"));
+        kappaModel.addPlot("observable1");
         kappaModel.addInitialValue(agents, "5", new Location("cytosol"));
         
         agents.clear();
         agents.add(new Agent("agent2"));
-        kappaModel.addObservable(agents, "observable2", new Location("nucleus"), true);
+        kappaModel.addVariable(agents, "observable2", new Location("nucleus"));
+        kappaModel.addPlot("observable2");
         kappaModel.addInitialValue(agents, "7", new Location("nucleus"));
         
         simulation.initialise();
         
-        checkObservation(getLocatedObservable("observable1 cytosol"), new ObservationElement(5));
-        checkObservation(getLocatedObservable("observable2 nucleus"), new ObservationElement(7, new int[] {1}, new int[] {7}));
+        checkObservation("observable1", new ObservationElement(5));
+        checkObservation("observable2", new ObservationElement(7, new int[] {1}, new int[] {7}));
     }
 
     @Test
@@ -94,15 +98,17 @@ public abstract class AbstractSimulationTest {
         
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
-        kappaModel.addObservable(agents, "observable1", new Location("cytosol"), true);
-        kappaModel.addObservable(agents, "observable2", new Location("cytosol", new MathExpression("0")), true);
+        kappaModel.addVariable(agents, "observable1", new Location("cytosol"));
+        kappaModel.addPlot("observable1");
+        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new MathExpression("0")));
+        kappaModel.addPlot("observable2");
         kappaModel.addInitialValue(agents, "5", new Location("cytosol", new MathExpression("0")));
         kappaModel.addInitialValue(agents, "7", new Location("cytosol", new MathExpression("3")));
         
         simulation.initialise();
         
-        checkObservation(getLocatedObservable("observable2 cytosol[0]"), new ObservationElement(5));
-        checkObservation(getLocatedObservable("observable1 cytosol"), new ObservationElement(12, new int[] {4}, new int[] {5, 0, 0, 7}));
+        checkObservation("observable2", new ObservationElement(5));
+        checkObservation("observable1", new ObservationElement(12, new int[] {4}, new int[] {5, 0, 0, 7}));
     }
 
     @Test
@@ -114,15 +120,17 @@ public abstract class AbstractSimulationTest {
         
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
-        kappaModel.addObservable(agents, "observable1", new Location("cytosol"), true);
-        kappaModel.addObservable(agents, "observable2", new Location("cytosol", new MathExpression("0"), new MathExpression("0")), true);
+        kappaModel.addVariable(agents, "observable1", new Location("cytosol"));
+        kappaModel.addPlot("observable1");
+        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new MathExpression("0"), new MathExpression("0")));
+        kappaModel.addPlot("observable2");
         kappaModel.addInitialValue(agents, "5", new Location("cytosol", new MathExpression("0"), new MathExpression("0")));
         kappaModel.addInitialValue(agents, "7", new Location("cytosol", new MathExpression("2"), new MathExpression("1")));
         
         simulation.initialise();
         
-        checkObservation(getLocatedObservable("observable1 cytosol"), new ObservationElement(12, new int[] {3, 2}, new int[][] {{5, 0}, {0, 0}, {0, 7}}));
-        checkObservation(getLocatedObservable("observable2 cytosol[0][0]"), new ObservationElement(5));
+        checkObservation("observable1", new ObservationElement(12, new int[] {3, 2}, new int[][] {{5, 0}, {0, 0}, {0, 7}}));
+        checkObservation("observable2", new ObservationElement(5));
     }
 
 //    @Test
@@ -146,34 +154,22 @@ public abstract class AbstractSimulationTest {
 //        }
 //    }
 
-    private void checkObservation(LocatedObservable locatedObservable, ObservationElement element) {
+    private void checkObservation(String observableName, ObservationElement element) {
         Observation observation = simulation.getCurrentObservation();
-        ObservationElement actual = observation.observables.get(locatedObservable);
+        ObservationElement actual = observation.observables.get(observableName);
         assertEquals(element.toString(), actual.toString());
     }
     
-    private void checkGetQuantity(LocatedObservable locatedObservable, ObservationElement element) {
-        ObservationElement actual = simulation.getComplexQuantity(locatedObservable);
+    private void checkGetQuantity(Variable variable, ObservationElement element) {
+        ObservationElement actual = simulation.getComplexQuantity(variable);
         assertEquals(element.toString(), actual.toString());
-    }
-    
-    private LocatedObservable getLocatedObservable(String label) {
-        for (LocatedObservable observable : simulation.getLocatedObservables()) {
-            if (label.equals(observable.label)) {
-                return observable;
-            }
-        }
-        return null;
     }
     
     private void checkObservation(Observation observation, String... expectedObservableNames) {
         assertNotNull(observation);
         assertEquals(expectedObservableNames.length, observation.observables.size());
         
-        Set<String> actualNames = new HashSet<String>();
-        for (LocatedObservable observable : observation.observables.keySet()) {
-            actualNames.add(observable.observable.label);
-        }
+        Set<String> actualNames = new HashSet<String>(observation.observables.keySet());
         
         for (String current : expectedObservableNames) {
             assertTrue("Missing observable: " + current, actualNames.contains(current));
@@ -181,19 +177,10 @@ public abstract class AbstractSimulationTest {
     }
     
     private void checkQuantity(String label, int expected, Agent...agents) {
-        kappaModel.addObservable(Arrays.asList(agents), label, null, true);
+        kappaModel.addVariable(Arrays.asList(agents), label, null);
         simulation.initialise();
-        LocatedObservable observable = getSimulationObservable(label);
-        assertEquals(new ObservationElement(expected), simulation.getComplexQuantity(observable));
-    }
-
-    private LocatedObservable getSimulationObservable(String label) {
-        for (LocatedObservable observable : simulation.getLocatedObservables()) {
-            if (label.equals(observable.label)) {
-                return observable;
-            }
-        }
-        return null;
+        Variable variable = simulation.getVariable(label);
+        assertEquals(new ObservationElement(expected), simulation.getComplexQuantity(variable));
     }
 
     @Test
@@ -252,18 +239,18 @@ public abstract class AbstractSimulationTest {
         
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
-        kappaModel.addObservable(agents, "observable1", new Location("cytosol"), true);
+        kappaModel.addVariable(agents, "observable1", new Location("cytosol"));
         kappaModel.addInitialValue(agents, "5", new Location("cytosol"));
         
         agents.clear();
         agents.add(new Agent("agent2"));
-        kappaModel.addObservable(agents, "observable2", new Location("nucleus"), true);
+        kappaModel.addVariable(agents, "observable2", new Location("nucleus"));
         kappaModel.addInitialValue(agents, "7", new Location("nucleus"));
         
         simulation.initialise();
         
-        checkGetQuantity(getLocatedObservable("observable1 cytosol"), new ObservationElement(5));
-        checkGetQuantity(getLocatedObservable("observable2 nucleus"), new ObservationElement(7, new int[] {1}, new int[] {7}));
+        checkGetQuantity(simulation.getVariable("observable1"), new ObservationElement(5));
+        checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(7, new int[] {1}, new int[] {7}));
     }
 
     @Test
@@ -274,15 +261,15 @@ public abstract class AbstractSimulationTest {
         
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
-        kappaModel.addObservable(agents, "observable1", new Location("cytosol"), true);
-        kappaModel.addObservable(agents, "observable2", new Location("cytosol", new MathExpression("0")), true);
+        kappaModel.addVariable(agents, "observable1", new Location("cytosol"));
+        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new MathExpression("0")));
         kappaModel.addInitialValue(agents, "5", new Location("cytosol", new MathExpression("0")));
         kappaModel.addInitialValue(agents, "7", new Location("cytosol", new MathExpression("3")));
         
         simulation.initialise();
         
-        checkGetQuantity(getLocatedObservable("observable1 cytosol"), new ObservationElement(12, new int[] {4}, new int[] {5, 0, 0, 7}));
-        checkGetQuantity(getLocatedObservable("observable2 cytosol[0]"), new ObservationElement(5));
+        checkGetQuantity(simulation.getVariable("observable1"), new ObservationElement(12, new int[] {4}, new int[] {5, 0, 0, 7}));
+        checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(5));
     }
 
     @Test
@@ -294,15 +281,15 @@ public abstract class AbstractSimulationTest {
         
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
-        kappaModel.addObservable(agents, "observable1", new Location("cytosol"), true);
-        kappaModel.addObservable(agents, "observable2", new Location("cytosol", new MathExpression("0"), new MathExpression("0")), true);
+        kappaModel.addVariable(agents, "observable1", new Location("cytosol"));
+        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new MathExpression("0"), new MathExpression("0")));
         kappaModel.addInitialValue(agents, "5", new Location("cytosol", new MathExpression("0"), new MathExpression("0")));
         kappaModel.addInitialValue(agents, "7", new Location("cytosol", new MathExpression("2"), new MathExpression("1")));
         
         simulation.initialise();
         
-        checkGetQuantity(getLocatedObservable("observable1 cytosol"), new ObservationElement(12, new int[] {3, 2}, new int[][] {{5, 0}, {0, 0}, {0, 7}}));
-        checkGetQuantity(getLocatedObservable("observable2 cytosol[0][0]"), new ObservationElement(5));
+        checkGetQuantity(simulation.getVariable("observable1"), new ObservationElement(12, new int[] {3, 2}, new int[][] {{5, 0}, {0, 0}, {0, 7}}));
+        checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(5));
     }
 
     

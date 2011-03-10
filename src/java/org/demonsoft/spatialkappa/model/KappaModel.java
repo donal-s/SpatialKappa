@@ -1,7 +1,5 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.Utils.getFlatString;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,22 +7,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.demonsoft.spatialkappa.model.Variable.Type;
 
-public class KappaModel {
+
+public class KappaModel implements IKappaModel {
 
     private static final ComplexMatcher matcher = new ComplexMatcher();
     
     private final List<LocatedTransform> locatedTransforms = new ArrayList<LocatedTransform>();
     private final Map<String, AggregateAgent> aggregateAgentMap = new HashMap<String, AggregateAgent>();
     private final List<InitialValue> initialValues = new ArrayList<InitialValue>();
-    private final List<LocatedObservable> locatedObservables = new ArrayList<LocatedObservable>();
+//    private final List<LocatedObservable> locatedObservables = new ArrayList<LocatedObservable>();
     private final List<Perturbation> perturbations = new ArrayList<Perturbation>();
     private final List<Compartment> compartments = new ArrayList<Compartment>();
     private final List<CompartmentLink> compartmentLinks = new ArrayList<CompartmentLink>();
     private final List<Transport> transports = new ArrayList<Transport>();
     private final Set<Complex> canonicalComplexes = new HashSet<Complex>();
+    private final List<String> plottedVariables = new ArrayList<String>();
 
-    public void addTransform(Direction direction, String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, String forwardRate, String backwardRate,
+    public void addTransform(Direction direction, String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, VariableExpression forwardRate, VariableExpression backwardRate,
             Location location) {
         if (direction == null) {
             throw new NullPointerException();
@@ -55,7 +56,11 @@ public class KappaModel {
         if (Direction.BIDIRECTIONAL == direction) {
             addTransform(new LocatedTransform(new Transform(label, rightSideAgents, leftSideAgents, backwardRate, false), location));
         }
+        if (label != null) {
+            variables.put(label, new Variable(label));
+        }
     }
+
 
     public void addTransform(LocatedTransform transform) {
         if (transform == null) {
@@ -97,6 +102,21 @@ public class KappaModel {
         initialValues.add(new InitialValue(complexes, quantity, compartment));
     }
 
+    public void addInitialValue(List<Agent> agents, VariableReference reference, Location compartment) {
+        if (agents == null || reference == null) {
+            throw new NullPointerException();
+        }
+        if (agents.size() == 0) {
+            throw new IllegalArgumentException("Empty complex");
+        }
+        for (Agent agent : agents) {
+            aggregateAgent(agent);
+        }
+        List<Complex> complexes = getCanonicalComplexes(Utils.getComplexes(agents));
+        
+        initialValues.add(new InitialValue(complexes, reference, compartment));
+    }
+
     private List<Complex> getCanonicalComplexes(List<Complex> complexes) {
         for (int index = 0; index < complexes.size(); index++) {
             boolean found = false;
@@ -113,16 +133,22 @@ public class KappaModel {
         return complexes;
     }
 
-    public void addObservable(List<Agent> agents, String label, Location location, boolean inObservations) {
-        locatedObservables.add(new LocatedObservable(new Observable(new Complex(agents), label, inObservations), location));
+    public void addVariable(List<Agent> agents, String label, Location location) {
+        if (label == null) {
+            throw new NullPointerException();
+        }
+        variables.put(label, new Variable(new Complex(agents), location, label));
 
         for (Agent agent : agents) {
             aggregateAgent(agent);
         }
     }
 
-    public void addObservable(String label) {
-        locatedObservables.add(new LocatedObservable(new Observable(label), null));
+    public void addPlot(String label) {
+        if (label == null) {
+            throw new NullPointerException();
+        }
+        plottedVariables.add(label);
     }
 
     public void addPerturbation(Perturbation perturbation) {
@@ -182,10 +208,14 @@ public class KappaModel {
         for (InitialValue initialValue : initialValues) {
             result.append(initialValue).append("\n");
         }
-        result.append("\nOBSERVABLES\n");
-        for (LocatedObservable observable : locatedObservables) {
-            result.append(observable).append("\n");
+        result.append("\nVARIABLES\n");
+        for (Variable variable : variables.values()) {
+            result.append(variable).append("\n");
         }
+//        result.append("\nOBSERVABLES\n");
+//        for (LocatedObservable observable : locatedObservables) {
+//            result.append(observable).append("\n");
+//        }
         result.append("\nPERTURBATIONS\n");
         for (Perturbation perturbation : perturbations) {
             result.append(perturbation).append("\n");
@@ -209,10 +239,17 @@ public class KappaModel {
 
     public Map<LocatedComplex, Integer> getConcreteLocatedInitialValuesMap() {
         Map<LocatedComplex, Integer> result = new HashMap<LocatedComplex, Integer>();
-
+        SimulationState modelSimulationState = new ModelOnlySimulationState(variables);
+        
         for (InitialValue initialValue : initialValues) {
             boolean partition = false;
             Compartment compartment = null;
+            
+            int quantity = initialValue.quantity;
+            if (initialValue.reference != null) {
+                quantity = (int) variables.get(initialValue.reference.variableName).expression.evaluate(modelSimulationState).value;
+            }
+            
             Location location = initialValue.location;
             if (location != null) {
                 compartment = location.getReferencedCompartment(compartments);
@@ -233,7 +270,7 @@ public class KappaModel {
                 }
                 else {
                     for (Complex complex : initialValue.complexes) {
-                        addInitialLocatedValue(result, complex, location, initialValue.quantity);
+                        addInitialLocatedValue(result, complex, location, quantity);
                     }
                 }
             }
@@ -251,7 +288,7 @@ public class KappaModel {
             }
                 else { // no compartments
                     for (Complex complex : initialValue.complexes) {
-                        addInitialLocatedValue(result, complex, location, initialValue.quantity);
+                        addInitialLocatedValue(result, complex, location, quantity);
                     }
                 }
 
@@ -272,28 +309,35 @@ public class KappaModel {
         result.put(locatedComplex, quantity);
     }
 
-    public List<Observable> getVisibleObservables() {
-        List<Observable> result = new ArrayList<Observable>();
-        for (LocatedObservable observable : locatedObservables) {
-            if (observable.observable.inObservations) {
-                result.add(observable.observable);
-            }
-        }
-        return result;
+    public List<String> getPlottedVariables() {
+        return plottedVariables;
     }
+    
+//    public List<Observable> getVisibleObservables() {
+//        List<Observable> result = new ArrayList<Observable>();
+//        for (LocatedObservable observable : locatedObservables) {
+//            if (plottedVariables.contains(observable.label)) {
+//                result.add(observable.observable);
+//            }
+//        }
+//        return result;
+//    }
 
-    public List<LocatedObservable> getVisibleLocatedObservables() {
-        List<LocatedObservable> result = new ArrayList<LocatedObservable>();
-        for (LocatedObservable observable : locatedObservables) {
-            if (observable.observable.inObservations) {
-                result.add(observable);
-            }
-        }
-        return result;
-    }
+//    public List<LocatedObservable> getVisibleLocatedObservables() {
+//        List<LocatedObservable> result = new ArrayList<LocatedObservable>();
+//        for (LocatedObservable observable : locatedObservables) {
+//            if (plottedVariables.contains(observable.label)) {
+//                result.add(observable);
+//            }
+//        }
+//        return result;
+//    }
 
-    public void addTransport(String label, String compartmentLinkName, List<Agent> agents, String rate) {
+    public void addTransport(String label, String compartmentLinkName, List<Agent> agents, VariableExpression rate) {
         addTransport(new Transport(label, compartmentLinkName, agents, rate));
+        if (label != null) {
+            variables.put(label, new Variable(label));
+        }
     }
 
     void addTransport(Transport transport) {
@@ -368,17 +412,17 @@ public class KappaModel {
         return locatedTransforms;
     }
 
-    public List<LocatedObservable> getLocatedObservables() {
-        return locatedObservables;
-    }
+//    public List<LocatedObservable> getLocatedObservables() {
+//        return locatedObservables;
+//    }
 
-    public List<Observable> getObservables() {
-        List<Observable> result = new ArrayList<Observable>();
-        for (LocatedObservable observable : locatedObservables) {
-            result.add(observable.observable);
-        }
-        return result;
-    }
+//    public List<Observable> getObservables() {
+//        List<Observable> result = new ArrayList<Observable>();
+//        for (LocatedObservable observable : locatedObservables) {
+//            result.add(observable.observable);
+//        }
+//        return result;
+//    }
 
     public List<Transform> getTransforms() {
         List<Transform> result = new ArrayList<Transform>();
@@ -409,47 +453,190 @@ public class KappaModel {
     }
     
     
-    public static class InitialValue {
 
-        public final List<Complex> complexes = new ArrayList<Complex>();
-        public final int quantity;
-        public final Location location;
 
-        public InitialValue(List<Complex> complexes, int quantity, Location location) {
-            if (complexes == null) {
-                throw new NullPointerException();
-            }
-            if (complexes.size() == 0 || quantity <= 0) {
-                throw new IllegalArgumentException();
-            }
+    final Map<String, Variable> variables = new HashMap<String, Variable>();
 
-            this.quantity = quantity;
-            this.complexes.addAll(complexes);
-            this.location = location;
-        }
+    public void addVariable(VariableExpression expression, String label) {
+        variables.put(label, new Variable(expression, label));
+    }
 
-//        @Deprecated
-//        public InitialValue(List<Agent> agents, int quantity, Location location) {
-//            this(Utils.getComplexes(agents), quantity, location);
-//        }
-
-        @Override
-        public String toString() {
-            StringBuilder result = new StringBuilder();
-            result.append(quantity);
-            if (location != null) {
-                result.append(" ").append(location);
-            }
-
-            result.append(" * (").append(getFlatString(complexes)).append(")");
-            return result.toString();
-        }
-
+    public Map<String, Variable> getVariables() {
+        return variables;
     }
 
 
+    public void validate() {
+        
+        for (Variable variable : variables.values()) {
+            if (Variable.Type.VARIABLE_EXPRESSION == variable.type) {
+                VariableReference reference = variable.expression.getReference();
+                if (reference != null) {
+                    Variable other = variables.get(reference.variableName);
+                    if (other == null) {
+                        throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
+                    }
+                }
+//            else if (variable. != null) {
+//                Variable other = variables.get(reference.variableName);
+//                if (other == null) {
+//                    throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
+//                }
+            }
+        }
+        
+        for (CompartmentLink link : compartmentLinks) {
+            boolean found = false;
+            for (Compartment compartment : compartments) {
+                if (link.getSourceReference().getName().equals(compartment.getName())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                throw new IllegalStateException("Compartment '" + link.getSourceReference().getName() + "' not found");
+            }
+            
+            found = false;
+            for (Compartment compartment : compartments) {
+                if (link.getTargetReference().getName().equals(compartment.getName())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                throw new IllegalStateException("Compartment '" + link.getTargetReference().getName() + "' not found");
+            }
+        }
+       
+        for (InitialValue initialValue : initialValues) {
+            if (initialValue.reference != null) {
+                VariableReference reference = initialValue.reference;
+                Variable variable = variables.get(reference.variableName);
+                if (variable == null) {
+                    throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
+                }
+                if (!variable.expression.isFixed(variables)) {
+                    throw new IllegalStateException("Reference '" + reference.variableName + "' not fixed - cannot be initial value");
+                }
+                if (variable.expression.isInfinite(variables)) {
+                    throw new IllegalStateException("Reference '" + reference.variableName + "' evaluates to infinity - cannot be initial value");
+                }
+                
+                
+            }
+        }
+        
+        for (LocatedTransform transform : locatedTransforms) {
+            VariableReference reference = transform.transition.rate.getReference();
+            if (reference != null) {
+                Variable variable = variables.get(reference.variableName);
+                if (variable == null) {
+                    throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
+                }
+                if (!variable.expression.isFixed(variables)) {
+                    throw new IllegalStateException("Reference '" + reference.variableName + "' not fixed");
+                }
+            }
+        }
+        
+        for (Transport transport : transports) {
+            VariableReference reference = transport.rate.getReference();
+            if (reference != null) {
+                Variable variable = variables.get(reference.variableName);
+                if (variable == null) {
+                    throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
+                }
+                if (!variable.expression.isFixed(variables)) {
+                    throw new IllegalStateException("Reference '" + reference.variableName + "' not fixed");
+                }
+            }
+            
+            boolean found = false;
+            for (CompartmentLink link : compartmentLinks) {
+                if (transport.getCompartmentLinkName().equals(link.getName())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                throw new IllegalStateException("Compartment link '" + transport.getCompartmentLinkName() + "' not found");
+            }
+        }
+        
+        for (String reference : plottedVariables) {
+            boolean found = false;
+            for (Transport transport : transports) {
+                if (reference.equals(transport.label)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) {
+                continue;
+            }
+            for (LocatedTransform transform : locatedTransforms) {
+                if (reference.equals(transform.transition.label)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) {
+                continue;
+            }
+//            for (LocatedObservable observable : locatedObservables) {
+//                if (reference.equals(observable.label)) {
+//                    found = true;
+//                    break;
+//                }
+//            }
+//            if (found) {
+//                continue;
+//            }
+            
+            Variable variable = variables.get(reference);
+            if (variable == null) {
+                throw new IllegalStateException("Reference '" + reference + "' not found");
+            }
+            if (variable.type == Type.VARIABLE_EXPRESSION && variable.expression.isInfinite(variables)) {
+                throw new IllegalStateException("Reference '" + reference + "' evaluates to infinity - cannot plot");
+            }
+        }
+        
+    }
 
+    public static class ModelOnlySimulationState implements SimulationState {
 
+        private final Map<String, Variable> variables;
+        
+        public ModelOnlySimulationState(Map<String, Variable> variables) {
+            this.variables = variables;
+        }
+        
+        public float getTime() {
+            throw new IllegalStateException("Should not be called");
+        }
 
+        public Transition getTransition(String label) {
+            throw new IllegalStateException("Should not be called");
+        }
 
+        public Variable getVariable(String label) {
+            return variables.get(label);
+        }
+
+        public ObservationElement getComplexQuantity(Variable variable) {
+            throw new IllegalStateException("Should not be called");
+        }
+
+        public void updateTransitionActivity(Transition transition, boolean b) {
+            throw new IllegalStateException("Should not be called");
+        }
+
+        public Map<String, Variable> getVariables() {
+            return variables;
+        }
+        
+    }
+    
 }

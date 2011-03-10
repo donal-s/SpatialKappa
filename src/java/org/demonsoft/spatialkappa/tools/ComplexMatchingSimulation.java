@@ -19,9 +19,8 @@ import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.ComplexMapping;
 import org.demonsoft.spatialkappa.model.ComplexMatcher;
-import org.demonsoft.spatialkappa.model.KappaModel;
+import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.LocatedComplex;
-import org.demonsoft.spatialkappa.model.LocatedObservable;
 import org.demonsoft.spatialkappa.model.LocatedTransition;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.ObservationElement;
@@ -30,6 +29,7 @@ import org.demonsoft.spatialkappa.model.TransformCache;
 import org.demonsoft.spatialkappa.model.Transition;
 import org.demonsoft.spatialkappa.model.Transport;
 import org.demonsoft.spatialkappa.model.Utils;
+import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
 import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
 import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
@@ -53,7 +53,7 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
         super();
     }
 
-    public ComplexMatchingSimulation(KappaModel kappaModel) {
+    public ComplexMatchingSimulation(IKappaModel kappaModel) {
         super(kappaModel);
     }
 
@@ -237,7 +237,7 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
                 }
 
             }
-            for (Map.Entry<LocatedObservable, List<ObservableMapValue>> entry : observableComplexMap.entrySet()) {
+            for (Map.Entry<Variable, List<ObservableMapValue>> entry : observableComplexMap.entrySet()) {
                 ListIterator<ObservableMapValue> iter = entry.getValue().listIterator();
                 while (iter.hasNext()) {
                     ObservableMapValue current = iter.next();
@@ -463,14 +463,14 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
     private void updateObservableComplexMap() {
         ComplexMatcher matcher = new ComplexMatcher();
         Set<LocatedComplex> complexes = complexStore.getLocatedComplexes();
-        for (Map.Entry<LocatedObservable, List<ObservableMapValue>> entry : observableComplexMap.entrySet()) {
+        for (Map.Entry<Variable, List<ObservableMapValue>> entry : observableComplexMap.entrySet()) {
             List<ObservableMapValue> matches = entry.getValue();
-            LocatedObservable observable = entry.getKey();
+            Variable variable = entry.getKey();
             matches.clear();
             for (LocatedComplex complex : complexes) {
-                boolean matchNameOnly = observable.location != null && observable.location.getIndices().length == 0;
-                if (Location.doLocationsMatch(observable.location, complex.location, matchNameOnly)) {
-                    int matchCount = matcher.getPartialMatches(entry.getKey().observable.complex, complex.complex).size();
+                boolean matchNameOnly = variable.location != null && variable.location.getIndices().length == 0;
+                if (Location.doLocationsMatch(variable.location, complex.location, matchNameOnly)) {
+                    int matchCount = matcher.getPartialMatches(variable.complex, complex.complex).size();
                     if (matchCount > 0) {
                         matches.add(new ObservableMapValue(complex.complex, complex.location, matchCount));
                     }
@@ -480,37 +480,35 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
     }
 
     @Override
-    public ObservationElement getComplexQuantity(LocatedObservable observable) {
-        if (observable == null) {
+    public ObservationElement getComplexQuantity(Variable variable) {
+        if (variable == null) {
             throw new NullPointerException();
         }
         int value = 0;
         int[] dimensions = null;
         Serializable cellValues = null;
         boolean partition = false;
-        if (observable.observable.complex != null) {
-            List<ObservableMapValue> complexes = observableComplexMap.get(observable);
-            if (complexes != null) {
-                if (observable.location != null) {
-                    Compartment compartment = observable.location.getReferencedCompartment(kappaModel.getCompartments());
-                    if (compartment.getDimensions().length != observable.location.getIndices().length) {
-                        partition = true;
-                        dimensions = compartment.getDimensions();
-                        cellValues = compartment.createValueArray();
-                    }
+        List<ObservableMapValue> complexes = observableComplexMap.get(variable);
+        if (complexes != null) {
+            if (variable.location != null) {
+                Compartment compartment = variable.location.getReferencedCompartment(kappaModel.getCompartments());
+                if (compartment.getDimensions().length != variable.location.getIndices().length) {
+                    partition = true;
+                    dimensions = compartment.getDimensions();
+                    cellValues = compartment.createValueArray();
+                }
 
-                    for (ObservableMapValue current : complexes) {
-                        int quantity = complexStore.getComplexQuantity(current.complex, current.location) * current.count;
-                        value += quantity;
-                        if (partition) {
-                            addCellValue(cellValues, quantity, current.location.getIndices());
-                        }
+                for (ObservableMapValue current : complexes) {
+                    int quantity = complexStore.getComplexQuantity(current.complex, current.location) * current.count;
+                    value += quantity;
+                    if (partition) {
+                        addCellValue(cellValues, quantity, current.location.getIndices());
                     }
                 }
-                else { // No compartment
-                    for (ObservableMapValue current : complexes) {
-                        value += complexStore.getComplexQuantity(current.complex, current.location) * current.count;
-                    }
+            }
+            else { // No compartment
+                for (ObservableMapValue current : complexes) {
+                    value += complexStore.getComplexQuantity(current.complex, current.location) * current.count;
                 }
             }
         }

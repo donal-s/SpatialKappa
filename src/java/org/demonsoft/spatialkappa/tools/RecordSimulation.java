@@ -5,9 +5,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.List;
 
-import org.demonsoft.spatialkappa.model.LocatedObservable;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationListener;
 
@@ -33,10 +31,6 @@ public class RecordSimulation implements Simulation, ObservationListener {
 
     public void removeObservationListener(ObservationListener listener) {
         simulation.removeObservationListener(listener);
-    }
-
-    public List<LocatedObservable> getLocatedObservables() {
-        return simulation.getLocatedObservables();
     }
 
     public void addObservationListener(ObservationListener listener) {
@@ -82,7 +76,6 @@ public class RecordSimulation implements Simulation, ObservationListener {
         }
         try {
             outputStream = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(recordFile)));
-            outputStream.writeObject(getLocatedObservables());
             outputStream.writeObject(simulation.getCurrentObservation());
         }
         catch (IOException e) {

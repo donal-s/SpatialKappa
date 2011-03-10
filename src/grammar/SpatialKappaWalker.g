@@ -15,23 +15,33 @@ import org.demonsoft.spatialkappa.model.CompartmentLink;
 import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.MathExpression;
+import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Perturbation;
 import org.demonsoft.spatialkappa.model.Perturbation.Assignment;
 import org.demonsoft.spatialkappa.model.Perturbation.ConcentrationExpression;
 import org.demonsoft.spatialkappa.model.Perturbation.Condition;
 import org.demonsoft.spatialkappa.model.Perturbation.Inequality;
+import org.demonsoft.spatialkappa.model.VariableExpression;
+import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
+import org.demonsoft.spatialkappa.model.VariableReference;
 }
 
 @members { 
-KappaModel kappaModel = new KappaModel(); 
+IKappaModel kappaModel = new KappaModel();
+
+// Hook for unit tests to override the model implementation
+public void setKappaModel(IKappaModel kappaModel) {
+  this.kappaModel = kappaModel;
+} 
 }
 
-prog returns [KappaModel result]
-  :
-  {
+prog returns [IKappaModel result]
+  @after {
+    kappaModel.validate();
     $result = kappaModel;
   }
+  :
   (
     line
   )+
@@ -44,20 +54,22 @@ line
   | compartmentLinkExpr
   | transportExpr
   | initExpr
+  | plotExpr
   | obsExpr
   | varExpr
   | modExpr
   ;
 
 ruleExpr
+options {backtrack=true;}
   :
-  ^(TRANSFORM a=transformExpr b=transitionKineticExpr LABEL?)
+  ^(TRANSFORM a=transformExpr b=transitionKineticExpr label?)
   {
-    kappaModel.addTransform($a.direction, $LABEL.text, $a.lhs, $a.rhs, $b.rate1, $b.rate2, null);
+    kappaModel.addTransform($a.direction, $label.result, $a.lhs, $a.rhs, $b.rate1, $b.rate2, null);
   }
-  | ^(TRANSFORM a=transformExpr b=transitionKineticExpr LABEL c=locationExpr)
+  | ^(TRANSFORM a=transformExpr b=transitionKineticExpr label c=locationExpr)
   {
-    kappaModel.addTransform($a.direction, $LABEL.text, $a.lhs, $a.rhs, $b.rate1, $b.rate2, $c.result );
+    kappaModel.addTransform($a.direction, $label.result, $a.lhs, $a.rhs, $b.rate1, $b.rate2, $c.result );
   }
   ;
 
@@ -137,9 +149,9 @@ iface returns [AgentSite result]
 
 stateExpr returns [String result]
   :
-  ^(STATE marker)
+  ^(STATE id)
   {
-    $result = $marker.text;
+    $result = $id.text;
   }
   ;
 
@@ -155,38 +167,25 @@ linkExpr returns [String result]
   {$result = "?";}
   ;
 
-transitionKineticExpr returns [String rate1, String rate2]
+transitionKineticExpr returns [VariableExpression rate1, VariableExpression rate2]
   :
-  ^(RATE a=rateValueExpr (b=rateValueExpr)?)
+  ^(RATE a=varAlgebraExpr (b=varAlgebraExpr)?)
   {
-    $rate1 = $a.text;
-    $rate2 = $b.text;
+    $rate1 = $a.result;
+    $rate2 = $b.result;
   }
   ;
-
-rateValueExpr returns [String rateValue]
-  :
-  ^(RATEVALUE number)
-  {
-    $rateValue = $number.text;
-  }
-  | ^(RATEVALUE INFINITE_RATE)
-  {
-    $rateValue = "$" + "INF";
-  }
-  ;
-
 
 initExpr
   :
-  ^(INIT agentGroup INT)
-  {
-    kappaModel.addInitialValue($agentGroup.result, $INT.text, null);
-  }
-  |
-  ^(INIT agentGroup INT locationExpr)
+  ^(INIT agentGroup INT locationExpr?)
   {
     kappaModel.addInitialValue($agentGroup.result, $INT.text, $locationExpr.result);
+  }
+  |
+  ^(INIT agentGroup label locationExpr?)
+  {
+    kappaModel.addInitialValue($agentGroup.result, new VariableReference($label.result), $locationExpr.result);
   }
   ;
   
@@ -195,33 +194,33 @@ compartmentExpr
   List<Integer> dimensions = new ArrayList<Integer>();
   }
   :
-  ^(COMPARTMENT LABEL (^(DIMENSION INT {dimensions.add(Integer.parseInt($INT.text));}))*)
+  ^(COMPARTMENT label (^(DIMENSION INT {dimensions.add(Integer.parseInt($INT.text));}))*)
   {
-    kappaModel.addCompartment($LABEL.text, dimensions);
+    kappaModel.addCompartment($label.result, dimensions);
   }
   ;
   
 compartmentLinkExpr
   :
-  ^(COMPARTMENT_LINK linkName=LABEL sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr)
+  ^(COMPARTMENT_LINK linkName=label sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr)
   {
-    kappaModel.addCompartmentLink(new CompartmentLink($linkName.text, $sourceCompartment.result, $targetCompartment.result, $transportTransition.result));
+    kappaModel.addCompartmentLink(new CompartmentLink($linkName.result, $sourceCompartment.result, $targetCompartment.result, $transportTransition.result));
   }
   ;
   
 transportExpr
   :
-  ^(TRANSPORT linkName=LABEL agentGroup? b=transportKineticExpr (transportName=LABEL)?)
+  ^(TRANSPORT linkName=label agentGroup? b=transportKineticExpr (transportName=label)?)
   {
-    kappaModel.addTransport($transportName.text, $linkName.text, $agentGroup.result, $b.result);
+    kappaModel.addTransport($transportName.result, $linkName.result, $agentGroup.result, $b.result);
   }
   ;
   
-transportKineticExpr returns [String result]
+transportKineticExpr returns [VariableExpression result]
   :
-  ^(RATE rateValueExpr)
+  ^(RATE varAlgebraExpr)
   {
-    $result = $rateValueExpr.text;
+    $result = $varAlgebraExpr.result;
   }
   ;
 
@@ -230,9 +229,9 @@ locationExpr returns [Location result]
   List<MathExpression> dimensions = new ArrayList<MathExpression>();
   }
   :
-  ^(LOCATION name=LABEL (compartmentIndexExpr {dimensions.add($compartmentIndexExpr.result);})*)
+  ^(LOCATION name=label (compartmentIndexExpr {dimensions.add($compartmentIndexExpr.result);})*)
   {
-    $result = new Location($LABEL.text, dimensions);
+    $result = new Location($name.result, dimensions);
   }
   ;
 
@@ -245,31 +244,67 @@ compartmentIndexExpr returns [MathExpression result]
   ;
 
 
+plotExpr
+  :
+  ^(PLOT label)
+  {
+    kappaModel.addPlot($label.result);
+  }
+  ;
+
 
 obsExpr
   :
-  ^(OBSERVATION agentGroup LABEL?)
+  ^(OBSERVATION agentGroup)
   {
-    kappaModel.addObservable($agentGroup.result, $LABEL.text, null, true);
+    kappaModel.addVariable($agentGroup.result, $agentGroup.result.toString(), null);
+    kappaModel.addPlot($agentGroup.result.toString());
   }
-  | ^(OBSERVATION agentGroup LABEL locationExpr)
+  | ^(OBSERVATION agentGroup label)
   {
-    kappaModel.addObservable($agentGroup.result, $LABEL.text, $locationExpr.result, true);
+    kappaModel.addVariable($agentGroup.result, $label.result, null);
+    kappaModel.addPlot($label.result);
   }
-  |
-  ^(OBSERVATION LABEL)
+  | ^(OBSERVATION agentGroup label locationExpr)
   {
-    kappaModel.addObservable($LABEL.text);
-  }  
+    kappaModel.addVariable($agentGroup.result, $label.result, $locationExpr.result);
+    kappaModel.addPlot($label.result);
+  }
   ;
 
 varExpr
   :
-  ^(VARIABLE agentGroup LABEL)
+  ^(VARIABLE agentGroup label)
   {
-    kappaModel.addObservable($agentGroup.result, $LABEL.text, null, false);
+    kappaModel.addVariable($agentGroup.result, $label.result, null);
+  }
+  |
+  ^(VARIABLE varAlgebraExpr label)
+  {
+    kappaModel.addVariable($varAlgebraExpr.result, $label.result);
   }
   ;
+
+varAlgebraExpr returns [VariableExpression result]
+  :
+  ^(VAR_EXPR operator a=varAlgebraExpr b=varAlgebraExpr)
+  {
+    $result = new VariableExpression($a.result, VariableExpression.Operator.getOperator($operator.text), $b.result);
+  }    
+  | ^(VAR_EXPR number)
+  {
+    $result = new VariableExpression($number.text);
+  }    
+  | ^(VAR_EXPR label)
+  {
+    $result = new VariableExpression(new VariableReference($label.result));
+  }  
+  | ^(VAR_EXPR VAR_INFINITY)  
+  {
+    $result = new VariableExpression(Constant.INFINITY);
+  }  
+  ;
+
 
 
 modExpr
@@ -307,30 +342,30 @@ options {backtrack=true;}
 
 assignment returns [Assignment result]
   :
-  ^(ASSIGNMENT LABEL INFINITE_RATE)
+  ^(ASSIGNMENT label VAR_INFINITY)
   {
-    $result = new Assignment($LABEL.text, ConcentrationExpression.INFINITE_RATE);
+    $result = new Assignment($label.result, ConcentrationExpression.INFINITE_RATE);
   }
-  | ^(ASSIGNMENT LABEL concentrationExpression)
+  | ^(ASSIGNMENT label concentrationExpression)
   {
-    $result = new Assignment($LABEL.text, $concentrationExpression.result);
+    $result = new Assignment($label.result, $concentrationExpression.result);
   }
   ;
   
 
 concentrationExpression returns [ConcentrationExpression result]
   :
-  ^(CONCENTRATION_EXPRESSION LABEL operator a=concentrationExpression)
+  ^(CONCENTRATION_EXPRESSION label operator a=concentrationExpression)
   {
-    $result = new ConcentrationExpression($LABEL.text, $operator.text, $a.result);
+    $result = new ConcentrationExpression($label.result, $operator.text, $a.result);
   }
   | ^(CONCENTRATION_EXPRESSION number operator a=concentrationExpression)
   {
     $result = new ConcentrationExpression(Float.parseFloat($number.text), $operator.text, $a.result);
   }
-  | ^(CONCENTRATION_EXPRESSION LABEL)
+  | ^(CONCENTRATION_EXPRESSION label)
   {
-    $result = new ConcentrationExpression($LABEL.text);
+    $result = new ConcentrationExpression($label.result);
   }
   | ^(CONCENTRATION_EXPRESSION number)
   {
@@ -349,9 +384,9 @@ mathExpr returns [MathExpression result]
   {
     $result = new MathExpression($INT.text);
   }    
-  | ^(MATH_EXPR VARIABLE_NAME)
+  | ^(MATH_EXPR label)
   {
-    $result = new MathExpression($VARIABLE_NAME.text);
+    $result = new MathExpression($label.result);
   }    
   ;
 
@@ -362,9 +397,10 @@ id returns [String result]
     { $result = $ID.text;}
   ;
 
-marker
+label returns [String result]
   :
-  ( VARIABLE_NAME | ALPHANUMERIC | INT )
+  LABEL
+    { $result = $LABEL.text;}
   ;
 
 number
@@ -374,7 +410,7 @@ number
     
 operator
   :
-  ( '+' | '*' | '-' | '/' | '%' )
+  ( '+' | '*' | '-' | '/' | '%' | '^' )
   ;
 
 transformTransition returns [Direction result]

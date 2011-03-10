@@ -119,7 +119,7 @@ public class Perturbation {
             }
             Transition transition = simulationState.getTransition(targetTransform);
             if (transition != null) {
-                transition.setRate(expression.evaluate(simulationState));
+                transition.setRate(new VariableExpression(expression.evaluate(simulationState)));
                 simulationState.updateTransitionActivity(transition, true);
             }
         }
@@ -217,13 +217,13 @@ public class Perturbation {
             else {
                 Transition transition = simulationState.getTransition(label);
                 if (transition != null) {
-                    result = transition.getRate();
+                    result = transition.getRate().evaluate(simulationState).value; //TODO test infinite rate
                 }
                 else {
-                    LocatedObservable observable = simulationState.getLocatedObservable(label);
-                    if (observable != null) {
+                    Variable variable = simulationState.getVariable(label);
+                    if (variable != null) {
                         // TODO cache this              
-                        ObservationElement element = simulationState.getComplexQuantity(observable);
+                        ObservationElement element = simulationState.getComplexQuantity(variable);
                         if (element != null) {
                             result = element.value;
                         }

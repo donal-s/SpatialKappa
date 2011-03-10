@@ -4,6 +4,10 @@
 	<classpathentry kind="src" path="test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="src/lib/jlfgr-1_0.jar"/>
+	<classpathentry kind="lib" path="src/lib/easymock-3.0.jar"/>
+	<classpathentry kind="lib" path="src/lib/cglib-2.2.jar"/>
+	<classpathentry kind="lib" path="src/lib/objenesis-1.2.jar"/>
+	<classpathentry kind="lib" path="src/lib/asm-3.3.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="src/lib/antlr-3.2.jar"/>
 	<classpathentry kind="lib" path="src/lib/commons-io-1.4.jar"/>

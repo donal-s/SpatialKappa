@@ -2,47 +2,36 @@ package org.demonsoft.spatialkappa.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public abstract class Transition {
 
-    protected static final String INFINITE_RATE_TEXT = "$INF";
-    
-    public static final float INFINITE_RATE = Float.MAX_VALUE;
     public static final float ZERO_RATE = 0f;
 
-    protected float rate;
+    protected VariableExpression rate;
     public final String label;
     public final List<Complex> sourceComplexes = new ArrayList<Complex>();
     public final List<Complex> targetComplexes = new ArrayList<Complex>();
     
-    public Transition(String label, String rate) {
+    public Transition(String label, VariableExpression rate) {
         if (rate == null) {
             throw new NullPointerException();
         }
-        if (INFINITE_RATE_TEXT.equals(rate)) {
-            this.rate = INFINITE_RATE;
-        }
-        else {
-            this.rate = Float.parseFloat(rate);
-        }
+        this.rate = rate;
         this.label = label;
     }
 
-    public final float getRate() {
+    public final VariableExpression getRate() {
         return rate;
     }
 
-    public final void setRate(float rate) {
+    public final void setRate(VariableExpression rate) {
         this.rate = rate;
     }
 
-    public final boolean isInfiniteRate() {
-        return rate == INFINITE_RATE;
-    }
-
-    public final String getRateText() {
-        return isInfiniteRate() ? INFINITE_RATE_TEXT : Float.toString(rate);
+    public final boolean isInfiniteRate(Map<String, Variable> variables) {
+        return rate.isInfinite(variables);
     }
 
 }

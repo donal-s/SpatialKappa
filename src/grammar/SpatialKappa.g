@@ -29,7 +29,6 @@ tokens {
   LESS_THAN;
   ASSIGNMENT;
   CONCENTRATION_EXPRESSION;
-  INFINITE_RATE;
   COMPARTMENT;
   DIMENSION;
   COMPARTMENT_LINK;
@@ -39,6 +38,11 @@ tokens {
   TRANSPORT;
   TRANSFORM;
   ID;
+  LABEL;
+  VAR;
+  VAR_EXPR;
+  VAR_INFINITY;
+  PLOT;
 }
 
 @header        {package org.demonsoft.spatialkappa.parser;}
@@ -57,6 +61,7 @@ line
   | compartmentLinkExpr NEWLINE!
   | transportExpr NEWLINE!
   | initExpr NEWLINE!
+  | plotExpr NEWLINE!
   | obsExpr NEWLINE!
   | varExpr NEWLINE!
   | modExpr NEWLINE!
@@ -65,12 +70,12 @@ line
 
 ruleExpr
   :
-  LABEL? transformExpr transformKineticExpr 
+  label? transformExpr transformKineticExpr 
     -> 
-      ^(TRANSFORM transformExpr transformKineticExpr LABEL?)
-  | LABEL locationExpr transformExpr transformKineticExpr 
+      ^(TRANSFORM transformExpr transformKineticExpr label?)
+  | label locationExpr transformExpr transformKineticExpr 
     -> 
-      ^(TRANSFORM transformExpr transformKineticExpr LABEL locationExpr)
+      ^(TRANSFORM transformExpr transformKineticExpr label locationExpr)
   ;
 
 transformExpr
@@ -123,9 +128,9 @@ iface
 
 stateExpr
   :
-  '~' marker
+  '~' id
     ->
-      ^(STATE marker)
+      ^(STATE id)
   ;
 
 linkExpr
@@ -143,62 +148,53 @@ linkExpr
 
 transformKineticExpr
   :
-  '@' a=rateValueExpr (',' b=rateValueExpr)?
+  '@' a=varAlgebraExpr (',' b=varAlgebraExpr)?
     ->
       ^(RATE $a ($b)?)
   ;
 
 transportKineticExpr
   :
-  '@' rateValueExpr
+  '@' varAlgebraExpr
     ->
-      ^(RATE rateValueExpr)
-  ;
-
-rateValueExpr
-  :
-  a=number
-    ->
-      ^(RATEVALUE $a)
-  | b='$INF'
-    ->
-      ^(RATEVALUE INFINITE_RATE)
+      ^(RATE varAlgebraExpr)
   ;
 
 initExpr
+options {backtrack=true;}
   :
-  '%init:' INT '*' '(' agentGroup ')'
+  '%init:' locationExpr? INT '(' agentGroup ')'
     ->
-      ^(INIT agentGroup INT)
-  | '%init:' locationExpr INT '*' '(' agentGroup ')'
+      ^(INIT agentGroup INT locationExpr?)
+  | '%init:' locationExpr? label '(' agentGroup ')'
     ->
-      ^(INIT agentGroup INT locationExpr)
+      ^(INIT agentGroup label locationExpr?)
   ;
 
 compartmentExpr
   :
-  '%compartment:' LABEL ('[' INT ']')*
+  '%compartment:' label ('[' INT ']')*
     ->
-      ^(COMPARTMENT LABEL ^(DIMENSION INT)*)
+      ^(COMPARTMENT label ^(DIMENSION INT)*)
   ;
 
 compartmentLinkExpr
   :
-  '%link:' linkName=LABEL sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr
+  '%link:' linkName=label sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr
     ->
       ^(COMPARTMENT_LINK $linkName $sourceCompartment transportTransition $targetCompartment)
   ;
 
 transportExpr
   :
-  '%transport:' (transportName=LABEL)? linkName=LABEL (agentGroup)? transportKineticExpr
+  '%transport:' (transportName=label)? linkName=label (agentGroup)? transportKineticExpr
     ->
       ^(TRANSPORT $linkName agentGroup? transportKineticExpr $transportName?)
   ;
 
 locationExpr
   :
-  sourceCompartment=LABEL compartmentIndexExpr*
+  sourceCompartment=label compartmentIndexExpr*
     ->
       ^(LOCATION $sourceCompartment compartmentIndexExpr*)
   ;
@@ -210,26 +206,75 @@ compartmentIndexExpr
       ^(INDEX mathExpr)
   ;
 
+plotExpr
+  :
+  '%plot:' label
+    ->
+      ^(PLOT label)
+  ;
+
 obsExpr
   :
-  '%obs:' LABEL? agentGroup
+  '%obs:' label? agentGroup
     ->
-      ^(OBSERVATION agentGroup LABEL?)
-  | '%obs:' LABEL locationExpr agentGroup
+      ^(OBSERVATION agentGroup label?)
+  | '%obs:' label locationExpr agentGroup
     ->
-      ^(OBSERVATION agentGroup LABEL locationExpr)
-  | '%obs:' LABEL
-    ->
-      ^(OBSERVATION LABEL)
+      ^(OBSERVATION agentGroup label locationExpr)
   ;
 
 varExpr
+options {backtrack=true;}
   :
-  '%var:' LABEL agentGroup
+  '%var:' label agentGroup
     ->
-      ^(VARIABLE agentGroup LABEL)
+      ^(VARIABLE agentGroup label)
+  |
+  '%var:' label varAlgebraExpr
+    ->
+      ^(VARIABLE varAlgebraExpr label)
   ;
 
+varAlgebraExpr
+options {backtrack=true;}
+  :
+  (a=varAlgebraMultExpr -> $a) (op=operator_add b=varAlgebraMultExpr -> ^(VAR_EXPR $op $varAlgebraExpr $b) )*
+  ;
+  
+varAlgebraMultExpr
+options {backtrack=true;}
+  :
+  (a=varAlgebraExpExpr -> $a) (op=operator_mult b=varAlgebraExpExpr -> ^(VAR_EXPR $op $varAlgebraMultExpr $b) )*
+  ;
+  
+varAlgebraExpExpr
+options {backtrack=true;}
+  :
+  a=varAlgebraAtom operator_exp b=varAlgebraExpExpr
+    ->
+      ^(VAR_EXPR operator_exp $a $b)
+  | a=varAlgebraAtom
+    ->
+      $a
+  ;
+  
+varAlgebraAtom
+options {backtrack=true;}
+  :
+  '(' varAlgebraExpr ')'
+    ->
+      varAlgebraExpr
+  | number
+    ->
+      ^(VAR_EXPR number)
+  | label
+    ->
+      ^(VAR_EXPR label)
+  | '[' 'inf' ']'
+    ->
+      ^(VAR_EXPR VAR_INFINITY)
+  ;
+  
 modExpr
   :
   '%mod:' concentrationInequality 'do' assignment
@@ -261,12 +306,12 @@ options {backtrack=true;}
 
 assignment
   :
-  LABEL ':=' '$INF'
+  label ':=' '$INF'
     ->
-      ^(ASSIGNMENT LABEL INFINITE_RATE)
-  | LABEL ':=' a=concentrationExpression
+      ^(ASSIGNMENT label VAR_INFINITY)
+  | label ':=' a=concentrationExpression
     ->
-      ^(ASSIGNMENT LABEL $a)
+      ^(ASSIGNMENT label $a)
   ;
 
 concentrationExpression
@@ -274,15 +319,15 @@ concentrationExpression
   '(' concentrationExpression ')'
     ->
       concentrationExpression
-  | LABEL operator concentrationExpression
+  | label operator concentrationExpression
     ->
-      ^(CONCENTRATION_EXPRESSION LABEL operator concentrationExpression)
+      ^(CONCENTRATION_EXPRESSION label operator concentrationExpression)
   | number operator concentrationExpression
     ->
       ^(CONCENTRATION_EXPRESSION number operator concentrationExpression)
-  | LABEL
+  | label
     ->
-      ^(CONCENTRATION_EXPRESSION LABEL)
+      ^(CONCENTRATION_EXPRESSION label)
   | number
     ->
       ^(CONCENTRATION_EXPRESSION number)
@@ -308,29 +353,25 @@ options {backtrack=true;}
   | INT
     ->
       ^(MATH_EXPR INT)
-  | VARIABLE_NAME
+  | label
     ->
-      ^(MATH_EXPR VARIABLE_NAME)
+      ^(MATH_EXPR label)
   ;
   
 id
+options {backtrack=true;}
   :
-  (
-    ( ALPHANUMERIC | VARIABLE_NAME | MARKER | INT ) ( ALPHANUMERIC | VARIABLE_NAME | MARKER | INT | '_' | '^' | '-' )*
-  )
+    ( ID_FRAGMENT | INT ) ( ID_FRAGMENT | INT | '_' | '-' )*
    ->
     {new CommonTree(new CommonToken(ID,$id.text.toString()))} // Avoid lexing as mutiple tokens
   ;
 
-marker
+label
   :
-  (
-    VARIABLE_NAME
-    | MARKER
-    | INT
-  )
+  LABEL
+   ->
+    {new CommonTree(new CommonToken(LABEL, $label.text.substring(1, $label.text.length() - 1)))}
   ;
-
 
 number
   :
@@ -347,6 +388,25 @@ operator
   | '-'
   | '/'
   | '%'
+  | '^'
+  ;
+
+operator_exp
+  :
+  | '^'
+  ;
+
+operator_mult
+  :
+  '*'
+  | '/'
+  | '%'
+  ;
+
+operator_add
+  :
+  '+'
+  | '-'
   ;
 
 transformTransition
@@ -392,26 +452,9 @@ FLOAT
     |   NUMERIC EXPONENT
     ;
 
-VARIABLE_NAME
-  :
-  ('a'..'z' | 'A'..'Z') ('a'..'z' | 'A'..'Z' | '0'..'9')*
-  ;
-
-MARKER
+ID_FRAGMENT
   :
   ALPHANUMERIC
-  ;
-
-fragment
-ID
-  :
-  ALPHANUMERIC
-  (
-    ALPHANUMERIC
-    | '_'
-    | '^'
-    | '-'
-  )*
   ;
 
 fragment
@@ -437,7 +480,7 @@ EXPONENT
 
 LABEL
   :
-  '\'' .* '\''  { setText(getText().substring(1, getText().length() - 1)); }
+  '\'' .* '\''
   ;
 
 COMMENT

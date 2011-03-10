@@ -8,16 +8,22 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.HashMap;
+
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.LocatedTransform;
 import org.demonsoft.spatialkappa.model.Perturbation;
+import org.demonsoft.spatialkappa.model.SimulationState;
 import org.demonsoft.spatialkappa.model.Transform;
 import org.demonsoft.spatialkappa.model.TransformTest;
+import org.demonsoft.spatialkappa.model.Variable;
+import org.demonsoft.spatialkappa.model.KappaModel.ModelOnlySimulationState;
 import org.demonsoft.spatialkappa.model.Perturbation.Assignment;
 import org.demonsoft.spatialkappa.model.Perturbation.ConcentrationExpression;
 import org.demonsoft.spatialkappa.model.Perturbation.Condition;
 import org.demonsoft.spatialkappa.model.Perturbation.Inequality;
+import org.demonsoft.spatialkappa.model.VariableExpression;
 import org.demonsoft.spatialkappa.tools.ComplexMatchingSimulation;
 import org.junit.Test;
 
@@ -134,12 +140,12 @@ public class PerturbationTest {
         ComplexMatchingSimulation simulation = new ComplexMatchingSimulation(kappaModel);
         
         // Transform based expression
-        Transform transform = new Transform("label", TransformTest.getComplexes(new Agent("A")), null, "0.6");
+        Transform transform = new Transform("label", TransformTest.getComplexes(new Agent("A")), null, 0.6f);
         kappaModel.addTransform(new LocatedTransform(transform, null));
         simulation.initialise();
         
         assertTrue(perturbation.isConditionMet(simulation));
-        simulation.getTransition("label").setRate(0.4f);
+        simulation.getTransition("label").setRate(new VariableExpression(0.4f));
         assertFalse(perturbation.isConditionMet(simulation));
         
         // Observation based expression
@@ -148,7 +154,7 @@ public class PerturbationTest {
 
         kappaModel = new KappaModel();
         simulation = new ComplexMatchingSimulation(kappaModel);
-        kappaModel.addObservable(getList(new Agent("A")), "label", null, false);
+        kappaModel.addVariable(getList(new Agent("A")), "label", null);
         kappaModel.addInitialValue(getList(new Agent("A")), "100", null);
         simulation.initialise();
         
@@ -156,7 +162,7 @@ public class PerturbationTest {
 
         kappaModel = new KappaModel();
         simulation = new ComplexMatchingSimulation(kappaModel);
-        kappaModel.addObservable(getList(new Agent("A")), "label", null, false);
+        kappaModel.addVariable(getList(new Agent("A")), "label", null);
         kappaModel.addInitialValue(getList(new Agent("A")), "10", null);
         simulation.initialise();
         
@@ -169,6 +175,8 @@ public class PerturbationTest {
         Assignment assignment = new Assignment("transform", new ConcentrationExpression(2f));
         Condition condition = new Condition(new ConcentrationExpression(1f), Inequality.GREATER_THAN, new ConcentrationExpression(0.5f));
         Perturbation perturbation = new Perturbation(condition, assignment);
+        SimulationState state = new ModelOnlySimulationState(new HashMap<String, Variable>());
+
         
         try {
             perturbation.apply(null);
@@ -180,7 +188,7 @@ public class PerturbationTest {
 
         KappaModel kappaModel = new KappaModel();
         ComplexMatchingSimulation simulation = new ComplexMatchingSimulation(kappaModel);
-        kappaModel.addTransform(new LocatedTransform(new Transform("transform", TransformTest.getComplexes(new Agent("A")), null, "0.4"), null));
+        kappaModel.addTransform(new LocatedTransform(new Transform("transform", TransformTest.getComplexes(new Agent("A")), null, 0.4f), null));
         simulation.initialise();
         
         assertTrue(perturbation.isConditionMet(simulation));
@@ -188,7 +196,7 @@ public class PerturbationTest {
         perturbation.apply(simulation);
         
         assertTrue(perturbation.isConditionMet(simulation));
-        assertEquals(2f, simulation.getTransition("transform").getRate(), 0.01f);
+        assertEquals(2f, simulation.getTransition("transform").getRate().evaluate(state).value, 0.01f);
 
         // TODO assignments from %var & %obs
         // TODO assignments to reversible reactions

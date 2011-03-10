@@ -20,7 +20,6 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 
 
-import org.demonsoft.spatialkappa.model.LocatedObservable;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.ObservationListener;
@@ -53,7 +52,7 @@ public class CompartmentViewPanel extends JPanel implements ObservationListener,
     private ChartPanel chartPanel;
     private boolean initialised = false;
 
-    LocatedObservable observable;
+    String observable;
     int rows;
     int columns;
 
@@ -123,7 +122,7 @@ public class CompartmentViewPanel extends JPanel implements ObservationListener,
         repaint();
     }
 
-    public void setCompartment(LocatedObservable observable, Observation initialObservation) {
+    public void setCompartment(String observable, Observation initialObservation) {
         this.observable = observable;
 
         if (chartPanel != null) {
@@ -177,7 +176,7 @@ public class CompartmentViewPanel extends JPanel implements ObservationListener,
         dataset = new DefaultCellDataset(rows, columns);
 
         CellPlot plot = new HexagonalCellPlot(dataset);
-        chart = new JFreeChart(observable.label, JFreeChart.DEFAULT_TITLE_FONT, plot, false);
+        chart = new JFreeChart(observable, JFreeChart.DEFAULT_TITLE_FONT, plot, false);
         CHART_THEME.apply(chart);
 
         chartPanel = new ChartPanel(chart);

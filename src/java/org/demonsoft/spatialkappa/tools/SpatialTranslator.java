@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.tree.CommonTree;
@@ -25,13 +24,14 @@ import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.CompartmentLink;
 import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.Direction;
-import org.demonsoft.spatialkappa.model.KappaModel;
-import org.demonsoft.spatialkappa.model.LocatedObservable;
+import org.demonsoft.spatialkappa.model.IKappaModel;
+import org.demonsoft.spatialkappa.model.InitialValue;
 import org.demonsoft.spatialkappa.model.LocatedTransform;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Transform;
 import org.demonsoft.spatialkappa.model.Transport;
-import org.demonsoft.spatialkappa.model.KappaModel.InitialValue;
+import org.demonsoft.spatialkappa.model.Variable;
+import org.demonsoft.spatialkappa.model.Variable.Type;
 import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
 import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
 import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
@@ -41,7 +41,7 @@ public class SpatialTranslator {
 
     private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
 
-    private final KappaModel kappaModel;
+    private final IKappaModel kappaModel;
 
     public SpatialTranslator(File inputFile) throws Exception {
         if (inputFile == null) {
@@ -57,14 +57,14 @@ public class SpatialTranslator {
         kappaModel = getKappaModel(new ByteArrayInputStream(input.getBytes()));
     }
 
-    public SpatialTranslator(KappaModel kappaModel) {
+    public SpatialTranslator(IKappaModel kappaModel) {
         if (kappaModel == null) {
             throw new NullPointerException();
         }
         this.kappaModel = kappaModel;
     }
 
-    private KappaModel getKappaModel(InputStream inputStream) throws Exception {
+    private IKappaModel getKappaModel(InputStream inputStream) throws Exception {
         ANTLRInputStream input = new ANTLRInputStream(inputStream);
         CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));
         SpatialKappaParser.prog_return r = new SpatialKappaParser(tokens).prog();
@@ -95,9 +95,18 @@ public class SpatialTranslator {
             builder.append(getKappaString(initialValue));
         }
         builder.append("\n");
-
-        for (LocatedObservable observable : kappaModel.getLocatedObservables()) {
-            builder.append(getKappaString(observable)).append("\n");
+        List<String> variableNames = new ArrayList<String>(kappaModel.getVariables().keySet());
+        Collections.sort(variableNames);
+        
+        for (String variableName : variableNames) {
+            Variable variable = kappaModel.getVariables().get(variableName);
+            if (variable.type != Type.TRANSITION_LABEL) {
+                builder.append(getKappaString(kappaModel.getVariables().get(variableName)));
+            }
+        }
+        
+        for (String plotName : kappaModel.getPlottedVariables()) {
+            builder.append("%plot: '").append(plotName).append("'\n");
         }
         builder.append("\n");
         return builder.toString();
@@ -123,15 +132,6 @@ public class SpatialTranslator {
             }
         }
         return null;
-    }
-
-    private String getComplexKappaString(List<Complex> complexes, Location location) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getKappaString(complexes.get(0), getKappaString(location)));
-        for (int index = 1; index < complexes.size(); index++) {
-            builder.append(",").append(getKappaString(complexes.get(index), getKappaString(location)));
-        }
-        return builder.toString();
     }
 
     private String getComplexKappaString(List<Complex> complexes, String stateSuffix) {
@@ -208,17 +208,10 @@ public class SpatialTranslator {
         return builder.toString();
     }
 
-    String getKappaString(LocatedObservable observable) {
+    String getKappaString(Variable variable) {
         StringBuilder builder = new StringBuilder();
-        if (observable.observable.isGeneratedLabel()) {
-            builder.append("%obs:");
-        }
-        else {
-            builder.append("%obs: '").append(observable.observable.label).append("'");
-        }
-        if (observable.observable.complex != null) {
-            builder.append(" ").append(getKappaString(observable.observable.complex, getKappaString(observable.location)));
-        }
+        builder.append("%var: '").append(variable.label).append("'");
+        builder.append(" ").append(getKappaString(variable.complex, getKappaString(variable.location))).append("\n");
         return builder.toString();
     }
     
@@ -264,9 +257,9 @@ public class SpatialTranslator {
             builder.append(getAgentKappaString(isolatedAgents, leftSuffix));
             builder.append(" ").append(direction).append(" ");
             builder.append(getAgentKappaString(isolatedAgents, rightSuffix)).append(" @ ");
-            builder.append(transport.getRateText());
+            builder.append(transport.getRate().toString());
             if (compartmentLink.getDirection() == Direction.BIDIRECTIONAL) {
-                builder.append(",").append(transport.getRateText());
+                builder.append(",").append(transport.getRate().toString());
             }
             builder.append("\n");
         }
@@ -320,7 +313,7 @@ public class SpatialTranslator {
                 if (transform.rightAgents.size() > 0) {
                     builder.append(getAgentKappaString(transform.rightAgents, stateSuffixes[cellIndex])).append(" ");
                 }
-                builder.append("@ ").append(transform.getRateText()).append("\n");
+                builder.append("@ ").append(transform.getRate().toString()).append("\n");
 
             }
         }
@@ -335,7 +328,7 @@ public class SpatialTranslator {
             if (transform.rightAgents.size() > 0) {
                 builder.append(getAgentKappaString(transform.rightAgents, transition.sourceLocation)).append(" ");
             }
-            builder.append("@ ").append(transform.getRateText()).append("\n");
+            builder.append("@ ").append(transform.getRate().toString()).append("\n");
         }
         return builder.toString();
 
@@ -358,13 +351,13 @@ public class SpatialTranslator {
             String[] stateSuffixes = compartment.getCellStateSuffixes();
 
             for (int cellIndex = 0; cellIndex < cellCounts.length; cellIndex++) {
-                builder.append("%init: ").append(cellCounts[cellIndex]).append(" * (");
+                builder.append("%init: ").append(cellCounts[cellIndex]).append(" (");
                 builder.append(getComplexKappaString(initialValue.complexes, stateSuffixes[cellIndex]));
                 builder.append(")\n");
             }
         }
         else {
-            builder.append("%init: ").append(initialValue.quantity).append(" * (");
+            builder.append("%init: ").append(initialValue.quantity).append(" (");
             builder.append(getComplexKappaString(initialValue.complexes, getKappaString(location)));
             builder.append(")\n");
         }
