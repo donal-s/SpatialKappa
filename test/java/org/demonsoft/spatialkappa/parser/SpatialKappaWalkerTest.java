@@ -7,6 +7,7 @@ import static org.easymock.EasyMock.reset;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
@@ -22,11 +23,14 @@ import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
+import org.demonsoft.spatialkappa.model.BooleanExpression;
+import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.CompartmentLink;
 import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.Location;
-import org.demonsoft.spatialkappa.model.MathExpression;
+import org.demonsoft.spatialkappa.model.Perturbation;
+import org.demonsoft.spatialkappa.model.PerturbationEffect;
 import org.demonsoft.spatialkappa.model.VariableExpression;
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
 import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
@@ -85,7 +89,7 @@ public class SpatialKappaWalkerTest {
         checkRuleExpr("'label' 'cytosol' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
                 Direction.BIDIRECTIONAL, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), new VariableExpression(2), location);
 
-        location = new Location("cytosol", new MathExpression("0"), new MathExpression("1"));
+        location = new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1"));
 
         checkRuleExpr("'label' 'cytosol'[0][1] A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 Direction.FORWARD, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null, location);
@@ -118,11 +122,11 @@ public class SpatialKappaWalkerTest {
 
         checkInitExpr_value("%init: 'cytosol' 5 (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", 5, new Location("cytosol"));
         checkInitExpr_value("%init: 'cytosol'[0][1] 5 (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", 5, 
-                new Location("cytosol", new MathExpression("0"), new MathExpression("1")));
+                new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")));
         
         checkInitExpr_reference("%init: 'cytosol' 'label' (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", "label", new Location("cytosol"));
         checkInitExpr_reference("%init: 'cytosol'[0][1] 'label' (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", "label", 
-                new Location("cytosol", new MathExpression("0"), new MathExpression("1")));
+                new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")));
     }
 
     private void checkInitExpr_reference(String inputText, String leftSideAgents, String label, Location location) throws Exception {
@@ -205,13 +209,24 @@ public class SpatialKappaWalkerTest {
         rightAgents.add(new Agent("B", new AgentSite("x", null, null)));
 
         checkTransform(Direction.FORWARD, "[A(s!1), B(x!1)]", "[A(s), B(x)]", runParserRule("transformExpr", "A(s!1),B(x!1)   -> A(s),  B(x)"));
+        checkTransform(Direction.FORWARD, null, "[A(s), B(x)]", runParserRule("transformExpr", "-> A(s),  B(x)"));
         checkTransform(Direction.BIDIRECTIONAL, "[A(s!1), B(x!1)]", "[A(s), B(x)]", runParserRule("transformExpr", "A(s!1),B(x!1)   <-> A(s),  B(x)"));
     }
 
     private void checkTransform(Direction direction, String leftAgents, String rightAgents, Object actual) throws Exception {
         assertEquals(direction, actual.getClass().getDeclaredField("direction").get(actual));
-        assertEquals(leftAgents, actual.getClass().getDeclaredField("lhs").get(actual).toString());
-        assertEquals(rightAgents, actual.getClass().getDeclaredField("rhs").get(actual).toString());
+        if (leftAgents == null) {
+            assertNull(actual.getClass().getDeclaredField("lhs").get(actual));
+        }
+        else {
+            assertEquals(leftAgents, actual.getClass().getDeclaredField("lhs").get(actual).toString());
+        }
+        if (rightAgents == null) {
+            assertNull(actual.getClass().getDeclaredField("rhs").get(actual));
+        }
+        else {
+            assertEquals(rightAgents, actual.getClass().getDeclaredField("rhs").get(actual).toString());
+        }
     }
 
     @Test
@@ -234,7 +249,7 @@ public class SpatialKappaWalkerTest {
     @Test
     public void testObsExpr_spatial() throws Exception {
         checkObsExpr("obsExpr", "%obs: 'label' 'cytosol' A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol"), true);
-        checkObsExpr("obsExpr", "%obs: 'label' 'cytosol'[0][1] A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol", new MathExpression("0"), new MathExpression("1")), true);
+        checkObsExpr("obsExpr", "%obs: 'label' 'cytosol'[0][1] A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")), true);
     }
 
     private void checkObsExpr(String ruleName, String inputText, String label, String leftSideAgents, Location location, boolean inObservations) throws Exception {
@@ -291,6 +306,16 @@ public class SpatialKappaWalkerTest {
         checkVarExpr("%var: 'label' 2.55e4", "25500.0", "label");
         checkVarExpr("%var: 'label' ('a' + 'b') * 2", "(('a' + 'b') * 2.0)", "label");
         checkVarExpr("%var: 'label' [inf] * 2", "([inf] * 2.0)", "label");
+        checkVarExpr("%var: 'label' [inf] * 2", "([inf] * 2.0)", "label");
+        checkVarExpr("%var: 'label' [pi] ^ 2", "([pi] ^ 2.0)", "label");
+        checkVarExpr("%var: 'label' [log] 'n'", "[log] ('n')", "label");
+        checkVarExpr("%var: 'label' [sin] 'n'", "[sin] ('n')", "label");
+        checkVarExpr("%var: 'label' [cos] 'n'", "[cos] ('n')", "label");
+        checkVarExpr("%var: 'label' [tan] 'n'", "[tan] ('n')", "label");
+        checkVarExpr("%var: 'label' [sqrt] 'n'", "[sqrt] ('n')", "label");
+        checkVarExpr("%var: 'label' [exp] 'n'", "[exp] ('n')", "label");
+        checkVarExpr("%var: 'label' [mod] 'n' 2", "([mod] 'n' 2.0)", "label");
+        checkVarExpr("%var: 'label' 'n' ^ 2", "('n' ^ 2.0)", "label");
     }
 
     private void checkVarExpr(String inputText, String expressionText, String label) throws Exception {
@@ -302,6 +327,57 @@ public class SpatialKappaWalkerTest {
         verify(mocks);
         assertEquals(expressionText, expression.getValue().toString());
     }
+
+    @Test
+    public void testModExpr() throws Exception {
+        checkModExpr("%mod: ([T]>10) && ('v1'/'v2') < 1 do $ADD 'n' C(x1~p)", "(([T] > 10.0) && (('v1' / 'v2') < 1.0)) do $ADD 'n' [C(x1~p)]");
+        checkModExpr("%mod: ([log][E]>10) || [true] do $SNAPSHOT until [false]", "(([log] ([E]) > 10.0) || [true]) do $SNAPSHOT until [false]");
+        checkModExpr("%mod: ([mod] [T] 100)=0 do $DEL [inf] C() until [T]>1000", "(([mod] [T] 100.0) = 0.0) do $DEL [inf] [C()] until ([T] > 1000.0)");
+        checkModExpr("%mod: [not][false] do 'rule_name' := [inf]", "[not] [false] do 'rule_name' := [inf]");
+    }
+    
+    private void checkModExpr(String inputText, String perturbationText) throws Exception {
+        Capture<Perturbation> perturbation = new Capture<Perturbation>();
+        reset(mocks);
+        kappaModel.addPerturbation(capture(perturbation));
+        replay(mocks);
+        runParserRule("modExpr", inputText);
+        verify(mocks);
+        assertEquals(perturbationText, perturbation.toString());
+    }
+
+    @Test
+    public void testBooleanExpression() throws Exception {
+        checkBooleanExpression("[false]", "[false]");
+        checkBooleanExpression("[true] && [true] || [false]", "(([true] && [true]) || [false])");
+        checkBooleanExpression("[not][true] && [false]", "([not] [true] && [false])");
+        checkBooleanExpression("[not]([true] && [false])", "[not] ([true] && [false])");
+        checkBooleanExpression("[T]>10", "([T] > 10.0)");
+        checkBooleanExpression("'v1'/'v2' < [E]", "(('v1' / 'v2') < [E])");
+        checkBooleanExpression("[T]>10 && 'v1'/'v2' < 1", "(([T] > 10.0) && (('v1' / 'v2') < 1.0))");
+    }
+    
+    private void checkBooleanExpression(String inputText, String expectedText) throws Exception {
+        BooleanExpression expression = (BooleanExpression) runParserRule("booleanExpression", inputText);
+        assertNotNull(expression);
+        assertEquals(expectedText, expression.toString());
+    }
+
+    @Test
+    public void testEffect() throws Exception {
+        checkEffect("$SNAPSHOT", "$SNAPSHOT");
+        checkEffect("$STOP", "$STOP");
+        checkEffect("$ADD 'n' + 1 C()", "$ADD ('n' + 1.0) [C()]");
+        checkEffect("$DEL [inf] C(), C(x1~p)", "$DEL [inf] [C(), C(x1~p)]");
+        checkEffect("'rule' := 'n' + 1", "'rule' := ('n' + 1.0)");
+    }
+    
+    private void checkEffect(String inputText, String expectedText) throws Exception {
+        PerturbationEffect effect = (PerturbationEffect) runParserRule("effect", inputText);
+        assertNotNull(effect);
+        assertEquals(expectedText, effect.toString());
+    }
+
 
     private final void checkParserRule(String rulename, String inputText, String expectedOutput) throws Exception {
         assertEquals(expectedOutput, runParserRule(rulename, inputText).toString());
@@ -331,18 +407,18 @@ public class SpatialKappaWalkerTest {
     }
 
     @Test
-    public void testMathExpr() throws Exception {
-        checkMathExpression("1", (MathExpression) runParserRule("mathExpr", "1"));
-        checkMathExpression("'x'", (MathExpression) runParserRule("mathExpr", "'x'"));
-        checkMathExpression("(2 + 3)", (MathExpression) runParserRule("mathExpr", "2 + 3"));
-        checkMathExpression("(2 - 3)", (MathExpression) runParserRule("mathExpr", "2 - 3"));
-        checkMathExpression("(2 / 3)", (MathExpression) runParserRule("mathExpr", "2 / 3"));
-        checkMathExpression("(2 * 3)", (MathExpression) runParserRule("mathExpr", "2 * 3"));
-        checkMathExpression("(2 % 3)", (MathExpression) runParserRule("mathExpr", "2 % 3"));
-        checkMathExpression("(2 ^ 3)", (MathExpression) runParserRule("mathExpr", "2 ^ 3"));
-        checkMathExpression("(2 * 3)", (MathExpression) runParserRule("mathExpr", "2*3"));
-        checkMathExpression("(2 * 3)", (MathExpression) runParserRule("mathExpr", "(2 * 3)"));
-        checkMathExpression("('x' + ('y' * 2))", (MathExpression) runParserRule("mathExpr", "'x' + ('y' * 2)"));
+    public void testCellIndexExpr() throws Exception {
+        checkCellIndexExpression("1", (CellIndexExpression) runParserRule("cellIndexExpr", "1"));
+        checkCellIndexExpression("'x'", (CellIndexExpression) runParserRule("cellIndexExpr", "'x'"));
+        checkCellIndexExpression("(2 + 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2 + 3"));
+        checkCellIndexExpression("(2 - 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2 - 3"));
+        checkCellIndexExpression("(2 / 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2 / 3"));
+        checkCellIndexExpression("(2 * 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2 * 3"));
+        checkCellIndexExpression("(2 % 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2 % 3"));
+        checkCellIndexExpression("(2 ^ 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2 ^ 3"));
+        checkCellIndexExpression("(2 * 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2*3"));
+        checkCellIndexExpression("(2 * 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "(2 * 3)"));
+        checkCellIndexExpression("('x' + ('y' * 2))", (CellIndexExpression) runParserRule("cellIndexExpr", "'x' + ('y' * 2)"));
     }
 
     @Test
@@ -373,7 +449,7 @@ public class SpatialKappaWalkerTest {
         assertEquals(expected, actual.toString());
     }
 
-    private void checkMathExpression(String expected, MathExpression actual) {
+    private void checkCellIndexExpression(String expected, CellIndexExpression actual) {
         assertNotNull(actual);
         assertEquals(expected, actual.toString());
     }

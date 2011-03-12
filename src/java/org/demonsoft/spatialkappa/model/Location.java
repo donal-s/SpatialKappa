@@ -10,14 +10,14 @@ public class Location implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final String name;
-    private final MathExpression[] indices;
+    private final CellIndexExpression[] indices;
     private int hashCode;
 
-    public Location(String name, List<MathExpression> indices) {
-        this(name, indices.toArray(new MathExpression[indices.size()]));
+    public Location(String name, List<CellIndexExpression> indices) {
+        this(name, indices.toArray(new CellIndexExpression[indices.size()]));
     }
 
-    public Location(String name, MathExpression... indices) {
+    public Location(String name, CellIndexExpression... indices) {
         if (name == null) {
             throw new NullPointerException();
         }
@@ -30,7 +30,7 @@ public class Location implements Serializable {
         return name;
     }
 
-    public MathExpression[] getIndices() {
+    public CellIndexExpression[] getIndices() {
         return indices;
     }
 
@@ -47,8 +47,8 @@ public class Location implements Serializable {
     }
 
     public boolean isConcreteLocation() {
-        for (MathExpression index : indices) {
-            if (!index.isConcrete()) {
+        for (CellIndexExpression index : indices) {
+            if (!index.isFixed()) {
                 return false;
             }
         }
@@ -61,7 +61,7 @@ public class Location implements Serializable {
             return name;
         }
         StringBuilder builder = new StringBuilder(name);
-        for (MathExpression expression : indices) {
+        for (CellIndexExpression expression : indices) {
             builder.append("[").append(expression).append("]");
         }
         return builder.toString();
@@ -104,9 +104,9 @@ public class Location implements Serializable {
         if (variables == null) {
             throw new NullPointerException();
         }
-        MathExpression[] newIndices = new MathExpression[this.indices.length];
+        CellIndexExpression[] newIndices = new CellIndexExpression[this.indices.length];
         for (int index = 0; index < indices.length; index++) {
-            newIndices[index] = new MathExpression("" + indices[index].evaluate(variables));
+            newIndices[index] = new CellIndexExpression("" + indices[index].evaluateIndex(variables));
         }
         return new Location(name, newIndices);
     }

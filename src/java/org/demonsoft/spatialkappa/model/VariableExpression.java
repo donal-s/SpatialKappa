@@ -3,98 +3,176 @@ package org.demonsoft.spatialkappa.model;
 import java.io.Serializable;
 import java.util.Map;
 
-import org.demonsoft.spatialkappa.model.Variable.Type;
-
 public class VariableExpression implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     public static enum Operator {
-        PLUS {
+        PLUS("+") {
             @Override
             ObservationElement eval(ObservationElement x, ObservationElement y) {
                 return x.plus(y);
             }
-
             @Override
-            public String toString() {
-                return "+";
+            int eval(int x, int y) {
+                return x + y;
             }
         },
-        MINUS {
+        MINUS("-") {
             @Override
             ObservationElement eval(ObservationElement x, ObservationElement y) {
                 return x.minus(y);
             }
-
             @Override
-            public String toString() {
-                return "-";
+            int eval(int x, int y) {
+                return x - y;
             }
         },
-        MULTIPLY {
+        MULTIPLY("*") {
             @Override
             ObservationElement eval(ObservationElement x, ObservationElement y) {
                 return x.times(y);
             }
-
             @Override
-            public String toString() {
-                return "*";
+            int eval(int x, int y) {
+                return x * y;
             }
         },
-        DIVIDE {
+        DIVIDE("/") {
             @Override
             ObservationElement eval(ObservationElement x, ObservationElement y) {
                 return x.dividedBy(y);
             }
-
             @Override
-            public String toString() {
-                return "/";
+            int eval(int x, int y) {
+                return x / y;
             }
         },
-        MODULUS {
+        // Used by cell index syntax
+        MODULUS_SYMBOL("%") {
             @Override
             ObservationElement eval(ObservationElement x, ObservationElement y) {
                 return x.modulus(y);
             }
-
             @Override
-            public String toString() {
-                return "%";
+            int eval(int x, int y) {
+                return x % y;
+            }
+        },
+        MODULUS("[mod]") {
+            @Override
+            ObservationElement eval(ObservationElement x, ObservationElement y) {
+                return x.modulus(y);
+            }
+            @Override
+            int eval(int x, int y) {
+                return x % y;
+            }
+        },
+        POWER("^") {
+            @Override
+            ObservationElement eval(ObservationElement x, ObservationElement y) {
+                return x.exponent(y);
+            }
+            @Override
+            int eval(int x, int y) {
+                return (int) Math.pow(x, y);
             }
         };
 
+        private final String text;
+        
+        Operator(String text) {
+            this.text = text;
+        }
+        
+        @Override
+        public String toString() {
+            return text;
+        }
+
         abstract ObservationElement eval(ObservationElement x, ObservationElement y);
         
+        abstract int eval(int x, int y);
+        
         public static Operator getOperator(String input) {
-            if ("+".equals(input)) {
-                return PLUS;
-            }
-            if ("-".equals(input)) {
-                return MINUS;
-            }
-            if ("*".equals(input)) {
-                return MULTIPLY;
-            }
-            if ("/".equals(input)) {
-                return DIVIDE;
-            }
-            if ("%".equals(input)) {
-                return MODULUS;
+            for (Operator current : Operator.values()) {
+                if (current.text.equals(input)) {
+                    return current;
+                }
             }
             throw new IllegalArgumentException(input);
         }
     }
 
-    public static enum Constant {
-        INFINITY {
+    public static enum UnaryOperator {
+        LOG("[log]") {
             @Override
-            public String toString() {
-                return "[inf]";
+            ObservationElement eval(ObservationElement x) {
+                return x.log();
             }
         },
+        SIN("[sin]") {
+            @Override
+            ObservationElement eval(ObservationElement x) {
+                return x.sin();
+            }
+        },
+        COS("[cos]") {
+            @Override
+            ObservationElement eval(ObservationElement x) {
+                return x.cos();
+            }
+        },
+        TAN("[tan]") {
+            @Override
+            ObservationElement eval(ObservationElement x) {
+                return x.tan();
+            }
+        },
+        SQRT("[sqrt]") {
+            @Override
+            ObservationElement eval(ObservationElement x) {
+                return x.sqrt();
+            }
+        },
+        EXP("[exp]") {
+            @Override
+            ObservationElement eval(ObservationElement x) {
+                return x.exp();
+            }
+        };
+
+        private final String text;
+        
+        UnaryOperator(String text) {
+            this.text = text;
+        }
+        
+        @Override
+        public String toString() {
+            return text;
+        }
+
+        abstract ObservationElement eval(ObservationElement x);
+    }
+
+    public static enum Constant {
+        INFINITY("[inf]", Float.POSITIVE_INFINITY),
+        PI("[pi]", (float) Math.PI);
+        
+        private final String text;
+        public final float value;
+        
+        Constant(String text, float value) {
+            this.text = text;
+            this.value = value;
+        }
+        
+        @Override
+        public String toString() {
+            return text;
+        }
     }
 
     public static enum SimulationToken {
@@ -112,13 +190,19 @@ public class VariableExpression implements Serializable {
         },
     }
 
-    private final VariableReference reference;
-    private final float value;
-    private final Operator operator;
-    private final VariableExpression lhsExpression;
-    private final VariableExpression rhsExpression;
-    private final SimulationToken simulationToken;
-    private final boolean infinite;
+    public static enum Type {
+        NUMBER, BINARY_EXPRESSION, UNARY_EXPRESSION, VARIABLE_REFERENCE, CONSTANT, SIMULATION_TOKEN
+    }
+
+    public final Type type;
+    public final VariableReference reference;
+    protected float value;
+    protected Operator operator;
+    private UnaryOperator unaryOperator;
+    protected VariableExpression lhsExpression;
+    protected VariableExpression rhsExpression;
+    private SimulationToken simulationToken;
+    private Constant constant;
     
     public VariableExpression(String input) {
         if (input == null) {
@@ -129,21 +213,13 @@ public class VariableExpression implements Serializable {
         }
         reference = null;
         value = Float.parseFloat(input);
-        operator = null;
-        lhsExpression = null;
-        rhsExpression = null;
-        simulationToken = null;
-        infinite = false;
+        type = Type.NUMBER;
     }
 
     public VariableExpression(float input) {
         reference = null;
         value = input;
-        operator = null;
-        lhsExpression = null;
-        rhsExpression = null;
-        simulationToken = null;
-        infinite = false;
+        type = Type.NUMBER;
     }
 
     public VariableExpression(VariableExpression expr1, Operator operator, VariableExpression expr2) {
@@ -151,12 +227,10 @@ public class VariableExpression implements Serializable {
             throw new NullPointerException();
         }
         reference = null;
-        value = 0;
         this.operator = operator;
         lhsExpression = expr1;
         rhsExpression = expr2;
-        simulationToken = null;
-        infinite = false;
+        type = Type.BINARY_EXPRESSION;
     }
 
     public VariableExpression(VariableReference reference) {
@@ -164,12 +238,7 @@ public class VariableExpression implements Serializable {
             throw new NullPointerException();
         }
         this.reference = reference;
-        value = 0;
-        operator = null;
-        lhsExpression = null;
-        rhsExpression = null;
-        simulationToken = null;
-        infinite = false;
+        type = Type.VARIABLE_REFERENCE;
     }
 
     public VariableExpression(Constant constant) {
@@ -177,12 +246,8 @@ public class VariableExpression implements Serializable {
             throw new NullPointerException();
         }
         reference = null;
-        value = 0;
-        operator = null;
-        lhsExpression = null;
-        rhsExpression = null;
-        simulationToken = null;
-        infinite = Constant.INFINITY == constant;
+        this.constant = constant;
+        type = Type.CONSTANT;
     }
 
     public VariableExpression(SimulationToken token) {
@@ -190,64 +255,64 @@ public class VariableExpression implements Serializable {
             throw new NullPointerException();
         }
         reference = null;
-        value = 0;
-        operator = null;
-        lhsExpression = null;
-        rhsExpression = null;
         simulationToken = token;
-        infinite = false;
+        type = Type.SIMULATION_TOKEN;
     }
 
-    public Operator getOperator() {
-        return operator;
-    }
-
-    public VariableReference getReference() {
-        return reference;
-    }
-
-    public float getValue() {
-        return value;
-    }
-
-    public VariableExpression getLhsExpression() {
-        return lhsExpression;
-    }
-
-    public VariableExpression getRhsExpression() {
-        return rhsExpression;
+    public VariableExpression(UnaryOperator unaryOperator, VariableExpression expr) {
+        if (unaryOperator == null || expr == null) {
+            throw new NullPointerException();
+        }
+        reference = null;
+        this.unaryOperator = unaryOperator;
+        lhsExpression = expr;
+        type = Type.UNARY_EXPRESSION;
     }
 
     @Override
     public String toString() {
-        if (infinite) {
-            return Constant.INFINITY.toString();
-        }
-        if (simulationToken != null) {
-            return simulationToken.toString();
-        }
-        if (reference != null) {
-            return reference.toString();
-        }
-        if (operator != null) {
+        switch (type) {
+        case BINARY_EXPRESSION:
+            if (operator == Operator.MODULUS) {
+                // Kappa uses prefix notation here
+                return "(" + operator + " " + lhsExpression + " " + rhsExpression + ")";
+            }
             return "(" + lhsExpression + " " + operator + " " + rhsExpression + ")";
+            
+        case CONSTANT:
+            return constant.toString();
+            
+        case NUMBER:
+            return "" + value;
+            
+        case SIMULATION_TOKEN:
+            return simulationToken.toString();
+            
+        case UNARY_EXPRESSION:
+            return unaryOperator + " (" + lhsExpression + ")";
+            
+        case VARIABLE_REFERENCE:
+            return reference.toString();
+            
+        default:
+            throw new IllegalStateException("Unknown expression");
         }
-        return "" + value;
+        
     }
 
-
-    
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + (infinite ? 1231 : 1237);
+        result = prime * result + ((constant == null) ? 0 : constant.hashCode());
         result = prime * result + ((lhsExpression == null) ? 0 : lhsExpression.hashCode());
         result = prime * result + ((operator == null) ? 0 : operator.hashCode());
         result = prime * result + ((reference == null) ? 0 : reference.hashCode());
         result = prime * result + ((rhsExpression == null) ? 0 : rhsExpression.hashCode());
         result = prime * result + ((simulationToken == null) ? 0 : simulationToken.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
+        result = prime * result + ((unaryOperator == null) ? 0 : unaryOperator.hashCode());
         result = prime * result + Float.floatToIntBits(value);
         return result;
     }
@@ -261,7 +326,7 @@ public class VariableExpression implements Serializable {
         if (getClass() != obj.getClass())
             return false;
         VariableExpression other = (VariableExpression) obj;
-        if (infinite != other.infinite)
+        if (constant != other.constant)
             return false;
         if (lhsExpression == null) {
             if (other.lhsExpression != null)
@@ -285,6 +350,10 @@ public class VariableExpression implements Serializable {
             return false;
         if (simulationToken != other.simulationToken)
             return false;
+        if (type != other.type)
+            return false;
+        if (unaryOperator != other.unaryOperator)
+            return false;
         if (Float.floatToIntBits(value) != Float.floatToIntBits(other.value))
             return false;
         return true;
@@ -294,36 +363,76 @@ public class VariableExpression implements Serializable {
         if (state == null) {
             throw new NullPointerException();
         }
-        if (infinite) {
-            throw new IllegalStateException();
-        }
-        if (reference != null) {
+        switch (type) {
+        case BINARY_EXPRESSION:
+            return operator.eval(lhsExpression.evaluate(state), rhsExpression.evaluate(state));
+            
+        case CONSTANT:
+            if (constant == Constant.INFINITY) {
+                throw new IllegalStateException();
+            }
+            return new ObservationElement(constant.value);
+            
+        case NUMBER:
+            return new ObservationElement(value);
+            
+        case SIMULATION_TOKEN:
+            switch (simulationToken) {
+            case EVENTS:
+                return new ObservationElement(state.getEventCount());
+
+            case TIME:
+                return new ObservationElement(state.getTime());
+
+            default:
+                throw new IllegalStateException("Unknown expression");
+            }
+            
+        case UNARY_EXPRESSION:
+            return unaryOperator.eval(lhsExpression.evaluate(state));
+            
+        case VARIABLE_REFERENCE:
             Variable target = state.getVariable(reference.variableName);
             if (target == null) {
                 throw new IllegalArgumentException("Missing value: " + reference);
             }
             return target.evaluate(state);
+            
+        default:
+            throw new IllegalStateException("Unknown expression");
         }
-        if (operator != null) {
-            return operator.eval(lhsExpression.evaluate(state), rhsExpression.evaluate(state));
-        }
-        return new ObservationElement(value);
     }
 
     public boolean isInfinite(Map<String, Variable> variables) {
         if (variables == null) {
             throw new NullPointerException();
         }
-        if (reference != null) {
+        switch (type) {
+        case BINARY_EXPRESSION:
+            return lhsExpression.isInfinite(variables) || rhsExpression.isInfinite(variables);
+            
+        case CONSTANT:
+            return constant == Constant.INFINITY;
+            
+        case NUMBER:
+            return false;
+            
+        case SIMULATION_TOKEN:
+            return false;
+            
+        case UNARY_EXPRESSION:
+            return lhsExpression.isInfinite(variables);
+            
+        case VARIABLE_REFERENCE:
             if (!variables.containsKey(reference.variableName)) {
                 throw new IllegalArgumentException("Missing value: " + reference);
             }
             Variable target = variables.get(reference.variableName);
-            return target.type == Type.VARIABLE_EXPRESSION && target.expression.isInfinite(variables);
+            return target.type == Variable.Type.VARIABLE_EXPRESSION && target.expression.isInfinite(variables);
+            
+        default:
+            throw new IllegalStateException("Unknown expression");
         }
-        
-        return infinite || 
-                (operator != null && (lhsExpression.isInfinite(variables) || rhsExpression.isInfinite(variables)));
     }
 
 
@@ -331,15 +440,31 @@ public class VariableExpression implements Serializable {
         if (variables == null) {
             throw new NullPointerException();
         }
-        if (reference != null) {
+        switch (type) {
+        case BINARY_EXPRESSION:
+            return lhsExpression.isFixed(variables) && rhsExpression.isFixed(variables);
+            
+        case CONSTANT:
+            return true;
+            
+        case NUMBER:
+            return true;
+            
+        case SIMULATION_TOKEN:
+            return false;
+            
+        case UNARY_EXPRESSION:
+            return lhsExpression.isFixed(variables);
+            
+        case VARIABLE_REFERENCE:
             if (!variables.containsKey(reference.variableName)) {
                 throw new IllegalArgumentException("Missing value: " + reference);
             }
             return variables.get(reference.variableName).expression.isFixed(variables);
+            
+        default:
+            throw new IllegalStateException("Unknown expression");
         }
-        
-        return infinite || (simulationToken == null && 
-                (operator == null || (lhsExpression.isFixed(variables) && rhsExpression.isFixed(variables))));
     }
     
 }

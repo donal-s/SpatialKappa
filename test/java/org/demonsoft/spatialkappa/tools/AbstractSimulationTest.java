@@ -13,10 +13,10 @@ import java.util.Set;
 
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
+import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Location;
-import org.demonsoft.spatialkappa.model.MathExpression;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.Variable;
@@ -100,10 +100,10 @@ public abstract class AbstractSimulationTest {
         agents.add(new Agent("agent1"));
         kappaModel.addVariable(agents, "observable1", new Location("cytosol"));
         kappaModel.addPlot("observable1");
-        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new MathExpression("0")));
+        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new CellIndexExpression("0")));
         kappaModel.addPlot("observable2");
-        kappaModel.addInitialValue(agents, "5", new Location("cytosol", new MathExpression("0")));
-        kappaModel.addInitialValue(agents, "7", new Location("cytosol", new MathExpression("3")));
+        kappaModel.addInitialValue(agents, "5", new Location("cytosol", new CellIndexExpression("0")));
+        kappaModel.addInitialValue(agents, "7", new Location("cytosol", new CellIndexExpression("3")));
         
         simulation.initialise();
         
@@ -122,37 +122,16 @@ public abstract class AbstractSimulationTest {
         agents.add(new Agent("agent1"));
         kappaModel.addVariable(agents, "observable1", new Location("cytosol"));
         kappaModel.addPlot("observable1");
-        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new MathExpression("0"), new MathExpression("0")));
+        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("0")));
         kappaModel.addPlot("observable2");
-        kappaModel.addInitialValue(agents, "5", new Location("cytosol", new MathExpression("0"), new MathExpression("0")));
-        kappaModel.addInitialValue(agents, "7", new Location("cytosol", new MathExpression("2"), new MathExpression("1")));
+        kappaModel.addInitialValue(agents, "5", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("0")));
+        kappaModel.addInitialValue(agents, "7", new Location("cytosol", new CellIndexExpression("2"), new CellIndexExpression("1")));
         
         simulation.initialise();
         
         checkObservation("observable1", new ObservationElement(12, new int[] {3, 2}, new int[][] {{5, 0}, {0, 0}, {0, 7}}));
         checkObservation("observable2", new ObservationElement(5));
     }
-
-//    @Test
-//    public void testCanonicalComplexes() {
-//        kappaModel.addCompartment(new Compartment("cytosol"));
-//        kappaModel.addCompartment(new Compartment("nucleus"));
-//        kappaModel.addInitialValue(getList(new Agent("mRNA", new AgentSite("enc", "CRY1", null))), "29", new Location("nucleus"));
-//        kappaModel.addInitialValue(getList(new Agent("mRNA", new AgentSite("enc", "CRY1", null))), "4706", new Location("cytosol"));
-//
-//        simulation.initialise();
-//        
-//        Map<String, Complex> complexNameMap = new HashMap<String, Complex>();
-//        for (LocatedComplex current : simulation.complexStore.locatedComplexQuantities.keySet()) {
-//            String label = current.complex.toString();
-//            if (complexNameMap.containsKey(label)) {
-//                assertSame(complexNameMap.get(label), current.complex);
-//            }
-//            else {
-//                complexNameMap.put(label, current.complex);
-//            }
-//        }
-//    }
 
     private void checkObservation(String observableName, ObservationElement element) {
         Observation observation = simulation.getCurrentObservation();
@@ -193,7 +172,7 @@ public abstract class AbstractSimulationTest {
     @Test
     public void testGetQuantity_noCompartments() {
         try {
-            new ComplexMatchingSimulation().getComplexQuantity(null);
+            simulation.getComplexQuantity(null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -262,9 +241,9 @@ public abstract class AbstractSimulationTest {
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
         kappaModel.addVariable(agents, "observable1", new Location("cytosol"));
-        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new MathExpression("0")));
-        kappaModel.addInitialValue(agents, "5", new Location("cytosol", new MathExpression("0")));
-        kappaModel.addInitialValue(agents, "7", new Location("cytosol", new MathExpression("3")));
+        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new CellIndexExpression("0")));
+        kappaModel.addInitialValue(agents, "5", new Location("cytosol", new CellIndexExpression("0")));
+        kappaModel.addInitialValue(agents, "7", new Location("cytosol", new CellIndexExpression("3")));
         
         simulation.initialise();
         
@@ -282,9 +261,9 @@ public abstract class AbstractSimulationTest {
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
         kappaModel.addVariable(agents, "observable1", new Location("cytosol"));
-        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new MathExpression("0"), new MathExpression("0")));
-        kappaModel.addInitialValue(agents, "5", new Location("cytosol", new MathExpression("0"), new MathExpression("0")));
-        kappaModel.addInitialValue(agents, "7", new Location("cytosol", new MathExpression("2"), new MathExpression("1")));
+        kappaModel.addVariable(agents, "observable2", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("0")));
+        kappaModel.addInitialValue(agents, "5", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("0")));
+        kappaModel.addInitialValue(agents, "7", new Location("cytosol", new CellIndexExpression("2"), new CellIndexExpression("1")));
         
         simulation.initialise();
         
@@ -292,5 +271,29 @@ public abstract class AbstractSimulationTest {
         checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(5));
     }
 
+    @Test
+    public void testGetTransitionFiredCount() {
+        try {
+            simulation.getTransitionFiredCount(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            simulation.getTransitionFiredCount(new Variable(new VariableExpression(2), "not a transition"));
+            fail("invalid type should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        simulation.transitionsFiredMap.put(new Variable("label"), 55);
+        
+        assertEquals(new ObservationElement(55), simulation.getTransitionFiredCount(new Variable("label")));
+        assertEquals(new ObservationElement(0), simulation.getTransitionFiredCount(new Variable("other")));
+    }
+    
     
 }

@@ -22,10 +22,6 @@ public class UtilsTest {
         
         assertEquals("test,5,null,test2()", Utils.getFlatString(Arrays.asList(input)));
         
-        assertEquals("test,5,null,test2()", Utils.getFlatString(",", false, Arrays.asList(input)));
-        assertEquals("test,5,test2()", Utils.getFlatString(",", true, Arrays.asList(input)));
-        assertEquals("test 5 null test2()", Utils.getFlatString(" ", false, Arrays.asList(input)));
-        
         assertEquals("test,5,null,test2()", Utils.getFlatString(",", false, input));
         assertEquals("test,5,test2()", Utils.getFlatString(",", true, input));
         assertEquals("test 5 null test2()", Utils.getFlatString(" ", false, input));

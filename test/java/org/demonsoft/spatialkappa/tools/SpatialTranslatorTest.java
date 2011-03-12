@@ -11,30 +11,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.apache.commons.io.FileUtils;
+import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.CompartmentLink;
 import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Location;
-import org.demonsoft.spatialkappa.model.MathExpression;
-import org.demonsoft.spatialkappa.model.MathExpression.Operator;
+import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
+import org.demonsoft.spatialkappa.model.VariableReference;
 import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
 import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
 import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
-import org.demonsoft.spatialkappa.tools.SpatialTranslator;
 import org.junit.Before;
 import org.junit.Test;
 
 
 public class SpatialTranslatorTest {
 
+    private VariableReference refX = new VariableReference("x");
+    private VariableReference refY = new VariableReference("y");
+    
     private SpatialTranslator translator;
     
     @Before
@@ -210,7 +212,7 @@ public class SpatialTranslatorTest {
         // Single cell-cell link
         compartments.clear();
         compartmentLink = new CompartmentLink("label", 
-                new Location("a", new MathExpression("1")), new Location("a", new MathExpression("2")), Direction.FORWARD);
+                new Location("a", new CellIndexExpression("1")), new Location("a", new CellIndexExpression("2")), Direction.FORWARD);
         compartments.add(new Compartment("a", 4));
         
         assertArrayEquals(new String[][] {{"loc~a,loc_index~1", "loc~a,loc_index~2"}}, translator.getLinkStateSuffixPairs(compartmentLink, compartments));
@@ -218,8 +220,8 @@ public class SpatialTranslatorTest {
         // Linear array
         compartments.clear();
         compartmentLink = new CompartmentLink("label",
-                new Location("a", new MathExpression("x")), 
-                new Location("a", new MathExpression(new MathExpression("x"), Operator.PLUS, new MathExpression("1"))), Direction.FORWARD);
+                new Location("a", new CellIndexExpression(refX)), 
+                new Location("a", new CellIndexExpression(new CellIndexExpression(refX), Operator.PLUS, new CellIndexExpression("1"))), Direction.FORWARD);
         compartments.add(new Compartment("a", 4));
         
         assertArrayEquals(new String[][] {
@@ -230,12 +232,12 @@ public class SpatialTranslatorTest {
         // 2D array - square mesh - dimensions treated independently
         compartments.clear();
         compartmentLink = new CompartmentLink("label", 
-                new Location("a", new MathExpression("x"), new MathExpression("y")), 
-                new Location("a", new MathExpression(new MathExpression("x"), Operator.PLUS, new MathExpression("1")), new MathExpression("y")), 
+                new Location("a", new CellIndexExpression(refX), new CellIndexExpression(refY)), 
+                new Location("a", new CellIndexExpression(new CellIndexExpression(refX), Operator.PLUS, new CellIndexExpression("1")), new CellIndexExpression(refY)), 
                 Direction.FORWARD);
         compartmentLink = new CompartmentLink("label", 
-                new Location("a", new MathExpression("x"), new MathExpression("y")), 
-                new Location("a", new MathExpression("x"), new MathExpression(new MathExpression("y"), Operator.PLUS, new MathExpression("1"))), 
+                new Location("a", new CellIndexExpression(refX), new CellIndexExpression(refY)), 
+                new Location("a", new CellIndexExpression(refX), new CellIndexExpression(new CellIndexExpression(refY), Operator.PLUS, new CellIndexExpression("1"))), 
                 Direction.FORWARD);
         compartments.add(new Compartment("a", 4, 4));
         
@@ -252,9 +254,9 @@ public class SpatialTranslatorTest {
         // 2D array - diagonal linked mesh - dimensions treated together
         compartments.clear();
         compartmentLink = new CompartmentLink("label", 
-                new Location("a", new MathExpression("x"), new MathExpression("y")), 
-                new Location("a", new MathExpression(new MathExpression("x"), Operator.PLUS, new MathExpression("1")), 
-                        new MathExpression(new MathExpression("y"), Operator.PLUS, new MathExpression("1"))), 
+                new Location("a", new CellIndexExpression("x"), new CellIndexExpression("y")), 
+                new Location("a", new CellIndexExpression(new CellIndexExpression("x"), Operator.PLUS, new CellIndexExpression("1")), 
+                        new CellIndexExpression(new CellIndexExpression("y"), Operator.PLUS, new CellIndexExpression("1"))), 
                 Direction.FORWARD);
         compartments.add(new Compartment("a", 3, 3));
         
@@ -275,11 +277,11 @@ public class SpatialTranslatorTest {
         assertEquals("loc~label,loc_index~0", translator.getKappaString(location, 1));
         assertEquals("loc~label,loc_index_1~0,loc_index_2~0", translator.getKappaString(location, 2));
 
-        location = new Location("label", new MathExpression("2"));
+        location = new Location("label", new CellIndexExpression("2"));
         assertEquals("loc~label,loc_index~2", translator.getKappaString(location, 1));
 
 
-        location = new Location("label", new MathExpression("2"), new MathExpression(new MathExpression("3"), Operator.PLUS, new MathExpression("1")));
+        location = new Location("label", new CellIndexExpression("2"), new CellIndexExpression(new CellIndexExpression("3"), Operator.PLUS, new CellIndexExpression("1")));
         try {
             translator.getKappaString(location, 1);
             fail("too few dimensions should have failed");
@@ -290,7 +292,7 @@ public class SpatialTranslatorTest {
         assertEquals("loc~label,loc_index_1~2,loc_index_2~4", translator.getKappaString(location, 2));
         assertEquals("loc~label,loc_index_1~2,loc_index_2~4,loc_index_3~0", translator.getKappaString(location, 3));
 
-        location = new Location("label", new MathExpression("x"));
+        location = new Location("label", new CellIndexExpression(refX));
         try {
             translator.getKappaString(location, 1);
             fail("missing variable should have failed");
@@ -317,12 +319,12 @@ public class SpatialTranslatorTest {
         assertEquals("loc~label", translator.getKappaString(location, variables, 0));
         assertEquals("loc~label,loc_index~0", translator.getKappaString(location, variables, 1));
 
-        location = new Location("label", new MathExpression("2"));
+        location = new Location("label", new CellIndexExpression("2"));
         assertEquals("loc~label,loc_index~2", translator.getKappaString(location, variables, 1));
         assertEquals("loc~label,loc_index_1~2,loc_index_2~0", translator.getKappaString(location, variables, 2));
 
 
-        location = new Location("label", new MathExpression("2"), new MathExpression(new MathExpression("3"), Operator.PLUS, new MathExpression("1")));
+        location = new Location("label", new CellIndexExpression("2"), new CellIndexExpression(new CellIndexExpression("3"), Operator.PLUS, new CellIndexExpression("1")));
         try {
             translator.getKappaString(location, variables, 1);
             fail("too few dimensions should have failed");
@@ -333,7 +335,7 @@ public class SpatialTranslatorTest {
         assertEquals("loc~label,loc_index_1~2,loc_index_2~4", translator.getKappaString(location, variables, 2));
         assertEquals("loc~label,loc_index_1~2,loc_index_2~4,loc_index_3~0", translator.getKappaString(location, variables, 3));
 
-        location = new Location("label", new MathExpression("x"));
+        location = new Location("label", new CellIndexExpression(refX));
         try {
             translator.getKappaString(location, variables, 1);
             fail("missing variable should have failed");
@@ -345,7 +347,7 @@ public class SpatialTranslatorTest {
         variables.put("x", 7);
         assertEquals("loc~label,loc_index~7", translator.getKappaString(location, variables, 1));
 
-        location = new Location("label", new MathExpression("2"), new MathExpression("x"));
+        location = new Location("label", new CellIndexExpression("2"), new CellIndexExpression(refX));
         variables.clear();
         try {
             translator.getKappaString(location, variables, 1);

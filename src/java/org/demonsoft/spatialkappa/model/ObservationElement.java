@@ -6,6 +6,8 @@ import java.util.Arrays;
 public class ObservationElement implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public static final ObservationElement ZERO = new ObservationElement(0);
     
     public final float value;
     public final boolean isCompartment;
@@ -190,6 +192,67 @@ public class ObservationElement implements Serializable {
         
         return new ObservationElement(value % y.value);
     }
-    
+
+    public ObservationElement log() {
+        if (isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement((float) Math.log(value));
+    }
+
+    public ObservationElement exponent(ObservationElement y) {
+        if (isCompartment) {
+            if (y.isCompartment) {
+                throw new RuntimeException("not implemented");
+            }
+            throw new RuntimeException("not implemented");
+        }
+        if (y.isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement((float) Math.pow(value, y.value));
+    }
+
+    public ObservationElement sin() {
+        if (isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement((float) Math.sin(value));
+    }
+
+    public ObservationElement cos() {
+        if (isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement((float) Math.cos(value));
+    }
+
+    public ObservationElement tan() {
+        if (isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement((float) Math.tan(value));
+    }
+
+    public ObservationElement sqrt() {
+        if (isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement((float) Math.sqrt(value));
+    }
+
+    public ObservationElement exp() {
+        if (isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement((float) Math.exp(value));
+    }
     
 }

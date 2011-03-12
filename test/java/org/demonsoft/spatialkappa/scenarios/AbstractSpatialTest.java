@@ -26,131 +26,154 @@ public abstract class AbstractSpatialTest {
     
     @Test
     public void testSimpleStateCase() throws Exception {
-        checkEventSimulation(SIMPLE_STATE_INPUT, new String[] {"[A(x~s)]", "[A(x~t)]"}, 200, 50, new int[][] {
+        checkEventSimulation(SIMPLE_STATE_INPUT, new String[] {"[A(x~s)]", "[A(x~t)]"}, 200, 50, new float[][] {
                 {1000, 0}, {800, 200}, {600, 400}, {400, 600}, {200, 800}, {0, 1000}, {0, 1000}
         });
     }
     
     @Test
     public void testVariableReferenceComplexCase() throws Exception {
-        checkEventSimulation(VARIABLE_REFERENCE_COMPLEX_INPUT, new String[] {"as"}, 200, 50, new int[][] {
+        checkEventSimulation(VARIABLE_REFERENCE_COMPLEX_INPUT, new String[] {"as"}, 200, 50, new float[][] {
                 {1000, 0}, {1000, 0}, 
         });
     }
     
     @Test
     public void testSimpleTimedStateCase() throws Exception {
-        checkTimedSimulation(SIMPLE_STATE_INPUT, new String[] {"[A(x~s)]", "[A(x~t)]"}, 2.5f, 100, new int[][] {
+        checkTimedSimulation(SIMPLE_STATE_INPUT, new String[] {"[A(x~s)]", "[A(x~t)]"}, 2.5f, 100, new float[][] {
                 {1000, 0}, {800, 200}, {600, 400}, {480, 520}, {380, 620}, {280, 720}, {220, 780}
         });
     }
     
     @Test
     public void testSimpleInfiniteRateCase() throws Exception {
-        checkEventSimulation(SIMPLE_INFINITE_RATE_INPUT, new String[] {"[A(x~s)]", "[A(x~t)]"}, 1, 50, new int[][] {
+        checkEventSimulation(SIMPLE_INFINITE_RATE_INPUT, new String[] {"[A(x~s)]", "[A(x~t)]"}, 1, 50, new float[][] {
                 {1000, 0}, {0, 1000}, {0, 1000}
         });
     }
     
     @Test
     public void testInfiniteRateGradualSubstrateCase() throws Exception {
-        checkEventSimulation(INFINITE_RATE_GRADUAL_SUBSTRATE_INPUT, new String[] {"[A(x~s)]", "[A(x~t)]", "[A(x~u)]"}, 1, 1, new int[][] {
+        checkEventSimulation(INFINITE_RATE_GRADUAL_SUBSTRATE_INPUT, new String[] {"[A(x~s)]", "[A(x~t)]", "[A(x~u)]"}, 1, 1, new float[][] {
                 {1000, 0, 0}, {999, 0, 1}, {998, 0, 2}, {997, 0, 3}, {996, 0, 4}
         });
     }
     
     @Test
     public void testErrorCase1() throws Exception {
-        checkEventSimulation(ERROR_CASE1_INPUT, new String[] {"[A(a)]", "result"}, 200, 50, new int[][] {
+        checkEventSimulation(ERROR_CASE1_INPUT, new String[] {"[A(a)]", "result"}, 200, 50, new float[][] {
                 {1000, 0}, {800, 200}, {600, 400}, {400, 600}, {200, 800}, {0, 1000}, {0, 1000}
         });
     }
     
     @Test
     public void testSimpleLinkCase() throws Exception {
-        checkEventSimulation(SIMPLE_LINK_INPUT, new String[] {"[A(x)]", "[A(x!_)]"}, 2000, 50, new int[][] {
+        checkEventSimulation(SIMPLE_LINK_INPUT, new String[] {"[A(x)]", "[A(x!_)]"}, 2000, 50, new float[][] {
                 {10000, 0}, {8000, 2000}, {6000, 4000}, {4000, 6000}, {2000, 8000}, {0, 10000}
         });
     }
     
     @Test
     public void testTimedPerturbationCase() throws Exception {
-        checkEventSimulation(TIMED_PERTURBATION_INPUT, new String[] {"[A(x~a)]", "[C(z~a)]"}, 2000, 200, new int[][] {
+        checkEventSimulation(TIMED_PERTURBATION_INPUT, new String[] {"[A(x~a)]", "[C(z~a)]"}, 2000, 200, new float[][] {
                 {10000, 10000}, {8000, 10000}, {6000, 10000}, {4650, 9300}, {4000, 8000}, {3300, 6700}
         });
     }
     
     @Test
     public void testTimedInfiniteRatePerturbationCase() throws Exception {
-        checkTimedSimulation(TIMED_INFINITE_RATE_PERTURBATION_INPUT, new String[] {"[A(x~a)]", "[C(z~a)]"}, 1, 500, new int[][] {
+        checkTimedSimulation(TIMED_INFINITE_RATE_PERTURBATION_INPUT, new String[] {"[A(x~a)]", "[C(z~a)]"}, 1, 500, new float[][] {
                 {10000, 10000}, {9000, 10000}, {8250, 10000}, {7350, 10000}, {6700, 0}, {6120, 0}
         });
     }
     
     @Test
-    public void testRuleObservationCase() throws Exception {
-        checkEventSimulation(SIMPLE_LINK_OBSERVED_RULE_INPUT, new String[] {"link"}, 2000, 50, new int[][] {
-                {0}, {2000}, {2000}, {2000}, {2000}, {2000}
-        });
-    }
-
-    @Test
     public void testCreateAgentLinkCase() throws Exception {
-        checkEventSimulation(CREATE_AGENT_LINK_INPUT, new String[] {"[A(x)]", "[A(x!1), B(y!1)]"}, 2000, 50, new int[][] {
+        checkEventSimulation(CREATE_AGENT_LINK_INPUT, new String[] {"[A(x)]", "[A(x!1), B(y!1)]"}, 2000, 50, new float[][] {
                 {10000, 0}, {8000, 2000}, {6000, 4000}, {4000, 6000}, {2000, 8000}, {0, 10000}
         });
     }
     
     @Test
     public void testCreateObservableCase() throws Exception {
-        checkEventSimulation(CREATE_COMPLEX_INPUT, new String[] {"[A(x)]", "[B(y!1), C(z!1)]"}, 2000, 50, new int[][] {
+        checkEventSimulation(CREATE_COMPLEX_INPUT, new String[] {"[A(x)]", "[B(y!1), C(z!1)]"}, 2000, 50, new float[][] {
                 {10000, 0}, {10000, 2000}, {10000, 4000}, {10000, 6000}, {10000, 8000}, {10000, 10000}
         });
     }
     
     @Test
     public void testDeleteLinkCase() throws Exception {
-        checkEventSimulation(DELETE_LINK_INPUT, new String[] {"[A(x!_)]", "[B(y)]"}, 2000, 50, new int[][] {
+        checkEventSimulation(DELETE_LINK_INPUT, new String[] {"[A(x!_)]", "[B(y)]"}, 2000, 50, new float[][] {
                 {10000, 0}, {8000, 2000}, {6000, 4000}, {4000, 6000}, {2000, 8000}, {0, 10000}
         });
     }
     
     @Test
     public void testDeleteAgentLinkCase() throws Exception {
-        checkEventSimulation(DELETE_AGENT_LINK_INPUT, new String[] {"[B(y!?)]"}, 2000, 50, new int[][] {
+        checkEventSimulation(DELETE_AGENT_LINK_INPUT, new String[] {"[B(y!?)]"}, 2000, 50, new float[][] {
                 {10000}, {8000}, {6000}, {4000}, {2000}, {0}
         });
     }
     
     @Test
     public void testDeleteObservableCase() throws Exception {
-        checkEventSimulation(DELETE_COMPLEX_INPUT, new String[] {"[A(x)]"}, 2000, 50, new int[][] {
+        checkEventSimulation(DELETE_COMPLEX_INPUT, new String[] {"[A(x)]"}, 2000, 50, new float[][] {
                 {10000}, {8000}, {6000}, {4000}, {2000}, {0}
         });
     }
     
     @Test
     public void testDeleteObservableNoSitesCase() throws Exception {
-        checkEventSimulation(DELETE_COMPLEX_INPUT_NO_SITES, new String[] {"[A()]"}, 2000, 50, new int[][] {
+        checkEventSimulation(DELETE_COMPLEX_INPUT_NO_SITES, new String[] {"[A()]"}, 2000, 50, new float[][] {
                 {10000}, {8000}, {6000}, {4000}, {2000}, {0}
         });
     }
     
     @Test
     public void testSimpleLinkEquilibriumCase() throws Exception {
-        checkEventSimulation(SIMPLE_LINK_EQUILIBRIUM_INPUT, new String[] {"[A(x)]", "[A(x!_)]"}, 2000, 50, new int[][] {
+        checkEventSimulation(SIMPLE_LINK_EQUILIBRIUM_INPUT, new String[] {"[A(x)]", "[A(x!_)]"}, 2000, 50, new float[][] {
                 {10000, 0}, {8000, 2000}, {6000, 4000}, {4000, 6000}, {2004, 7996}, 
         });
     }
     
     @Test
     public void testAdditionalStateCase() throws Exception {
-        checkEventSimulation(ADDITIONAL_STATE_INPUT, new String[] {"[A(x~s)]", "[A(x~t,y~a)]"}, 200, 50, new int[][] {
+        checkEventSimulation(ADDITIONAL_STATE_INPUT, new String[] {"[A(x~s)]", "[A(x~t,y~a)]"}, 200, 50, new float[][] {
                 {1000, 0}, {800, 200}, {600, 400}, {400, 600}, {200, 800}, {0, 1000}, {0, 1000}
         });
     }
     
-    protected void checkEventSimulation(String simulationText, String[] observableNames, int eventsPerStep, int accuracy, int[][] expectedObservableValues) throws Exception {
+    @Test
+    public void testMathFunctionCase() throws Exception {
+        checkEventSimulation(MATH_FUNCTIONS_INPUT, new String[] {"log", "sin", "cos", "tan", "sqrt", "pi", "exp"}, 1, 0.01f, new float[][] {
+                {0, 0, 1, 0, 0, (float) Math.PI, 1}, 
+                {(float) Math.log(11), (float) Math.sin(1), (float) Math.cos(1), (float) Math.tan(1), 1, (float) Math.PI, (float) Math.E}, 
+                {(float) Math.log(21), (float) Math.sin(2), (float) Math.cos(2), (float) Math.tan(2), (float) Math.sqrt(2), (float) Math.PI, (float) Math.pow(Math.E, 2)}, 
+        });
+    }
+    
+    @Test
+    public void testSimulationTokensCase() throws Exception {
+        checkEventSimulation(SIMULATION_TOKENS_INPUT, new String[] {"events", "time"}, 100, 10, new float[][] {
+                {0, 0}, {100, 5}, {200, 10}, {300, 15}, 
+        });
+    }
+    
+    @Test
+    public void testStoppedSimulationCase() throws Exception {
+        checkEventSimulation(STOPPED_SIMULATION_INPUT, new String[] {"events"}, 100, 0, new float[][] {
+                {0}, {100}, {151}, 
+        });
+    }
+    
+    @Test
+    public void testTransitionsFiredCase() throws Exception {
+        checkEventSimulation(TRANSITIONS_FIRED_INPUT, new String[] {"A created", "B created"}, 150, 15, new float[][] {
+                {0, 0}, {100, 50}, {100, 50}, {100, 50}, // Not cumulative 
+        });
+    }
+    
+    protected void checkEventSimulation(String simulationText, String[] observableNames, int eventsPerStep, float accuracy, float[][] expectedObservableValues) throws Exception {
         AbstractSimulation simulation = createSimulation(simulationText);
         
         // Check time 0
@@ -163,7 +186,7 @@ public abstract class AbstractSpatialTest {
         }
     }
 
-    private final void checkObservations(int observation, String[] observableNames, int accuracy, int... values) {
+    private final void checkObservations(int observation, String[] observableNames, float accuracy, float... values) {
         for (int index = 0; index < observableNames.length; index++) {
             assertNotNull("Observable not found: " + observableNames[index], currentObservation.observables.get(observableNames[index]));
 
@@ -172,7 +195,7 @@ public abstract class AbstractSpatialTest {
         }
     }
 
-    protected final void checkTimedSimulation(String simulationText, String[] observableNames, float timePerStep, int accuracy, int[][] expectedObservableValues) throws Exception {
+    protected final void checkTimedSimulation(String simulationText, String[] observableNames, float timePerStep, float accuracy, float[][] expectedObservableValues) throws Exception {
         AbstractSimulation simulation = createSimulation(simulationText);
         
         // Check time 0
@@ -225,6 +248,42 @@ public abstract class AbstractSpatialTest {
         "%obs: A(x~s)\n" + 
         "%obs: A(x~t,y~a)\n";
     
+    private static final String MATH_FUNCTIONS_INPUT = 
+        " -> A() @ 1\n" + 
+        "%var: 'log' [log] (([E] * 10) + 1)\n" + 
+        "%var: 'sin' [sin] [E]\n" + 
+        "%var: 'cos' [cos] [E]\n" + 
+        "%var: 'tan' [tan] [E]\n" + 
+        "%var: 'sqrt' [sqrt] [E]\n" + 
+        "%var: 'exp' [exp] [E]\n" + 
+        "%var: 'pi' [pi]\n" + // TODO - handle obs
+        "%plot: 'log'\n" + 
+        "%plot: 'sin'\n" + 
+        "%plot: 'cos'\n" + 
+        "%plot: 'tan'\n" + 
+        "%plot: 'sqrt'\n" + 
+        "%plot: 'exp'\n" + 
+        "%plot: 'pi'\n";
+    
+    private static final String SIMULATION_TOKENS_INPUT = 
+        " -> A() @ 20\n" + 
+        "%var: 'events' [E]\n" + 
+        "%var: 'time' [T]\n" + // TODO - handle obs
+        "%plot: 'events'\n" + 
+        "%plot: 'time'\n";
+    
+    private static final String STOPPED_SIMULATION_INPUT = 
+        " -> A() @ 1\n" + 
+        "%var: 'events' [E]\n" + 
+        "%plot: 'events'\n" +
+        "%mod: [E] = 150 do $STOP\n";
+    
+    private static final String TRANSITIONS_FIRED_INPUT = 
+        "'A created' -> A() @ 2\n" + 
+        "'B created' -> B() @ 1\n" + 
+        "%plot: 'A created'\n" + 
+        "%plot: 'B created'\n";
+
     private static final String SIMPLE_LINK_INPUT = 
         "A(x),B(y) -> A(x!1),B(y!1) @ 0.1\n" + 
         "%init: 10000 (A(x),B(y))\n" + 
@@ -237,7 +296,7 @@ public abstract class AbstractSpatialTest {
         "%init: 10000 (A(x~a),C(z~a))\n" + 
         "%obs: A(x~a)\n" +
         "%obs: C(z~a)\n" +
-        "%mod: $T > 7 do 'triggered' := 0.1\n";
+        "%mod: [T] > 7 do 'triggered' := 0.1\n";
     
     private static final String TIMED_INFINITE_RATE_PERTURBATION_INPUT = 
         "A(x~a) -> A(x~b) @ 0.1\n" + 
@@ -245,12 +304,7 @@ public abstract class AbstractSpatialTest {
         "%init: 10000 (A(x~a),C(z~a))\n" + 
         "%obs: A(x~a)\n" +
         "%obs: C(z~a)\n" +
-        "%mod: $T > 3 do 'triggered' := $INF\n";
-    
-    private static final String SIMPLE_LINK_OBSERVED_RULE_INPUT = 
-        "'link' A(x),B(y) -> A(x!1),B(y!1) @ 0.1\n" + 
-        "%init: 10000 (A(x),B(y))\n" + 
-        "%plot: 'link'\n";
+        "%mod: [T] > 3 do 'triggered' := [inf]\n";
     
     private static final String CREATE_AGENT_LINK_INPUT = 
         "A(x) -> A(x!1),B(y!1) @ 0.1\n" + 
@@ -320,7 +374,7 @@ public abstract class AbstractSpatialTest {
     
     @Test
     public void testSimpleTransport() throws Exception {
-        checkEventSimulation(SIMPLE_TRANSPORT_INPUT, new String[] {"val[0]", "val[1]", "val[2]", "val[3]"}, 400, 60, new int[][] {
+        checkEventSimulation(SIMPLE_TRANSPORT_INPUT, new String[] {"val[0]", "val[1]", "val[2]", "val[3]"}, 400, 60, new float[][] {
                 {2000, 0, 0, 0}, {1680, 300, 20, 0}, {1500, 450, 50, 0}, {1350, 500, 100, 0},
         });
     }
@@ -328,7 +382,7 @@ public abstract class AbstractSpatialTest {
     @Test
     public void testDirectionalTransport() throws Exception {
         checkEventSimulation(DIRECTIONAL_TRANSPORT_INPUT, 
-                new String[] {"val[0]A", "val[1]A", "val[2]A", "val[0]B", "val[1]B", "val[2]B", }, 2000, 100, new int[][] {
+                new String[] {"val[0]A", "val[1]A", "val[2]A", "val[0]B", "val[1]B", "val[2]B", }, 2000, 100, new float[][] {
                 {1000, 0, 0, 0, 0, 1000}, {330, 330, 330, 330, 330, 330}, {0, 0, 1000, 1000, 0, 0}, 
         });
     }
@@ -336,56 +390,56 @@ public abstract class AbstractSpatialTest {
     @Test
     public void testMultipleNamesDiscreteComplexTransport() throws Exception {
         checkEventSimulation(MULTIPLE_NAMES_DISCRETE_COMPLEX_TRANSPORT_INPUT, 
-                new String[] {"val[0]A", "val[1]A", "val[0]B", "val[1]B", }, 1000, 0, new int[][] {
+                new String[] {"val[0]A", "val[1]A", "val[0]B", "val[1]B", }, 1000, 0, new float[][] {
                 {1000, 0, 0, 1000}, {0, 1000, 0, 1000}, 
         });
     }
     
     @Test
     public void testVerySimpleTransport() throws Exception {
-        checkEventSimulation(VERY_SIMPLE_TRANSPORT_INPUT, new String[] {"val[0]", "val[1]"}, 1, 0, new int[][] {
+        checkEventSimulation(VERY_SIMPLE_TRANSPORT_INPUT, new String[] {"val[0]", "val[1]"}, 1, 0, new float[][] {
                 {10, 0}, {9, 1}, {8, 2}
         });
     }
     
     @Test
     public void testInitialDistribution() throws Exception {
-        checkEventSimulation(INITIAL_DISTRIBUTION_INPUT, new String[] {"nucleus", "val[0]", "val[1]", "val[2]", "val[3]", "val[4]"}, 1, 0, new int[][] {
+        checkEventSimulation(INITIAL_DISTRIBUTION_INPUT, new String[] {"nucleus", "val[0]", "val[1]", "val[2]", "val[3]", "val[4]"}, 1, 0, new float[][] {
                 {20, 420, 420, 1020, 420, 420}
         });
     }
     
     @Test
     public void testCellLimitedTransform() throws Exception {
-        checkEventSimulation(CELL_LIMITED_TRANSFORM_INPUT, new String[] {"cytosol[0]", "cytosol[1]", "membrane[1]"}, 500, 0, new int[][] {
+        checkEventSimulation(CELL_LIMITED_TRANSFORM_INPUT, new String[] {"cytosol[0]", "cytosol[1]", "membrane[1]"}, 500, 0, new float[][] {
                 {1000, 1000, 500}, {1000, 500, 500}, {1000, 0, 500}, 
         });
     }
     
     @Test
     public void testCompartmentLimitedTransform() throws Exception {
-        checkEventSimulation(COMPARTMENT_LIMITED_TRANSFORM_INPUT, new String[] {"cytosol[0]", "cytosol[1]", "membrane[1]"}, 1000, 50, new int[][] {
+        checkEventSimulation(COMPARTMENT_LIMITED_TRANSFORM_INPUT, new String[] {"cytosol[0]", "cytosol[1]", "membrane[1]"}, 1000, 50, new float[][] {
                 {1000, 1000, 500}, {500, 500, 500}, {0, 0, 500}, 
         });
     }
     
     @Test
     public void testUnlimitedTransform() throws Exception {
-        checkEventSimulation(UNLIMITED_TRANSFORM_INPUT, new String[] {"cytosol[0]", "cytosol[1]", "membrane[1]"}, 1000, 50, new int[][] {
+        checkEventSimulation(UNLIMITED_TRANSFORM_INPUT, new String[] {"cytosol[0]", "cytosol[1]", "membrane[1]"}, 1000, 50, new float[][] {
                 {1000, 1000, 1000}, {670, 670, 670}, {330, 330, 330}, 
         });
     }
     
     @Test
     public void testSteadyStateConcentrationGradient() throws Exception {
-        checkEventSimulation(STEADY_STATE_CONCENTRATION_GRADIENT_INPUT, new String[] {"val[0]", "val[1]", "val[2]", "val[3]"}, 3000, 50, new int[][] {
+        checkEventSimulation(STEADY_STATE_CONCENTRATION_GRADIENT_INPUT, new String[] {"val[0]", "val[1]", "val[2]", "val[3]"}, 3000, 50, new float[][] {
                 {0, 0, 0, 0}, {150, 100, 50, 1}, {150, 100, 50, 1}, 
         });
     }
     
     @Test
     public void testTransitionActivation() throws Exception {
-        checkEventSimulation(TRANSITION_ACTIVATION_INPUT, new String[] {"C"}, 3000, 50, new int[][] {
+        checkEventSimulation(TRANSITION_ACTIVATION_INPUT, new String[] {"C"}, 3000, 50, new float[][] {
                 {0}, {1000}, 
         });
     }

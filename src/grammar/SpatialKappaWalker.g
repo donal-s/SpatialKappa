@@ -11,19 +11,18 @@ package org.demonsoft.spatialkappa.parser;
 
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
+import org.demonsoft.spatialkappa.model.BooleanExpression;
+import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.CompartmentLink;
 import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.Location;
-import org.demonsoft.spatialkappa.model.MathExpression;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Perturbation;
-import org.demonsoft.spatialkappa.model.Perturbation.Assignment;
-import org.demonsoft.spatialkappa.model.Perturbation.ConcentrationExpression;
-import org.demonsoft.spatialkappa.model.Perturbation.Condition;
-import org.demonsoft.spatialkappa.model.Perturbation.Inequality;
+import org.demonsoft.spatialkappa.model.PerturbationEffect;
 import org.demonsoft.spatialkappa.model.VariableExpression;
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
+import org.demonsoft.spatialkappa.model.VariableExpression.SimulationToken;
 import org.demonsoft.spatialkappa.model.VariableReference;
 }
 
@@ -226,7 +225,7 @@ transportKineticExpr returns [VariableExpression result]
 
 locationExpr returns [Location result]
   @init {
-  List<MathExpression> dimensions = new ArrayList<MathExpression>();
+  List<CellIndexExpression> dimensions = new ArrayList<CellIndexExpression>();
   }
   :
   ^(LOCATION name=label (compartmentIndexExpr {dimensions.add($compartmentIndexExpr.result);})*)
@@ -235,11 +234,11 @@ locationExpr returns [Location result]
   }
   ;
 
-compartmentIndexExpr returns [MathExpression result]
+compartmentIndexExpr returns [CellIndexExpression result]
   :
-  ^(INDEX mathExpr)
+  ^(INDEX cellIndexExpr)
   {
-    $result = $mathExpr.result;
+    $result = $cellIndexExpr.result;
   }
   ;
 
@@ -303,90 +302,138 @@ varAlgebraExpr returns [VariableExpression result]
   {
     $result = new VariableExpression(Constant.INFINITY);
   }  
+  | ^(VAR_EXPR PI)  
+  {
+    $result = new VariableExpression(Constant.PI);
+  }  
+  | ^(VAR_EXPR TIME)
+  {
+    $result = new VariableExpression(SimulationToken.TIME);
+  }  
+  | ^(VAR_EXPR EVENTS)
+  {
+    $result = new VariableExpression(SimulationToken.EVENTS);
+  }  
+  | ^(VAR_EXPR LOG a=varAlgebraExpr)
+  {
+    $result = new VariableExpression(VariableExpression.UnaryOperator.LOG, $a.result);
+  }  
+  | ^(VAR_EXPR SIN a=varAlgebraExpr)
+  {
+    $result = new VariableExpression(VariableExpression.UnaryOperator.SIN, $a.result);
+  }  
+  | ^(VAR_EXPR COS a=varAlgebraExpr)
+  {
+    $result = new VariableExpression(VariableExpression.UnaryOperator.COS, $a.result);
+  }  
+  | ^(VAR_EXPR TAN a=varAlgebraExpr)
+  {
+    $result = new VariableExpression(VariableExpression.UnaryOperator.TAN, $a.result);
+  }  
+  | ^(VAR_EXPR SQRT a=varAlgebraExpr)
+  {
+    $result = new VariableExpression(VariableExpression.UnaryOperator.SQRT, $a.result);
+  }  
+  | ^(VAR_EXPR EXP a=varAlgebraExpr)
+  {
+    $result = new VariableExpression(VariableExpression.UnaryOperator.EXP, $a.result);
+  }  
+  | ^(VAR_EXPR MODULUS a=varAlgebraExpr b=varAlgebraExpr)
+  {
+    $result = new VariableExpression($a.result, VariableExpression.Operator.MODULUS, $b.result);
+  }  
   ;
-
-
 
 modExpr
   :
-  ^(PERTURBATION concentrationInequality assignment)
+  ^(PERTURBATION ^(CONDITION booleanExpression) effect untilExpression?)
   {
-    kappaModel.addPerturbation(new Perturbation($concentrationInequality.result, $assignment.result));
-  }
-  | ^(PERTURBATION timeInequality assignment)
-  {
-    kappaModel.addPerturbation(new Perturbation($timeInequality.result, $assignment.result));
-  }
-  ;
-  
-timeInequality returns [String result]
-  :
-  ^(TIME_INEQUALITY number)
-  {
-    $result = $number.text;
-  }
-  ;
-  
-concentrationInequality returns [Condition result]
-options {backtrack=true;}
-  :
-  ^(CONCENTRATION_INEQUALITY a=concentrationExpression GREATER_THAN b=concentrationExpression)
-  {
-    $result = new Condition($a.result, Inequality.GREATER_THAN, $b.result);
-  }
-  | ^(CONCENTRATION_INEQUALITY a=concentrationExpression LESS_THAN b=concentrationExpression)
-  {
-    $result = new Condition($a.result, Inequality.LESS_THAN, $b.result);
-  };
-  
-
-assignment returns [Assignment result]
-  :
-  ^(ASSIGNMENT label VAR_INFINITY)
-  {
-    $result = new Assignment($label.result, ConcentrationExpression.INFINITE_RATE);
-  }
-  | ^(ASSIGNMENT label concentrationExpression)
-  {
-    $result = new Assignment($label.result, $concentrationExpression.result);
-  }
-  ;
-  
-
-concentrationExpression returns [ConcentrationExpression result]
-  :
-  ^(CONCENTRATION_EXPRESSION label operator a=concentrationExpression)
-  {
-    $result = new ConcentrationExpression($label.result, $operator.text, $a.result);
-  }
-  | ^(CONCENTRATION_EXPRESSION number operator a=concentrationExpression)
-  {
-    $result = new ConcentrationExpression(Float.parseFloat($number.text), $operator.text, $a.result);
-  }
-  | ^(CONCENTRATION_EXPRESSION label)
-  {
-    $result = new ConcentrationExpression($label.result);
-  }
-  | ^(CONCENTRATION_EXPRESSION number)
-  {
-    $result = new ConcentrationExpression(Float.parseFloat($number.text));
+    kappaModel.addPerturbation(new Perturbation($booleanExpression.result, $effect.result, $untilExpression.result));
   }
   ;
 
-
-mathExpr returns [MathExpression result]
+booleanExpression returns [BooleanExpression result]
   :
-  ^(MATH_EXPR operator a=mathExpr b=mathExpr)
+  ^(BOOL_EXPR AND a=booleanExpression b=booleanExpression)
   {
-    $result = new MathExpression($a.result, MathExpression.Operator.getOperator($operator.text), $b.result);
+    $result = new BooleanExpression(BooleanExpression.Operator.AND, $a.result, $b.result);
   }    
-  | ^(MATH_EXPR INT)
+  | ^(BOOL_EXPR OR a=booleanExpression b=booleanExpression)
   {
-    $result = new MathExpression($INT.text);
+    $result = new BooleanExpression(BooleanExpression.Operator.OR, $a.result, $b.result);
   }    
-  | ^(MATH_EXPR label)
+  | ^(BOOL_EXPR NOT a=booleanExpression)
   {
-    $result = new MathExpression($label.result);
+    $result = new BooleanExpression(BooleanExpression.Operator.NOT, $a.result);
+  }    
+  | ^(BOOL_EXPR TRUE)
+  {
+    $result = new BooleanExpression(true);
+  }    
+  | ^(BOOL_EXPR FALSE)
+  {
+    $result = new BooleanExpression(false);
+  }    
+  | ^(BOOL_EXPR op=relationalOperator c=varAlgebraExpr d=varAlgebraExpr)
+  {
+    $result = new BooleanExpression(BooleanExpression.RelationalOperator.getOperator($op.text), $c.result, $d.result);
+  }    
+  ;
+  
+
+
+relationalOperator
+  :
+  '<' | '>' | '='
+  ;
+
+effect returns [PerturbationEffect result]
+  :
+  ^(EFFECT SNAPSHOT)
+  {
+    $result = PerturbationEffect.SNAPSHOT;
+  }    
+  | ^(EFFECT STOP)
+  {
+    $result = PerturbationEffect.STOP;
+  }    
+  | ^(EFFECT ADD varAlgebraExpr agentGroup)
+  {
+    $result = new PerturbationEffect(PerturbationEffect.Type.ADD, $varAlgebraExpr.result, $agentGroup.result);
+  }    
+  | ^(EFFECT REMOVE varAlgebraExpr agentGroup)
+  {
+    $result = new PerturbationEffect(PerturbationEffect.Type.REMOVE, $varAlgebraExpr.result, $agentGroup.result);
+  }    
+  | ^(EFFECT SET ^(TARGET label) varAlgebraExpr)
+  {
+    $result = new PerturbationEffect($label.result, $varAlgebraExpr.result);
+  }    
+  ;
+  
+  
+untilExpression returns [BooleanExpression result]
+  :
+  ^(UNTIL booleanExpression)
+  {
+    $result = $booleanExpression.result;
+  }
+  ;
+  
+
+cellIndexExpr returns [CellIndexExpression result]
+  :
+  ^(CELL_INDEX_EXPR operator a=cellIndexExpr b=cellIndexExpr)
+  {
+    $result = new CellIndexExpression($a.result, CellIndexExpression.Operator.getOperator($operator.text), $b.result);
+  }    
+  | ^(CELL_INDEX_EXPR INT)
+  {
+    $result = new CellIndexExpression($INT.text);
+  }    
+  | ^(CELL_INDEX_EXPR label)
+  {
+    $result = new CellIndexExpression(new VariableReference($label.result));
   }    
   ;
 

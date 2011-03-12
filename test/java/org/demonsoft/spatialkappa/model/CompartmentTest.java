@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.Location;
-import org.demonsoft.spatialkappa.model.MathExpression;
+import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.junit.Test;
 
 public class CompartmentTest {
@@ -141,19 +141,19 @@ public class CompartmentTest {
         
         compartment = new Compartment("label", 3);
         checkCompartmentReferences(compartment.getDistributedCellReferences(), 
-                new Location("label", new MathExpression("0")),
-                new Location("label", new MathExpression("1")),
-                new Location("label", new MathExpression("2"))
+                new Location("label", new CellIndexExpression("0")),
+                new Location("label", new CellIndexExpression("1")),
+                new Location("label", new CellIndexExpression("2"))
         );
         
         compartment = new Compartment("label", 3, 2);
         checkCompartmentReferences(compartment.getDistributedCellReferences(), 
-                new Location("label", new MathExpression("0"), new MathExpression("0")),
-                new Location("label", new MathExpression("1"), new MathExpression("0")),
-                new Location("label", new MathExpression("2"), new MathExpression("0")),
-                new Location("label", new MathExpression("0"), new MathExpression("1")),
-                new Location("label", new MathExpression("1"), new MathExpression("1")),
-                new Location("label", new MathExpression("2"), new MathExpression("1"))
+                new Location("label", new CellIndexExpression("0"), new CellIndexExpression("0")),
+                new Location("label", new CellIndexExpression("1"), new CellIndexExpression("0")),
+                new Location("label", new CellIndexExpression("2"), new CellIndexExpression("0")),
+                new Location("label", new CellIndexExpression("0"), new CellIndexExpression("1")),
+                new Location("label", new CellIndexExpression("1"), new CellIndexExpression("1")),
+                new Location("label", new CellIndexExpression("2"), new CellIndexExpression("1"))
         );
     }
 
@@ -185,15 +185,15 @@ public class CompartmentTest {
         compartments.add(new Compartment("label3", 3, 2));
         checkCompartmentReferences(Compartment.getDistributedCellReferences(compartments), 
                 new Location("label"),
-                new Location("label2", new MathExpression("0")),
-                new Location("label2", new MathExpression("1")),
-                new Location("label2", new MathExpression("2")),
-                new Location("label3", new MathExpression("0"), new MathExpression("0")),
-                new Location("label3", new MathExpression("1"), new MathExpression("0")),
-                new Location("label3", new MathExpression("2"), new MathExpression("0")),
-                new Location("label3", new MathExpression("0"), new MathExpression("1")),
-                new Location("label3", new MathExpression("1"), new MathExpression("1")),
-                new Location("label3", new MathExpression("2"), new MathExpression("1"))
+                new Location("label2", new CellIndexExpression("0")),
+                new Location("label2", new CellIndexExpression("1")),
+                new Location("label2", new CellIndexExpression("2")),
+                new Location("label3", new CellIndexExpression("0"), new CellIndexExpression("0")),
+                new Location("label3", new CellIndexExpression("1"), new CellIndexExpression("0")),
+                new Location("label3", new CellIndexExpression("2"), new CellIndexExpression("0")),
+                new Location("label3", new CellIndexExpression("0"), new CellIndexExpression("1")),
+                new Location("label3", new CellIndexExpression("1"), new CellIndexExpression("1")),
+                new Location("label3", new CellIndexExpression("2"), new CellIndexExpression("1"))
         );
     }
 

@@ -7,8 +7,6 @@ import java.util.Map;
 
 public abstract class Transition {
 
-    public static final float ZERO_RATE = 0f;
-
     protected VariableExpression rate;
     public final String label;
     public final List<Complex> sourceComplexes = new ArrayList<Complex>();

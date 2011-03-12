@@ -1,21 +1,20 @@
 package org.demonsoft.spatialkappa.model;
 
+import java.util.List;
 import java.util.Map;
 
 public interface SimulationState {
 
     float getTime();
+    int getEventCount();
 
-    Transition getTransition(String label);
-
-//    LocatedObservable getLocatedObservable(String label);
-
+    Map<String, Variable> getVariables();
     Variable getVariable(String label);
 
     ObservationElement getComplexQuantity(Variable variable);
+    ObservationElement getTransitionFiredCount(Variable variable);
 
-    void updateTransitionActivity(Transition transition, boolean b);
-
-    Map<String, Variable> getVariables();
-
+    void addComplexInstances(List<Agent> agents, int amount);
+    void setTransitionRate(String transitionName, VariableExpression rateExpression);
+    void stop();
 }

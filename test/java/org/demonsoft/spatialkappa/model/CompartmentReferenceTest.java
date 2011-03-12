@@ -2,18 +2,17 @@ package org.demonsoft.spatialkappa.model;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-import org.demonsoft.spatialkappa.model.Compartment;
-import org.demonsoft.spatialkappa.model.Location;
-import org.demonsoft.spatialkappa.model.MathExpression;
-import org.demonsoft.spatialkappa.model.MathExpression.Operator;
+import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.junit.Test;
 
 
@@ -21,8 +20,8 @@ public class CompartmentReferenceTest {
 
     @Test
     public void testConstructor() {
-        MathExpression expr1 = new MathExpression("2");
-        MathExpression expr2 = new MathExpression("x");
+        CellIndexExpression expr1 = new CellIndexExpression("2");
+        CellIndexExpression expr2 = new CellIndexExpression(new VariableReference("x"));
 
         try {
             new Location(null);
@@ -41,23 +40,23 @@ public class CompartmentReferenceTest {
         
         Location compartmentReference = new Location("label");
         assertEquals("label", compartmentReference.getName());
-        assertArrayEquals(new MathExpression[0], compartmentReference.getIndices());
+        assertArrayEquals(new CellIndexExpression[0], compartmentReference.getIndices());
         assertEquals("label", compartmentReference.toString());
         assertTrue(compartmentReference.isConcreteLocation());
 
         compartmentReference = new Location("label", expr1, expr2);
         assertEquals("label", compartmentReference.getName());
-        assertArrayEquals(new MathExpression[] {expr1, expr2}, compartmentReference.getIndices());
+        assertArrayEquals(new CellIndexExpression[] {expr1, expr2}, compartmentReference.getIndices());
         assertEquals("label[2]['x']", compartmentReference.toString());
         assertFalse(compartmentReference.isConcreteLocation());
 
         compartmentReference = new Location("label", 
-                new MathExpression(new MathExpression("2"), Operator.PLUS, new MathExpression("2")), 
-                new MathExpression("5"));
+                new CellIndexExpression(new CellIndexExpression("2"), Operator.PLUS, new CellIndexExpression("2")), 
+                new CellIndexExpression("5"));
         assertEquals("label[(2 + 2)][5]", compartmentReference.toString());
         assertTrue(compartmentReference.isConcreteLocation());
 
-        compartmentReference = new Location("label", new MathExpression("x"));
+        compartmentReference = new Location("label", new CellIndexExpression(new VariableReference("x")));
         assertEquals("label['x']", compartmentReference.toString());
         assertFalse(compartmentReference.isConcreteLocation());
     }
@@ -99,15 +98,15 @@ public class CompartmentReferenceTest {
 
         assertEquals(compartmentReference, compartmentReference.getConcreteLocation(variables));
 
-        compartmentReference = new Location("label", new MathExpression("2"));
+        compartmentReference = new Location("label", new CellIndexExpression("2"));
         assertEquals(compartmentReference, compartmentReference.getConcreteLocation(variables));
 
 
-        compartmentReference = new Location("label", new MathExpression("2"), new MathExpression(new MathExpression("3"), Operator.PLUS, new MathExpression("1")));
-        Location expectedReference = new Location("label", new MathExpression("2"), new MathExpression("4"));
+        compartmentReference = new Location("label", new CellIndexExpression("2"), new CellIndexExpression(new CellIndexExpression("3"), Operator.PLUS, new CellIndexExpression("1")));
+        Location expectedReference = new Location("label", new CellIndexExpression("2"), new CellIndexExpression("4"));
         assertEquals(expectedReference, compartmentReference.getConcreteLocation(variables));
 
-        compartmentReference = new Location("label", new MathExpression("x"));
+        compartmentReference = new Location("label", new CellIndexExpression(new VariableReference("x")));
         try {
             compartmentReference.getConcreteLocation(variables);
             fail("missing variable should have failed");
@@ -117,10 +116,10 @@ public class CompartmentReferenceTest {
         }
         
         variables.put("x", 7);
-        expectedReference = new Location("label", new MathExpression("7"));
+        expectedReference = new Location("label", new CellIndexExpression("7"));
         assertEquals(expectedReference, compartmentReference.getConcreteLocation(variables));
 
-        compartmentReference = new Location("label", new MathExpression("2"), new MathExpression("x"));
+        compartmentReference = new Location("label", new CellIndexExpression("2"), new CellIndexExpression(new VariableReference("x")));
         variables.clear();
         try {
             compartmentReference.getConcreteLocation(variables);
@@ -131,7 +130,7 @@ public class CompartmentReferenceTest {
         }
         
         variables.put("x", 7);
-        expectedReference = new Location("label", new MathExpression("2"), new MathExpression("7"));
+        expectedReference = new Location("label", new CellIndexExpression("2"), new CellIndexExpression("7"));
         assertEquals(expectedReference, compartmentReference.getConcreteLocation(variables));
     }
     

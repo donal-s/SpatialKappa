@@ -12,10 +12,6 @@ public class Utils {
         return getFlatString(",", false, elements.toArray());
     }
     
-    public static String getFlatString(String seperator, boolean skipNulls, List<? extends Object> elements) {
-        return getFlatString(seperator, skipNulls, elements.toArray());
-    }
-    
     public static String getFlatString(String seperator, boolean skipNulls, Object... elements) {
         StringBuilder builder = new StringBuilder();
         boolean firstWritten = false;

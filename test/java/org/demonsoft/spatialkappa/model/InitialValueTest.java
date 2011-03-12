@@ -19,7 +19,7 @@ public class InitialValueTest {
         List<Complex> complexes = Utils.getComplexes(getList(new Agent("A"), 
                 new Agent("B", new AgentSite("x", null, "1")), 
                 new Agent("C", new AgentSite("y", null, "1"))));
-        Location location = new Location("cytosol", new MathExpression("2"));
+        Location location = new Location("cytosol", new CellIndexExpression("2"));
 
         try {
             new InitialValue(null, 5, location);
@@ -61,7 +61,7 @@ public class InitialValueTest {
         List<Complex> complexes = Utils.getComplexes(getList(new Agent("A"), 
                 new Agent("B", new AgentSite("x", null, "1")), 
                 new Agent("C", new AgentSite("y", null, "1"))));
-        Location location = new Location("cytosol", new MathExpression("2"));
+        Location location = new Location("cytosol", new CellIndexExpression("2"));
         VariableReference reference = new VariableReference("variable");
 
         try {

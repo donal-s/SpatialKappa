@@ -1,16 +1,19 @@
 package org.demonsoft.spatialkappa.model;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 import java.util.HashMap;
 import java.util.Map;
 
-
-import org.demonsoft.spatialkappa.model.VariableExpression;
+import org.demonsoft.spatialkappa.model.KappaModel.ModelOnlySimulationState;
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
 import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.demonsoft.spatialkappa.model.VariableExpression.SimulationToken;
-import org.demonsoft.spatialkappa.model.KappaModel.ModelOnlySimulationState;
+import org.demonsoft.spatialkappa.model.VariableExpression.Type;
+import org.demonsoft.spatialkappa.model.VariableExpression.UnaryOperator;
 import org.junit.Test;
 
 
@@ -46,6 +49,20 @@ public class VariableExpressionTest {
         }
         try {
             new VariableExpression((VariableReference) null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // expected exception
+        }
+        try {
+            new VariableExpression(null, expr1);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // expected exception
+        }
+        try {
+            new VariableExpression(UnaryOperator.LOG, null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -88,76 +105,61 @@ public class VariableExpressionTest {
         }
         
         VariableExpression expr = new VariableExpression(new VariableReference("x"));
-        assertEquals(null, expr.getOperator());
-        assertEquals(reference, expr.getReference());
-        assertEquals(0.0f, expr.getValue());
-        assertEquals(null, expr.getLhsExpression());
-        assertEquals(null, expr.getRhsExpression());
+        assertEquals(reference, expr.reference);
+        assertEquals(Type.VARIABLE_REFERENCE, expr.type);
         assertEquals("'x'", expr.toString());
         
         expr = new VariableExpression("2");
-        assertEquals(null, expr.getOperator());
-        assertEquals(null, expr.getReference());
-        assertEquals(2.0f, expr.getValue());
-        assertEquals(null, expr.getLhsExpression());
-        assertEquals(null, expr.getRhsExpression());
+        assertEquals(Type.NUMBER, expr.type);
         assertEquals("2.0", expr.toString());
         
         expr = new VariableExpression(Constant.INFINITY);
-        assertEquals(null, expr.getOperator());
-        assertEquals(null, expr.getReference());
-        assertEquals(0f, expr.getValue());
-        assertEquals(null, expr.getLhsExpression());
-        assertEquals(null, expr.getRhsExpression());
+        assertEquals(Type.CONSTANT, expr.type);
         assertEquals("[inf]", expr.toString());
 
         expr = new VariableExpression(SimulationToken.EVENTS);
-        assertEquals(null, expr.getOperator());
-        assertEquals(null, expr.getReference());
-        assertEquals(0f, expr.getValue());
-        assertEquals(null, expr.getLhsExpression());
-        assertEquals(null, expr.getRhsExpression());
+        assertEquals(Type.SIMULATION_TOKEN, expr.type);
         assertEquals("[E]", expr.toString());
 
         expr = new VariableExpression("2.55e4");
-        assertEquals(null, expr.getOperator());
-        assertEquals(null, expr.getReference());
-        assertEquals(2.55e4f, expr.getValue());
-        assertEquals(null, expr.getLhsExpression());
-        assertEquals(null, expr.getRhsExpression());
+        assertEquals(Type.NUMBER, expr.type);
         assertEquals("25500.0", expr.toString());
         
         expr = new VariableExpression(expr1, Operator.PLUS, expr2);
-        assertEquals(Operator.PLUS, expr.getOperator());
-        assertEquals(null, expr.getReference());
-        assertEquals(0.0f, expr.getValue());
-        assertEquals(expr1, expr.getLhsExpression());
-        assertEquals(expr2, expr.getRhsExpression());
+        assertEquals(Type.BINARY_EXPRESSION, expr.type);
         assertEquals("('x' + 2.0)", expr.toString());
         
         expr = new VariableExpression(expr2, Operator.PLUS, expr2);
-        assertEquals(Operator.PLUS, expr.getOperator());
-        assertEquals(null, expr.getReference());
-        assertEquals(0.0f, expr.getValue());
-        assertEquals(expr2, expr.getLhsExpression());
-        assertEquals(expr2, expr.getRhsExpression());
+        assertEquals(Type.BINARY_EXPRESSION, expr.type);
         assertEquals("(2.0 + 2.0)", expr.toString());
         
         expr = new VariableExpression(expr1, Operator.PLUS, expr3);
-        assertEquals(Operator.PLUS, expr.getOperator());
-        assertEquals(null, expr.getReference());
-        assertEquals(0f, expr.getValue());
-        assertEquals(expr1, expr.getLhsExpression());
-        assertEquals(expr3, expr.getRhsExpression());
+        assertEquals(Type.BINARY_EXPRESSION, expr.type);
         assertEquals("('x' + [inf])", expr.toString());
         
         expr = new VariableExpression(expr2, Operator.PLUS, expr3);
-        assertEquals(Operator.PLUS, expr.getOperator());
-        assertEquals(null, expr.getReference());
-        assertEquals(0f, expr.getValue());
-        assertEquals(expr2, expr.getLhsExpression());
-        assertEquals(expr3, expr.getRhsExpression());
+        assertEquals(Type.BINARY_EXPRESSION, expr.type);
         assertEquals("(2.0 + [inf])", expr.toString());
+        
+        expr = new VariableExpression(UnaryOperator.LOG, expr1);
+        assertEquals(Type.UNARY_EXPRESSION, expr.type);
+        assertEquals("[log] ('x')", expr.toString());
+        
+        expr = new VariableExpression(UnaryOperator.SIN, expr1);
+        assertEquals(Type.UNARY_EXPRESSION, expr.type);
+        assertEquals("[sin] ('x')", expr.toString());
+        
+        expr = new VariableExpression(UnaryOperator.COS, expr1);
+        assertEquals(Type.UNARY_EXPRESSION, expr.type);
+        assertEquals("[cos] ('x')", expr.toString());
+        
+        expr = new VariableExpression(UnaryOperator.TAN, expr1);
+        assertEquals(Type.UNARY_EXPRESSION, expr.type);
+        assertEquals("[tan] ('x')", expr.toString());
+        
+        expr = new VariableExpression(UnaryOperator.SQRT, expr1);
+        assertEquals(Type.UNARY_EXPRESSION, expr.type);
+        assertEquals("[sqrt] ('x')", expr.toString());
     }
     
     @Test
@@ -185,6 +187,14 @@ public class VariableExpressionTest {
         expr = new VariableExpression(new VariableExpression("2"), Operator.MULTIPLY, new VariableExpression(SimulationToken.TIME));
         assertFalse(expr.isFixed(variables));
 
+        expr = new VariableExpression(UnaryOperator.LOG, new VariableExpression("3"));
+        assertTrue(expr.isFixed(variables));
+
+        expr = new VariableExpression(UnaryOperator.LOG, new VariableExpression(SimulationToken.TIME));
+        assertFalse(expr.isFixed(variables));
+
+        expr = new VariableExpression(UnaryOperator.LOG, new VariableExpression(Constant.INFINITY));
+        assertTrue(expr.isFixed(variables));
         
         
         expr = new VariableExpression(new VariableReference("x"));
@@ -241,6 +251,7 @@ public class VariableExpressionTest {
 
         assertFalse(new VariableExpression("2.55e4").isInfinite(variables));
         assertTrue(new VariableExpression(Constant.INFINITY).isInfinite(variables));
+        assertFalse(new VariableExpression(Constant.PI).isInfinite(variables));
         assertFalse(new VariableExpression(SimulationToken.EVENTS).isInfinite(variables));
         
         expr = new VariableExpression(new VariableExpression("2"), Operator.PLUS, new VariableExpression("3"));
@@ -249,6 +260,17 @@ public class VariableExpressionTest {
         expr = new VariableExpression(new VariableExpression("2"), Operator.MULTIPLY, new VariableExpression(SimulationToken.TIME));
         assertFalse(expr.isInfinite(variables));
 
+        expr = new VariableExpression(new VariableExpression("2"), Operator.MULTIPLY, new VariableExpression(Constant.INFINITY));
+        assertTrue(expr.isInfinite(variables));
+
+        expr = new VariableExpression(UnaryOperator.LOG, new VariableExpression("3"));
+        assertFalse(expr.isInfinite(variables));
+
+        expr = new VariableExpression(UnaryOperator.LOG, new VariableExpression(SimulationToken.TIME));
+        assertFalse(expr.isInfinite(variables));
+
+        expr = new VariableExpression(UnaryOperator.LOG, new VariableExpression(Constant.INFINITY));
+        assertTrue(expr.isInfinite(variables));
         
         
         expr = new VariableExpression(new VariableReference("x"));
@@ -339,14 +361,25 @@ public class VariableExpressionTest {
         assertEquals(3.5f, new VariableExpression(new VariableExpression("7"), Operator.DIVIDE, new VariableExpression("2")).evaluate(state).value);
         assertEquals(0.0f, new VariableExpression(new VariableExpression("0"), Operator.MODULUS, new VariableExpression("5")).evaluate(state).value);
         assertEquals(2.0f, new VariableExpression(new VariableExpression("7"), Operator.MODULUS, new VariableExpression("5")).evaluate(state).value);
+        assertEquals(8.0f, new VariableExpression(new VariableExpression("2"), Operator.POWER, new VariableExpression("3")).evaluate(state).value);
         
         assertEquals(12.0f, new VariableExpression(referenceX).evaluate(state).value);
         assertEquals(15.0f, new VariableExpression(new VariableExpression(referenceX), Operator.PLUS, new VariableExpression(referenceY)).evaluate(state).value);
         assertEquals(9.0f, new VariableExpression(new VariableExpression(referenceX), Operator.MINUS, new VariableExpression(referenceY)).evaluate(state).value);
         assertEquals(36.0f, new VariableExpression(new VariableExpression(referenceX), Operator.MULTIPLY, new VariableExpression(referenceY)).evaluate(state).value);
         assertEquals(4.0f, new VariableExpression(new VariableExpression(referenceX), Operator.DIVIDE, new VariableExpression(referenceY)).evaluate(state).value);
+
+        variables.put("y", new Variable(new VariableExpression(100), "y"));
+        assertEquals(4.61f, new VariableExpression(UnaryOperator.LOG, new VariableExpression(referenceY)).evaluate(state).value, 0.01f);
+        assertEquals(-0.51f, new VariableExpression(UnaryOperator.SIN, new VariableExpression(referenceY)).evaluate(state).value, 0.01f);
+        assertEquals(0.86f, new VariableExpression(UnaryOperator.COS, new VariableExpression(referenceY)).evaluate(state).value, 0.01f);
+        assertEquals(-0.59f, new VariableExpression(UnaryOperator.TAN, new VariableExpression(referenceY)).evaluate(state).value, 0.01f);
+        assertEquals(10.0f, new VariableExpression(UnaryOperator.SQRT, new VariableExpression(referenceY)).evaluate(state).value);
         
-        // TODO handle simulation constants
+        variables.put("y", new Variable(new VariableExpression(3), "y"));
+        assertEquals(20.09f, new VariableExpression(UnaryOperator.EXP, new VariableExpression(referenceY)).evaluate(state).value, 0.01f);
+
+        // TODO handle simulation tokens
     }
     
 }

@@ -1,8 +1,16 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import org.demonsoft.spatialkappa.model.Variable.Type;
+import org.easymock.EasyMock;
 import org.junit.Test;
 
 public class VariableTest {
@@ -34,20 +42,12 @@ public class VariableTest {
         assertNull(variable.complex);
         assertEquals("'label' ('x')", variable.toString());
         assertSame(Type.VARIABLE_EXPRESSION, variable.type);
- 
-        variable = new Variable(expression, "label");
-        assertEquals("label", variable.label);
-        assertSame(expression, variable.expression);
-        assertNull(variable.location);
-        assertNull(variable.complex);
-        assertEquals("'label' ('x')", variable.toString());
-        assertSame(Type.VARIABLE_EXPRESSION, variable.type);
     }
 
     @Test
     public void testVariable_kappaExpression() {
         Complex complex = new Complex(new Agent("agent1"));
-        Location location = new Location("cytosol", new MathExpression("2"));
+        Location location = new Location("cytosol", new CellIndexExpression("2"));
         
         try {
             new Variable(null, location, "label");
@@ -99,6 +99,41 @@ public class VariableTest {
         assertNull(variable.complex);
         assertEquals("'label'", variable.toString());
         assertSame(Type.TRANSITION_LABEL, variable.type);
+    }
+
+    @Test
+    public void testEvaluate() {
+        SimulationState state = EasyMock.createMock(SimulationState.class);
+        
+        try {
+            new Variable("label").evaluate(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // expected exception
+        }
+
+        Variable variable = new Variable(new VariableExpression(2), "label");
+        assertEquals(2f, variable.evaluate(state).value, 0.1f);
+
+        Complex complex = new Complex(new Agent("agent1"));
+        Location location = new Location("cytosol", new CellIndexExpression("2"));
+        variable = new Variable(complex, location, "label");
+
+        expect(state.getComplexQuantity(variable)).andReturn(new ObservationElement(3));
+        
+        replay(state);
+        assertEquals(3f, variable.evaluate(state).value, 0.1f);
+        verify(state);
+        
+        variable = new Variable("label");
+        
+        reset(state);
+        expect(state.getTransitionFiredCount(variable)).andReturn(new ObservationElement(4));
+        
+        replay(state);
+        assertEquals(4f, variable.evaluate(state).value, 0.1f);
+        verify(state);
     }
 
 }

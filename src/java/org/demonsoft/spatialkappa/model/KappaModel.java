@@ -17,13 +17,14 @@ public class KappaModel implements IKappaModel {
     private final List<LocatedTransform> locatedTransforms = new ArrayList<LocatedTransform>();
     private final Map<String, AggregateAgent> aggregateAgentMap = new HashMap<String, AggregateAgent>();
     private final List<InitialValue> initialValues = new ArrayList<InitialValue>();
-//    private final List<LocatedObservable> locatedObservables = new ArrayList<LocatedObservable>();
     private final List<Perturbation> perturbations = new ArrayList<Perturbation>();
     private final List<Compartment> compartments = new ArrayList<Compartment>();
     private final List<CompartmentLink> compartmentLinks = new ArrayList<CompartmentLink>();
     private final List<Transport> transports = new ArrayList<Transport>();
     private final Set<Complex> canonicalComplexes = new HashSet<Complex>();
     private final List<String> plottedVariables = new ArrayList<String>();
+    private final Map<String, Variable> variables = new HashMap<String, Variable>();
+
 
     public void addTransform(Direction direction, String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, VariableExpression forwardRate, VariableExpression backwardRate,
             Location location) {
@@ -45,13 +46,6 @@ public class KappaModel implements IKappaModel {
             throw new IllegalArgumentException("Invalid transform type: " + direction);
         }
 
-//        List<Complex> leftComplexes = (leftSideAgents != null) ? Utils.getComplexes(leftSideAgents) : null;
-//        List<Complex> rightComplexes = (rightSideAgents != null) ? Utils.getComplexes(rightSideAgents) : null;
-
-//        addTransform(new LocatedTransform(new Transform(label, leftComplexes, rightComplexes, forwardRate), location));
-//        if (Direction.BIDIRECTIONAL == direction) {
-//            addTransform(new LocatedTransform(new Transform(label, rightComplexes, leftComplexes, backwardRate), location));
-//        }
         addTransform(new LocatedTransform(new Transform(label, leftSideAgents, rightSideAgents, forwardRate, false), location));
         if (Direction.BIDIRECTIONAL == direction) {
             addTransform(new LocatedTransform(new Transform(label, rightSideAgents, leftSideAgents, backwardRate, false), location));
@@ -62,7 +56,7 @@ public class KappaModel implements IKappaModel {
     }
 
 
-    public void addTransform(LocatedTransform transform) {
+    private void addTransform(LocatedTransform transform) {
         if (transform == null) {
             throw new NullPointerException();
         }
@@ -134,15 +128,17 @@ public class KappaModel implements IKappaModel {
     }
 
     public void addVariable(List<Agent> agents, String label, Location location) {
-        if (label == null) {
-            throw new NullPointerException();
-        }
         variables.put(label, new Variable(new Complex(agents), location, label));
 
         for (Agent agent : agents) {
             aggregateAgent(agent);
         }
     }
+    
+    public void addVariable(VariableExpression expression, String label) {
+        variables.put(label, new Variable(expression, label));
+    }
+
 
     public void addPlot(String label) {
         if (label == null) {
@@ -212,10 +208,6 @@ public class KappaModel implements IKappaModel {
         for (Variable variable : variables.values()) {
             result.append(variable).append("\n");
         }
-//        result.append("\nOBSERVABLES\n");
-//        for (LocatedObservable observable : locatedObservables) {
-//            result.append(observable).append("\n");
-//        }
         result.append("\nPERTURBATIONS\n");
         for (Perturbation perturbation : perturbations) {
             result.append(perturbation).append("\n");
@@ -223,21 +215,7 @@ public class KappaModel implements IKappaModel {
         return result.toString();
     }
 
-    public List<InitialValue> getInitialValues() {
-        return initialValues;
-    }
-
-    public Map<Complex, Integer> getInitialValuesMap() {
-        Map<Complex, Integer> result = new HashMap<Complex, Integer>();
-        for (InitialValue value : initialValues) {
-            for (Complex complex : value.complexes) {
-                result.put(complex, value.quantity);
-            }
-        }
-        return result;
-    }
-
-    public Map<LocatedComplex, Integer> getConcreteLocatedInitialValuesMap() {
+    public Map<LocatedComplex, Integer> getFixedLocatedInitialValuesMap() {
         Map<LocatedComplex, Integer> result = new HashMap<LocatedComplex, Integer>();
         SimulationState modelSimulationState = new ModelOnlySimulationState(variables);
         
@@ -309,30 +287,6 @@ public class KappaModel implements IKappaModel {
         result.put(locatedComplex, quantity);
     }
 
-    public List<String> getPlottedVariables() {
-        return plottedVariables;
-    }
-    
-//    public List<Observable> getVisibleObservables() {
-//        List<Observable> result = new ArrayList<Observable>();
-//        for (LocatedObservable observable : locatedObservables) {
-//            if (plottedVariables.contains(observable.label)) {
-//                result.add(observable.observable);
-//            }
-//        }
-//        return result;
-//    }
-
-//    public List<LocatedObservable> getVisibleLocatedObservables() {
-//        List<LocatedObservable> result = new ArrayList<LocatedObservable>();
-//        for (LocatedObservable observable : locatedObservables) {
-//            if (plottedVariables.contains(observable.label)) {
-//                result.add(observable);
-//            }
-//        }
-//        return result;
-//    }
-
     public void addTransport(String label, String compartmentLinkName, List<Agent> agents, VariableExpression rate) {
         addTransport(new Transport(label, compartmentLinkName, agents, rate));
         if (label != null) {
@@ -340,11 +294,11 @@ public class KappaModel implements IKappaModel {
         }
     }
 
-    void addTransport(Transport transport) {
+    private void addTransport(Transport transport) {
         transports.add(transport);
     }
 
-    public List<LocatedTransition> getConcreteLocatedTransitions() {
+    public List<LocatedTransition> getFixedLocatedTransitions() {
         List<LocatedTransition> result = new ArrayList<LocatedTransition>();
         for (LocatedTransform transition : locatedTransforms) {
             Location location = transition.sourceLocation;
@@ -412,26 +366,6 @@ public class KappaModel implements IKappaModel {
         return locatedTransforms;
     }
 
-//    public List<LocatedObservable> getLocatedObservables() {
-//        return locatedObservables;
-//    }
-
-//    public List<Observable> getObservables() {
-//        List<Observable> result = new ArrayList<Observable>();
-//        for (LocatedObservable observable : locatedObservables) {
-//            result.add(observable.observable);
-//        }
-//        return result;
-//    }
-
-    public List<Transform> getTransforms() {
-        List<Transform> result = new ArrayList<Transform>();
-        for (LocatedTransform transform : locatedTransforms) {
-            result.add((Transform) transform.transition);
-        }
-        return result;
-    }
-
     public List<Compartment> getCompartments() {
         return compartments;
     }
@@ -452,36 +386,31 @@ public class KappaModel implements IKappaModel {
         return perturbations;
     }
     
-    
-
-
-    final Map<String, Variable> variables = new HashMap<String, Variable>();
-
-    public void addVariable(VariableExpression expression, String label) {
-        variables.put(label, new Variable(expression, label));
+    public List<InitialValue> getInitialValues() {
+        return initialValues;
     }
 
+    public List<String> getPlottedVariables() {
+        return plottedVariables;
+    }
+    
     public Map<String, Variable> getVariables() {
         return variables;
     }
+
+    
+
 
 
     public void validate() {
         
         for (Variable variable : variables.values()) {
-            if (Variable.Type.VARIABLE_EXPRESSION == variable.type) {
-                VariableReference reference = variable.expression.getReference();
-                if (reference != null) {
-                    Variable other = variables.get(reference.variableName);
-                    if (other == null) {
-                        throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
-                    }
+            if (Variable.Type.VARIABLE_EXPRESSION == variable.type && VariableExpression.Type.VARIABLE_REFERENCE == variable.expression.type) {
+                VariableReference reference = variable.expression.reference;
+                Variable other = variables.get(reference.variableName);
+                if (other == null) {
+                    throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
                 }
-//            else if (variable. != null) {
-//                Variable other = variables.get(reference.variableName);
-//                if (other == null) {
-//                    throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
-//                }
             }
         }
         
@@ -528,7 +457,7 @@ public class KappaModel implements IKappaModel {
         }
         
         for (LocatedTransform transform : locatedTransforms) {
-            VariableReference reference = transform.transition.rate.getReference();
+            VariableReference reference = transform.transition.rate.reference;
             if (reference != null) {
                 Variable variable = variables.get(reference.variableName);
                 if (variable == null) {
@@ -541,7 +470,7 @@ public class KappaModel implements IKappaModel {
         }
         
         for (Transport transport : transports) {
-            VariableReference reference = transport.rate.getReference();
+            VariableReference reference = transport.rate.reference;
             if (reference != null) {
                 Variable variable = variables.get(reference.variableName);
                 if (variable == null) {
@@ -584,15 +513,6 @@ public class KappaModel implements IKappaModel {
             if (found) {
                 continue;
             }
-//            for (LocatedObservable observable : locatedObservables) {
-//                if (reference.equals(observable.label)) {
-//                    found = true;
-//                    break;
-//                }
-//            }
-//            if (found) {
-//                continue;
-//            }
             
             Variable variable = variables.get(reference);
             if (variable == null) {
@@ -617,10 +537,6 @@ public class KappaModel implements IKappaModel {
             throw new IllegalStateException("Should not be called");
         }
 
-        public Transition getTransition(String label) {
-            throw new IllegalStateException("Should not be called");
-        }
-
         public Variable getVariable(String label) {
             return variables.get(label);
         }
@@ -629,12 +545,28 @@ public class KappaModel implements IKappaModel {
             throw new IllegalStateException("Should not be called");
         }
 
-        public void updateTransitionActivity(Transition transition, boolean b) {
+        public Map<String, Variable> getVariables() {
+            return variables;
+        }
+
+        public int getEventCount() {
             throw new IllegalStateException("Should not be called");
         }
 
-        public Map<String, Variable> getVariables() {
-            return variables;
+        public ObservationElement getTransitionFiredCount(Variable variable) {
+            throw new IllegalStateException("Should not be called");
+        }
+
+        public void addComplexInstances(List<Agent> agents, int amount) {
+            throw new IllegalStateException("Should not be called");
+        }
+
+        public void setTransitionRate(String transitionName, VariableExpression expression) {
+            throw new IllegalStateException("Should not be called");
+        }
+
+        public void stop() {
+            throw new IllegalStateException("Should not be called");
         }
         
     }

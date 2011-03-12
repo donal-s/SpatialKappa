@@ -1,17 +1,14 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
 
-
-import org.demonsoft.spatialkappa.model.Compartment;
-import org.demonsoft.spatialkappa.model.CompartmentLink;
-import org.demonsoft.spatialkappa.model.Direction;
-import org.demonsoft.spatialkappa.model.Location;
-import org.demonsoft.spatialkappa.model.MathExpression;
-import org.demonsoft.spatialkappa.model.MathExpression.Operator;
+import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.junit.Test;
 
 public class CompartmentLinkTest {
@@ -134,39 +131,41 @@ public class CompartmentLinkTest {
         
         // Single cell-cell link
         compartments.clear();
-        reference1 = new Location("a", new MathExpression("1"));
-        reference2 = new Location("a", new MathExpression("2"));
+        reference1 = new Location("a", new CellIndexExpression("1"));
+        reference2 = new Location("a", new CellIndexExpression("2"));
         compartmentLink = new CompartmentLink("label", reference1, reference2, Direction.FORWARD);
         compartments.add(new Compartment("a", 4));
         
         assertArrayEquals(new Location[][] {
-                { new Location("a", new MathExpression("1")), new Location("a", new MathExpression("2")) }
+                { new Location("a", new CellIndexExpression("1")), new Location("a", new CellIndexExpression("2")) }
                 }, compartmentLink.getCellReferencePairs(compartments));
 
+        VariableReference refX = new VariableReference("x");
+        
         // Linear array
         compartments.clear();
-        reference1 = new Location("a", new MathExpression("x"));
-        reference2 = new Location("a", new MathExpression(new MathExpression("x"), Operator.PLUS, new MathExpression("1")));
+        reference1 = new Location("a", new CellIndexExpression(refX));
+        reference2 = new Location("a", new CellIndexExpression(new CellIndexExpression(refX), Operator.PLUS, new CellIndexExpression("1")));
         compartmentLink = new CompartmentLink("label", reference1, reference2, Direction.FORWARD);
         compartments.add(new Compartment("a", 4));
         
         assertArrayEquals(new Location[][] {
-                { new Location("a", new MathExpression("0")), new Location("a", new MathExpression("1")) },
-                { new Location("a", new MathExpression("1")), new Location("a", new MathExpression("2")) },
-                { new Location("a", new MathExpression("2")), new Location("a", new MathExpression("3")) },
+                { new Location("a", new CellIndexExpression("0")), new Location("a", new CellIndexExpression("1")) },
+                { new Location("a", new CellIndexExpression("1")), new Location("a", new CellIndexExpression("2")) },
+                { new Location("a", new CellIndexExpression("2")), new Location("a", new CellIndexExpression("3")) },
                 }, compartmentLink.getCellReferencePairs(compartments));
 
         // Linear array negative
         compartments.clear();
-        reference1 = new Location("a", new MathExpression("x"));
-        reference2 = new Location("a", new MathExpression(new MathExpression("x"), Operator.MINUS, new MathExpression("1")));
+        reference1 = new Location("a", new CellIndexExpression(refX));
+        reference2 = new Location("a", new CellIndexExpression(new CellIndexExpression(refX), Operator.MINUS, new CellIndexExpression("1")));
         compartmentLink = new CompartmentLink("label", reference1, reference2, Direction.FORWARD);
         compartments.add(new Compartment("a", 4));
         
         assertArrayEquals(new Location[][] {
-                { new Location("a", new MathExpression("1")), new Location("a", new MathExpression("0")) },
-                { new Location("a", new MathExpression("2")), new Location("a", new MathExpression("1")) },
-                { new Location("a", new MathExpression("3")), new Location("a", new MathExpression("2")) },
+                { new Location("a", new CellIndexExpression("1")), new Location("a", new CellIndexExpression("0")) },
+                { new Location("a", new CellIndexExpression("2")), new Location("a", new CellIndexExpression("1")) },
+                { new Location("a", new CellIndexExpression("3")), new Location("a", new CellIndexExpression("2")) },
                 }, compartmentLink.getCellReferencePairs(compartments));
         
     }

@@ -374,7 +374,7 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
             multiplePanel.removeAll();
             for (String observable : observation.orderedObservables) {
                 ObservationElement element = observation.observables.get(observable);
-                int value = (int) element.value;
+                float value = element.value;
                 XYSeries series = new XYSeries(observable);
                 series.add(observation.time, value);
                 chartData.addSeries(series);
@@ -586,7 +586,7 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
                 public void run() {
                     for (Map.Entry<String, ObservationElement> entry : observation.observables.entrySet()) {
                         String key = entry.getKey();
-                        int value = (int) entry.getValue().value;
+                        float value = entry.getValue().value;
                         XYSeries series = chartData.getSeries(key);
                         series.add(observation.time, value, !replayRunning);
                     }

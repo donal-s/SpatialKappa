@@ -30,7 +30,7 @@ public class Transform extends Transition {
     public Transform(String label, List<Complex> leftSideComplexes, List<Complex> rightSideComplexes, VariableExpression rate) {
         super(label, rate);
         if ((leftSideComplexes == null || leftSideComplexes.size() == 0) && (rightSideComplexes == null || rightSideComplexes.size() == 0)) {
-            throw new IllegalArgumentException("Both left and right agent lists may not be empty");
+            throw new IllegalArgumentException("Both left and right complex lists may not be empty");
         }
 
         if (leftSideComplexes != null) {

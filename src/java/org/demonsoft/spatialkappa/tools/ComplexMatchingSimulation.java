@@ -91,18 +91,18 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
         initialiseActivityMaps();
     }
 
-    protected void increaseTransitionActivities(Complex complex, Location location) {
+    private void increaseTransitionActivities(Complex complex, Location location) {
         invalidateTransitionActivities(complex, location);
     }
 
-    protected void reduceTransitionActivities(Complex complex, Location location) {
+    private void reduceTransitionActivities(Complex complex, Location location) {
         invalidateTransitionActivities(complex, location);
         if (complexStore.getComplexQuantity(complex, location) == 0) {
             removeComplexFromObservables(complex, location);
         }
     }
 
-    protected void invalidateTransitionActivities(Complex complex, Location location) {
+    private void invalidateTransitionActivities(Complex complex, Location location) {
         Set<Transition> affectedTransitions = new HashSet<Transition>();
         if (complexTransitionMap.containsKey(complex)) {
             affectedTransitions.addAll(complexTransitionMap.get(complex));
@@ -126,8 +126,7 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
 
     }
 
-    @Override
-    protected void initialiseActivityMaps() {
+    private void initialiseActivityMaps() {
         finiteRateTransitionActivityMap.clear();
         infiniteRateTransitionActivityMap.clear();
 
@@ -158,7 +157,7 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
         return result;
     }
 
-    protected void addNewComplexToState(Complex complex, Location location) {
+    private void addNewComplexToState(Complex complex, Location location) {
         updateTransitionComplexMap(complex);
         updateComplexTransitionMap(complex);
         addComplexToObservables(complex, location);
@@ -170,7 +169,7 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
         }
     }
 
-    protected void updateComplexTransitionMap(Complex complex) {
+    private void updateComplexTransitionMap(Complex complex) {
         if (!complexTransitionMap.containsKey(complex)) {
             List<Transition> currentTransitions = new ArrayList<Transition>();
             for (LocatedTransition transition : finiteRateTransitions) {
@@ -199,7 +198,7 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
         }
     }
 
-    protected void markComplexUsed(Complex complex) {
+    private void markComplexUsed(Complex complex) {
         if (!transformCacheUsed) {
             return;
         }
@@ -207,7 +206,7 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
         unusedComplexes.remove(complex);
     }
 
-    protected void markComplexUnused(Complex complex) {
+    private void markComplexUnused(Complex complex) {
         if (!transformCacheUsed) {
             return;
         }
@@ -251,7 +250,7 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
         }
     }
 
-    protected void updateTransitionComplexMap(Complex concreteComplex) {
+    private void updateTransitionComplexMap(Complex concreteComplex) {
         ComplexMatcher matcher = new ComplexMatcher();
         for (LocatedTransition transition : finiteRateTransitions) {
             List<Complex> sourceComplexes = transition.transition.sourceComplexes;
@@ -277,7 +276,7 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
         }
     }
 
-    protected void updateTransitionComplexMap() {
+    private void updateTransitionComplexMap() {
         ComplexMatcher matcher = new ComplexMatcher();
         for (Transition transition : getAllTransitions()) {
             for (Complex transitionComplex : transition.sourceComplexes) {
@@ -295,13 +294,12 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
         }
     }
 
-    @Override
-    protected ComplexMapping pickComplexMapping(Complex component, Location location) {
+    private ComplexMapping pickComplexMapping(Complex component, Location location) {
         List<ComplexMapping> sourceComplexMappings = transitionComplexMap.get(component);
         return pickComplexMapping(sourceComplexMappings, location);
     }
 
-    protected ComplexMapping pickComplexMapping(List<ComplexMapping> complexMappings, Location location) {
+    private ComplexMapping pickComplexMapping(List<ComplexMapping> complexMappings, Location location) {
         int totalQuantity = 0;
         for (ComplexMapping complexMapping : complexMappings) {
             totalQuantity += complexStore.getComplexQuantity(complexMapping.target, location);
@@ -322,8 +320,7 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
         return null;
     }
 
-    @Override
-    protected Complex pickComplex(List<Complex> components, Location location) {
+    private Complex pickComplex(List<Complex> components, Location location) {
         List<ComplexMapping> complexMappings = new ArrayList<ComplexMapping>();
         for (Complex templateComplex : components) {
             complexMappings.addAll(transitionComplexMap.get(templateComplex));
@@ -517,14 +514,5 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
         }
         return new ObservationElement(value);
     }
-
-    public void setUnusedQueueLength(int queueLength) {
-        unusedQueueLength = queueLength;
-    }
-
-    public void setUseTransformCache(boolean value) {
-        transformCacheUsed = value;
-    }
-
 
 }

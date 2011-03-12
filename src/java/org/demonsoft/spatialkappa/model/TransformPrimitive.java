@@ -174,9 +174,6 @@ abstract class TransformPrimitive {
 
                     if (mappedTargetAgent.getComplex() != mappedSourceAgent.getComplex()) {
                         throw new IllegalArgumentException("Link sites not in same complex");
-//                    mappedTargetAgent.getComplex().incrementLinkNames(Integer.parseInt(getNewLinkId(targetComplexes)) - 1);
-//                    targetComplexes.remove(mappedTargetAgent.getComplex());
-//                    mappedSourceAgent.getComplex().mergeComplex(mappedTargetAgent.getComplex());
                     }
                 }
             }

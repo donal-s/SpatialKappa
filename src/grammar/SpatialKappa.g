@@ -20,29 +20,45 @@ tokens {
   LHS;
   RHS;
   RATE;
-  RATEVALUE;
-  RULE;
   PERTURBATION;
-  TIME_INEQUALITY;
-  CONCENTRATION_INEQUALITY;
-  GREATER_THAN;
-  LESS_THAN;
-  ASSIGNMENT;
-  CONCENTRATION_EXPRESSION;
   COMPARTMENT;
   DIMENSION;
   COMPARTMENT_LINK;
   LOCATION;
-  MATH_EXPR;
+  CELL_INDEX_EXPR;
   INDEX;
   TRANSPORT;
   TRANSFORM;
   ID;
   LABEL;
-  VAR;
   VAR_EXPR;
   VAR_INFINITY;
   PLOT;
+  CONDITION;
+  EFFECT;
+  UNTIL;
+  SNAPSHOT;
+  STOP;
+  ADD;
+  REMOVE;
+  SET;
+  BOOL_EXPR;
+  AND;
+  OR;
+  NOT;
+  TRUE;
+  FALSE;
+  TIME;
+  EVENTS;
+  TARGET;
+  LOG;
+  MODULUS;
+  PI;
+  SIN;
+  COS;
+  TAN;
+  SQRT;
+  EXP;
 }
 
 @header        {package org.demonsoft.spatialkappa.parser;}
@@ -201,9 +217,9 @@ locationExpr
 
 compartmentIndexExpr
   :
-  '[' mathExpr ']'
+  '[' cellIndexExpr ']'
     ->
-      ^(INDEX mathExpr)
+      ^(INDEX cellIndexExpr)
   ;
 
 plotExpr
@@ -273,89 +289,118 @@ options {backtrack=true;}
   | '[' 'inf' ']'
     ->
       ^(VAR_EXPR VAR_INFINITY)
+  | '[' 'pi' ']'
+    ->
+      ^(VAR_EXPR PI)
+  | '[' 'T' ']'
+    ->
+      ^(VAR_EXPR TIME)
+  | '[' 'E' ']'
+    ->
+      ^(VAR_EXPR EVENTS)
+  | operator_unary varAlgebraAtom
+    ->
+      ^(VAR_EXPR operator_unary varAlgebraAtom)
+  | operator_binary_prefix a=varAlgebraAtom b=varAlgebraAtom
+    ->
+      ^(VAR_EXPR operator_binary_prefix $a $b)
   ;
   
 modExpr
   :
-  '%mod:' concentrationInequality 'do' assignment
+  '%mod:' booleanExpression 'do' effect untilExpression?
     ->
-      ^(PERTURBATION concentrationInequality assignment)
-  | '%mod:' timeInequality 'do' assignment
-    ->
-      ^(PERTURBATION timeInequality assignment)
-  ;
-  
-timeInequality
-  :
-  '$T' '>' number
-    ->
-      ^(TIME_INEQUALITY number)
-  ;
-  
-concentrationInequality
-options {backtrack=true;}
-  :
-  concentrationExpression '>' concentrationExpression
-    ->
-      ^(CONCENTRATION_INEQUALITY concentrationExpression GREATER_THAN concentrationExpression)
-  | concentrationExpression '<' concentrationExpression
-    ->
-      ^(CONCENTRATION_INEQUALITY concentrationExpression LESS_THAN concentrationExpression)
+      ^(PERTURBATION ^(CONDITION booleanExpression) effect untilExpression?)
   ;
   
 
-assignment
-  :
-  label ':=' '$INF'
-    ->
-      ^(ASSIGNMENT label VAR_INFINITY)
-  | label ':=' a=concentrationExpression
-    ->
-      ^(ASSIGNMENT label $a)
-  ;
-
-concentrationExpression
-  :
-  '(' concentrationExpression ')'
-    ->
-      concentrationExpression
-  | label operator concentrationExpression
-    ->
-      ^(CONCENTRATION_EXPRESSION label operator concentrationExpression)
-  | number operator concentrationExpression
-    ->
-      ^(CONCENTRATION_EXPRESSION number operator concentrationExpression)
-  | label
-    ->
-      ^(CONCENTRATION_EXPRESSION label)
-  | number
-    ->
-      ^(CONCENTRATION_EXPRESSION number)
-  ;
-  
-mathExpr
+booleanExpression
 options {backtrack=true;}
   :
-  a=mathAtom operator b=mathAtom
+  (a=booleanAtom -> $a) (op=booleanOperator b=booleanAtom -> ^(BOOL_EXPR $op $booleanExpression $b) )*
+  ;
+  
+booleanOperator
+  :
+  '&&' -> AND
+  | '||' -> OR
+  ;
+
+relationalOperator
+  :
+  '<' | '>' | '='
+  ;
+
+  
+booleanAtom
+options {backtrack=true;}
+  :
+  '(' booleanExpression ')'
     ->
-      ^(MATH_EXPR operator $a $b)
-  | a=mathAtom
+      booleanExpression
+  | '[' 'true' ']'
+    ->
+      ^(BOOL_EXPR TRUE)
+  | '[' 'false' ']'
+    ->
+      ^(BOOL_EXPR FALSE)
+  | '[' 'not' ']' booleanAtom
+    ->
+      ^(BOOL_EXPR NOT booleanAtom)
+  | a=varAlgebraExpr relationalOperator b=varAlgebraExpr
+    ->
+      ^(BOOL_EXPR relationalOperator $a $b)
+  ;
+
+effect
+  :
+  '$SNAPSHOT'
+    ->
+      ^(EFFECT SNAPSHOT)
+  | '$STOP'
+    ->
+      ^(EFFECT STOP)
+  | '$ADD' varAlgebraExpr agentGroup
+    ->
+      ^(EFFECT ADD varAlgebraExpr agentGroup)
+  | '$DEL' varAlgebraExpr agentGroup
+    ->
+      ^(EFFECT REMOVE varAlgebraExpr agentGroup)
+  | label ':=' varAlgebraExpr
+    ->
+      ^(EFFECT SET ^(TARGET label) varAlgebraExpr)
+  ;
+  
+untilExpression
+  :
+  'until' booleanExpression
+    ->
+      ^(UNTIL booleanExpression)
+  ;
+  
+cellIndexExpr
+options {backtrack=true;}
+  :
+  a=cellIndexAtom operator_cell_index b=cellIndexAtom
+    ->
+      ^(CELL_INDEX_EXPR operator_cell_index $a $b)
+  | a=cellIndexAtom
     ->
       $a
   ;
   
-mathAtom
+cellIndexAtom
 options {backtrack=true;}
   :
-  '(' mathExpr ')'
+  '(' cellIndexExpr ')'
     ->
-      mathExpr
+      cellIndexExpr
   | INT
     ->
-      ^(MATH_EXPR INT)
+      ^(CELL_INDEX_EXPR INT)
   | label
     ->
-      ^(MATH_EXPR label)
+      ^(CELL_INDEX_EXPR label)
   ;
   
 id
@@ -381,7 +426,7 @@ number
   )
   ;
   
-operator
+operator_cell_index
   :
   '+'
   | '*'
@@ -396,11 +441,25 @@ operator_exp
   | '^'
   ;
 
+operator_unary
+  :
+  '[' 'log' ']' -> LOG
+  | '[' 'sin' ']' -> SIN
+  | '[' 'cos' ']' -> COS
+  | '[' 'tan' ']' -> TAN
+  | '[' 'sqrt' ']' -> SQRT
+  | '[' 'exp' ']' -> EXP
+  ;
+
+operator_binary_prefix
+  :
+  '[' 'mod' ']' -> MODULUS
+  ;
+
 operator_mult
   :
   '*'
   | '/'
-  | '%'
   ;
 
 operator_add

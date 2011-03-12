@@ -105,8 +105,11 @@ public class Variable {
             }
             return "'" + label + "' " + location + " (" + complex + ")";
             
-        default:
+        case TRANSITION_LABEL:
             return "'" + label + "'";
+            
+        default:
+            throw new IllegalStateException();
         }
     }
 
@@ -118,8 +121,11 @@ public class Variable {
         case KAPPA_EXPRESSION:
             return state.getComplexQuantity(this);
             
+        case TRANSITION_LABEL:
+            return state.getTransitionFiredCount(this);
+            
         default:
-            return null;
+            throw new IllegalStateException();
         }
     }
 

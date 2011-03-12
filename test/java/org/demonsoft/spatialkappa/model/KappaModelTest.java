@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.demonsoft.spatialkappa.model.MathExpression.Operator;
+import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
 import org.demonsoft.spatialkappa.model.VariableExpression.SimulationToken;
 import org.junit.Test;
@@ -94,13 +94,13 @@ public class KappaModelTest {
         List<Complex> rightComplexes = TransformTest.getComplexes(new Agent("agent2"));
         List<Agent> leftAgents = Transform.getAgents(leftComplexes);
         List<Agent> rightAgents = Transform.getAgents(rightComplexes);
-        Location location = new Location("cytosol", new MathExpression("2"));
+        Location location = new Location("cytosol", new CellIndexExpression("2"));
 
         model.addTransform(Direction.FORWARD, "label", leftAgents, rightAgents, new VariableExpression(0.1f), null, location);
 
         Transform transform1 = new Transform("label", leftComplexes, rightComplexes, 0.1f);
         checkTransforms(model, location, new Transform[] { transform1 });
-        assertEquals(new Variable("label"), model.variables.get("label"));
+        assertEquals(new Variable("label"), model.getVariables().get("label"));
 
         AggregateAgent expectedAgent = new AggregateAgent("agent1", new AggregateSite("interface1", "state1", "link1"), new AggregateSite("interface2",
                 "state2", "link1"));
@@ -115,7 +115,7 @@ public class KappaModelTest {
 
         checkTransforms(model, location, new Transform[] { transform1, new Transform("label2", leftComplexes, rightComplexes, 0.1f),
                 new Transform("label2", rightComplexes, leftComplexes, 0.3f) });
-        assertEquals(new Variable("label2"), model.variables.get("label2"));
+        assertEquals(new Variable("label2"), model.getVariables().get("label2"));
 
         expectedAgent = new AggregateAgent("agent1", new AggregateSite("interface1", new String[] { "state1", "state4" }, new String[] { "link1", "link4" }),
                 new AggregateSite("interface2", "state2", "link1"), new AggregateSite("interface3", "state3", "link4"));
@@ -152,19 +152,19 @@ public class KappaModelTest {
 
         model.addTransport("label", "linkName", agents, new VariableExpression(0.1f));
         checkTransports(model.getTransports(), new String[] {"label: linkName agent1(),agent2() @ 0.1"});
-        assertEquals(new Variable("label"), model.variables.get("label"));
+        assertEquals(new Variable("label"), model.getVariables().get("label"));
         
         model = new KappaModel();
         model.addTransport(null, "linkName", null, new VariableExpression(0.1f));
         checkTransports(model.getTransports(), new String[] {"linkName @ 0.1"});
-        assertEquals(0, model.variables.size());
+        assertEquals(0, model.getVariables().size());
     }
 
     @Test
     public void testAddInitialValue_concreteValue() {
         List<Agent> agents = getList(new Agent("agent1"));
-        Location location = new Location("cytosol", new MathExpression("2"));
-        Location otherLocation = new Location("nucleus", new MathExpression("2"));
+        Location location = new Location("cytosol", new CellIndexExpression("2"));
+        Location otherLocation = new Location("nucleus", new CellIndexExpression("2"));
 
         try {
             model.addInitialValue(null, "0.1", location);
@@ -245,8 +245,8 @@ public class KappaModelTest {
     @Test
     public void testAddInitialValue_reference() {
         List<Agent> agents = getList(new Agent("agent1"));
-        Location location = new Location("cytosol", new MathExpression("2"));
-        Location otherLocation = new Location("nucleus", new MathExpression("2"));
+        Location location = new Location("cytosol", new CellIndexExpression("2"));
+        Location otherLocation = new Location("nucleus", new CellIndexExpression("2"));
         model.addVariable(new VariableExpression(3), "variable 3");
         model.addVariable(new VariableExpression(5), "variable 5");
         VariableReference reference = new VariableReference("variable 3");
@@ -304,8 +304,8 @@ public class KappaModelTest {
     }
     
     @Test
-    public void testGetConcreteLocatedInitialValuesMap() {
-        Map<LocatedComplex, Integer> actual = model.getConcreteLocatedInitialValuesMap();
+    public void testGetFixedLocatedInitialValuesMap() {
+        Map<LocatedComplex, Integer> actual = model.getFixedLocatedInitialValuesMap();
         assertEquals(0, actual.size());
         
         // No compartments
@@ -320,21 +320,21 @@ public class KappaModelTest {
         Complex complex2 = TransformTest.getComplexes(new Agent("agent2")).get(0);
 
         model.addInitialValue(complex2.agents, "5", new Location("cytosol"));
-        model.addInitialValue(complex2.agents, "10", new Location("cytosol", new MathExpression("1")));
+        model.addInitialValue(complex2.agents, "10", new Location("cytosol", new CellIndexExpression("1")));
 
         checkConcreteLocatedInitialValues(new Object[][] { 
-                { complex1, 1, new Location("cytosol", new MathExpression("0")) }, 
-                { complex1, 1, new Location("cytosol", new MathExpression("1")) }, 
-                { complex1, 1, new Location("cytosol", new MathExpression("2")) }, 
-                { complex2, 2, new Location("cytosol", new MathExpression("0")) }, 
-                { complex2, 12, new Location("cytosol", new MathExpression("1")) }, 
-                { complex2, 1, new Location("cytosol", new MathExpression("2")) }, 
+                { complex1, 1, new Location("cytosol", new CellIndexExpression("0")) }, 
+                { complex1, 1, new Location("cytosol", new CellIndexExpression("1")) }, 
+                { complex1, 1, new Location("cytosol", new CellIndexExpression("2")) }, 
+                { complex2, 2, new Location("cytosol", new CellIndexExpression("0")) }, 
+                { complex2, 12, new Location("cytosol", new CellIndexExpression("1")) }, 
+                { complex2, 1, new Location("cytosol", new CellIndexExpression("2")) }, 
                 });
     }
 
     @Test
-    public void testGetConcreteLocatedTransitions_transforms() {
-        List<LocatedTransition> actual = model.getConcreteLocatedTransitions();
+    public void testGetFixedLocatedTransitions_transforms() {
+        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
         assertEquals(0, actual.size());
         
         // No compartments
@@ -358,20 +358,20 @@ public class KappaModelTest {
 
         leftAgents = getList(new Agent("agent5"));
         rightAgents = getList(new Agent("agent6"));
-        model.addTransform(Direction.FORWARD, "label3", leftAgents, rightAgents, new VariableExpression(0.3f), null, new Location("cytosol", new MathExpression("1")));
+        model.addTransform(Direction.FORWARD, "label3", leftAgents, rightAgents, new VariableExpression(0.3f), null, new Location("cytosol", new CellIndexExpression("1")));
         Transform transform3 = new Transform("label3", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.3f);
 
         checkLocatedTransitions(new LocatedTransform[] { 
-                new LocatedTransform(transform2, new Location("cytosol", new MathExpression("0"))),
-                new LocatedTransform(transform2, new Location("cytosol", new MathExpression("1"))),
-                new LocatedTransform(transform2, new Location("cytosol", new MathExpression("2"))),
-                new LocatedTransform(transform3, new Location("cytosol", new MathExpression("1"))),
+                new LocatedTransform(transform2, new Location("cytosol", new CellIndexExpression("0"))),
+                new LocatedTransform(transform2, new Location("cytosol", new CellIndexExpression("1"))),
+                new LocatedTransform(transform2, new Location("cytosol", new CellIndexExpression("2"))),
+                new LocatedTransform(transform3, new Location("cytosol", new CellIndexExpression("1"))),
         });
     }
 
     @Test
-    public void testGetConcreteLocatedTransitions_transforms_noCompartmentSpecified() {
-        List<LocatedTransition> actual = model.getConcreteLocatedTransitions();
+    public void testGetFixedLocatedTransitions_transforms_noCompartmentSpecified() {
+        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
         assertEquals(0, actual.size());
         
         // No compartments
@@ -389,31 +389,31 @@ public class KappaModelTest {
         model.addCompartment(new Compartment("membrane", 2));
         
         checkLocatedTransitions(new LocatedTransform[] { 
-                new LocatedTransform(transform, new Location("cytosol", new MathExpression("0"))),
-                new LocatedTransform(transform, new Location("cytosol", new MathExpression("1"))),
-                new LocatedTransform(transform, new Location("cytosol", new MathExpression("2"))),
-                new LocatedTransform(transform, new Location("membrane", new MathExpression("0"))),
-                new LocatedTransform(transform, new Location("membrane", new MathExpression("1"))),
+                new LocatedTransform(transform, new Location("cytosol", new CellIndexExpression("0"))),
+                new LocatedTransform(transform, new Location("cytosol", new CellIndexExpression("1"))),
+                new LocatedTransform(transform, new Location("cytosol", new CellIndexExpression("2"))),
+                new LocatedTransform(transform, new Location("membrane", new CellIndexExpression("0"))),
+                new LocatedTransform(transform, new Location("membrane", new CellIndexExpression("1"))),
         });
     }
 
     @Test
     public void testGetConcreteLocatedTransitions_transports() {
-        List<LocatedTransition> actual = model.getConcreteLocatedTransitions();
+        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
         assertEquals(0, actual.size());
         
         model.addCompartment(new Compartment("cytosol", 3));
-        model.addCompartmentLink(new CompartmentLink("intra", new Location("cytosol", new MathExpression("x")), 
-                new Location("cytosol", new MathExpression(new MathExpression("x"), Operator.PLUS, new MathExpression("1"))),
+        model.addCompartmentLink(new CompartmentLink("intra", new Location("cytosol", new CellIndexExpression(new VariableReference("x"))), 
+                new Location("cytosol", new CellIndexExpression(new CellIndexExpression(new VariableReference("x")), Operator.PLUS, new CellIndexExpression("1"))),
                 Direction.BIDIRECTIONAL));
         
         List<Agent> agents = getList(new Agent("agent1"));
         model.addTransport("label", "intra", agents, new VariableExpression(0.2f));
         Transport transport = new Transport("label",  "intra", agents, 0.2f);
 
-        Location cell0 = new Location("cytosol", new MathExpression("0"));
-        Location cell1 = new Location("cytosol", new MathExpression("1"));
-        Location cell2 = new Location("cytosol", new MathExpression("2"));
+        Location cell0 = new Location("cytosol", new CellIndexExpression("0"));
+        Location cell1 = new Location("cytosol", new CellIndexExpression("1"));
+        Location cell2 = new Location("cytosol", new CellIndexExpression("2"));
         
         checkLocatedTransitions(new LocatedTransport[] { 
                 new LocatedTransport(transport, cell0, cell1),
@@ -425,24 +425,24 @@ public class KappaModelTest {
 
     @Test
     public void testGetConcreteLocatedTransitions_transports_multipleLinksSameLabel() {
-        List<LocatedTransition> actual = model.getConcreteLocatedTransitions();
+        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
         assertEquals(0, actual.size());
         
         model.addCompartment(new Compartment("cytosol", 3));
         model.addCompartmentLink(new CompartmentLink("intra", 
-                new Location("cytosol", new MathExpression("0")), new Location("cytosol", new MathExpression("1")),
+                new Location("cytosol", new CellIndexExpression("0")), new Location("cytosol", new CellIndexExpression("1")),
                 Direction.BIDIRECTIONAL));
         model.addCompartmentLink(new CompartmentLink("intra", 
-                new Location("cytosol", new MathExpression("1")), new Location("cytosol", new MathExpression("2")),
+                new Location("cytosol", new CellIndexExpression("1")), new Location("cytosol", new CellIndexExpression("2")),
                 Direction.BIDIRECTIONAL));
         
         List<Agent> agents = getList(new Agent("agent1"));
         model.addTransport("label", "intra", agents, new VariableExpression(0.2f));
         Transport transport = new Transport("label",  "intra", agents, 0.2f);
 
-        Location cell0 = new Location("cytosol", new MathExpression("0"));
-        Location cell1 = new Location("cytosol", new MathExpression("1"));
-        Location cell2 = new Location("cytosol", new MathExpression("2"));
+        Location cell0 = new Location("cytosol", new CellIndexExpression("0"));
+        Location cell1 = new Location("cytosol", new CellIndexExpression("1"));
+        Location cell2 = new Location("cytosol", new CellIndexExpression("2"));
         
         checkLocatedTransitions(new LocatedTransport[] { 
                 new LocatedTransport(transport, cell0, cell1),
@@ -454,7 +454,7 @@ public class KappaModelTest {
 
     private void checkLocatedTransitions(LocatedTransition[] expecteds) {
         List<String> actuals = new ArrayList<String>();
-        for (LocatedTransition transition : model.getConcreteLocatedTransitions()) {
+        for (LocatedTransition transition : model.getFixedLocatedTransitions()) {
             actuals.add(transition.toString());
         }
         assertEquals(expecteds.length, actuals.size());
@@ -506,7 +506,7 @@ public class KappaModelTest {
     public void testAddVariable_withAgentsAndCompartments() {
         List<Agent> agents1 = new ArrayList<Agent>();
         agents1.add(new Agent("agent1"));
-        Location location = new Location("cytosol", new MathExpression("2"));
+        Location location = new Location("cytosol", new CellIndexExpression("2"));
 
         try {
             model.addVariable(null, "label", location);
@@ -629,31 +629,6 @@ public class KappaModelTest {
         assertEquals(link2, model.getCompartmentLinks().get(1));
     }
 
-    @Test
-    public void testGetInitialValues() {
-        Map<Complex, Integer> initialValues = model.getInitialValuesMap();
-        assertNotNull(initialValues);
-        assertEquals(0, initialValues.size());
-
-        List<Agent> agents1 = new ArrayList<Agent>();
-        agents1.add(new Agent("agent1"));
-        model.addInitialValue(agents1, "3", null);
-
-        List<Agent> agents2 = new ArrayList<Agent>();
-        agents2.add(new Agent("agent1", new AgentSite("x", null, "1")));
-        agents2.add(new Agent("agent2", new AgentSite("x", null, "1")));
-        agents2.add(new Agent("agent3", new AgentSite("x", null, "2")));
-        agents2.add(new Agent("agent4", new AgentSite("x", null, "2")));
-        model.addInitialValue(agents2, "5", null);
-
-        Complex expectedComplex1 = new Complex(new Agent("agent1"));
-        Complex expectedComplex2 = new Complex(new Agent("agent1", new AgentSite("x", null, "1")), new Agent("agent2", new AgentSite("x", null, "1")));
-        Complex expectedComplex3 = new Complex(new Agent("agent3", new AgentSite("x", null, "2")), new Agent("agent4", new AgentSite("x", null, "2")));
-
-        Object[][] expected = new Object[][] { { expectedComplex1, 3, null }, { expectedComplex2, 5, null }, { expectedComplex3, 5, null } };
-        checkInitialValues(model.getInitialValuesMap(), expected);
-    }
-
     private void checkTransforms(KappaModel kappaModel, Location location, Transform[] expectedTransforms) {
         assertEquals(expectedTransforms.length, kappaModel.getLocatedTransforms().size());
 
@@ -679,7 +654,7 @@ public class KappaModelTest {
     }
 
     private void checkConcreteLocatedInitialValues(Object[][] expectedQuantities) {
-        Map<LocatedComplex, Integer> quantityMap = model.getConcreteLocatedInitialValuesMap();
+        Map<LocatedComplex, Integer> quantityMap = model.getFixedLocatedInitialValuesMap();
         assertEquals(expectedQuantities.length, quantityMap.size());
         
         for (Object[] expected : expectedQuantities) {
@@ -715,38 +690,21 @@ public class KappaModelTest {
         }
     }
 
-    private void checkInitialValues(Map<Complex, Integer> quantityMap, Object[][] expectedQuantities) {
-        assertEquals(expectedQuantities.length, quantityMap.size());
-
-        for (Object[] expected : expectedQuantities) {
-            String complexString = expected[0].toString();
-            boolean found = false;
-            for (Map.Entry<Complex, Integer> entry : quantityMap.entrySet()) {
-                if (complexString.equals(entry.getKey().toString())) {
-                    assertEquals(expected[1], entry.getValue());
-                    found = true;
-                    break;
-                }
-            }
-            assertTrue(found);
-        }
-    }
-
     private void checkVariables(KappaModel kappaModel, String... expectedVariables) {
         checkListByString(kappaModel.getVariables().values(), expectedVariables);
     }
 
-    private void checkListByString(Collection<? extends Object> objects, String[] expectedObservables) {
-        assertEquals(expectedObservables.length, objects.size());
+    private void checkListByString(Collection<? extends Object> objects, String[] expected) {
+        assertEquals(expected.length, objects.size());
 
         Set<String> actual = new HashSet<String>();
         for (Object object : objects) {
             actual.add(object.toString());
         }
 
-        for (int index = 0; index < expectedObservables.length; index++) {
-            assertTrue(actual.contains(expectedObservables[index]));
-            actual.remove(expectedObservables[index]);
+        for (int index = 0; index < expected.length; index++) {
+            assertTrue(actual.contains(expected[index]));
+            actual.remove(expected[index]);
         }
         assertTrue(actual.isEmpty());
     }

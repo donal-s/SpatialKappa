@@ -9,7 +9,7 @@ public class Observation implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public final float time;
-    public final List<String> orderedObservables; // TODO complete
+    public final List<String> orderedObservables;
     public final Map<String, ObservationElement> observables;
     public final boolean finalObservation;
     public final long elapsedTime;

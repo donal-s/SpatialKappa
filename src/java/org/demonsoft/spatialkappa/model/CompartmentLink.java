@@ -71,9 +71,9 @@ public class CompartmentLink {
     private Object[][] getVariableRanges(Location reference, Compartment compartment) {
         List<Object[]> result = new ArrayList<Object[]>();
         for (int index = 0; index < reference.getIndices().length; index++) {
-            MathExpression expr = reference.getIndices()[index];
-            if (!expr.isConcrete()) {
-                result.add(new Object[] { expr.getVariable(), compartment.getDimensions()[index] });
+            CellIndexExpression expr = reference.getIndices()[index];
+            if (!expr.isFixed()) {
+                result.add(new Object[] { expr.reference.variableName, compartment.getDimensions()[index] });
             }
         }
         return result.toArray(new Object[result.size()][]);
@@ -83,7 +83,7 @@ public class CompartmentLink {
             Compartment targetCompartment, Map<String, Integer> variables, int variableIndex) {
         if (variableIndex >= variableRanges.length) {
             for (int index = 0; index < targetCompartment.getDimensions().length; index++) {
-                int value = targetReference.getIndices()[index].evaluate(variables);
+                int value = targetReference.getIndices()[index].evaluateIndex(variables);
                 if (value < 0 || value >= targetCompartment.getDimensions()[index]) {
                     return;
                 }

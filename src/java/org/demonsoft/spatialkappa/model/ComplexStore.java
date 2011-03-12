@@ -154,21 +154,6 @@ public class ComplexStore {
         return result;
     }
 
-    public Map<Location, Integer> getLocatedQuantities(Complex complex, Location location, boolean matchCompartmentNameOnly) {
-      Map<Location, Integer> result = new HashMap<Location, Integer>();
-      Map<Location, Integer> locationQuantities = complexLocationQuantityMap.get(complex);
-      if (locationQuantities != null) {
-          for (Map.Entry<Location, Integer> entry : locationQuantities.entrySet()) {
-              if (Location.doLocationsMatch(location, entry.getKey(), matchCompartmentNameOnly)) {
-                  result.put(entry.getKey(), entry.getValue());
-              }
-          }
-      }
-      return result;
-  }
-  
-    
-
     public Complex pickComplex(Location location) {
         int totalQuantity = getComplexCount(location);
         if (totalQuantity == 0) {
@@ -233,9 +218,9 @@ public class ComplexStore {
                 builder.append("%init:");
                 if (complex.location != null) {
                     builder.append(" '").append(complex.location.getName()).append("'");
-                    MathExpression[] indices = complex.location.getIndices();
+                    CellIndexExpression[] indices = complex.location.getIndices();
                     if (indices != null && indices.length > 0) {
-                        for (MathExpression expression : indices) {
+                        for (CellIndexExpression expression : indices) {
                             builder.append("[").append(expression).append("]");
                         }
                     }

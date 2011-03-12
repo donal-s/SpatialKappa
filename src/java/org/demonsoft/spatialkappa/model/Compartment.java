@@ -80,13 +80,13 @@ public class Compartment {
             return new Location[] { new Location(name) };
         }
         
-        MathExpression[][] indices = new MathExpression[getCellCount()][dimensions.length];
+        CellIndexExpression[][] indices = new CellIndexExpression[getCellCount()][dimensions.length];
         int cellRunLength = 1;
         int cycleLength = 1;
         for (int dimensionIndex = 0; dimensionIndex < dimensions.length; dimensionIndex++) {
             cycleLength *= dimensions[dimensionIndex];
             for (int cellIndex = 0; cellIndex < indices.length; cellIndex++) {
-                indices[cellIndex][dimensionIndex] = new MathExpression("" + ((cellIndex / cellRunLength) % cycleLength));
+                indices[cellIndex][dimensionIndex] = new CellIndexExpression("" + ((cellIndex / cellRunLength) % cycleLength));
             }
             cellRunLength = cycleLength;
         }

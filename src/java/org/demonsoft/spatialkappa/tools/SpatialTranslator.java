@@ -101,7 +101,7 @@ public class SpatialTranslator {
         for (String variableName : variableNames) {
             Variable variable = kappaModel.getVariables().get(variableName);
             if (variable.type != Type.TRANSITION_LABEL) {
-                builder.append(getKappaString(kappaModel.getVariables().get(variableName)));
+                builder.append(getKappaString(variable));
             }
         }
         
@@ -191,7 +191,7 @@ public class SpatialTranslator {
         builder.append("loc~").append(location.getName());
         if (dimensionCount == 1) {
             if (usedDimensions == 1) {
-                builder.append(",loc_index~").append(location.getIndices()[0].evaluate(variables));
+                builder.append(",loc_index~").append(location.getIndices()[0].evaluateIndex(variables));
             }
             else {
                 builder.append(",loc_index~0");
@@ -199,7 +199,7 @@ public class SpatialTranslator {
         }
         else if (dimensionCount > 1) {
             for (int index = 0; index < usedDimensions; index++) {
-                builder.append(",loc_index_").append(index + 1).append("~").append(location.getIndices()[index].evaluate(variables));
+                builder.append(",loc_index_").append(index + 1).append("~").append(location.getIndices()[index].evaluateIndex(variables));
             }
             for (int index = usedDimensions; index < dimensionCount; index++) {
                 builder.append(",loc_index_").append(index + 1).append("~0");
