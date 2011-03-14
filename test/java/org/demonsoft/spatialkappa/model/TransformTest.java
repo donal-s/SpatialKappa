@@ -81,6 +81,9 @@ public class TransformTest extends TransitionTest {
 
         transform = new Transform("diffusion-red-0", leftComplexes, rightComplexes, new VariableExpression(0.1f));
         checkTransform("diffusion-red-0", leftComplexes, rightComplexes, 0.1f, false, transform);
+        
+         // TODO validate against this:
+        // A(a!_,b!1,bindings~2),B(a!1) -> A(a!_,b,bindings~1), B(c) @ 'unbind rate'
 
     }
     

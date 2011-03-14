@@ -57,6 +57,10 @@ public class AggregateSite {
         return links;
     }
 
+    public  Set<String> getStates() {
+        return states;
+    }
+
     public void merge(AgentSite other) {
         if (other.getState() != null) {
             states.add(other.getState());

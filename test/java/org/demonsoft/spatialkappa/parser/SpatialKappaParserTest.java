@@ -20,18 +20,10 @@ public class SpatialKappaParserTest {
                 "(TRANSFORM (-> (LHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
                 "(RATE (VAR_EXPR 1)))");
-        runParserRule("ruleExpr", "A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
-                "(TRANSFORM (<-> (LHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
-                "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
-                "(RATE (VAR_EXPR 1) (VAR_EXPR 2)))");
         runParserRule("ruleExpr", "'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 "(TRANSFORM (-> (LHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
                 "(RATE (VAR_EXPR 1)) label)");
-        runParserRule("ruleExpr", "'label' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
-                "(TRANSFORM (<-> (LHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
-                "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
-                "(RATE (VAR_EXPR 1) (VAR_EXPR 2)) label)");
         runParserRule("ruleExpr", "'IPTG addition{77331}'  -> IPTG(laci) @ 0.0", 
                 "(TRANSFORM (-> LHS (RHS (AGENTS (AGENT IPTG (INTERFACE laci))))) (RATE (VAR_EXPR 0.0)) IPTG addition{77331})");
         
@@ -39,16 +31,26 @@ public class SpatialKappaParserTest {
                 "(TRANSFORM (-> (LHS (AGENTS (AGENT CRY (INTERFACE clk)) (AGENT EBOX-CLK-BMAL1 (INTERFACE cry)))) " +
                 "(RHS (AGENTS (AGENT CRY (INTERFACE clk (LINK 2))) (AGENT EBOX-CLK-BMAL1 (INTERFACE cry (LINK 2)))))) " +
                 "(RATE (VAR_EXPR 127.286)) bin)");
+
+        // <-> rules no longer valid
+        runParserRuleFail("ruleExpr", "A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
+        runParserRuleFail("ruleExpr", "'label' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
+
     }
 
     @Test
     public void testTransformExpr() throws Exception {
-        runParserRule("transformExpr", "A(s),B(x) <-> @", 
-                "(<-> (LHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) RHS)");
+        runParserRule("transformExpr", "A(s),B(x) -> @", 
+                "(-> (LHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) RHS)");
         runParserRule("transformExpr", "-> A(s!1),B(x!1)", 
                 "(-> LHS (RHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))))");
-        runParserRule("transformExpr", "A(s),B(x) <-> A(s!1),B(x!1)", 
-                "(<-> (LHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) (RHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))))");
+        runParserRule("transformExpr", "A(s),B(x) -> A(s!1),B(x!1)", 
+                "(-> (LHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) (RHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))))");
+
+        // <-> rules no longer valid
+        runParserRuleFail("transformExpr", "A(s),B(x) <-> @");
+        runParserRuleFail("transformExpr", "<-> A(s!1),B(x!1)");
+        runParserRuleFail("transformExpr", "A(s),B(x) <-> A(s!1),B(x!1)");
     }
 
     @Test
@@ -93,24 +95,13 @@ public class SpatialKappaParserTest {
     }
 
     @Test
-    public void testTransformKineticExpr() throws Exception {
-        runParserRule("transformKineticExpr", "@ 0.1", "(RATE (VAR_EXPR 0.1))");
-        runParserRule("transformKineticExpr", "@ 'x'", "(RATE (VAR_EXPR x))");
-        runParserRule("transformKineticExpr", "@ 'x' / 2", "(RATE (VAR_EXPR / (VAR_EXPR x) (VAR_EXPR 2)))");
-        runParserRule("transformKineticExpr", "@ 'x'-2", "(RATE (VAR_EXPR - (VAR_EXPR x) (VAR_EXPR 2)))");
-        runParserRule("transformKineticExpr", "@ 'x'^'y'", "(RATE (VAR_EXPR ^ (VAR_EXPR x) (VAR_EXPR y)))");
-        runParserRule("transformKineticExpr", "@ [inf],1.0", "(RATE (VAR_EXPR VAR_INFINITY) (VAR_EXPR 1.0))");
-        runParserRule("transformKineticExpr", "@ 0.1,0.2", "(RATE (VAR_EXPR 0.1) (VAR_EXPR 0.2))");
-    }
-
-    @Test
-    public void testTransportKineticExpr() throws Exception {
-        runParserRule("transportKineticExpr", "@ 0.1", "(RATE (VAR_EXPR 0.1))");
-        runParserRule("transportKineticExpr", "@ 'x'", "(RATE (VAR_EXPR x))");
-        runParserRule("transportKineticExpr", "@ 'x' / 2", "(RATE (VAR_EXPR / (VAR_EXPR x) (VAR_EXPR 2)))");
-        runParserRule("transportKineticExpr", "@ 'x'-2", "(RATE (VAR_EXPR - (VAR_EXPR x) (VAR_EXPR 2)))");
-        runParserRule("transportKineticExpr", "@ 'x'^'y'", "(RATE (VAR_EXPR ^ (VAR_EXPR x) (VAR_EXPR y)))");
-        runParserRule("transportKineticExpr", "@ [inf]", "(RATE (VAR_EXPR VAR_INFINITY))");
+    public void testKineticExpr() throws Exception {
+        runParserRule("kineticExpr", "@ 0.1", "(RATE (VAR_EXPR 0.1))");
+        runParserRule("kineticExpr", "@ 'x'", "(RATE (VAR_EXPR x))");
+        runParserRule("kineticExpr", "@ 'x' / 2", "(RATE (VAR_EXPR / (VAR_EXPR x) (VAR_EXPR 2)))");
+        runParserRule("kineticExpr", "@ 'x'-2", "(RATE (VAR_EXPR - (VAR_EXPR x) (VAR_EXPR 2)))");
+        runParserRule("kineticExpr", "@ 'x'^'y'", "(RATE (VAR_EXPR ^ (VAR_EXPR x) (VAR_EXPR y)))");
+        runParserRule("kineticExpr", "@ [inf]", "(RATE (VAR_EXPR VAR_INFINITY))");
     }
 
     @Test
@@ -385,20 +376,10 @@ public class SpatialKappaParserTest {
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
                 "(RATE (VAR_EXPR 1)) label " +
                 "(LOCATION cytosol))");
-        runParserRule("ruleExpr", "'label' 'cytosol' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
-                "(TRANSFORM (<-> (LHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
-                "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
-                "(RATE (VAR_EXPR 1) (VAR_EXPR 2)) label " +
-                "(LOCATION cytosol))");
         runParserRule("ruleExpr", "'label' 'cytosol'[0][1] A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 "(TRANSFORM (-> (LHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
                 "(RATE (VAR_EXPR 1)) label " +
-                "(LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))))");
-        runParserRule("ruleExpr", "'label' 'cytosol'[0][1] A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
-                "(TRANSFORM (<-> (LHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
-                "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
-                "(RATE (VAR_EXPR 1) (VAR_EXPR 2)) label " +
                 "(LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))))");
  
         runParserRule("ruleExpr", "'unbinRv{200960}' REV-ERBa(rore!1,loc~nuc), RORE(rev-erba!1,gene!_) -> REV-ERBa(rore,loc~nuc), RORE(rev-erba,gene!_) @ 21.8", 
@@ -407,6 +388,10 @@ public class SpatialKappaParserTest {
                     "(RHS (AGENTS (AGENT REV-ERBa (INTERFACE rore) (INTERFACE loc (STATE nuc))) " +
                     "(AGENT RORE (INTERFACE rev-erba) (INTERFACE gene (LINK OCCUPIED)))))) " +
                     "(RATE (VAR_EXPR 21.8)) unbinRv{200960})");
+
+        // <-> rules no longer valid
+        runParserRuleFail("ruleExpr", "'label' 'cytosol' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
+        runParserRuleFail("ruleExpr", "'label' 'cytosol'[0][1] A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
     }
 
     @Test
@@ -480,7 +465,7 @@ public class SpatialKappaParserTest {
         }
         else {
             if (tree.getClass() == CommonTree.class) {
-                assertTrue(tree.toStringTree().contains("mismatched token:"));
+                assertTrue(tree.toStringTree().contains("mismatched token:") || tree.toStringTree().contains("unexpected"));
             }
             else {
                 assertEquals(CommonErrorNode.class, tree.getClass());

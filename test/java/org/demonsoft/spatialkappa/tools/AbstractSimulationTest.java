@@ -14,7 +14,6 @@ import java.util.Set;
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
-import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Observation;
@@ -48,7 +47,7 @@ public abstract class AbstractSimulationTest {
         
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent2"));
-        kappaModel.addTransform(Direction.FORWARD, "label", agents, new ArrayList<Agent>(), new VariableExpression(0.1f), null, null);
+        kappaModel.addTransform("label", agents, new ArrayList<Agent>(), new VariableExpression(0.1f), null);
         kappaModel.addPlot("label");
         
         agents = new ArrayList<Agent>();

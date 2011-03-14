@@ -31,7 +31,7 @@ public class KappaModelTest {
         rightAgents.add(new Agent("agent2"));
 
         try {
-            model.addTransform(null, "label", leftAgents, rightAgents, new VariableExpression(0.1f), null, null);
+            model.addTransform("label", leftAgents, rightAgents, null, null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -39,15 +39,7 @@ public class KappaModelTest {
         }
 
         try {
-            model.addTransform(Direction.FORWARD, "label", leftAgents, rightAgents, null, null, null);
-            fail("null should have failed");
-        }
-        catch (NullPointerException ex) {
-            // Expected exception
-        }
-
-        try {
-            model.addTransform(Direction.FORWARD, "label", null, null, new VariableExpression(0.1f), null, null);
+            model.addTransform("label", null, null, new VariableExpression(0.1f), null);
             fail("lhs and rhs null should have failed");
         }
         catch (IllegalArgumentException ex) {
@@ -55,37 +47,12 @@ public class KappaModelTest {
         }
 
         try {
-            model.addTransform(Direction.FORWARD, "label", new ArrayList<Agent>(), new ArrayList<Agent>(), new VariableExpression(0.1f), null, null);
+            model.addTransform("label", new ArrayList<Agent>(), new ArrayList<Agent>(), new VariableExpression(0.1f), null);
             fail("lhs and rhs empty should have failed");
         }
         catch (IllegalArgumentException ex) {
             // Expected exception
         }
-
-        try {
-            model.addTransform(Direction.BACKWARD, "label", leftAgents, rightAgents, new VariableExpression(0.1f), null, null);
-            fail("unknown transition should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-
-        try {
-            model.addTransform(Direction.FORWARD, "label", leftAgents, rightAgents, new VariableExpression(0.1f), new VariableExpression(0.2f), null);
-            fail("backward rate present should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-
-        try {
-            model.addTransform(Direction.BIDIRECTIONAL, "label", leftAgents, rightAgents, new VariableExpression(0.1f), null, null);
-            fail("backward rate missing should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-
     }
 
     @Test
@@ -96,7 +63,7 @@ public class KappaModelTest {
         List<Agent> rightAgents = Transform.getAgents(rightComplexes);
         Location location = new Location("cytosol", new CellIndexExpression("2"));
 
-        model.addTransform(Direction.FORWARD, "label", leftAgents, rightAgents, new VariableExpression(0.1f), null, location);
+        model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), location);
 
         Transform transform1 = new Transform("label", leftComplexes, rightComplexes, 0.1f);
         checkTransforms(model, location, new Transform[] { transform1 });
@@ -111,10 +78,9 @@ public class KappaModelTest {
         leftAgents = Transform.getAgents(leftComplexes);
         rightAgents = Transform.getAgents(rightComplexes);
 
-        model.addTransform(Direction.BIDIRECTIONAL, "label2", leftAgents, rightAgents, new VariableExpression(0.1f), new VariableExpression(0.3f), location);
+        model.addTransform("label2", leftAgents, rightAgents, new VariableExpression(0.1f), location);
 
-        checkTransforms(model, location, new Transform[] { transform1, new Transform("label2", leftComplexes, rightComplexes, 0.1f),
-                new Transform("label2", rightComplexes, leftComplexes, 0.3f) });
+        checkTransforms(model, location, new Transform[] { transform1, new Transform("label2", leftComplexes, rightComplexes, 0.1f) });
         assertEquals(new Variable("label2"), model.getVariables().get("label2"));
 
         expectedAgent = new AggregateAgent("agent1", new AggregateSite("interface1", new String[] { "state1", "state4" }, new String[] { "link1", "link4" }),
@@ -340,7 +306,7 @@ public class KappaModelTest {
         // No compartments
         List<Agent> leftAgents = getList(new Agent("agent1"));
         List<Agent> rightAgents = getList(new Agent("agent2"));
-        model.addTransform(Direction.FORWARD, "label", leftAgents, rightAgents, new VariableExpression(0.1f), null, null);
+        model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), null);
         Transform transform1 = new Transform("label", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.1f);
 
         checkLocatedTransitions(new LocatedTransform[] { 
@@ -353,12 +319,12 @@ public class KappaModelTest {
         
         leftAgents = getList(new Agent("agent3"));
         rightAgents = getList(new Agent("agent4"));
-        model.addTransform(Direction.FORWARD, "label2", leftAgents, rightAgents, new VariableExpression(0.2f), null, new Location("cytosol"));
+        model.addTransform("label2", leftAgents, rightAgents, new VariableExpression(0.2f), new Location("cytosol"));
         Transform transform2 = new Transform("label2", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.2f);
 
         leftAgents = getList(new Agent("agent5"));
         rightAgents = getList(new Agent("agent6"));
-        model.addTransform(Direction.FORWARD, "label3", leftAgents, rightAgents, new VariableExpression(0.3f), null, new Location("cytosol", new CellIndexExpression("1")));
+        model.addTransform("label3", leftAgents, rightAgents, new VariableExpression(0.3f), new Location("cytosol", new CellIndexExpression("1")));
         Transform transform3 = new Transform("label3", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.3f);
 
         checkLocatedTransitions(new LocatedTransform[] { 
@@ -377,7 +343,7 @@ public class KappaModelTest {
         // No compartments
         List<Agent> leftAgents = getList(new Agent("agent1"));
         List<Agent> rightAgents = getList(new Agent("agent2"));
-        model.addTransform(Direction.FORWARD, "label", leftAgents, rightAgents, new VariableExpression(0.1f), null, null);
+        model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), null);
         Transform transform = new Transform("label", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.1f);
 
         checkLocatedTransitions(new LocatedTransform[] { 
@@ -763,7 +729,7 @@ public class KappaModelTest {
         
         // Plot reference to transform
         model = new KappaModel();
-        model.addTransform(Direction.FORWARD, "transformRef", getList(new Agent("agent1")), null, new VariableExpression(2f), null, null);
+        model.addTransform("transformRef", getList(new Agent("agent1")), null, new VariableExpression(2f), null);
         model.addPlot("transformRef");
         model.validate();
         
@@ -858,31 +824,21 @@ public class KappaModelTest {
     public void testValidate_transform() {
         // Missing transform reference
         model = new KappaModel();
-        model.addTransform(Direction.BIDIRECTIONAL, null, getList(new Agent("agent1")), null, 
+        model.addTransform(null, getList(new Agent("agent1")), null, 
                 new VariableExpression(new VariableReference("unknown")), 
-                new VariableExpression(2f),
                 null);
         checkValidate_failure("Reference 'unknown' not found");
         
-        model = new KappaModel();
-        model.addTransform(Direction.BIDIRECTIONAL, null, getList(new Agent("agent1")), null, 
-                new VariableExpression(2f),
-                new VariableExpression(new VariableReference("unknown")), 
-                null);
-        checkValidate_failure("Reference 'unknown' not found");
-
         // Non fixed transform reference
         model = new KappaModel();
         model.addVariable(new VariableExpression(SimulationToken.EVENTS), "variableRef");
-        model.addTransform(Direction.BIDIRECTIONAL, null, getList(new Agent("agent1")), null, 
+        model.addTransform(null, getList(new Agent("agent1")), null, 
                 new VariableExpression(new VariableReference("variableRef")), 
-                new VariableExpression(2f),
                 null);
         checkValidate_failure("Reference 'variableRef' not fixed");
         
         model = new KappaModel();
-        model.addTransform(Direction.BIDIRECTIONAL, null, getList(new Agent("agent1")), null, 
-                new VariableExpression(2f),
+        model.addTransform(null, getList(new Agent("agent1")), null, 
                 new VariableExpression(Constant.INFINITY), 
                 null);
         model.validate();

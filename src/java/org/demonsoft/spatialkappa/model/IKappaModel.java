@@ -8,8 +8,7 @@ import java.util.Map;
 
 public interface IKappaModel {
 
-    public void addTransform(Direction direction, String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, VariableExpression forwardRate, VariableExpression backwardRate,
-            Location location);
+    public void addTransform(String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, VariableExpression rate, Location location);
 
     public void addTransport(String label, String compartmentLinkName, List<Agent> agents, VariableExpression rate);
 

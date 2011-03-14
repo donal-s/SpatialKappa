@@ -125,7 +125,7 @@ public class CompartmentTest {
         assertArrayEquals(new String[] {"loc~label"}, compartment.getCellStateSuffixes());
         
         compartment = new Compartment("label", 3);
-        assertArrayEquals(new String[] {"loc~label,loc_index~0", "loc~label,loc_index~1", "loc~label,loc_index~2"}, compartment.getCellStateSuffixes());
+        assertArrayEquals(new String[] {"loc~label,loc_index_1~0", "loc~label,loc_index_1~1", "loc~label,loc_index_1~2"}, compartment.getCellStateSuffixes());
         
         compartment = new Compartment("label", 3, 2);
         assertArrayEquals(new String[] {

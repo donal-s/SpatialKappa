@@ -86,12 +86,12 @@ line
 
 ruleExpr
   :
-  label? transformExpr transformKineticExpr 
+  label? transformExpr kineticExpr 
     -> 
-      ^(TRANSFORM transformExpr transformKineticExpr label?)
-  | label locationExpr transformExpr transformKineticExpr 
+      ^(TRANSFORM transformExpr kineticExpr label?)
+  | label locationExpr transformExpr kineticExpr 
     -> 
-      ^(TRANSFORM transformExpr transformKineticExpr label locationExpr)
+      ^(TRANSFORM transformExpr kineticExpr label locationExpr)
   ;
 
 transformExpr
@@ -162,14 +162,7 @@ linkExpr
       ^(LINK ANY)
   ;
 
-transformKineticExpr
-  :
-  '@' a=varAlgebraExpr (',' b=varAlgebraExpr)?
-    ->
-      ^(RATE $a ($b)?)
-  ;
-
-transportKineticExpr
+kineticExpr
   :
   '@' varAlgebraExpr
     ->
@@ -203,9 +196,9 @@ compartmentLinkExpr
 
 transportExpr
   :
-  '%transport:' (transportName=label)? linkName=label (agentGroup)? transportKineticExpr
+  '%transport:' (transportName=label)? linkName=label (agentGroup)? kineticExpr
     ->
-      ^(TRANSPORT $linkName agentGroup? transportKineticExpr $transportName?)
+      ^(TRANSPORT $linkName agentGroup? kineticExpr $transportName?)
   ;
 
 locationExpr
@@ -472,7 +465,6 @@ transformTransition
   :
   ( 
     FORWARD_TRANSITION
-    | EQUILIBRIUM_TRANSITION
   )
   ;
 

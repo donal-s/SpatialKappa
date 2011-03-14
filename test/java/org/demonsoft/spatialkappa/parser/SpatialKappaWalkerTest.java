@@ -12,7 +12,6 @@ import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -22,11 +21,9 @@ import org.antlr.runtime.Parser;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.demonsoft.spatialkappa.model.Agent;
-import org.demonsoft.spatialkappa.model.AgentSite;
 import org.demonsoft.spatialkappa.model.BooleanExpression;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.CompartmentLink;
-import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Perturbation;
@@ -53,28 +50,21 @@ public class SpatialKappaWalkerTest {
     public void testRuleExpr() throws Exception {
 
         checkRuleExpr("A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
-                Direction.FORWARD, null, "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null, null);
-
-        checkRuleExpr("A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
-                Direction.BIDIRECTIONAL, null, "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), new VariableExpression(2), null);
+                null, "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null);
 
         checkRuleExpr("'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
-                Direction.FORWARD, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null, null);
+                "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null);
 
-        checkRuleExpr("'label' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
-                Direction.BIDIRECTIONAL, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), new VariableExpression(2), null);
-
-        checkRuleExpr("'label' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1+2,'x'+[inf]", 
-                Direction.BIDIRECTIONAL, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", 
-                new VariableExpression(new VariableExpression(1f), Operator.PLUS, new VariableExpression(2f)), 
+        checkRuleExpr("'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 'x'+[inf]", 
+                "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", 
                 new VariableExpression(new VariableExpression(new VariableReference("x")), Operator.PLUS, new VariableExpression(Constant.INFINITY)), null);
 
         checkRuleExpr("'IPTG addition{77331}'  -> IPTG(laci) @ 0.0", 
-                Direction.FORWARD, "IPTG addition{77331}", null, "[IPTG(laci)]", new VariableExpression(0), null, null);
+                "IPTG addition{77331}", null, "[IPTG(laci)]", new VariableExpression(0), null);
 
         checkRuleExpr("'bin' CRY(clk),EBOX-CLK-BMAL1(cry) -> CRY(clk!2), EBOX-CLK-BMAL1(cry!2) @ 127.2862", 
-                Direction.FORWARD, "bin", "[CRY(clk), EBOX-CLK-BMAL1(cry)]", "[CRY(clk!2), EBOX-CLK-BMAL1(cry!2)]", 
-                new VariableExpression(127.2862f), null, null);
+                "bin", "[CRY(clk), EBOX-CLK-BMAL1(cry)]", "[CRY(clk!2), EBOX-CLK-BMAL1(cry!2)]", 
+                new VariableExpression(127.2862f), null);
 
     }
 
@@ -84,25 +74,19 @@ public class SpatialKappaWalkerTest {
         Location location = new Location("cytosol");
 
         checkRuleExpr("'label' 'cytosol' A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
-                Direction.FORWARD, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null, location);
-
-        checkRuleExpr("'label' 'cytosol' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
-                Direction.BIDIRECTIONAL, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), new VariableExpression(2), location);
+                "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), location);
 
         location = new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1"));
 
         checkRuleExpr("'label' 'cytosol'[0][1] A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
-                Direction.FORWARD, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null, location);
-
-        checkRuleExpr("'label' 'cytosol'[0][1] A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2", 
-                Direction.BIDIRECTIONAL, "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), new VariableExpression(2), location);
+                "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), location);
     }
     
-    private void checkRuleExpr(String inputText, Direction direction, String label, String leftSideAgents, String rightSideAgents, VariableExpression forwardRate, VariableExpression backwardRate, Location location) throws Exception {
+    private void checkRuleExpr(String inputText, String label, String leftSideAgents, String rightSideAgents, VariableExpression rate, Location location) throws Exception {
         lhsAgents.reset();
         rhsAgents.reset();
         reset(mocks);
-        kappaModel.addTransform(eq(direction), eq(label), capture(lhsAgents), capture(rhsAgents), eq(forwardRate), eq(backwardRate), eq(location));
+        kappaModel.addTransform(eq(label), capture(lhsAgents), capture(rhsAgents), eq(rate), eq(location));
         replay(mocks);
         runParserRule("ruleExpr", inputText);
         verify(mocks);
@@ -201,20 +185,11 @@ public class SpatialKappaWalkerTest {
     
     @Test
     public void testTransformExpr() throws Exception {
-        List<Agent> leftAgents = new ArrayList<Agent>();
-        leftAgents.add(new Agent("A", new AgentSite("s", null, "1")));
-        leftAgents.add(new Agent("B", new AgentSite("x", null, "1")));
-        List<Agent> rightAgents = new ArrayList<Agent>();
-        rightAgents.add(new Agent("A", new AgentSite("s", null, null)));
-        rightAgents.add(new Agent("B", new AgentSite("x", null, null)));
-
-        checkTransform(Direction.FORWARD, "[A(s!1), B(x!1)]", "[A(s), B(x)]", runParserRule("transformExpr", "A(s!1),B(x!1)   -> A(s),  B(x)"));
-        checkTransform(Direction.FORWARD, null, "[A(s), B(x)]", runParserRule("transformExpr", "-> A(s),  B(x)"));
-        checkTransform(Direction.BIDIRECTIONAL, "[A(s!1), B(x!1)]", "[A(s), B(x)]", runParserRule("transformExpr", "A(s!1),B(x!1)   <-> A(s),  B(x)"));
+        checkTransform("[A(s!1), B(x!1)]", "[A(s), B(x)]", runParserRule("transformExpr", "A(s!1),B(x!1)   -> A(s),  B(x)"));
+        checkTransform(null, "[A(s), B(x)]", runParserRule("transformExpr", "-> A(s),  B(x)"));
     }
 
-    private void checkTransform(Direction direction, String leftAgents, String rightAgents, Object actual) throws Exception {
-        assertEquals(direction, actual.getClass().getDeclaredField("direction").get(actual));
+    private void checkTransform(String leftAgents, String rightAgents, Object actual) throws Exception {
         if (leftAgents == null) {
             assertNull(actual.getClass().getDeclaredField("lhs").get(actual));
         }
@@ -457,17 +432,7 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testTransformExpr_spatial() throws Exception {
-        List<Agent> leftAgents = new ArrayList<Agent>();
-        leftAgents.add(new Agent("A", new AgentSite("s", null, "1")));
-        leftAgents.add(new Agent("B", new AgentSite("x", null, "1")));
-        List<Agent> rightAgents = new ArrayList<Agent>();
-        rightAgents.add(new Agent("A", new AgentSite("s", null, null)));
-        rightAgents.add(new Agent("B", new AgentSite("x", null, null)));
-        
-        checkTransform(Direction.FORWARD, "[A(s!1), B(x!1)]", "[A(s), B(x)]",
-                runParserRule("transformExpr", "A(s!1),B(x!1)   -> A(s),  B(x)"));
-        checkTransform(Direction.BIDIRECTIONAL, "[A(s!1), B(x!1)]", "[A(s), B(x)]",
-                runParserRule("transformExpr", "A(s!1),B(x!1)   <-> A(s),  B(x)"));
+        checkTransform("[A(s!1), B(x!1)]", "[A(s), B(x)]", runParserRule("transformExpr", "A(s!1),B(x!1)   -> A(s),  B(x)"));
     }
 
     @Test

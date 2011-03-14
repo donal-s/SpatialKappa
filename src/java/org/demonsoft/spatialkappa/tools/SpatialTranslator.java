@@ -79,13 +79,24 @@ public class SpatialTranslator {
 
     public String translateToKappa() {
         StringBuilder builder = new StringBuilder();
+
+        String aggregateLocationState = getAggregateLocationState(kappaModel.getCompartments());
+        
+        List<String> agentNames = new ArrayList<String>(kappaModel.getAggregateAgentMap().keySet());
+        Collections.sort(agentNames);
+        
+        for (String agentName : agentNames) {
+            builder.append(getKappaString(kappaModel.getAggregateAgentMap().get(agentName), aggregateLocationState));
+        }
+        builder.append("\n");
+        
         // TODO - allow multiple diffusions same name
         // TODO - restrict diffusion agents to unlinked complexes
         for (Transport transport : kappaModel.getTransports()) {
             builder.append(getKappaString(transport));
         }
         builder.append("\n");
-
+        
         for (LocatedTransform transform : kappaModel.getLocatedTransforms()) {
             builder.append(getKappaString(transform));
         }
@@ -109,6 +120,73 @@ public class SpatialTranslator {
             builder.append("%plot: '").append(plotName).append("'\n");
         }
         builder.append("\n");
+        return builder.toString();
+    }
+
+    private String getAggregateLocationState(List<Compartment> compartments) {
+        if (compartments == null || compartments.size() == 0) {
+            return "";
+        }
+        
+        int maxDimensions = 0;
+        List<String> compartmentNames = new ArrayList<String>();
+        for (Compartment compartment : compartments) {
+            compartmentNames.add(compartment.getName());
+            if (compartment.getDimensions().length > maxDimensions) {
+                maxDimensions = compartment.getDimensions().length;
+            }
+        }
+        
+        int[] maxDimensionSizes = new int[maxDimensions];
+        for (Compartment compartment : compartments) {
+            for (int index = 0; index < compartment.getDimensions().length; index++) {
+                if (compartment.getDimensions()[index] > maxDimensionSizes[index]) {
+                    maxDimensionSizes[index] = compartment.getDimensions()[index];
+                }
+            }
+        }
+        
+        StringBuilder result = new StringBuilder();
+        
+        result.append("loc");
+        Collections.sort(compartmentNames);
+        for (String compartmentName : compartmentNames) {
+            result.append("~").append(compartmentName);
+        }
+        
+        for (int index = 0; index < maxDimensions; index++) {
+            result.append(",loc_index_").append(index + 1);
+            for (int stateIndex = 0; stateIndex < maxDimensionSizes[index]; stateIndex++) {
+                result.append("~").append(stateIndex);
+            }
+        }
+        
+        return result.toString();
+    }
+
+    private Object getKappaString(AggregateAgent agent, String aggregateLocationState) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("%agent: ").append(agent.getName()).append("(");
+        
+        boolean firstElement = true;
+        for (AggregateSite site : agent.getSites()) {
+            if (!firstElement) {
+                builder.append(",");
+            }
+            else {
+                firstElement = false;
+            }
+            builder.append(site.getName());
+            List<String> states = new ArrayList<String>(site.getStates());
+            Collections.sort(states);
+            for (String state : states) {
+                builder.append("~").append(state);
+            }
+        }
+        if (agent.getSites().size() > 0 && aggregateLocationState.length() > 0) {
+            builder.append(",");
+        }
+        builder.append(aggregateLocationState).append(")\n");
         return builder.toString();
     }
 
@@ -189,22 +267,13 @@ public class SpatialTranslator {
         
         StringBuilder builder = new StringBuilder();
         builder.append("loc~").append(location.getName());
-        if (dimensionCount == 1) {
-            if (usedDimensions == 1) {
-                builder.append(",loc_index~").append(location.getIndices()[0].evaluateIndex(variables));
-            }
-            else {
-                builder.append(",loc_index~0");
-            }
+        for (int index = 0; index < usedDimensions; index++) {
+            builder.append(",loc_index_").append(index + 1).append("~").append(location.getIndices()[index].evaluateIndex(variables));
         }
-        else if (dimensionCount > 1) {
-            for (int index = 0; index < usedDimensions; index++) {
-                builder.append(",loc_index_").append(index + 1).append("~").append(location.getIndices()[index].evaluateIndex(variables));
-            }
-            for (int index = usedDimensions; index < dimensionCount; index++) {
-                builder.append(",loc_index_").append(index + 1).append("~0");
-            }
+        for (int index = usedDimensions; index < dimensionCount; index++) {
+            builder.append(",loc_index_").append(index + 1).append("~0");
         }
+        
         return builder.toString();
     }
 
@@ -253,15 +322,28 @@ public class SpatialTranslator {
             }
             String leftSuffix = (compartmentLink.getDirection() != Direction.BACKWARD) ? stateSuffixPairs[index][0] : stateSuffixPairs[index][1];
             String rightSuffix = (compartmentLink.getDirection() != Direction.BACKWARD) ? stateSuffixPairs[index][1] : stateSuffixPairs[index][0];
-            Direction direction = (compartmentLink.getDirection() == Direction.BIDIRECTIONAL) ? Direction.BIDIRECTIONAL : Direction.FORWARD;
             builder.append(getAgentKappaString(isolatedAgents, leftSuffix));
-            builder.append(" ").append(direction).append(" ");
+            builder.append(" ").append(Direction.FORWARD).append(" ");
             builder.append(getAgentKappaString(isolatedAgents, rightSuffix)).append(" @ ");
             builder.append(transport.getRate().toString());
-            if (compartmentLink.getDirection() == Direction.BIDIRECTIONAL) {
-                builder.append(",").append(transport.getRate().toString());
-            }
             builder.append("\n");
+            
+            if (compartmentLink.getDirection() == Direction.BIDIRECTIONAL) {
+                if (transport.label != null) {
+                    builder.append("'").append(transport.label);
+                    if (stateSuffixPairs.length > 1) {
+                        builder.append("-").append(labelSuffix++);
+                    }
+                    builder.append("' ");
+                }
+                leftSuffix = stateSuffixPairs[index][1];
+                rightSuffix = stateSuffixPairs[index][0];
+                builder.append(getAgentKappaString(isolatedAgents, leftSuffix));
+                builder.append(" ").append(Direction.FORWARD).append(" ");
+                builder.append(getAgentKappaString(isolatedAgents, rightSuffix)).append(" @ ");
+                builder.append(transport.getRate().toString());
+                builder.append("\n");
+            }
         }
     }
 

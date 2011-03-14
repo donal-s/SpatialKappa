@@ -62,17 +62,17 @@ line
 ruleExpr
 options {backtrack=true;}
   :
-  ^(TRANSFORM a=transformExpr b=transitionKineticExpr label?)
+  ^(TRANSFORM a=transformExpr b=kineticExpr label?)
   {
-    kappaModel.addTransform($a.direction, $label.result, $a.lhs, $a.rhs, $b.rate1, $b.rate2, null);
+    kappaModel.addTransform($label.result, $a.lhs, $a.rhs, $b.rate, null);
   }
-  | ^(TRANSFORM a=transformExpr b=transitionKineticExpr label c=locationExpr)
+  | ^(TRANSFORM a=transformExpr b=kineticExpr label c=locationExpr)
   {
-    kappaModel.addTransform($a.direction, $label.result, $a.lhs, $a.rhs, $b.rate1, $b.rate2, $c.result );
+    kappaModel.addTransform($label.result, $a.lhs, $a.rhs, $b.rate, $c.result );
   }
   ;
 
-transformExpr returns [Direction direction, List<Agent> lhs, List<Agent> rhs]
+transformExpr returns [List<Agent> lhs, List<Agent> rhs]
   :
   ^(
     t=transformTransition
@@ -80,7 +80,6 @@ transformExpr returns [Direction direction, List<Agent> lhs, List<Agent> rhs]
     ^(RHS b=agentGroup?)
    )
   {
-    $direction = $t.result;
     $lhs = $a.result;
     $rhs = $b.result;
   }
@@ -90,7 +89,6 @@ transformExpr returns [Direction direction, List<Agent> lhs, List<Agent> rhs]
     ^(RHS b=agentGroup?)
    )
   {
-    $direction = $t.result;
     $lhs = null;
     $rhs = $b.result;
   }
@@ -100,7 +98,6 @@ transformExpr returns [Direction direction, List<Agent> lhs, List<Agent> rhs]
     RHS
    )
   {
-    $direction = $t.result;
     $lhs = $a.result;
     $rhs = null;
   }
@@ -166,12 +163,11 @@ linkExpr returns [String result]
   {$result = "?";}
   ;
 
-transitionKineticExpr returns [VariableExpression rate1, VariableExpression rate2]
+kineticExpr returns [VariableExpression rate]
   :
-  ^(RATE a=varAlgebraExpr (b=varAlgebraExpr)?)
+  ^(RATE a=varAlgebraExpr)
   {
-    $rate1 = $a.result;
-    $rate2 = $b.result;
+    $rate = $a.result;
   }
   ;
 
@@ -464,7 +460,6 @@ transformTransition returns [Direction result]
   :
   ( 
     FORWARD_TRANSITION       { $result = Direction.FORWARD; }
-    | EQUILIBRIUM_TRANSITION { $result = Direction.BIDIRECTIONAL; }
   )
   ;
   

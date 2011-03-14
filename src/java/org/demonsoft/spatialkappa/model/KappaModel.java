@@ -26,30 +26,8 @@ public class KappaModel implements IKappaModel {
     private final Map<String, Variable> variables = new HashMap<String, Variable>();
 
 
-    public void addTransform(Direction direction, String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, VariableExpression forwardRate, VariableExpression backwardRate,
-            Location location) {
-        if (direction == null) {
-            throw new NullPointerException();
-        }
-
-        if (Direction.FORWARD == direction) {
-            if (backwardRate != null) {
-                throw new IllegalArgumentException("transform should not have a second rate");
-            }
-        }
-        else if (Direction.BIDIRECTIONAL == direction) {
-            if (backwardRate == null) {
-                throw new IllegalArgumentException("equilibrium should have a second rate");
-            }
-        }
-        else {
-            throw new IllegalArgumentException("Invalid transform type: " + direction);
-        }
-
-        addTransform(new LocatedTransform(new Transform(label, leftSideAgents, rightSideAgents, forwardRate, false), location));
-        if (Direction.BIDIRECTIONAL == direction) {
-            addTransform(new LocatedTransform(new Transform(label, rightSideAgents, leftSideAgents, backwardRate, false), location));
-        }
+    public void addTransform(String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, VariableExpression rate, Location location) {
+        addTransform(new LocatedTransform(new Transform(label, leftSideAgents, rightSideAgents, rate, false), location));
         if (label != null) {
             variables.put(label, new Variable(label));
         }

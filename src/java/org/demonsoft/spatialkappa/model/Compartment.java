@@ -59,7 +59,7 @@ public class Compartment {
         for (int dimensionIndex = 0; dimensionIndex < dimensions.length; dimensionIndex++) {
             int currentDimension = dimensions[dimensionIndex];
             
-            String currentName = (dimensions.length == 1) ? ",loc_index~" : ",loc_index_" + (dimensionIndex + 1) + "~";
+            String currentName = ",loc_index_" + (dimensionIndex + 1) + "~";
             String[] newSuffixes = new String[suffixes.length * currentDimension];
             
             

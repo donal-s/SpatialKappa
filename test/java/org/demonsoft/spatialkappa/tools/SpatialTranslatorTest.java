@@ -215,7 +215,7 @@ public class SpatialTranslatorTest {
                 new Location("a", new CellIndexExpression("1")), new Location("a", new CellIndexExpression("2")), Direction.FORWARD);
         compartments.add(new Compartment("a", 4));
         
-        assertArrayEquals(new String[][] {{"loc~a,loc_index~1", "loc~a,loc_index~2"}}, translator.getLinkStateSuffixPairs(compartmentLink, compartments));
+        assertArrayEquals(new String[][] {{"loc~a,loc_index_1~1", "loc~a,loc_index_1~2"}}, translator.getLinkStateSuffixPairs(compartmentLink, compartments));
 
         // Linear array
         compartments.clear();
@@ -225,9 +225,9 @@ public class SpatialTranslatorTest {
         compartments.add(new Compartment("a", 4));
         
         assertArrayEquals(new String[][] {
-                {"loc~a,loc_index~0", "loc~a,loc_index~1"},
-                {"loc~a,loc_index~1", "loc~a,loc_index~2"},
-                {"loc~a,loc_index~2", "loc~a,loc_index~3"}}, translator.getLinkStateSuffixPairs(compartmentLink, compartments));
+                {"loc~a,loc_index_1~0", "loc~a,loc_index_1~1"},
+                {"loc~a,loc_index_1~1", "loc~a,loc_index_1~2"},
+                {"loc~a,loc_index_1~2", "loc~a,loc_index_1~3"}}, translator.getLinkStateSuffixPairs(compartmentLink, compartments));
 
         // 2D array - square mesh - dimensions treated independently
         compartments.clear();
@@ -274,11 +274,11 @@ public class SpatialTranslatorTest {
     public void testGetKappaString_location() throws Exception {
         Location location = new Location("label");
         assertEquals("loc~label", translator.getKappaString(location, 0));
-        assertEquals("loc~label,loc_index~0", translator.getKappaString(location, 1));
+        assertEquals("loc~label,loc_index_1~0", translator.getKappaString(location, 1));
         assertEquals("loc~label,loc_index_1~0,loc_index_2~0", translator.getKappaString(location, 2));
 
         location = new Location("label", new CellIndexExpression("2"));
-        assertEquals("loc~label,loc_index~2", translator.getKappaString(location, 1));
+        assertEquals("loc~label,loc_index_1~2", translator.getKappaString(location, 1));
 
 
         location = new Location("label", new CellIndexExpression("2"), new CellIndexExpression(new CellIndexExpression("3"), Operator.PLUS, new CellIndexExpression("1")));
@@ -317,10 +317,10 @@ public class SpatialTranslatorTest {
         }
 
         assertEquals("loc~label", translator.getKappaString(location, variables, 0));
-        assertEquals("loc~label,loc_index~0", translator.getKappaString(location, variables, 1));
+        assertEquals("loc~label,loc_index_1~0", translator.getKappaString(location, variables, 1));
 
         location = new Location("label", new CellIndexExpression("2"));
-        assertEquals("loc~label,loc_index~2", translator.getKappaString(location, variables, 1));
+        assertEquals("loc~label,loc_index_1~2", translator.getKappaString(location, variables, 1));
         assertEquals("loc~label,loc_index_1~2,loc_index_2~0", translator.getKappaString(location, variables, 2));
 
 
@@ -345,7 +345,7 @@ public class SpatialTranslatorTest {
         }
         
         variables.put("x", 7);
-        assertEquals("loc~label,loc_index~7", translator.getKappaString(location, variables, 1));
+        assertEquals("loc~label,loc_index_1~7", translator.getKappaString(location, variables, 1));
 
         location = new Location("label", new CellIndexExpression("2"), new CellIndexExpression(refX));
         variables.clear();
@@ -382,32 +382,40 @@ public class SpatialTranslatorTest {
         "%obs: 'red[3]' 'cytosol'[3] A(state~red) \n";
     
     private static final String SIMPLE_TEST_OUTPUT = 
-        "'diffusion-all-1' A(loc~cytosol,loc_index~0) <-> A(loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-all-2' A(loc~cytosol,loc_index~1) <-> A(loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-all-3' A(loc~cytosol,loc_index~2) <-> A(loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
-        "'diffusion-red-1' A(state~red,loc~cytosol,loc_index~0) <-> A(state~red,loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-red-2' A(state~red,loc~cytosol,loc_index~1) <-> A(state~red,loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-red-3' A(state~red,loc~cytosol,loc_index~2) <-> A(state~red,loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
+        "%agent: A(state~blue~green~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "\n" + 
-        "'heating' A(state~blue,loc~cytosol,loc_index~0) -> A(state~red,loc~cytosol,loc_index~0) @ 1.0\n" + 
-        "'cooling-1' A(state~red,loc~cytosol,loc_index~0) -> A(state~blue,loc~cytosol,loc_index~0) @ 0.05\n" + 
-        "'cooling-2' A(state~red,loc~cytosol,loc_index~1) -> A(state~blue,loc~cytosol,loc_index~1) @ 0.05\n" + 
-        "'cooling-3' A(state~red,loc~cytosol,loc_index~2) -> A(state~blue,loc~cytosol,loc_index~2) @ 0.05\n" + 
-        "'cooling-4' A(state~red,loc~cytosol,loc_index~3) -> A(state~blue,loc~cytosol,loc_index~3) @ 0.05\n" + 
+        "'diffusion-all-1' A(loc~cytosol,loc_index_1~0) -> A(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-2' A(loc~cytosol,loc_index_1~1) -> A(loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-all-3' A(loc~cytosol,loc_index_1~1) -> A(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-4' A(loc~cytosol,loc_index_1~2) -> A(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-5' A(loc~cytosol,loc_index_1~2) -> A(loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-all-6' A(loc~cytosol,loc_index_1~3) -> A(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-red-1' A(state~red,loc~cytosol,loc_index_1~0) -> A(state~red,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-red-2' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~red,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-red-3' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~red,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-red-4' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~red,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-red-5' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~red,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-red-6' A(state~red,loc~cytosol,loc_index_1~3) -> A(state~red,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
         "\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~0))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~1))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~2))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~3))\n" + 
+        "'heating' A(state~blue,loc~cytosol,loc_index_1~0) -> A(state~red,loc~cytosol,loc_index_1~0) @ 1.0\n" + 
+        "'cooling-1' A(state~red,loc~cytosol,loc_index_1~0) -> A(state~blue,loc~cytosol,loc_index_1~0) @ 0.05\n" + 
+        "'cooling-2' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~blue,loc~cytosol,loc_index_1~1) @ 0.05\n" + 
+        "'cooling-3' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~blue,loc~cytosol,loc_index_1~2) @ 0.05\n" + 
+        "'cooling-4' A(state~red,loc~cytosol,loc_index_1~3) -> A(state~blue,loc~cytosol,loc_index_1~3) @ 0.05\n" + 
+        "\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~0))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~1))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~2))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~3))\n" + 
         "%init: 800 (A(state~green))\n" + 
-        "%init: 800 (A(state~red,loc~cytosol,loc_index~0))\n" + 
+        "%init: 800 (A(state~red,loc~cytosol,loc_index_1~0))\n" + 
         "\n" + 
         "%var: 'all red' A(state~red)\n" + 
         "%var: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
-        "%var: 'red[0]' A(state~red,loc~cytosol,loc_index~0)\n" + 
-        "%var: 'red[1]' A(state~red,loc~cytosol,loc_index~1)\n" + 
-        "%var: 'red[2]' A(state~red,loc~cytosol,loc_index~2)\n" + 
-        "%var: 'red[3]' A(state~red,loc~cytosol,loc_index~3)\n" + 
+        "%var: 'red[0]' A(state~red,loc~cytosol,loc_index_1~0)\n" + 
+        "%var: 'red[1]' A(state~red,loc~cytosol,loc_index_1~1)\n" + 
+        "%var: 'red[2]' A(state~red,loc~cytosol,loc_index_1~2)\n" + 
+        "%var: 'red[3]' A(state~red,loc~cytosol,loc_index_1~3)\n" + 
         "%plot: 'all red'\n" + 
         "%plot: 'cytosol blue'\n" + 
         "%plot: 'red[0]'\n" + 
@@ -437,32 +445,40 @@ public class SpatialTranslatorTest {
         "%obs: 'red[3]' 'cytosol'[3] A(state~red) \n";
     
     private static final String INFINITE_RATE_OUTPUT = 
-        "'diffusion-all-1' A(loc~cytosol,loc_index~0) <-> A(loc~cytosol,loc_index~1) @ [inf],[inf]\n" + 
-        "'diffusion-all-2' A(loc~cytosol,loc_index~1) <-> A(loc~cytosol,loc_index~2) @ [inf],[inf]\n" + 
-        "'diffusion-all-3' A(loc~cytosol,loc_index~2) <-> A(loc~cytosol,loc_index~3) @ [inf],[inf]\n" + 
-        "'diffusion-red-1' A(state~red,loc~cytosol,loc_index~0) <-> A(state~red,loc~cytosol,loc_index~1) @ [inf],[inf]\n" + 
-        "'diffusion-red-2' A(state~red,loc~cytosol,loc_index~1) <-> A(state~red,loc~cytosol,loc_index~2) @ [inf],[inf]\n" + 
-        "'diffusion-red-3' A(state~red,loc~cytosol,loc_index~2) <-> A(state~red,loc~cytosol,loc_index~3) @ [inf],[inf]\n" + 
+        "%agent: A(state~blue~green~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "\n" + 
-        "'heating' A(state~blue,loc~cytosol,loc_index~0) -> A(state~red,loc~cytosol,loc_index~0) @ [inf]\n" + 
-        "'cooling-1' A(state~red,loc~cytosol,loc_index~0) -> A(state~blue,loc~cytosol,loc_index~0) @ [inf]\n" + 
-        "'cooling-2' A(state~red,loc~cytosol,loc_index~1) -> A(state~blue,loc~cytosol,loc_index~1) @ [inf]\n" + 
-        "'cooling-3' A(state~red,loc~cytosol,loc_index~2) -> A(state~blue,loc~cytosol,loc_index~2) @ [inf]\n" + 
-        "'cooling-4' A(state~red,loc~cytosol,loc_index~3) -> A(state~blue,loc~cytosol,loc_index~3) @ [inf]\n" + 
+        "'diffusion-all-1' A(loc~cytosol,loc_index_1~0) -> A(loc~cytosol,loc_index_1~1) @ [inf]\n" + 
+        "'diffusion-all-2' A(loc~cytosol,loc_index_1~1) -> A(loc~cytosol,loc_index_1~0) @ [inf]\n" + 
+        "'diffusion-all-3' A(loc~cytosol,loc_index_1~1) -> A(loc~cytosol,loc_index_1~2) @ [inf]\n" + 
+        "'diffusion-all-4' A(loc~cytosol,loc_index_1~2) -> A(loc~cytosol,loc_index_1~1) @ [inf]\n" + 
+        "'diffusion-all-5' A(loc~cytosol,loc_index_1~2) -> A(loc~cytosol,loc_index_1~3) @ [inf]\n" + 
+        "'diffusion-all-6' A(loc~cytosol,loc_index_1~3) -> A(loc~cytosol,loc_index_1~2) @ [inf]\n" + 
+        "'diffusion-red-1' A(state~red,loc~cytosol,loc_index_1~0) -> A(state~red,loc~cytosol,loc_index_1~1) @ [inf]\n" + 
+        "'diffusion-red-2' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~red,loc~cytosol,loc_index_1~0) @ [inf]\n" + 
+        "'diffusion-red-3' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~red,loc~cytosol,loc_index_1~2) @ [inf]\n" + 
+        "'diffusion-red-4' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~red,loc~cytosol,loc_index_1~1) @ [inf]\n" + 
+        "'diffusion-red-5' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~red,loc~cytosol,loc_index_1~3) @ [inf]\n" + 
+        "'diffusion-red-6' A(state~red,loc~cytosol,loc_index_1~3) -> A(state~red,loc~cytosol,loc_index_1~2) @ [inf]\n" + 
         "\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~0))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~1))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~2))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~3))\n" + 
+        "'heating' A(state~blue,loc~cytosol,loc_index_1~0) -> A(state~red,loc~cytosol,loc_index_1~0) @ [inf]\n" + 
+        "'cooling-1' A(state~red,loc~cytosol,loc_index_1~0) -> A(state~blue,loc~cytosol,loc_index_1~0) @ [inf]\n" + 
+        "'cooling-2' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~blue,loc~cytosol,loc_index_1~1) @ [inf]\n" + 
+        "'cooling-3' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~blue,loc~cytosol,loc_index_1~2) @ [inf]\n" + 
+        "'cooling-4' A(state~red,loc~cytosol,loc_index_1~3) -> A(state~blue,loc~cytosol,loc_index_1~3) @ [inf]\n" + 
+        "\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~0))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~1))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~2))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~3))\n" + 
         "%init: 800 (A(state~green))\n" + 
-        "%init: 800 (A(state~red,loc~cytosol,loc_index~0))\n" + 
+        "%init: 800 (A(state~red,loc~cytosol,loc_index_1~0))\n" + 
         "\n" + 
         "%var: 'all red' A(state~red)\n" + 
         "%var: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
-        "%var: 'red[0]' A(state~red,loc~cytosol,loc_index~0)\n" + 
-        "%var: 'red[1]' A(state~red,loc~cytosol,loc_index~1)\n" + 
-        "%var: 'red[2]' A(state~red,loc~cytosol,loc_index~2)\n" + 
-        "%var: 'red[3]' A(state~red,loc~cytosol,loc_index~3)\n" + 
+        "%var: 'red[0]' A(state~red,loc~cytosol,loc_index_1~0)\n" + 
+        "%var: 'red[1]' A(state~red,loc~cytosol,loc_index_1~1)\n" + 
+        "%var: 'red[2]' A(state~red,loc~cytosol,loc_index_1~2)\n" + 
+        "%var: 'red[3]' A(state~red,loc~cytosol,loc_index_1~3)\n" + 
         "%plot: 'all red'\n" + 
         "%plot: 'cytosol blue'\n" + 
         "%plot: 'red[0]'\n" + 
@@ -489,22 +505,37 @@ public class SpatialTranslatorTest {
         "";
     
     private static final String TRANSPORT_ONLY_OUTPUT = 
-        "'diffusion-all-1' A(loc~cytosol,loc_index~0) <-> A(loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-all-2' A(loc~cytosol,loc_index~1) <-> A(loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-all-3' A(loc~cytosol,loc_index~2) <-> A(loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
-        "'diffusion-all-4' B(loc~cytosol,loc_index~0) <-> B(loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-all-5' B(loc~cytosol,loc_index~1) <-> B(loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-all-6' B(loc~cytosol,loc_index~2) <-> B(loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
-        "'diffusion-red-1' A(state~red,loc~cytosol,loc_index~0) <-> A(state~red,loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-red-2' A(state~red,loc~cytosol,loc_index~1) <-> A(state~red,loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-red-3' A(state~red,loc~cytosol,loc_index~2) <-> A(state~red,loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
-        "'diffusion-other-1' B(loc~cytosol,loc_index~0) <-> B(loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-other-2' B(loc~cytosol,loc_index~1) <-> B(loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-other-3' B(loc~cytosol,loc_index~2) <-> B(loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
-        "'cell exit1-1' B(loc~cytosol,loc_index~0) -> B(loc~membrane,loc_index~2) @ 0.2\n" + 
-        "'cell exit1-2' B(loc~cytosol,loc_index~1) -> B(loc~membrane,loc_index~3) @ 0.2\n" + 
-        "'cell exit2-1' B(loc~cytosol,loc_index~2) -> B(loc~membrane,loc_index~0) @ 0.3\n" + 
-        "'cell exit2-2' B(loc~cytosol,loc_index~3) -> B(loc~membrane,loc_index~1) @ 0.3\n" + 
+        "%agent: A(state~red,loc~cytosol~membrane,loc_index_1~0~1~2~3)\n" + 
+        "%agent: B(loc~cytosol~membrane,loc_index_1~0~1~2~3)\n" +
+        "\n" + 
+        "'diffusion-all-1' A(loc~cytosol,loc_index_1~0) -> A(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-2' A(loc~cytosol,loc_index_1~1) -> A(loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-all-3' A(loc~cytosol,loc_index_1~1) -> A(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-4' A(loc~cytosol,loc_index_1~2) -> A(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-5' A(loc~cytosol,loc_index_1~2) -> A(loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-all-6' A(loc~cytosol,loc_index_1~3) -> A(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-4' B(loc~cytosol,loc_index_1~0) -> B(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-5' B(loc~cytosol,loc_index_1~1) -> B(loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-all-6' B(loc~cytosol,loc_index_1~1) -> B(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-7' B(loc~cytosol,loc_index_1~2) -> B(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-8' B(loc~cytosol,loc_index_1~2) -> B(loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-all-9' B(loc~cytosol,loc_index_1~3) -> B(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-red-1' A(state~red,loc~cytosol,loc_index_1~0) -> A(state~red,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-red-2' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~red,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-red-3' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~red,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-red-4' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~red,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-red-5' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~red,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-red-6' A(state~red,loc~cytosol,loc_index_1~3) -> A(state~red,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-other-1' B(loc~cytosol,loc_index_1~0) -> B(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-other-2' B(loc~cytosol,loc_index_1~1) -> B(loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-other-3' B(loc~cytosol,loc_index_1~1) -> B(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-other-4' B(loc~cytosol,loc_index_1~2) -> B(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-other-5' B(loc~cytosol,loc_index_1~2) -> B(loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-other-6' B(loc~cytosol,loc_index_1~3) -> B(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'cell exit1-1' B(loc~cytosol,loc_index_1~0) -> B(loc~membrane,loc_index_1~2) @ 0.2\n" + 
+        "'cell exit1-2' B(loc~cytosol,loc_index_1~1) -> B(loc~membrane,loc_index_1~3) @ 0.2\n" + 
+        "'cell exit2-1' B(loc~cytosol,loc_index_1~2) -> B(loc~membrane,loc_index_1~0) @ 0.3\n" + 
+        "'cell exit2-2' B(loc~cytosol,loc_index_1~3) -> B(loc~membrane,loc_index_1~1) @ 0.3\n" + 
         "\n" + 
         "\n" + 
         "%init: 800 (A(state~red),B())\n" + 
@@ -527,44 +558,51 @@ public class SpatialTranslatorTest {
         "%transport: 'diffusion-red' 'interface2' A(state~red) @ 0.2\n" + 
         "%transport: 'diffusion-other' 'interface3' B() @ 0.3\n" + 
         "\n" +
-        "%init: 'nucleus' 800 (A(state~blue)) \n" + 
-        "%init: 'nucleus' 800 (A(state~red)) \n" + 
+        "%init: 'cytosol' 800 (A(state~blue)) \n" + 
+        "%init: 'membrane' 900 (A(state~red)) \n" + 
         "%init: 'nucleus' 800 (B()) \n" + 
         "";
     
     private static final String TRANSPORT_DIFFERENT_DIMENSIONS_OUTPUT = 
-        "'diffusion-blue' A(state~blue,loc~nucleus,loc_index_1~0,loc_index_2~0) <-> A(state~blue,loc~membrane,loc_index_1~2,loc_index_2~0) @ 0.1,0.1\n" + 
-        "'diffusion-red' A(state~red,loc~nucleus,loc_index_1~0,loc_index_2~0) <-> A(state~red,loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.2,0.2\n" + 
-        "'diffusion-other-1' B(loc~membrane,loc_index_1~0,loc_index_2~0) <-> B(loc~cytosol,loc_index_1~0,loc_index_2~2) @ 0.3,0.3\n" + 
-        "'diffusion-other-2' B(loc~membrane,loc_index_1~1,loc_index_2~0) <-> B(loc~cytosol,loc_index_1~1,loc_index_2~3) @ 0.3,0.3\n" + 
-        "'diffusion-other-3' B(loc~membrane,loc_index_1~2,loc_index_2~0) <-> B(loc~cytosol,loc_index_1~2,loc_index_2~4) @ 0.3,0.3\n" + 
+        "%agent: A(state~blue~red,loc~cytosol~membrane~nucleus,loc_index_1~0~1~2~3,loc_index_2~0~1~2~3~4)\n" + 
+        "%agent: B(loc~cytosol~membrane~nucleus,loc_index_1~0~1~2~3,loc_index_2~0~1~2~3~4)\n" + 
+        "\n" + 
+        "'diffusion-blue' A(state~blue,loc~nucleus,loc_index_1~0,loc_index_2~0) -> A(state~blue,loc~membrane,loc_index_1~2,loc_index_2~0) @ 0.1\n" + 
+        "'diffusion-blue' A(state~blue,loc~membrane,loc_index_1~2,loc_index_2~0) -> A(state~blue,loc~nucleus,loc_index_1~0,loc_index_2~0) @ 0.1\n" + 
+        "'diffusion-red' A(state~red,loc~nucleus,loc_index_1~0,loc_index_2~0) -> A(state~red,loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.2\n" + 
+        "'diffusion-red' A(state~red,loc~cytosol,loc_index_1~1,loc_index_2~2) -> A(state~red,loc~nucleus,loc_index_1~0,loc_index_2~0) @ 0.2\n" + 
+        "'diffusion-other-1' B(loc~membrane,loc_index_1~0,loc_index_2~0) -> B(loc~cytosol,loc_index_1~0,loc_index_2~2) @ 0.3\n" + 
+        "'diffusion-other-2' B(loc~cytosol,loc_index_1~0,loc_index_2~2) -> B(loc~membrane,loc_index_1~0,loc_index_2~0) @ 0.3\n" + 
+        "'diffusion-other-3' B(loc~membrane,loc_index_1~1,loc_index_2~0) -> B(loc~cytosol,loc_index_1~1,loc_index_2~3) @ 0.3\n" + 
+        "'diffusion-other-4' B(loc~cytosol,loc_index_1~1,loc_index_2~3) -> B(loc~membrane,loc_index_1~1,loc_index_2~0) @ 0.3\n" + 
+        "'diffusion-other-5' B(loc~membrane,loc_index_1~2,loc_index_2~0) -> B(loc~cytosol,loc_index_1~2,loc_index_2~4) @ 0.3\n" + 
+        "'diffusion-other-6' B(loc~cytosol,loc_index_1~2,loc_index_2~4) -> B(loc~membrane,loc_index_1~2,loc_index_2~0) @ 0.3\n" + 
         "\n" + 
         "\n" + 
-        "%init: 800 (A(state~blue,loc~nucleus))\n" + 
-        "%init: 800 (A(state~red,loc~nucleus))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~0))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~0))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~0))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~0))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~1))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~1))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~1))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~1))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~2))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~2))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~2))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~2))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~3))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~3))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~3))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~3))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~4))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~4))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~4))\n" + 
+        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~4))\n" + 
+        "%init: 300 (A(state~red,loc~membrane,loc_index_1~0))\n" + 
+        "%init: 300 (A(state~red,loc~membrane,loc_index_1~1))\n" + 
+        "%init: 300 (A(state~red,loc~membrane,loc_index_1~2))\n" + 
         "%init: 800 (B(loc~nucleus))\n" + 
-        "\n" + 
-        "\n" + 
-        "";
-
-    // TODO - extend this
-    private static final String TRANSPORT_MISSING_INIT_INPUT = 
-        "%compartment: 'cytosol' [4][5]\n" + 
-        "%compartment: 'membrane' [3]\n" + 
-        "%compartment: 'nucleus'\n" + 
-        "%link: 'interface1' 'nucleus' <-> 'membrane' [2]\n" +
-        "%link: 'interface2' 'nucleus' <-> 'cytosol' [1][2]\n" +
-        "%link: 'interface3' 'membrane' [x] <-> 'cytosol' [x][x+2]\n" +
-        "\n" + 
-        "%transport: 'diffusion-blue' 'interface1'  A(state~blue) @ 0.1\n" + 
-        "%transport: 'diffusion-red' 'interface2' A(state~red) @ 0.2\n" + 
-        "%transport: 'diffusion-other' 'interface3' B() @ 0.3\n" + 
-        "\n" +
-        "";
-    
-    private static final String TRANSPORT_MISSING_INIT_OUTPUT = 
-        "\n" + 
-        "\n" + 
         "\n" + 
         "\n" + 
         "";
@@ -581,27 +619,47 @@ public class SpatialTranslatorTest {
         "";
     
     private static final String TRANSPORT_LIMITED_LINKS_OUTPUT = 
-        "'diffusion-all-1' A(l1,l2,loc~cytosol,loc_index~0) <-> A(l1,l2,loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-all-2' A(l1,l2,loc~cytosol,loc_index~1) <-> A(l1,l2,loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-all-3' A(l1,l2,loc~cytosol,loc_index~2) <-> A(l1,l2,loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
-        "'diffusion-all-4' B(l1,loc~cytosol,loc_index~0) <-> B(l1,loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-all-5' B(l1,loc~cytosol,loc_index~1) <-> B(l1,loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-all-6' B(l1,loc~cytosol,loc_index~2) <-> B(l1,loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
-        "'diffusion-all-7' C(l1,l2,loc~cytosol,loc_index~0) <-> C(l1,l2,loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-all-8' C(l1,l2,loc~cytosol,loc_index~1) <-> C(l1,l2,loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-all-9' C(l1,l2,loc~cytosol,loc_index~2) <-> C(l1,l2,loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
-        "'diffusion-all-10' D(l1,loc~cytosol,loc_index~0) <-> D(l1,loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-all-11' D(l1,loc~cytosol,loc_index~1) <-> D(l1,loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-all-12' D(l1,loc~cytosol,loc_index~2) <-> D(l1,loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
-        "'diffusion-complex-1' A(l1!1,l2,loc~cytosol,loc_index~0),B(l1!1,loc~cytosol,loc_index~0)" +
-        " <-> A(l1!1,l2,loc~cytosol,loc_index~1),B(l1!1,loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-complex-2' A(l1!1,l2,loc~cytosol,loc_index~1),B(l1!1,loc~cytosol,loc_index~1)" +
-        " <-> A(l1!1,l2,loc~cytosol,loc_index~2),B(l1!1,loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-complex-3' A(l1!1,l2,loc~cytosol,loc_index~2),B(l1!1,loc~cytosol,loc_index~2)" +
-        " <-> A(l1!1,l2,loc~cytosol,loc_index~3),B(l1!1,loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
-        "'diffusion-agent-1' C(l1,l2,loc~cytosol,loc_index~0) <-> C(l1,l2,loc~cytosol,loc_index~1) @ 0.1,0.1\n" + 
-        "'diffusion-agent-2' C(l1,l2,loc~cytosol,loc_index~1) <-> C(l1,l2,loc~cytosol,loc_index~2) @ 0.1,0.1\n" + 
-        "'diffusion-agent-3' C(l1,l2,loc~cytosol,loc_index~2) <-> C(l1,l2,loc~cytosol,loc_index~3) @ 0.1,0.1\n" + 
+        "%agent: A(l1,l2,loc~cytosol,loc_index_1~0~1~2~3)\n" +
+        "%agent: B(l1,loc~cytosol,loc_index_1~0~1~2~3)\n" +
+        "%agent: C(l1,l2,loc~cytosol,loc_index_1~0~1~2~3)\n" +
+        "%agent: D(l1,loc~cytosol,loc_index_1~0~1~2~3)\n" +
+        "\n" +
+        "'diffusion-all-1' A(l1,l2,loc~cytosol,loc_index_1~0) -> A(l1,l2,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-2' A(l1,l2,loc~cytosol,loc_index_1~1) -> A(l1,l2,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-all-3' A(l1,l2,loc~cytosol,loc_index_1~1) -> A(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-4' A(l1,l2,loc~cytosol,loc_index_1~2) -> A(l1,l2,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-5' A(l1,l2,loc~cytosol,loc_index_1~2) -> A(l1,l2,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-all-6' A(l1,l2,loc~cytosol,loc_index_1~3) -> A(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-4' B(l1,loc~cytosol,loc_index_1~0) -> B(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-5' B(l1,loc~cytosol,loc_index_1~1) -> B(l1,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-all-6' B(l1,loc~cytosol,loc_index_1~1) -> B(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-7' B(l1,loc~cytosol,loc_index_1~2) -> B(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-8' B(l1,loc~cytosol,loc_index_1~2) -> B(l1,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-all-9' B(l1,loc~cytosol,loc_index_1~3) -> B(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-7' C(l1,l2,loc~cytosol,loc_index_1~0) -> C(l1,l2,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-8' C(l1,l2,loc~cytosol,loc_index_1~1) -> C(l1,l2,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-all-9' C(l1,l2,loc~cytosol,loc_index_1~1) -> C(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-10' C(l1,l2,loc~cytosol,loc_index_1~2) -> C(l1,l2,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-11' C(l1,l2,loc~cytosol,loc_index_1~2) -> C(l1,l2,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-all-12' C(l1,l2,loc~cytosol,loc_index_1~3) -> C(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-10' D(l1,loc~cytosol,loc_index_1~0) -> D(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-11' D(l1,loc~cytosol,loc_index_1~1) -> D(l1,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-all-12' D(l1,loc~cytosol,loc_index_1~1) -> D(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-13' D(l1,loc~cytosol,loc_index_1~2) -> D(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-14' D(l1,loc~cytosol,loc_index_1~2) -> D(l1,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-all-15' D(l1,loc~cytosol,loc_index_1~3) -> D(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-complex-1' A(l1!1,l2,loc~cytosol,loc_index_1~0),B(l1!1,loc~cytosol,loc_index_1~0) -> A(l1!1,l2,loc~cytosol,loc_index_1~1),B(l1!1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-complex-2' A(l1!1,l2,loc~cytosol,loc_index_1~1),B(l1!1,loc~cytosol,loc_index_1~1) -> A(l1!1,l2,loc~cytosol,loc_index_1~0),B(l1!1,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-complex-3' A(l1!1,l2,loc~cytosol,loc_index_1~1),B(l1!1,loc~cytosol,loc_index_1~1) -> A(l1!1,l2,loc~cytosol,loc_index_1~2),B(l1!1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-complex-4' A(l1!1,l2,loc~cytosol,loc_index_1~2),B(l1!1,loc~cytosol,loc_index_1~2) -> A(l1!1,l2,loc~cytosol,loc_index_1~1),B(l1!1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-complex-5' A(l1!1,l2,loc~cytosol,loc_index_1~2),B(l1!1,loc~cytosol,loc_index_1~2) -> A(l1!1,l2,loc~cytosol,loc_index_1~3),B(l1!1,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-complex-6' A(l1!1,l2,loc~cytosol,loc_index_1~3),B(l1!1,loc~cytosol,loc_index_1~3) -> A(l1!1,l2,loc~cytosol,loc_index_1~2),B(l1!1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-agent-1' C(l1,l2,loc~cytosol,loc_index_1~0) -> C(l1,l2,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-agent-2' C(l1,l2,loc~cytosol,loc_index_1~1) -> C(l1,l2,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-agent-3' C(l1,l2,loc~cytosol,loc_index_1~1) -> C(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-agent-4' C(l1,l2,loc~cytosol,loc_index_1~2) -> C(l1,l2,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-agent-5' C(l1,l2,loc~cytosol,loc_index_1~2) -> C(l1,l2,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-agent-6' C(l1,l2,loc~cytosol,loc_index_1~3) -> C(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
         "\n" + 
         "\n" + 
         "\n" + 
@@ -618,16 +676,19 @@ public class SpatialTranslatorTest {
         "";
     
     private static final String REACTION_ONLY_OUTPUT = 
+        "%agent: A(state~blue~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
+        "%agent: B(loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "\n" + 
-        "'heating' A(state~blue,loc~cytosol,loc_index~0) -> A(state~red,loc~cytosol,loc_index~0) @ 1.0\n" + 
-        "'cooling-1' A(state~red,loc~cytosol,loc_index~0) -> A(state~blue,loc~cytosol,loc_index~0) @ 0.05\n" + 
-        "'cooling-2' A(state~red,loc~cytosol,loc_index~1) -> A(state~blue,loc~cytosol,loc_index~1) @ 0.05\n" + 
-        "'cooling-3' A(state~red,loc~cytosol,loc_index~2) -> A(state~blue,loc~cytosol,loc_index~2) @ 0.05\n" + 
-        "'cooling-4' A(state~red,loc~cytosol,loc_index~3) -> A(state~blue,loc~cytosol,loc_index~3) @ 0.05\n" + 
-        "'dimerisation-1' A(loc~cytosol,loc_index~0),A(loc~cytosol,loc_index~0) -> B(loc~cytosol,loc_index~0) @ 0.05\n" + 
-        "'dimerisation-2' A(loc~cytosol,loc_index~1),A(loc~cytosol,loc_index~1) -> B(loc~cytosol,loc_index~1) @ 0.05\n" + 
-        "'dimerisation-3' A(loc~cytosol,loc_index~2),A(loc~cytosol,loc_index~2) -> B(loc~cytosol,loc_index~2) @ 0.05\n" + 
-        "'dimerisation-4' A(loc~cytosol,loc_index~3),A(loc~cytosol,loc_index~3) -> B(loc~cytosol,loc_index~3) @ 0.05\n" + 
+        "\n" + 
+        "'heating' A(state~blue,loc~cytosol,loc_index_1~0) -> A(state~red,loc~cytosol,loc_index_1~0) @ 1.0\n" + 
+        "'cooling-1' A(state~red,loc~cytosol,loc_index_1~0) -> A(state~blue,loc~cytosol,loc_index_1~0) @ 0.05\n" + 
+        "'cooling-2' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~blue,loc~cytosol,loc_index_1~1) @ 0.05\n" + 
+        "'cooling-3' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~blue,loc~cytosol,loc_index_1~2) @ 0.05\n" + 
+        "'cooling-4' A(state~red,loc~cytosol,loc_index_1~3) -> A(state~blue,loc~cytosol,loc_index_1~3) @ 0.05\n" + 
+        "'dimerisation-1' A(loc~cytosol,loc_index_1~0),A(loc~cytosol,loc_index_1~0) -> B(loc~cytosol,loc_index_1~0) @ 0.05\n" + 
+        "'dimerisation-2' A(loc~cytosol,loc_index_1~1),A(loc~cytosol,loc_index_1~1) -> B(loc~cytosol,loc_index_1~1) @ 0.05\n" + 
+        "'dimerisation-3' A(loc~cytosol,loc_index_1~2),A(loc~cytosol,loc_index_1~2) -> B(loc~cytosol,loc_index_1~2) @ 0.05\n" + 
+        "'dimerisation-4' A(loc~cytosol,loc_index_1~3),A(loc~cytosol,loc_index_1~3) -> B(loc~cytosol,loc_index_1~3) @ 0.05\n" + 
         "\n" + 
         "\n" + 
         "\n" + 
@@ -637,6 +698,10 @@ public class SpatialTranslatorTest {
         "DNA(binding!1,downstream!3), RNAP(dna!1,rna!2), RNA(downstream!2), DNA(upstream!3,binding!_) -> DNA(binding,downstream!1), RNAP(dna,rna), RNA(downstream), DNA(upstream!1,binding!_) @ 1.0\n";
     
     private static final String AGENT_ORDERING_OUTPUT = 
+        "%agent: DNA(binding,downstream,upstream)\n" + 
+        "%agent: RNA(downstream)\n" + 
+        "%agent: RNAP(rna,dna)\n" + 
+        "\n" + 
         "\n" + 
         "DNA(binding!1,downstream!3),RNAP(dna!1,rna!2),RNA(downstream!2),DNA(binding!_,upstream!3) ->" +
         " DNA(binding,downstream!1),RNAP(dna,rna),RNA(downstream),DNA(binding!_,upstream!1) @ 1.0\n" +
@@ -656,16 +721,18 @@ public class SpatialTranslatorTest {
         "%obs: 'red[3]' 'cytosol'[3] A(state~red) \n";
     
     private static final String OBSERVATIONS_ONLY_OUTPUT = 
+        "%agent: A(state~blue~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
+        "\n" + 
         "\n" + 
         "\n" + 
         "\n" + 
         "%var: '[A(state~blue)]' A(state~blue)\n" + 
         "%var: 'all red' A(state~red)\n" + 
         "%var: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
-        "%var: 'red[0]' A(state~red,loc~cytosol,loc_index~0)\n" + 
-        "%var: 'red[1]' A(state~red,loc~cytosol,loc_index~1)\n" + 
-        "%var: 'red[2]' A(state~red,loc~cytosol,loc_index~2)\n" + 
-        "%var: 'red[3]' A(state~red,loc~cytosol,loc_index~3)\n" + 
+        "%var: 'red[0]' A(state~red,loc~cytosol,loc_index_1~0)\n" + 
+        "%var: 'red[1]' A(state~red,loc~cytosol,loc_index_1~1)\n" + 
+        "%var: 'red[2]' A(state~red,loc~cytosol,loc_index_1~2)\n" + 
+        "%var: 'red[3]' A(state~red,loc~cytosol,loc_index_1~3)\n" + 
         "%plot: '[A(state~blue)]'\n" + 
         "%plot: 'all red'\n" + 
         "%plot: 'cytosol blue'\n" + 
@@ -686,14 +753,16 @@ public class SpatialTranslatorTest {
         "";
     
     private static final String INIT_ONLY_OUTPUT = 
+        "%agent: A(state~blue~green~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "\n" + 
         "\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~0))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~1))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~2))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index~3))\n" + 
+        "\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~0))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~1))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~2))\n" + 
+        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~3))\n" + 
         "%init: 800 (A(state~green))\n" + 
-        "%init: 800 (A(state~red,loc~cytosol,loc_index~0))\n" + 
+        "%init: 800 (A(state~red,loc~cytosol,loc_index_1~0))\n" + 
         "\n" + 
         "\n" + 
         "";

@@ -45,7 +45,7 @@ public class Transform extends Transition {
         createTransformMap(leftAgents, rightAgents);
     }
 
-    public Transform(String label, List<Agent> leftAgents, List<Agent> rightAgents, VariableExpression rate, boolean dummy) {
+    public Transform(String label, List<Agent> leftAgents, List<Agent> rightAgents, VariableExpression rate, @SuppressWarnings("unused") boolean dummy) {
         super(label, rate);
         if ((leftAgents == null || leftAgents.size() == 0) && (rightAgents == null || rightAgents.size() == 0)) {
             throw new IllegalArgumentException("Both left and right agent lists may not be empty");
