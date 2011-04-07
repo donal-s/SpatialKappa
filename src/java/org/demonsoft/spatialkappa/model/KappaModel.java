@@ -195,7 +195,6 @@ public class KappaModel implements IKappaModel {
 
     public Map<LocatedComplex, Integer> getFixedLocatedInitialValuesMap() {
         Map<LocatedComplex, Integer> result = new HashMap<LocatedComplex, Integer>();
-        SimulationState modelSimulationState = new ModelOnlySimulationState(variables);
         
         for (InitialValue initialValue : initialValues) {
             boolean partition = false;
@@ -203,7 +202,7 @@ public class KappaModel implements IKappaModel {
             
             int quantity = initialValue.quantity;
             if (initialValue.reference != null) {
-                quantity = (int) variables.get(initialValue.reference.variableName).expression.evaluate(modelSimulationState).value;
+                quantity = variables.get(initialValue.reference.variableName).expression.evaluate(this);
             }
             
             Location location = initialValue.location;
@@ -214,7 +213,7 @@ public class KappaModel implements IKappaModel {
                 }
 
                 if (partition && compartment != null) {
-                    int[] cellCounts = compartment.getDistributedCellCounts(initialValue.quantity);
+                    int[] cellCounts = compartment.getDistributedCellCounts(quantity);
                     Location[] cellLocations = compartment.getDistributedCellReferences();
                     
                     for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {

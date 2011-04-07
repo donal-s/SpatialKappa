@@ -311,7 +311,7 @@ public class VariableExpressionTest {
     }
     
     @Test
-    public void testEvaluate() {
+    public void testEvaluate_simulationState() {
         VariableReference referenceX = new VariableReference("x");
         VariableReference referenceY = new VariableReference("y");
         VariableExpression expr = new VariableExpression(referenceX);
@@ -319,7 +319,7 @@ public class VariableExpressionTest {
         SimulationState state = new ModelOnlySimulationState(variables);
         
         try {
-            expr.evaluate(null);
+            expr.evaluate((SimulationState) null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -378,6 +378,83 @@ public class VariableExpressionTest {
         
         variables.put("y", new Variable(new VariableExpression(3), "y"));
         assertEquals(20.09f, new VariableExpression(UnaryOperator.EXP, new VariableExpression(referenceY)).evaluate(state).value, 0.01f);
+
+        assertEquals(3.14f, new VariableExpression(Constant.PI).evaluate(state).value, 0.01f);
+
+        // TODO handle simulation tokens
+    }
+    
+    
+    @Test
+    public void testEvaluate_kappaModel() {
+        VariableReference referenceX = new VariableReference("x");
+        VariableReference referenceY = new VariableReference("y");
+        VariableExpression expr = new VariableExpression(referenceX);
+        IKappaModel model = new KappaModel();
+        Map<String, Variable> variables = model.getVariables();
+        
+        try {
+            expr.evaluate((IKappaModel) null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            expr.evaluate(model);
+            fail("missing variable should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        variables.put("y", new Variable(new VariableExpression(5), "y"));
+        try {
+            expr.evaluate(model);
+            fail("missing variable should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            new VariableExpression(Constant.INFINITY).evaluate(model);
+            fail("evaluating infinity should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
+
+        variables.put("x", new Variable(new VariableExpression(12), "x"));
+        variables.put("y", new Variable(new VariableExpression(3), "y"));
+
+        assertEquals(2, new VariableExpression("2").evaluate(model));
+        assertEquals(9, new VariableExpression(new VariableExpression("7"), Operator.PLUS, new VariableExpression("2")).evaluate(model));
+        assertEquals(5, new VariableExpression(new VariableExpression("7"), Operator.MINUS, new VariableExpression("2")).evaluate(model));
+        assertEquals(14, new VariableExpression(new VariableExpression("7"), Operator.MULTIPLY, new VariableExpression("2")).evaluate(model));
+        assertEquals(3, new VariableExpression(new VariableExpression("7"), Operator.DIVIDE, new VariableExpression("2")).evaluate(model));
+        assertEquals(0, new VariableExpression(new VariableExpression("0"), Operator.MODULUS, new VariableExpression("5")).evaluate(model));
+        assertEquals(2, new VariableExpression(new VariableExpression("7"), Operator.MODULUS, new VariableExpression("5")).evaluate(model));
+        assertEquals(8, new VariableExpression(new VariableExpression("2"), Operator.POWER, new VariableExpression("3")).evaluate(model));
+        
+        assertEquals(12, new VariableExpression(referenceX).evaluate(model));
+        assertEquals(15, new VariableExpression(new VariableExpression(referenceX), Operator.PLUS, new VariableExpression(referenceY)).evaluate(model));
+        assertEquals(9, new VariableExpression(new VariableExpression(referenceX), Operator.MINUS, new VariableExpression(referenceY)).evaluate(model));
+        assertEquals(36, new VariableExpression(new VariableExpression(referenceX), Operator.MULTIPLY, new VariableExpression(referenceY)).evaluate(model));
+        assertEquals(4, new VariableExpression(new VariableExpression(referenceX), Operator.DIVIDE, new VariableExpression(referenceY)).evaluate(model));
+
+        variables.put("y", new Variable(new VariableExpression(100), "y"));
+        assertEquals(4, new VariableExpression(UnaryOperator.LOG, new VariableExpression(referenceY)).evaluate(model));
+        assertEquals(0, new VariableExpression(UnaryOperator.SIN, new VariableExpression(referenceY)).evaluate(model));
+        assertEquals(0, new VariableExpression(UnaryOperator.COS, new VariableExpression(referenceY)).evaluate(model));
+        assertEquals(0, new VariableExpression(UnaryOperator.TAN, new VariableExpression(referenceY)).evaluate(model));
+        assertEquals(10, new VariableExpression(UnaryOperator.SQRT, new VariableExpression(referenceY)).evaluate(model));
+        
+        variables.put("y", new Variable(new VariableExpression(3), "y"));
+        assertEquals(20, new VariableExpression(UnaryOperator.EXP, new VariableExpression(referenceY)).evaluate(model));
+
+        assertEquals(3, new VariableExpression(Constant.PI).evaluate(model));
 
         // TODO handle simulation tokens
     }

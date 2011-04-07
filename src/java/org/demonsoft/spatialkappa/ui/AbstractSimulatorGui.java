@@ -10,6 +10,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -48,6 +50,9 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.DeviationRenderer;
+import org.jfree.data.xy.XYIntervalSeries;
+import org.jfree.data.xy.XYIntervalSeriesCollection;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -82,8 +87,9 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
     protected File kappaFile;
     protected File replayFile;
     JFrame frame;
-    private ChartPanel chartPanel;
-    protected JPanel multiplePanel;
+    private ChartPanel basicChartPanel;
+    private ChartPanel cellMeanChartPanel;
+    protected JPanel cellViewChartPanel;
     private JTextArea consoleTextArea;
     private PrintStream consoleStream;
     private JToolBar toolbar;
@@ -110,6 +116,7 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
     JLabel labelStepSize;
 
     XYSeriesCollection chartData;
+    XYIntervalSeriesCollection cellChartData;
     
     Dimension minimumSize;
     boolean stopSimulation;
@@ -118,20 +125,21 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
 
     public AbstractSimulatorGui() throws Exception {
 
-        JFreeChart chart = ChartFactory.createXYLineChart("", "Time", "Quantity", null, PlotOrientation.VERTICAL, true, false, false);
         frame = new JFrame(getWindowTitle());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        chartPanel = new ChartPanel(chart);
         frame.getContentPane().setLayout(new BorderLayout());
 
         tabbedPane = new JTabbedPane();
-        tabbedPane.add(chartPanel, "Chart");
 
-        chart = ChartFactory.createBarChart("Current quantities", "Observable", "Quantity", null, PlotOrientation.VERTICAL, true, false, false);
+        basicChartPanel = new ChartPanel(ChartFactory.createXYLineChart("", "Time", "Quantity", null, PlotOrientation.VERTICAL, true, false, false));
+        tabbedPane.add(basicChartPanel, "Observation chart");
 
-        multiplePanel = new JPanel();
-        multiplePanel.setLayout(new BoxLayout(multiplePanel, BoxLayout.X_AXIS));
-        tabbedPane.add(multiplePanel, "Compartment View");
+        cellMeanChartPanel = new ChartPanel(ChartFactory.createXYLineChart("", "Time", "Quantity", null, PlotOrientation.VERTICAL, true, false, false));
+        tabbedPane.add(cellMeanChartPanel, "Cell mean chart");
+
+        cellViewChartPanel = new JPanel();
+        cellViewChartPanel.setLayout(new BoxLayout(cellViewChartPanel, BoxLayout.X_AXIS));
+        tabbedPane.add(cellViewChartPanel, "Compartment View");
 
         consoleTextArea = new JTextArea();
         consoleTextArea.setEditable(false);
@@ -149,21 +157,45 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
 
         frame.getContentPane().add(tabbedPane, BorderLayout.CENTER);
 
+        createToolbar();
+        
+        JPanel statusPanel = new JPanel();
+        textStatus = new JLabel("Open a Kappa file.");
+        statusPanel.add(textStatus);
+        frame.getContentPane().add(statusPanel, BorderLayout.SOUTH);
+
+        frame.pack();
+        minimumSize = new Dimension(frame.getWidth() + 70, frame.getHeight());
+        frame.setSize(minimumSize);
+        frame.setMinimumSize(minimumSize);
+
+        frame.addComponentListener(new ComponentAdapter() {
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                if (frame.getWidth() < minimumSize.width) {
+                    frame.setSize(minimumSize.width, frame.getHeight());
+                }
+                if (frame.getHeight() < minimumSize.height) {
+                    frame.setSize(frame.getWidth(), minimumSize.height);
+                }
+            }
+        });
+        frame.setVisible(true);
+    }
+
+    private void createToolbar() {
         toolbar = new JToolBar();
 
         toolbarButtonOpen = makeToolbarButton("general/Open24", ACTION_OPEN, "Open Kappa file", "Open");
         toolbar.add(toolbarButtonOpen);
         toolbarButtonReload = makeToolbarButton("general/Refresh24", ACTION_RELOAD, "Reload Kappa file", "Reload");
-        toolbarButtonReload.setEnabled(false);
         toolbar.add(toolbarButtonReload);
         toolbarButtonRun = makeToolbarButton("media/Play24", ACTION_RUN, "Run simulation", "Run");
-        toolbarButtonRun.setEnabled(false);
         toolbar.add(toolbarButtonRun);
         toolbarButtonReplay = makeToolbarButton("media/FastForward24", ACTION_REPLAY, "Replay simulation", "Replay");
-        toolbarButtonReplay.setEnabled(false);
         toolbar.add(toolbarButtonReplay);
         toolbarButtonStop = makeToolbarButton("media/Stop24", ACTION_STOP, "Stop simulation", "Stop");
-        toolbarButtonStop.setEnabled(false);
         toolbar.add(toolbarButtonStop);
 
         toolbar.add(new JToolBar.Separator(new Dimension(20, 0)));
@@ -223,31 +255,6 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
         frame.getContentPane().add(toolbar, BorderLayout.NORTH);
 
         setToolbarMode(ToolbarMode.START);
-        
-        JPanel statusPanel = new JPanel();
-        textStatus = new JLabel("Open a Kappa file.");
-        statusPanel.add(textStatus);
-        frame.getContentPane().add(statusPanel, BorderLayout.SOUTH);
-
-        frame.pack();
-        minimumSize = new Dimension(frame.getWidth() + 70, frame.getHeight());
-        frame.setSize(minimumSize);
-        frame.setMinimumSize(minimumSize);
-
-        frame.addComponentListener(new ComponentAdapter() {
-
-            @Override
-            public void componentResized(ComponentEvent e) {
-                if (frame.getWidth() < minimumSize.width) {
-                    frame.setSize(minimumSize.width, frame.getHeight());
-                }
-                if (frame.getHeight() < minimumSize.height) {
-                    frame.setSize(frame.getWidth(), minimumSize.height);
-                }
-            }
-
-        });
-        frame.setVisible(true);
     }
 
     protected abstract String getWindowTitle();
@@ -272,13 +279,19 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
         return button;
     }
 
-    protected void openKappaFile(File inputFile) {
+    protected void openKappaFile(File inputFile, boolean recordSimulation) {
         textStatus.setText(STATUS_LOADING);
         setToolbarMode(ToolbarMode.PROCESSING);
         consoleTextArea.setText("");
 
         try {
-            simulation = createRecordSimulation(inputFile);
+            if (recordSimulation) {
+                simulation = createRecordSimulation(inputFile);
+            }
+            else {
+                kappaFile = inputFile;
+                simulation = createSimulation(inputFile);
+            }
             simulation.addObservationListener(this);
 
             textAreaData.setText(simulation.toString() + "\n");
@@ -338,8 +351,8 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
     
     
 
-    private Simulation createReplaySimulation(File inputFile) {
-        return new ReplaySimulation(inputFile, (Integer) toolbarSpinnerModelReplayInterval.getValue());
+    private Simulation createReplaySimulation(File inputFile) throws FileNotFoundException {
+        return new ReplaySimulation(new FileReader(inputFile), (Integer) toolbarSpinnerModelReplayInterval.getValue());
     }
 
     protected abstract Simulation createSimulation(File inputFile) throws Exception;
@@ -362,66 +375,15 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
             });
             stopSimulation = false;
             firstObservation = true;
-            chartData = new XYSeriesCollection();
-            String simulationName = replay ? replayFile.getName() : kappaFile.getName();
-
+            
             simulation.reset();
-            
-            Observation observation = simulation.getCurrentObservation();
-            for (Component component : multiplePanel.getComponents()) {
-                simulation.removeObservationListener((ObservationListener) component);
-            }
-            multiplePanel.removeAll();
-            for (String observable : observation.orderedObservables) {
-                ObservationElement element = observation.observables.get(observable);
-                float value = element.value;
-                XYSeries series = new XYSeries(observable);
-                series.add(observation.time, value);
-                chartData.addSeries(series);
-            }
 
-            String redObservable = null;
-            String greenObservable = null;
-            String blueObservable = null;
-            for (String observable : observation.orderedObservables) {
-                if (observable.equals("Red cytosol")) {
-                    redObservable = observable;
-                }
-                else if (observable.equals("Green cytosol")) {
-                    greenObservable = observable;
-                }
-                else if (observable.equals("Blue cytosol")) {
-                    blueObservable = observable;
-                }
-            }
-            
-            if (redObservable != null && greenObservable != null && blueObservable != null) {
-                ThreeChannelCompartmentViewPanel compartmentPanel = new ThreeChannelCompartmentViewPanel();
-                simulation.addObservationListener(compartmentPanel);
-                multiplePanel.add(compartmentPanel);
-                compartmentPanel.setCompartment(redObservable, greenObservable, blueObservable, observation);
-            }
-            else {
-                for (String observable : observation.orderedObservables) {
-                    ObservationElement element = observation.observables.get(observable);
-                    if (element.isCompartment) {
-                        CompartmentViewPanel compartmentPanel = new CompartmentViewPanel();
-                        simulation.addObservationListener(compartmentPanel);
-                        multiplePanel.add(compartmentPanel);
-                        compartmentPanel.setCompartment(observable, observation);
-                        break;
-                    }
-                }
-            }
-            
-            JFreeChart chart = ChartFactory.createXYLineChart(simulationName, "Time", "Quantity", chartData, PlotOrientation.VERTICAL, true, false, false);
-            XYPlot xyPlot = chart.getXYPlot();
-            xyPlot.getRenderer().setSeriesPaint(0, Color.RED);
-            xyPlot.getRenderer().setSeriesPaint(1, Color.GREEN);
-            xyPlot.getRenderer().setSeriesPaint(2, Color.BLUE);
-            
-            
-            chartPanel.setChart(chart);
+            String simulationName = replay ? replayFile.getName() : kappaFile.getName();
+            Observation observation = simulation.getCurrentObservation();
+
+            createBasicChart(simulationName, observation);
+            createCellMeanChart(simulationName, observation, replay);
+            createCellViewChart(observation);
 
             SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
@@ -431,28 +393,111 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
 
             boolean eventModelling = toolbarToggleUnitsEvents.isSelected();
 
-                simulation.reset();
-    
-                for (Object series : chartData.getSeries()) {
-                    ((XYSeries) series).clear();
-                }
-                
-                replayRunning = replay;
-                
-                if (eventModelling) {
-                    int steps = ((Double) toolbarSpinnerModelSteps.getValue()).intValue();
-                    int stepSize = ((Double) toolbarSpinnerModelStepSize.getValue()).intValue();
-                    simulation.runByEvent(steps, stepSize);
-                }
-                else {
-                    float steps = ((Double) toolbarSpinnerModelSteps.getValue()).floatValue();
-                    float stepSize = ((Double) toolbarSpinnerModelStepSize.getValue()).floatValue();
-                    simulation.runByTime(steps, stepSize);
-                }
+            replayRunning = replay;
+
+            if (eventModelling) {
+                int steps = ((Double) toolbarSpinnerModelSteps.getValue()).intValue();
+                int stepSize = ((Double) toolbarSpinnerModelStepSize.getValue()).intValue();
+                simulation.runByEvent(steps, stepSize);
+            }
+            else {
+                float steps = ((Double) toolbarSpinnerModelSteps.getValue()).floatValue();
+                float stepSize = ((Double) toolbarSpinnerModelStepSize.getValue()).floatValue();
+                simulation.runByTime(steps, stepSize);
+            }
         }
         catch (Exception e) {
             handleException(e);
         }
+    }
+
+    private void createCellViewChart(Observation observation) {
+        for (Component component : cellViewChartPanel.getComponents()) {
+            simulation.removeObservationListener((ObservationListener) component);
+        }
+        cellViewChartPanel.removeAll();
+        
+        String redObservable = null;
+        String greenObservable = null;
+        String blueObservable = null;
+        for (String observable : observation.orderedObservables) {
+            if (observable.equalsIgnoreCase("Red")) {
+                redObservable = observable;
+            }
+            else if (observable.equalsIgnoreCase("Green")) {
+                greenObservable = observable;
+            }
+            else if (observable.equalsIgnoreCase("Blue")) {
+                blueObservable = observable;
+            }
+        }
+        
+        if (redObservable != null && greenObservable != null && blueObservable != null) {
+            ThreeChannelCompartmentViewPanel compartmentPanel = new ThreeChannelCompartmentViewPanel();
+            simulation.addObservationListener(compartmentPanel);
+            cellViewChartPanel.add(compartmentPanel);
+            compartmentPanel.setCompartment(redObservable, greenObservable, blueObservable, observation);
+        }
+        else {
+            for (String observable : observation.orderedObservables) {
+                ObservationElement element = observation.observables.get(observable);
+                if (element.isCompartment) {
+                    CompartmentViewPanel compartmentPanel = new CompartmentViewPanel();
+                    simulation.addObservationListener(compartmentPanel);
+                    cellViewChartPanel.add(compartmentPanel);
+                    compartmentPanel.setCompartment(observable, observation);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void createCellMeanChart(String simulationName, Observation observation, boolean isReplay) {
+        cellChartData = new XYIntervalSeriesCollection();
+        for (String observable : observation.orderedObservables) {
+            ObservationElement element = observation.observables.get(observable);
+            if (element.isCompartment) {
+                float mean = element.getMean();
+                float stdDev = element.getStandardDeviation();
+                XYIntervalSeries series = new XYIntervalSeries(observable);
+                series.setNotify(!isReplay);
+                series.add(observation.time, observation.time, observation.time, mean, mean - stdDev, mean + stdDev);
+                cellChartData.addSeries(series);
+            }
+        }
+        JFreeChart chart = ChartFactory.createXYLineChart(simulationName, "Time", "Quantity", cellChartData, PlotOrientation.VERTICAL, true, false, false);
+        DeviationRenderer renderer = new DeviationRenderer(true, false);
+        renderer.setSeriesFillPaint(0, Color.RED);
+        renderer.setSeriesFillPaint(1, Color.GREEN);
+        renderer.setSeriesFillPaint(2, Color.BLUE);
+        renderer.setSeriesPaint(0, Color.RED);
+        renderer.setSeriesPaint(1, Color.GREEN);
+        renderer.setSeriesPaint(2, Color.BLUE);
+        chart.getXYPlot().setRenderer(renderer);
+        
+        cellMeanChartPanel.setChart(chart);
+    }
+
+    private void createBasicChart(String simulationName, Observation observation) {
+        chartData = new XYSeriesCollection();
+        for (String observable : observation.orderedObservables) {
+            ObservationElement element = observation.observables.get(observable);
+            float value = element.value;
+            if (Float.isInfinite(value) || Float.isNaN(value)) {
+                value = 0;
+            }
+            XYSeries series = new XYSeries(observable);
+            series.add(observation.time, value);
+            chartData.addSeries(series);
+        }
+        
+        JFreeChart chart = ChartFactory.createXYLineChart(simulationName, "Time", "Quantity", chartData, PlotOrientation.VERTICAL, true, false, false);
+        XYPlot xyPlot = chart.getXYPlot();
+        xyPlot.getRenderer().setSeriesPaint(0, Color.RED);
+        xyPlot.getRenderer().setSeriesPaint(1, Color.GREEN);
+        xyPlot.getRenderer().setSeriesPaint(2, Color.BLUE);
+        
+        basicChartPanel.setChart(chart);
     }
 
     protected void setToolbarMode(ToolbarMode mode) {
@@ -538,7 +583,7 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
 
     protected void openFile(File file) {
         if (file.getName().endsWith(KAPPA_FILE_SUFFIX)) {
-            openKappaFile(file);
+            openKappaFile(file, false);
         }
         else if (file.getName().endsWith(REPLAY_FILE_SUFFIX)) {
             openReplayFile(file);
@@ -551,7 +596,7 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
 
     protected void actionReloadFile() {
         if (kappaFile != null) {
-            openKappaFile(kappaFile);
+            openKappaFile(kappaFile, false);
         }
     }
 
@@ -561,7 +606,7 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
     }
 
     private void actionRunSimulation() {
-        openKappaFile(kappaFile);
+        openKappaFile(kappaFile, true);
         new Thread() {
             @Override
             public void run() {
@@ -587,8 +632,20 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
                     for (Map.Entry<String, ObservationElement> entry : observation.observables.entrySet()) {
                         String key = entry.getKey();
                         float value = entry.getValue().value;
+                        if (Float.isInfinite(value) || Float.isNaN(value)) {
+                            value = 0;
+                        }
                         XYSeries series = chartData.getSeries(key);
                         series.add(observation.time, value, !replayRunning);
+                    }
+                    for (Map.Entry<String, ObservationElement> entry : observation.observables.entrySet()) {
+                        ObservationElement element = entry.getValue();
+                        if (element.isCompartment) {
+                            float mean = element.getMean();
+                            float stdDev = element.getStandardDeviation();
+                            XYIntervalSeries series = cellChartData.getSeries(cellChartData.indexOf(entry.getKey()));
+                            series.add(observation.time, observation.time, observation.time, mean, mean - stdDev, mean + stdDev);
+                        }
                     }
                     StringBuilder status = new StringBuilder();
                     status.append("Time elapsed (s): ").append(observation.elapsedTime / 1000);
@@ -605,6 +662,10 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
             if (replayRunning) {
                 for (Object series : chartData.getSeries()) {
                     ((XYSeries) series).fireSeriesChanged();
+                }
+                for (int index = 0; index < cellChartData.getSeriesCount(); index++) {
+                    cellChartData.getSeries(index).setNotify(true);
+                    cellChartData.getSeries(index).fireSeriesChanged();
                 }
             }
             textAreaData.append(simulation.getDebugOutput());

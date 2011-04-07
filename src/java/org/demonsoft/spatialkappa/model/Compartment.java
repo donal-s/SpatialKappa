@@ -99,7 +99,7 @@ public class Compartment {
     }
 
     public Serializable createValueArray() {
-        Serializable result = (Serializable) Array.newInstance(int.class, dimensions);
+        Serializable result = (Serializable) Array.newInstance(float.class, dimensions);
         return result;
     }
 

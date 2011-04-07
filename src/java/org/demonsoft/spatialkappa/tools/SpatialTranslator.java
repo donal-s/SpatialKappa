@@ -107,7 +107,7 @@ public class SpatialTranslator {
         }
         builder.append("\n");
         List<String> variableNames = new ArrayList<String>(kappaModel.getVariables().keySet());
-        Collections.sort(variableNames);
+        Collections.sort(variableNames); // TODO need to sort to fix referencing issues
         
         for (String variableName : variableNames) {
             Variable variable = kappaModel.getVariables().get(variableName);
@@ -117,6 +117,19 @@ public class SpatialTranslator {
         }
         
         for (String plotName : kappaModel.getPlottedVariables()) {
+            Variable variable = kappaModel.getVariables().get(plotName);
+            if (variable.type == Type.KAPPA_EXPRESSION && variable.location != null) { // TODO - what about indirectly referenced compartments ?
+                Compartment compartment = variable.location.getReferencedCompartment(kappaModel.getCompartments());
+                if (compartment.getDimensions().length != variable.location.getIndices().length) {
+                    String[] stateSuffixes = compartment.getCellStateSuffixes();
+                    for (int cellIndex = 0; cellIndex < stateSuffixes.length; cellIndex++) {
+                        String cellName = plotName + " :" + stateSuffixes[cellIndex];
+                        builder.append("%var: '").append(cellName).append("' ").append(getKappaString(variable.complex, stateSuffixes[cellIndex])).append("\n");
+                        builder.append("%plot: '").append(cellName).append("'\n");
+                    }
+                }
+            }
+            
             builder.append("%plot: '").append(plotName).append("'\n");
         }
         builder.append("\n");
@@ -203,13 +216,14 @@ public class SpatialTranslator {
         return result;
     }
 
-    private CompartmentLink getCompartmentLink(List<CompartmentLink> compartmentLinks, String compartmentLinkName) {
+    private List<CompartmentLink> getCompartmentLinks(List<CompartmentLink> compartmentLinks, String compartmentLinkName) {
+        List<CompartmentLink> result = new ArrayList<CompartmentLink>();
         for (CompartmentLink link : compartmentLinks) {
             if (compartmentLinkName.equals(link.getName())) {
-                return link;
+                result.add(link);
             }
         }
-        return null;
+        return result;
     }
 
     private String getComplexKappaString(List<Complex> complexes, String stateSuffix) {
@@ -280,34 +294,47 @@ public class SpatialTranslator {
     String getKappaString(Variable variable) {
         StringBuilder builder = new StringBuilder();
         builder.append("%var: '").append(variable.label).append("'");
-        builder.append(" ").append(getKappaString(variable.complex, getKappaString(variable.location))).append("\n");
+        switch (variable.type) {
+        case KAPPA_EXPRESSION:
+            builder.append(" ").append(getKappaString(variable.complex, getKappaString(variable.location)));
+            break;
+        case VARIABLE_EXPRESSION:
+            builder.append(" ").append(variable.expression.toString());
+            break;
+        case TRANSITION_LABEL:
+            // Do nothing
+            break;
+        }
+        builder.append("\n");
         return builder.toString();
     }
     
     String getKappaString(Transport transport) {
         StringBuilder builder = new StringBuilder();
-        CompartmentLink compartmentLink = getCompartmentLink(kappaModel.getCompartmentLinks(), transport.getCompartmentLinkName());
-        String[][] stateSuffixPairs = getLinkStateSuffixPairs(compartmentLink, kappaModel.getCompartments());
-        List<Agent> agents = transport.getAgents();
-        if (agents != null) {
-            writeAgents(builder, stateSuffixPairs, transport, compartmentLink, agents, 1, kappaModel.getAggregateAgentMap());
-        }
-        else {
-            int labelSuffix = 1;
-            agents = getAggregateAgents(kappaModel.getAggregateAgentMap());
-            List<Agent> currentAgents = new ArrayList<Agent>();
-            for (Agent agent : agents) {
-                currentAgents.clear();
-                currentAgents.add(agent);
-                writeAgents(builder, stateSuffixPairs, transport, compartmentLink, currentAgents, labelSuffix, kappaModel.getAggregateAgentMap());
-                labelSuffix += stateSuffixPairs.length;
+        List<CompartmentLink> compartmentLinks = getCompartmentLinks(kappaModel.getCompartmentLinks(), transport.getCompartmentLinkName());
+        int labelSuffix = 1;
+        boolean forceSuffix = compartmentLinks.size() > 0;
+        for (CompartmentLink compartmentLink : compartmentLinks) {
+            String[][] stateSuffixPairs = getLinkStateSuffixPairs(compartmentLink, kappaModel.getCompartments());
+            List<Agent> agents = transport.getAgents();
+            if (agents != null) {
+                labelSuffix = writeAgents(builder, stateSuffixPairs, transport, compartmentLink, agents, labelSuffix, kappaModel.getAggregateAgentMap(), forceSuffix);
+            }
+            else {
+                agents = getAggregateAgents(kappaModel.getAggregateAgentMap());
+                List<Agent> currentAgents = new ArrayList<Agent>();
+                for (Agent agent : agents) {
+                    currentAgents.clear();
+                    currentAgents.add(agent);
+                    labelSuffix =  writeAgents(builder, stateSuffixPairs, transport, compartmentLink, currentAgents, labelSuffix, kappaModel.getAggregateAgentMap(), forceSuffix);
+                }
             }
         }
         return builder.toString();
     }
     
-    private void writeAgents(StringBuilder builder, String[][] stateSuffixPairs, Transport transport, CompartmentLink compartmentLink, List<Agent> agents,
-            int startLabelSuffix, Map<String, AggregateAgent> aggregateAgentMap) {
+    private int writeAgents(StringBuilder builder, String[][] stateSuffixPairs, Transport transport, CompartmentLink compartmentLink, List<Agent> agents,
+            int startLabelSuffix, Map<String, AggregateAgent> aggregateAgentMap, boolean forceSuffix) {
 
         int labelSuffix = startLabelSuffix;
         List<Agent> isolatedAgents = getIsolatedAgents(agents, aggregateAgentMap);
@@ -315,7 +342,7 @@ public class SpatialTranslator {
         for (int index = 0; index < stateSuffixPairs.length; index++) {
             if (transport.label != null) {
                 builder.append("'").append(transport.label);
-                if (stateSuffixPairs.length > 1) {
+                if (stateSuffixPairs.length > 1 || forceSuffix) {
                     builder.append("-").append(labelSuffix++);
                 }
                 builder.append("' ");
@@ -331,7 +358,7 @@ public class SpatialTranslator {
             if (compartmentLink.getDirection() == Direction.BIDIRECTIONAL) {
                 if (transport.label != null) {
                     builder.append("'").append(transport.label);
-                    if (stateSuffixPairs.length > 1) {
+                    if (stateSuffixPairs.length > 1 || forceSuffix) {
                         builder.append("-").append(labelSuffix++);
                     }
                     builder.append("' ");
@@ -345,6 +372,7 @@ public class SpatialTranslator {
                 builder.append("\n");
             }
         }
+        return labelSuffix;
     }
 
     private List<Agent> getIsolatedAgents(List<Agent> agents, Map<String, AggregateAgent> aggregateAgentMap) {
@@ -420,6 +448,12 @@ public class SpatialTranslator {
         StringBuilder builder = new StringBuilder();
         boolean partition = false;
         Compartment compartment = null;
+        int quantity = initialValue.quantity;
+        if (initialValue.reference != null) {
+            Variable target = kappaModel.getVariables().get(initialValue.reference.variableName);
+            quantity = target.evaluate(kappaModel);
+        }
+        
         Location location = initialValue.location;
         if (location != null) {
             compartment = location.getReferencedCompartment(kappaModel.getCompartments());
@@ -429,7 +463,7 @@ public class SpatialTranslator {
         }
 
         if (partition && compartment != null) {
-            int[] cellCounts = compartment.getDistributedCellCounts(initialValue.quantity);
+            int[] cellCounts = compartment.getDistributedCellCounts(quantity);
             String[] stateSuffixes = compartment.getCellStateSuffixes();
 
             for (int cellIndex = 0; cellIndex < cellCounts.length; cellIndex++) {
@@ -439,7 +473,7 @@ public class SpatialTranslator {
             }
         }
         else {
-            builder.append("%init: ").append(initialValue.quantity).append(" (");
+            builder.append("%init: ").append(quantity).append(" (");
             builder.append(getComplexKappaString(initialValue.complexes, getKappaString(location)));
             builder.append(")\n");
         }

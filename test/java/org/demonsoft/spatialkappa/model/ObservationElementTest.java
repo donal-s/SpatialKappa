@@ -19,10 +19,10 @@ public class ObservationElementTest {
     @Test
     public void testObservationElement_compartment() {
         int[] dimensions = new int[] {3};
-        int[] cellValues = new int[] {5, 6, 7};
+        float[] cellValues = new float[] {5, 6, 7};
         
         try {
-            new ObservationElement(4, null, cellValues);
+            new ObservationElement(4, null, "cytosol", cellValues);
             fail("Null should have failed");
         }
         catch (NullPointerException e) {
@@ -30,7 +30,7 @@ public class ObservationElementTest {
         }
         
         try {
-            new ObservationElement(4, dimensions, null);
+            new ObservationElement(4, dimensions, null, cellValues);
             fail("Null should have failed");
         }
         catch (NullPointerException e) {
@@ -38,7 +38,15 @@ public class ObservationElementTest {
         }
         
         try {
-            new ObservationElement(4, new int[] {3, 2}, cellValues);
+            new ObservationElement(4, dimensions, "cytosol", null);
+            fail("Null should have failed");
+        }
+        catch (NullPointerException e) {
+            // expected exception
+        }
+        
+        try {
+            new ObservationElement(4, new int[] {3, 2}, "cytosol", cellValues);
             fail("Dimension mismatch should have failed");
         }
         catch (Exception e) {
@@ -46,7 +54,7 @@ public class ObservationElementTest {
         }
         
         try {
-            new ObservationElement(4, dimensions, new int[][] {{5,5}, {6,6}, {7,7}});
+            new ObservationElement(4, dimensions, "cytosol", new int[][] {{5,5}, {6,6}, {7,7}});
             fail("Dimension mismatch should have failed");
         }
         catch (Exception e) {
@@ -54,18 +62,19 @@ public class ObservationElementTest {
         }
         
         try {
-            new ObservationElement(4, dimensions, new int[] {5, 6});
+            new ObservationElement(4, dimensions, "cytosol", new int[] {5, 6});
             fail("Length should have failed");
         }
         catch (Exception e) {
             // expected exception
         }
         
-        ObservationElement element = new ObservationElement(5, dimensions, cellValues);
+        ObservationElement element = new ObservationElement(5, dimensions, "cytosol", cellValues);
         assertEquals(5f, element.value, 0.01f);
         assertTrue(element.isCompartment);
         assertEquals(dimensions, element.dimensions);
         assertEquals(cellValues, element.cellValues);
+        assertEquals("cytosol", element.compartmentName);
     }
 
 }

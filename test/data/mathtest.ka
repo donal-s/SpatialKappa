@@ -25,8 +25,7 @@
 %plot: 'time'
 %var: 'sqrt' [sqrt][T]
 %plot: 'sqrt'
-#%var: 'tan' [mod]([tan][T]) 15
-#%plot: 'tan'
-%var: 'log events' [log][T]
+%var: 'tan' [mod]([tan][T]) 15
+%plot: 'tan'
+%var: 'log events' [log] [E]
 %plot: 'log events'
- 

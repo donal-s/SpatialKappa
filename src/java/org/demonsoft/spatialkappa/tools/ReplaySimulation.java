@@ -1,35 +1,52 @@
 package org.demonsoft.spatialkappa.tools;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.Reader;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import org.demonsoft.spatialkappa.model.Observation;
+import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.ObservationListener;
 
 public class ReplaySimulation implements Simulation {
 
 
+    private static final String TOKEN_HASH = "#";
+    private static final String TOKEN_TIME = "time";
+    private static final String TOKEN_EVENTS = "E";
+    private static final String COMPARTMENT_ELEMENT_PREFIX = "_:loc~";
+    private static final String COMPARTMENT_INDEX_PREFIX = "loc_index_";
+    
+    List<CompartmentElementDefinition> definitions = new ArrayList<CompartmentElementDefinition>();
     final Set<ObservationListener> listeners = new HashSet<ObservationListener>();
-    private File recordFile;
     int interval;
-    private ObjectInputStream inputStream;
     Observation currentObservation;
     boolean stopped;
+    private BufferedReader reader;
+    List<String> observableNames = new ArrayList<String>();
+    List<String> outputObservableNames = new ArrayList<String>();
+    String nextLine;
     
     
-    public ReplaySimulation(File recordFile, int interval) {
-        this.recordFile = recordFile;
+    public ReplaySimulation(Reader reader, int interval) {
+        this.reader = new BufferedReader(reader);
         this.interval = interval;
-        initialiseReader();
+        readObservationHeader();
+        currentObservation = readObservation();
+
     }
-    
+
     public void reset() {
-        stopReader();
-        initialiseReader();
+//        stopReader();
     }
 
     public Observation getCurrentObservation() {
@@ -58,7 +75,8 @@ public class ReplaySimulation implements Simulation {
                     
                     currentObservation = observation;
                     if (observation.finalObservation || stopped) {
-                        currentObservation = new Observation(currentObservation.time, currentObservation.orderedObservables, currentObservation.observables, true, currentObservation.elapsedTime, 0);
+                        currentObservation = new Observation(currentObservation.time, currentObservation.event, 
+                                currentObservation.orderedObservables, currentObservation.observables, true, currentObservation.elapsedTime, 0);
                     }
                     for (ObservationListener listener : listeners) {
                         listener.observation(currentObservation);
@@ -93,55 +111,229 @@ public class ReplaySimulation implements Simulation {
         return "Replay";
     }
 
-    @Override
-    public String toString() {
-        return "Replay of file: " + recordFile.getPath();
-    }
-    
-    private void initialiseReader() {
-        if (inputStream != null) {
-            try {
-                inputStream.close();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        try {
-            inputStream = new ObjectInputStream(new FileInputStream(recordFile));
-            currentObservation = readObservation();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
     void stopReader() {
-        if (inputStream != null) {
+        if (reader != null) {
             try {
-                inputStream.close();
+                reader.close();
             }
             catch (IOException e) {
                 e.printStackTrace();
             }
-            inputStream = null;
+            reader = null;
         }
     }
     
     Observation readObservation() {
-        Observation observation = null;
         try {
-            observation = (Observation) inputStream.readObject();
+            String line = nextLine;
+            nextLine = reader.readLine();
+            StringTokenizer tokens = new StringTokenizer(line);
+            
+            float time = Float.parseFloat(tokens.nextToken());
+            int event = Integer.parseInt(tokens.nextToken());
+            
+            Map<String, ObservationElement> elements = new HashMap<String, ObservationElement>();
+            for (String observableName : observableNames) {
+                elements.put(observableName, new ObservationElement(Float.parseFloat(tokens.nextToken())));
+            }
+            constructCompartmentObservations(elements);
+            Observation result = new Observation(time, event, outputObservableNames, elements, nextLine == null, 0, 0);
+            return result;
         }
         catch (IOException e) {
             e.printStackTrace();
         }
-        catch (ClassNotFoundException e) {
+        return null;
+    }
+    
+    private void constructCompartmentObservations(Map<String, ObservationElement> elements) {
+        for (CompartmentElementDefinition definition : definitions) {
+            Serializable cellValues = constructSlice(definition.elementNames, elements);
+            int totalValue = (int) elements.get(definition.compartmentName).value;
+            elements.put(definition.compartmentName, new ObservationElement(totalValue, definition.dimensions, definition.compartmentName, cellValues));
+        }
+    }
+    
+    private Serializable constructSlice(Object[] elementNames, Map<String, ObservationElement> elements) {
+        if (elementNames[0] instanceof String) {
+            float[] result = new float[elementNames.length];
+            for (int index = 0; index < elementNames.length; index++) {
+                result[index] = elements.get(elementNames[index]).value;
+                elements.remove(elementNames[index]);
+            }
+            return result;
+        }
+        Serializable[] result = new Serializable[elementNames.length];
+        for (int index = 0; index < elementNames.length; index++) {
+            result[index] =  constructSlice((Object[]) elementNames[index], elements);
+        }
+        return result;
+    }
+
+    public static class CompartmentElementDefinition {
+        
+        public final String compartmentName;
+        public final int[] dimensions;
+        public final Object[] elementNames;
+        
+        public CompartmentElementDefinition(String compartmentName, int[] dimensions, Object[] elementNames) {
+            this.compartmentName = compartmentName;
+            this.dimensions = dimensions;
+            this.elementNames = elementNames;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((compartmentName == null) ? 0 : compartmentName.hashCode());
+            result = prime * result + Arrays.hashCode(dimensions);
+            result = prime * result + Arrays.deepHashCode(elementNames);
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            CompartmentElementDefinition other = (CompartmentElementDefinition) obj;
+            if (compartmentName == null) {
+                if (other.compartmentName != null)
+                    return false;
+            }
+            else if (!compartmentName.equals(other.compartmentName))
+                return false;
+            if (!Arrays.equals(dimensions, other.dimensions))
+                return false;
+            if (!Arrays.deepEquals(elementNames, other.elementNames))
+                return false;
+            return true;
+        }
+        
+        
+    }
+    
+
+    void readObservationHeader() {
+        try {
+            String line = reader.readLine();
+            StringTokenizer tokens = new StringTokenizer(line);
+            
+            if (!tokens.hasMoreTokens() || !TOKEN_HASH.equals(tokens.nextToken())) {
+                throw new IllegalArgumentException("Column name missing: " + TOKEN_HASH);
+            }
+            if (!tokens.hasMoreTokens() || !TOKEN_TIME.equals(tokens.nextToken())) {
+                throw new IllegalArgumentException("Column name missing: " + TOKEN_TIME);
+            }
+            if (!tokens.hasMoreTokens() || !TOKEN_EVENTS.equals(tokens.nextToken())) {
+                throw new IllegalArgumentException("Column name missing: " + TOKEN_EVENTS);
+            }
+            
+            observableNames.clear();
+            while (tokens.hasMoreTokens()) {
+                String token = tokens.nextToken();
+                token = token.substring(1, token.length() - 1);
+                observableNames.add(token);
+            }
+            
+            constructCompartmentDefinitions();
+            
+            nextLine = reader.readLine();
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
-        if (observation == null || observation.finalObservation) {
-            stopReader();
+    }
+
+    void constructCompartmentDefinitions() {
+        outputObservableNames = new ArrayList<String>(observableNames);
+        List<String> compartmentNames = getCompartmentNames();
+        for (String compartmentName : compartmentNames) {
+            List<String> elementNames = getElementNames(compartmentName);
+            outputObservableNames.removeAll(elementNames);
+            int[] dimensions = getDimensions(elementNames);
+            Object[] orderedElementNames = getOrderedElementNames(elementNames, "", 0, dimensions);
+            definitions.add(new CompartmentElementDefinition(compartmentName, dimensions, orderedElementNames));
         }
-        return observation;
+    }
+
+    private Object[] getOrderedElementNames(List<String> elementNames, String indexPrefix, int dimension, int[] dimensions) {
+        if (dimension == dimensions.length - 1) {
+            String[] result = new String[dimensions[dimension]];
+            for (int index = 0; index < result.length; index++) {
+                String indexString = indexPrefix + "," + COMPARTMENT_INDEX_PREFIX + (dimension + 1) +  "~" + index;
+                for (String current : elementNames) {
+                    if (current.contains(indexString)) {
+                        result[index] = current;
+                        break;
+                    }
+                }
+            }
+            return result;
+        }
+        
+        Object[] result = new Object[dimensions[dimension]];
+        for (int index = 0; index < result.length; index++) {
+            String indexString = indexPrefix + "," + COMPARTMENT_INDEX_PREFIX + (dimension + 1) +  "~" + index;
+            result[index] = getOrderedElementNames(elementNames, indexString, dimension + 1, dimensions);
+        }
+        return result;
+    }
+
+    private int[] getDimensions(List<String> elementNames) {
+        String elementName = elementNames.get(0);
+        int highestDimension = 0;
+        while (elementName.contains(COMPARTMENT_INDEX_PREFIX + (highestDimension + 1))) {
+            highestDimension++;
+        }
+        int[] result = new int[highestDimension];
+        for (int index = 0; index < highestDimension; index++) {
+            int maxValue = 0;
+            while (true) {
+                boolean found = false;
+                String elementIndex = COMPARTMENT_INDEX_PREFIX + (index + 1) + "~" + maxValue;
+                for (String current : elementNames) {
+                    if (current.contains(elementIndex)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    maxValue++;
+                }
+                else {
+                    break;
+                }
+            }
+            result[index] = maxValue;
+        }
+        return result;
+    }
+
+    private List<String> getElementNames(String compartmentName) {
+        List<String> result = new ArrayList<String>();
+        for (String observableName : observableNames) {
+            if (observableName.startsWith(compartmentName + COMPARTMENT_ELEMENT_PREFIX)) {
+                result.add(observableName);
+            }
+        }
+        return result;
+    }
+
+    private List<String> getCompartmentNames() {
+        List<String> result = new ArrayList<String>();
+        for (String observableName : observableNames) {
+            if (observableName.contains(COMPARTMENT_ELEMENT_PREFIX)) {
+                String compartmentName = observableName.substring(0, observableName.indexOf(COMPARTMENT_ELEMENT_PREFIX));
+                if (!result.contains(compartmentName)) {
+                    result.add(compartmentName);
+                }
+            }
+        }
+        return result;
     }
 }

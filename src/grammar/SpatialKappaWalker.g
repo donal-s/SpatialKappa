@@ -57,6 +57,7 @@ line
   | obsExpr
   | varExpr
   | modExpr
+  | agentExpr
   ;
 
 ruleExpr
@@ -181,6 +182,14 @@ initExpr
   ^(INIT agentGroup label locationExpr?)
   {
     kappaModel.addInitialValue($agentGroup.result, new VariableReference($label.result), $locationExpr.result);
+  }
+  ;
+  
+agentExpr
+  :
+  AGENT_DECL
+  {
+    // Do nothing for now
   }
   ;
   

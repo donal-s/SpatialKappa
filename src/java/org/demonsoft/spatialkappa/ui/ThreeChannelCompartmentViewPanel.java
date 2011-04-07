@@ -94,7 +94,7 @@ public class ThreeChannelCompartmentViewPanel extends JPanel implements Observat
         toolbarToggleMaximumDynamic.addActionListener(this);
         buttonGroup.add(toolbarToggleMaximumDynamic);
         toolbar.add(toolbarToggleMaximumDynamic);
-        toolbarToggleMaximumDynamic.setSelected(true);
+        toolbarToggleMaximumFixed.setSelected(true);
 
         toolbar.add(new JToolBar.Separator(new Dimension(20, 0)));
 
@@ -309,7 +309,7 @@ public class ThreeChannelCompartmentViewPanel extends JPanel implements Observat
                     (areaHeight) / (redDataset.getRowCount() + 0.5)));
 
             int dataWidth = Math.min(cellSize * redDataset.getColumnCount(), areaWidth);
-            int dataHeight = Math.min((int) ((double) cellSize * (((double) redDataset.getRowCount()) + 0.5)), areaHeight);
+            int dataHeight = Math.min((int) (cellSize * (redDataset.getRowCount() + 0.5)), areaHeight);
 
             int xOffset = (areaWidth - dataWidth) / 2;
             int yOffset = (areaHeight - dataHeight) / 2;
@@ -383,10 +383,11 @@ public class ThreeChannelCompartmentViewPanel extends JPanel implements Observat
         }
 
         private void drawChannelPolygon(Graphics2D g2, float value, float maxValue, Polygon polygon, float[] differenceComponents) {
+            float usedValue = value;
             if (useLogColour) {
-                value = (value == 0) ? 0 : ((float) Math.log(value));
+                usedValue = (value == 0) ? 0 : ((float) Math.log(value));
             }
-            float ratio = (maxValue == 0) ? 0 : value / maxValue;
+            float ratio = (maxValue == 0) ? 0 : usedValue / maxValue;
 
             Color cellColor = new Color(baseComponents[0] + (differenceComponents[0] * ratio), baseComponents[1] + (differenceComponents[1] * ratio), baseComponents[2]
                     + (differenceComponents[2] * ratio));
@@ -398,14 +399,17 @@ public class ThreeChannelCompartmentViewPanel extends JPanel implements Observat
         
         private void drawBlendPolygon(Graphics2D g2, Polygon polygon, float[] differenceComponents, 
                 float redValue, float redMaxValue, float greenValue, float greenMaxValue, float blueValue, float blueMaxValue) {
+            float usedRedValue = redValue;
+            float usedGreenValue = greenValue;
+            float usedBlueValue = blueValue;
             if (useLogColour) {
-                redValue = (redValue == 0) ? 0 : ((float) Math.log(redValue));
-                greenValue = (greenValue == 0) ? 0 : ((float) Math.log(greenValue));
-                blueValue = (blueValue == 0) ? 0 : ((float) Math.log(blueValue));
+                usedRedValue = (redValue == 0) ? 0 : ((float) Math.log(redValue));
+                usedGreenValue = (greenValue == 0) ? 0 : ((float) Math.log(greenValue));
+                usedBlueValue = (blueValue == 0) ? 0 : ((float) Math.log(blueValue));
             }
-            float redRatio = (redMaxValue == 0) ? 0 : redValue / redMaxValue;
-            float greenRatio = (greenMaxValue == 0) ? 0 : greenValue / greenMaxValue;
-            float blueRatio = (blueMaxValue == 0) ? 0 : blueValue / blueMaxValue;
+            float redRatio = (redMaxValue == 0) ? 0 : usedRedValue / redMaxValue;
+            float greenRatio = (greenMaxValue == 0) ? 0 : usedGreenValue / greenMaxValue;
+            float blueRatio = (blueMaxValue == 0) ? 0 : usedBlueValue / blueMaxValue;
 
             Color cellColor = new Color(baseComponents[0] + (differenceComponents[0] * redRatio), baseComponents[1] + (differenceComponents[1] * greenRatio), baseComponents[2]
                     + (differenceComponents[2] * blueRatio));
@@ -432,9 +436,9 @@ public class ThreeChannelCompartmentViewPanel extends JPanel implements Observat
 
         private final int rows;
         private final int columns;
-        private final int[][] data;
-        private int dynamicMaxValue = 0;
-        private int maxValue = 0;
+        private final float[][] data;
+        private float dynamicMaxValue = 0;
+        private float maxValue = 0;
         private final List<DatasetChangeListener> listeners = new ArrayList<DatasetChangeListener>();
         private DatasetGroup group;
         private boolean useDynamicMaximum = true;
@@ -442,14 +446,14 @@ public class ThreeChannelCompartmentViewPanel extends JPanel implements Observat
         public DefaultCellDataset(int rows, int columns) {
             this.rows = rows;
             this.columns = columns;
-            this.data = new int[columns][rows];
+            this.data = new float[columns][rows];
         }
 
         public void setUseDynamicMaximum(boolean value) {
             useDynamicMaximum = value;
         }
 
-        public void setValue(int row, int column, int value) {
+        public void setValue(int row, int column, float value) {
             data[column][row] = value;
             dynamicMaxValue = 0;
             notifyListeners();

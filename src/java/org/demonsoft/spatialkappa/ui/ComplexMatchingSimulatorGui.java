@@ -26,7 +26,7 @@ public class ComplexMatchingSimulatorGui extends AbstractSimulatorGui {
         if (args.length == 1) {
             File kappaFile = new File(args[0]);
             if (kappaFile.exists()) {
-                simulator.openKappaFile(kappaFile);
+                simulator.openKappaFile(kappaFile, false);
                 simulator.runSimulation();
             }
         }

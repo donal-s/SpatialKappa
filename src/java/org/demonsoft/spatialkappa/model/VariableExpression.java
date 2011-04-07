@@ -466,5 +466,37 @@ public class VariableExpression implements Serializable {
             throw new IllegalStateException("Unknown expression");
         }
     }
+
+    public int evaluate(IKappaModel kappaModel) {
+        if (kappaModel == null) {
+            throw new NullPointerException();
+        }
+        switch (type) {
+        case BINARY_EXPRESSION:
+            return operator.eval(lhsExpression.evaluate(kappaModel), rhsExpression.evaluate(kappaModel));
+            
+        case CONSTANT:
+            if (constant == Constant.INFINITY) {
+                throw new IllegalStateException();
+            }
+            return (int) constant.value;
+            
+        case NUMBER:
+            return (int) value;
+            
+        case UNARY_EXPRESSION:
+            return (int) unaryOperator.eval(new ObservationElement(lhsExpression.evaluate(kappaModel))).value;
+            
+        case VARIABLE_REFERENCE:
+            Variable target = kappaModel.getVariables().get(reference.variableName);
+            if (target == null) {
+                throw new IllegalArgumentException("Missing value: " + reference);
+            }
+            return target.evaluate(kappaModel);
+            
+        default:
+            throw new IllegalStateException("Unknown expression");
+        }
+    }
     
 }

@@ -102,11 +102,11 @@ public class VariableTest {
     }
 
     @Test
-    public void testEvaluate() {
+    public void testEvaluate_simulationState() {
         SimulationState state = EasyMock.createMock(SimulationState.class);
         
         try {
-            new Variable("label").evaluate(null);
+            new Variable("label").evaluate((SimulationState) null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -134,6 +134,39 @@ public class VariableTest {
         replay(state);
         assertEquals(4f, variable.evaluate(state).value, 0.1f);
         verify(state);
+    }
+
+    @Test
+    public void testEvaluate_kappaModel() {
+        IKappaModel model = EasyMock.createMock(IKappaModel.class);
+        
+        try {
+            new Variable(new VariableExpression(2), "label").evaluate((KappaModel) null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // expected exception
+        }
+
+        Complex complex = new Complex(new Agent("agent1"));
+        Location location = new Location("cytosol", new CellIndexExpression("2"));
+        try {
+            new Variable(complex, location, "label").evaluate(model);
+            fail("null should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // expected exception
+        }
+        try {
+            new Variable("label").evaluate(model);
+            fail("null should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // expected exception
+        }
+        
+        Variable variable = new Variable(new VariableExpression(2), "label");
+        assertEquals(2, variable.evaluate(model));
     }
 
 }

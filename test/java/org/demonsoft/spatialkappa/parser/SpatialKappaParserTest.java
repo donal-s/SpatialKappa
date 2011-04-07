@@ -113,6 +113,14 @@ public class SpatialKappaParserTest {
     }
 
     @Test
+    public void testAgentExpr() throws Exception {
+        // TODO agent expressions ignored for now
+        runParserRule("agentExpr", "%agent: Agent()", "AGENT_DECL");
+        runParserRule("agentExpr", "%agent: Agent(none,single~value,multiple~val1~val2~val3)", "AGENT_DECL");
+    }
+    
+
+    @Test
     public void testPlotExpr() throws Exception {
         runParserRule("plotExpr", "%plot: 'label'\n", "(PLOT label)");
         
@@ -460,8 +468,13 @@ public class SpatialKappaParserTest {
         CommonTree tree = (CommonTree) getTreeMethod.invoke(ruleOutput, (Object[]) null);
         
         if (success) {
-            assertEquals(CommonTree.class, tree.getClass());
-            assertEquals(expectedTree, tree.toStringTree());
+            if (expectedTree != null) {
+                assertEquals(CommonTree.class, tree.getClass());
+                assertEquals(expectedTree, tree.toStringTree());
+            }
+            else {
+                assertNull(tree);
+            }
         }
         else {
             if (tree.getClass() == CommonTree.class) {

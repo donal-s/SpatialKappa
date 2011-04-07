@@ -365,15 +365,15 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
                         addCellValue(cellValues, quantity, current.location.getIndices());
                     }
                 }
+                if (partition) {
+                    return new ObservationElement(value, dimensions, compartment.getName(), cellValues);
+                }
             }
             else { // No compartment
                 for (ObservableMapValue current : complexes) {
                     value += current.count;
                 }
             }
-        }
-        if (partition) {
-            return new ObservationElement(value, dimensions, cellValues);
         }
         return new ObservationElement(value);
     }

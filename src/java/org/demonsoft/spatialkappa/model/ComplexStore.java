@@ -225,7 +225,7 @@ public class ComplexStore {
                         }
                     }
                 }
-                builder.append(" ").append(quantity).append(" * (");
+                builder.append(" ").append(quantity).append(" (");
                 builder.append(complex.complex.agents.get(0).toString());
                 for (int index = 1; index < complex.complex.agents.size(); index++) {
                     builder.append(",").append(complex.complex.agents.get(index).toString());

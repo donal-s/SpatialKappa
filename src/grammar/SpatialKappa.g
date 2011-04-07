@@ -59,6 +59,7 @@ tokens {
   TAN;
   SQRT;
   EXP;
+  AGENT_DECL;
 }
 
 @header        {package org.demonsoft.spatialkappa.parser;}
@@ -81,6 +82,7 @@ line
   | obsExpr NEWLINE!
   | varExpr NEWLINE!
   | modExpr NEWLINE!
+  | agentExpr NEWLINE!
   | NEWLINE!
   ;
 
@@ -178,6 +180,14 @@ options {backtrack=true;}
   | '%init:' locationExpr? label '(' agentGroup ')'
     ->
       ^(INIT agentGroup label locationExpr?)
+  ;
+
+agentExpr
+  :
+  '%agent:' id '(' (id stateExpr* (',' id stateExpr*)*)? ')'
+    ->
+     // TODO ignore for now
+     AGENT_DECL
   ;
 
 compartmentExpr
@@ -544,17 +554,19 @@ COMMENT
   NEWLINE {$channel=HIDDEN;}
   ;
 
+WS
+  :
+  (
+    ' '
+    | '\t'
+    | '\\' NEWLINE
+  )+
+  {$channel=HIDDEN;}
+  ;
+
 NEWLINE
   :
   '\r'? '\n'
   | '\r'
   ;
 
-WS
-  :
-  (
-    ' '
-    | '\t'
-  )+
-  {$channel=HIDDEN;}
-  ;

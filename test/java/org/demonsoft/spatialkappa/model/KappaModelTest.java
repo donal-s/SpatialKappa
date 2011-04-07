@@ -369,8 +369,13 @@ public class KappaModelTest {
         assertEquals(0, actual.size());
         
         model.addCompartment(new Compartment("cytosol", 3));
-        model.addCompartmentLink(new CompartmentLink("intra", new Location("cytosol", new CellIndexExpression(new VariableReference("x"))), 
+        model.addCompartmentLink(new CompartmentLink("intra", 
+                new Location("cytosol", new CellIndexExpression(new VariableReference("x"))), 
                 new Location("cytosol", new CellIndexExpression(new CellIndexExpression(new VariableReference("x")), Operator.PLUS, new CellIndexExpression("1"))),
+                Direction.BIDIRECTIONAL));
+        model.addCompartmentLink(new CompartmentLink("intra", 
+                new Location("cytosol", new CellIndexExpression("2")), 
+                new Location("cytosol", new CellIndexExpression("0")),
                 Direction.BIDIRECTIONAL));
         
         List<Agent> agents = getList(new Agent("agent1"));
@@ -386,6 +391,8 @@ public class KappaModelTest {
                 new LocatedTransport(transport, cell1, cell0),
                 new LocatedTransport(transport, cell1, cell2),
                 new LocatedTransport(transport, cell2, cell1),
+                new LocatedTransport(transport, cell0, cell2),
+                new LocatedTransport(transport, cell2, cell0),
         });
     }
 

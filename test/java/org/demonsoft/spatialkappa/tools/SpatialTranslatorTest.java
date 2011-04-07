@@ -116,6 +116,12 @@ public class SpatialTranslatorTest {
     }
 
     @Test
+    public void testTransport6Way() throws Exception {
+        translator = new SpatialTranslator(TRANSPORT_6WAY_INPUT);
+        assertEquals(TRANSPORT_6WAY_OUTPUT, translator.translateToKappa());
+    }
+
+    @Test
     public void testAgentOrdering() throws Exception {
         translator = new SpatialTranslator(AGENT_ORDERING_INPUT);
         assertEquals(AGENT_ORDERING_OUTPUT, translator.translateToKappa());
@@ -371,9 +377,14 @@ public class SpatialTranslatorTest {
         "'heating' 'cytosol'[0] A(state~blue) -> A(state~red) @ 1.0\n" + 
         "'cooling' 'cytosol' A(state~red) -> A(state~blue) @ 0.05\n" + 
         "\n" + 
+        "%var: 'green count' 800\n" + 
         "%init: 'cytosol' 800 (A(state~blue)) \n" + 
-        "%init: 800 (A(state~green)) \n" + 
+        "%init: 'green count' (A(state~green)) \n" + 
         "%init: 'cytosol'[0] 800 (A(state~red)) \n" + 
+        "%var: 'constant' 12\n" + 
+        "%var: 'all A not plotted' A()\n" + 
+        "%var: 'all A plotted' A()\n" + 
+        "%plot: 'all A plotted'\n" + 
         "%obs: 'all red' A(state~red)\n" + 
         "%obs: 'cytosol blue' 'cytosol' A(state~blue)\n" + 
         "%obs: 'red[0]' 'cytosol'[0] A(state~red) \n" + 
@@ -410,13 +421,26 @@ public class SpatialTranslatorTest {
         "%init: 800 (A(state~green))\n" + 
         "%init: 800 (A(state~red,loc~cytosol,loc_index_1~0))\n" + 
         "\n" + 
+        "%var: 'all A not plotted' A()\n" + 
+        "%var: 'all A plotted' A()\n" + 
         "%var: 'all red' A(state~red)\n" + 
+        "%var: 'constant' 12.0\n" + 
         "%var: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
+        "%var: 'green count' 800.0\n" + 
         "%var: 'red[0]' A(state~red,loc~cytosol,loc_index_1~0)\n" + 
         "%var: 'red[1]' A(state~red,loc~cytosol,loc_index_1~1)\n" + 
         "%var: 'red[2]' A(state~red,loc~cytosol,loc_index_1~2)\n" + 
         "%var: 'red[3]' A(state~red,loc~cytosol,loc_index_1~3)\n" + 
+        "%plot: 'all A plotted'\n" + 
         "%plot: 'all red'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~0' A(state~blue,loc~cytosol,loc_index_1~0)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~0'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~1' A(state~blue,loc~cytosol,loc_index_1~1)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~1'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~2' A(state~blue,loc~cytosol,loc_index_1~2)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~2'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~3' A(state~blue,loc~cytosol,loc_index_1~3)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~3'\n" + 
         "%plot: 'cytosol blue'\n" + 
         "%plot: 'red[0]'\n" + 
         "%plot: 'red[1]'\n" + 
@@ -480,6 +504,14 @@ public class SpatialTranslatorTest {
         "%var: 'red[2]' A(state~red,loc~cytosol,loc_index_1~2)\n" + 
         "%var: 'red[3]' A(state~red,loc~cytosol,loc_index_1~3)\n" + 
         "%plot: 'all red'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~0' A(state~blue,loc~cytosol,loc_index_1~0)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~0'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~1' A(state~blue,loc~cytosol,loc_index_1~1)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~1'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~2' A(state~blue,loc~cytosol,loc_index_1~2)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~2'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~3' A(state~blue,loc~cytosol,loc_index_1~3)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~3'\n" + 
         "%plot: 'cytosol blue'\n" + 
         "%plot: 'red[0]'\n" + 
         "%plot: 'red[1]'\n" + 
@@ -514,12 +546,12 @@ public class SpatialTranslatorTest {
         "'diffusion-all-4' A(loc~cytosol,loc_index_1~2) -> A(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
         "'diffusion-all-5' A(loc~cytosol,loc_index_1~2) -> A(loc~cytosol,loc_index_1~3) @ 0.1\n" + 
         "'diffusion-all-6' A(loc~cytosol,loc_index_1~3) -> A(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
-        "'diffusion-all-4' B(loc~cytosol,loc_index_1~0) -> B(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
-        "'diffusion-all-5' B(loc~cytosol,loc_index_1~1) -> B(loc~cytosol,loc_index_1~0) @ 0.1\n" + 
-        "'diffusion-all-6' B(loc~cytosol,loc_index_1~1) -> B(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
-        "'diffusion-all-7' B(loc~cytosol,loc_index_1~2) -> B(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
-        "'diffusion-all-8' B(loc~cytosol,loc_index_1~2) -> B(loc~cytosol,loc_index_1~3) @ 0.1\n" + 
-        "'diffusion-all-9' B(loc~cytosol,loc_index_1~3) -> B(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-7' B(loc~cytosol,loc_index_1~0) -> B(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-8' B(loc~cytosol,loc_index_1~1) -> B(loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-all-9' B(loc~cytosol,loc_index_1~1) -> B(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-10' B(loc~cytosol,loc_index_1~2) -> B(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-11' B(loc~cytosol,loc_index_1~2) -> B(loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-all-12' B(loc~cytosol,loc_index_1~3) -> B(loc~cytosol,loc_index_1~2) @ 0.1\n" + 
         "'diffusion-red-1' A(state~red,loc~cytosol,loc_index_1~0) -> A(state~red,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
         "'diffusion-red-2' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~red,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
         "'diffusion-red-3' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~red,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
@@ -567,10 +599,10 @@ public class SpatialTranslatorTest {
         "%agent: A(state~blue~red,loc~cytosol~membrane~nucleus,loc_index_1~0~1~2~3,loc_index_2~0~1~2~3~4)\n" + 
         "%agent: B(loc~cytosol~membrane~nucleus,loc_index_1~0~1~2~3,loc_index_2~0~1~2~3~4)\n" + 
         "\n" + 
-        "'diffusion-blue' A(state~blue,loc~nucleus,loc_index_1~0,loc_index_2~0) -> A(state~blue,loc~membrane,loc_index_1~2,loc_index_2~0) @ 0.1\n" + 
-        "'diffusion-blue' A(state~blue,loc~membrane,loc_index_1~2,loc_index_2~0) -> A(state~blue,loc~nucleus,loc_index_1~0,loc_index_2~0) @ 0.1\n" + 
-        "'diffusion-red' A(state~red,loc~nucleus,loc_index_1~0,loc_index_2~0) -> A(state~red,loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.2\n" + 
-        "'diffusion-red' A(state~red,loc~cytosol,loc_index_1~1,loc_index_2~2) -> A(state~red,loc~nucleus,loc_index_1~0,loc_index_2~0) @ 0.2\n" + 
+        "'diffusion-blue-1' A(state~blue,loc~nucleus,loc_index_1~0,loc_index_2~0) -> A(state~blue,loc~membrane,loc_index_1~2,loc_index_2~0) @ 0.1\n" + 
+        "'diffusion-blue-2' A(state~blue,loc~membrane,loc_index_1~2,loc_index_2~0) -> A(state~blue,loc~nucleus,loc_index_1~0,loc_index_2~0) @ 0.1\n" + 
+        "'diffusion-red-1' A(state~red,loc~nucleus,loc_index_1~0,loc_index_2~0) -> A(state~red,loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.2\n" + 
+        "'diffusion-red-2' A(state~red,loc~cytosol,loc_index_1~1,loc_index_2~2) -> A(state~red,loc~nucleus,loc_index_1~0,loc_index_2~0) @ 0.2\n" + 
         "'diffusion-other-1' B(loc~membrane,loc_index_1~0,loc_index_2~0) -> B(loc~cytosol,loc_index_1~0,loc_index_2~2) @ 0.3\n" + 
         "'diffusion-other-2' B(loc~cytosol,loc_index_1~0,loc_index_2~2) -> B(loc~membrane,loc_index_1~0,loc_index_2~0) @ 0.3\n" + 
         "'diffusion-other-3' B(loc~membrane,loc_index_1~1,loc_index_2~0) -> B(loc~cytosol,loc_index_1~1,loc_index_2~3) @ 0.3\n" + 
@@ -607,6 +639,58 @@ public class SpatialTranslatorTest {
         "\n" + 
         "";
 
+    private static final String TRANSPORT_6WAY_INPUT = 
+        "%compartment: 'cytosol' [3][3]\n" + 
+        "%link: '6way' 'cytosol' ['x']['y'] <-> 'cytosol' ['x'+1]['y'] \n" + 
+        "%link: '6way' 'cytosol' ['x']['y'] <-> 'cytosol' ['x']['y'+1] \n" + 
+        "%link: '6way' 'cytosol' ['x']['y'] <-> 'cytosol' ['x'+1][('y'+1)-(2*('x'%2))] \n" + 
+        "\n" + 
+        "%transport: 'diffusion RED' '6way' RED() @ 0.05 \n" + 
+        "%init: 40 (RED())\n" + 
+        "";
+    
+    private static final String TRANSPORT_6WAY_OUTPUT = 
+        "%agent: RED(loc~cytosol,loc_index_1~0~1~2,loc_index_2~0~1~2)\n" + 
+        "\n" + 
+        "'diffusion RED-1' RED(loc~cytosol,loc_index_1~0,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~0) @ 0.05\n" + 
+        "'diffusion RED-2' RED(loc~cytosol,loc_index_1~1,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~0,loc_index_2~0) @ 0.05\n" + 
+        "'diffusion RED-3' RED(loc~cytosol,loc_index_1~0,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-4' RED(loc~cytosol,loc_index_1~1,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~0,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-5' RED(loc~cytosol,loc_index_1~0,loc_index_2~2) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.05\n" + 
+        "'diffusion RED-6' RED(loc~cytosol,loc_index_1~1,loc_index_2~2) -> RED(loc~cytosol,loc_index_1~0,loc_index_2~2) @ 0.05\n" + 
+        "'diffusion RED-7' RED(loc~cytosol,loc_index_1~1,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~2,loc_index_2~0) @ 0.05\n" + 
+        "'diffusion RED-8' RED(loc~cytosol,loc_index_1~2,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~0) @ 0.05\n" + 
+        "'diffusion RED-9' RED(loc~cytosol,loc_index_1~1,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~2,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-10' RED(loc~cytosol,loc_index_1~2,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-11' RED(loc~cytosol,loc_index_1~1,loc_index_2~2) -> RED(loc~cytosol,loc_index_1~2,loc_index_2~2) @ 0.05\n" + 
+        "'diffusion RED-12' RED(loc~cytosol,loc_index_1~2,loc_index_2~2) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.05\n" + 
+        "'diffusion RED-13' RED(loc~cytosol,loc_index_1~0,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~0,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-14' RED(loc~cytosol,loc_index_1~0,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~0,loc_index_2~0) @ 0.05\n" + 
+        "'diffusion RED-15' RED(loc~cytosol,loc_index_1~0,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~0,loc_index_2~2) @ 0.05\n" + 
+        "'diffusion RED-16' RED(loc~cytosol,loc_index_1~0,loc_index_2~2) -> RED(loc~cytosol,loc_index_1~0,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-17' RED(loc~cytosol,loc_index_1~1,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-18' RED(loc~cytosol,loc_index_1~1,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~0) @ 0.05\n" + 
+        "'diffusion RED-19' RED(loc~cytosol,loc_index_1~1,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.05\n" + 
+        "'diffusion RED-20' RED(loc~cytosol,loc_index_1~1,loc_index_2~2) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-21' RED(loc~cytosol,loc_index_1~2,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~2,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-22' RED(loc~cytosol,loc_index_1~2,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~2,loc_index_2~0) @ 0.05\n" + 
+        "'diffusion RED-23' RED(loc~cytosol,loc_index_1~2,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~2,loc_index_2~2) @ 0.05\n" + 
+        "'diffusion RED-24' RED(loc~cytosol,loc_index_1~2,loc_index_2~2) -> RED(loc~cytosol,loc_index_1~2,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-25' RED(loc~cytosol,loc_index_1~0,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-26' RED(loc~cytosol,loc_index_1~1,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~0,loc_index_2~0) @ 0.05\n" + 
+        "'diffusion RED-27' RED(loc~cytosol,loc_index_1~0,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.05\n" + 
+        "'diffusion RED-28' RED(loc~cytosol,loc_index_1~1,loc_index_2~2) -> RED(loc~cytosol,loc_index_1~0,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-29' RED(loc~cytosol,loc_index_1~1,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~2,loc_index_2~0) @ 0.05\n" + 
+        "'diffusion RED-30' RED(loc~cytosol,loc_index_1~2,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-31' RED(loc~cytosol,loc_index_1~1,loc_index_2~2) -> RED(loc~cytosol,loc_index_1~2,loc_index_2~1) @ 0.05\n" + 
+        "'diffusion RED-32' RED(loc~cytosol,loc_index_1~2,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.05\n" + 
+        "\n" + 
+        "\n" + 
+        "%init: 40 (RED())\n" + 
+        "\n" + 
+        "\n" + 
+        "";
+
     private static final String TRANSPORT_LIMITED_LINKS_INPUT = 
         "%compartment: 'cytosol' [4]\n" + 
         "%link: 'intra-cytosol' 'cytosol' ['x'] <-> 'cytosol' ['x'+1]\n" + 
@@ -630,24 +714,24 @@ public class SpatialTranslatorTest {
         "'diffusion-all-4' A(l1,l2,loc~cytosol,loc_index_1~2) -> A(l1,l2,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
         "'diffusion-all-5' A(l1,l2,loc~cytosol,loc_index_1~2) -> A(l1,l2,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
         "'diffusion-all-6' A(l1,l2,loc~cytosol,loc_index_1~3) -> A(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
-        "'diffusion-all-4' B(l1,loc~cytosol,loc_index_1~0) -> B(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
-        "'diffusion-all-5' B(l1,loc~cytosol,loc_index_1~1) -> B(l1,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
-        "'diffusion-all-6' B(l1,loc~cytosol,loc_index_1~1) -> B(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
-        "'diffusion-all-7' B(l1,loc~cytosol,loc_index_1~2) -> B(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
-        "'diffusion-all-8' B(l1,loc~cytosol,loc_index_1~2) -> B(l1,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
-        "'diffusion-all-9' B(l1,loc~cytosol,loc_index_1~3) -> B(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
-        "'diffusion-all-7' C(l1,l2,loc~cytosol,loc_index_1~0) -> C(l1,l2,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
-        "'diffusion-all-8' C(l1,l2,loc~cytosol,loc_index_1~1) -> C(l1,l2,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
-        "'diffusion-all-9' C(l1,l2,loc~cytosol,loc_index_1~1) -> C(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
-        "'diffusion-all-10' C(l1,l2,loc~cytosol,loc_index_1~2) -> C(l1,l2,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
-        "'diffusion-all-11' C(l1,l2,loc~cytosol,loc_index_1~2) -> C(l1,l2,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
-        "'diffusion-all-12' C(l1,l2,loc~cytosol,loc_index_1~3) -> C(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
-        "'diffusion-all-10' D(l1,loc~cytosol,loc_index_1~0) -> D(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
-        "'diffusion-all-11' D(l1,loc~cytosol,loc_index_1~1) -> D(l1,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
-        "'diffusion-all-12' D(l1,loc~cytosol,loc_index_1~1) -> D(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
-        "'diffusion-all-13' D(l1,loc~cytosol,loc_index_1~2) -> D(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
-        "'diffusion-all-14' D(l1,loc~cytosol,loc_index_1~2) -> D(l1,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
-        "'diffusion-all-15' D(l1,loc~cytosol,loc_index_1~3) -> D(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-7' B(l1,loc~cytosol,loc_index_1~0) -> B(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-8' B(l1,loc~cytosol,loc_index_1~1) -> B(l1,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-all-9' B(l1,loc~cytosol,loc_index_1~1) -> B(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-10' B(l1,loc~cytosol,loc_index_1~2) -> B(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-11' B(l1,loc~cytosol,loc_index_1~2) -> B(l1,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-all-12' B(l1,loc~cytosol,loc_index_1~3) -> B(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-13' C(l1,l2,loc~cytosol,loc_index_1~0) -> C(l1,l2,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-14' C(l1,l2,loc~cytosol,loc_index_1~1) -> C(l1,l2,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-all-15' C(l1,l2,loc~cytosol,loc_index_1~1) -> C(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-16' C(l1,l2,loc~cytosol,loc_index_1~2) -> C(l1,l2,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-17' C(l1,l2,loc~cytosol,loc_index_1~2) -> C(l1,l2,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-all-18' C(l1,l2,loc~cytosol,loc_index_1~3) -> C(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-19' D(l1,loc~cytosol,loc_index_1~0) -> D(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-20' D(l1,loc~cytosol,loc_index_1~1) -> D(l1,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
+        "'diffusion-all-21' D(l1,loc~cytosol,loc_index_1~1) -> D(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
+        "'diffusion-all-22' D(l1,loc~cytosol,loc_index_1~2) -> D(l1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
+        "'diffusion-all-23' D(l1,loc~cytosol,loc_index_1~2) -> D(l1,loc~cytosol,loc_index_1~3) @ 0.1\n" + 
+        "'diffusion-all-24' D(l1,loc~cytosol,loc_index_1~3) -> D(l1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
         "'diffusion-complex-1' A(l1!1,l2,loc~cytosol,loc_index_1~0),B(l1!1,loc~cytosol,loc_index_1~0) -> A(l1!1,l2,loc~cytosol,loc_index_1~1),B(l1!1,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
         "'diffusion-complex-2' A(l1!1,l2,loc~cytosol,loc_index_1~1),B(l1!1,loc~cytosol,loc_index_1~1) -> A(l1!1,l2,loc~cytosol,loc_index_1~0),B(l1!1,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
         "'diffusion-complex-3' A(l1!1,l2,loc~cytosol,loc_index_1~1),B(l1!1,loc~cytosol,loc_index_1~1) -> A(l1!1,l2,loc~cytosol,loc_index_1~2),B(l1!1,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
@@ -735,6 +819,14 @@ public class SpatialTranslatorTest {
         "%var: 'red[3]' A(state~red,loc~cytosol,loc_index_1~3)\n" + 
         "%plot: '[A(state~blue)]'\n" + 
         "%plot: 'all red'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~0' A(state~blue,loc~cytosol,loc_index_1~0)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~0'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~1' A(state~blue,loc~cytosol,loc_index_1~1)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~1'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~2' A(state~blue,loc~cytosol,loc_index_1~2)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~2'\n" + 
+        "%var: 'cytosol blue :loc~cytosol,loc_index_1~3' A(state~blue,loc~cytosol,loc_index_1~3)\n" + 
+        "%plot: 'cytosol blue :loc~cytosol,loc_index_1~3'\n" + 
         "%plot: 'cytosol blue'\n" + 
         "%plot: 'red[0]'\n" + 
         "%plot: 'red[1]'\n" + 

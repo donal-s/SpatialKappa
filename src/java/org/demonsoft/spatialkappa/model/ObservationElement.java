@@ -14,16 +14,18 @@ public class ObservationElement implements Serializable {
     public final int[] dimensions;
     // int array of unknown dimension
     public final Serializable cellValues;
+    public final String compartmentName;
     
     public ObservationElement(float value) {
         this.value = value;
         this.isCompartment = false;
         this.dimensions = null;
         this.cellValues = null;
+        this.compartmentName = null;
     }
     
-    public ObservationElement(int value, int[] dimensions, Serializable cellValues) {
-        if (dimensions == null || cellValues == null) {
+    public ObservationElement(int value, int[] dimensions, String compartmentName, Serializable cellValues) {
+        if (dimensions == null || compartmentName == null || cellValues == null) {
             throw new NullPointerException();
         }
         
@@ -34,7 +36,7 @@ public class ObservationElement implements Serializable {
             }
             slice = ((Object[]) slice)[0];
         }
-        if (((int[]) slice).length != dimensions[dimensions.length - 1]) {
+        if (((float[]) slice).length != dimensions[dimensions.length - 1]) {
             throw new IllegalArgumentException();
         }
 
@@ -42,6 +44,7 @@ public class ObservationElement implements Serializable {
         this.isCompartment = true;
         this.dimensions = dimensions;
         this.cellValues = cellValues;
+        this.compartmentName = compartmentName;
     }
 
     public boolean matchesDimensions(ObservationElement other) {
@@ -57,8 +60,8 @@ public class ObservationElement implements Serializable {
     }
     
     private String toString(Object cells) {
-        if (cells instanceof int[]) {
-            return Arrays.toString((int[]) cells);
+        if (cells instanceof float[]) {
+            return Arrays.toString((float[]) cells);
         }
         Object[] values = (Object[]) cells;
         StringBuilder builder = new StringBuilder();
@@ -74,11 +77,13 @@ public class ObservationElement implements Serializable {
     }
     
 
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((cellValues == null) ? 0 : cellValues.hashCode());
+        result = prime * result + ((compartmentName == null) ? 0 : compartmentName.hashCode());
         result = prime * result + Arrays.hashCode(dimensions);
         result = prime * result + (isCompartment ? 1231 : 1237);
         result = prime * result + Float.floatToIntBits(value);
@@ -100,6 +105,12 @@ public class ObservationElement implements Serializable {
         }
         else if (!cellValues.equals(other.cellValues))
             return false;
+        if (compartmentName == null) {
+            if (other.compartmentName != null)
+                return false;
+        }
+        else if (!compartmentName.equals(other.compartmentName))
+            return false;
         if (!Arrays.equals(dimensions, other.dimensions))
             return false;
         if (isCompartment != other.isCompartment)
@@ -109,18 +120,18 @@ public class ObservationElement implements Serializable {
         return true;
     }
 
-    public int getCellValue(int columnIndex, int rowIndex) {
+    public float getCellValue(int columnIndex, int rowIndex) {
         if (dimensions.length == 1) {
-            return ((int[]) cellValues)[columnIndex];
+            return ((float[]) cellValues)[columnIndex];
         }
         if (dimensions.length == 2) {
-            return ((int[][]) cellValues)[columnIndex][rowIndex];
+            return ((float[]) ((Object[]) cellValues)[columnIndex])[rowIndex];
         }
         Object slice = ((Object[][]) cellValues)[columnIndex][rowIndex];
         for (int index = 0; index < dimensions.length - 3; index++) {
             slice = ((Object[]) slice)[0];
         }
-        return ((int[]) slice)[0];
+        return ((float[]) slice)[0];
     }
 
     public ObservationElement plus(ObservationElement y) {
@@ -253,6 +264,67 @@ public class ObservationElement implements Serializable {
         }
         
         return new ObservationElement((float) Math.exp(value));
+    }
+
+    public float getMean() {
+        if (!isCompartment) {
+            return value;
+        }
+        return getSum(cellValues) / getCellCount();
+    }
+
+    private int getCellCount() {
+        int cellCount = 1;
+        for (int index = 0; index < dimensions.length; index++) {
+            cellCount = cellCount * dimensions[index];
+        }
+        return cellCount;
+    }
+
+    private float getSum(Object cells) {
+        float result = 0;
+        if (cells instanceof float[]) {
+            for (int index = 0; index < ((float[]) cells).length; index++) {
+                float cell = ((float[]) cells)[index];
+                if (!Float.isInfinite(cell) && !Float.isNaN(cell)) {
+                    result += cell;
+                }
+            }
+        }
+        else {
+            Object[] values = (Object[]) cells;
+            for (int index = 0; index < values.length; index++) {
+                result += getSum(values[index]);
+            }
+        }
+        return result;
+    }
+
+    public float getStandardDeviation() {
+        if (!isCompartment) {
+            return value;
+        }
+        float mean = getMean();
+        return (float) Math.sqrt(getVarianceSum(cellValues, mean) / getCellCount());
+    }
+
+    private float getVarianceSum(Object cells, float mean) {
+        float result = 0;
+        if (cells instanceof float[]) {
+            for (int index = 0; index < ((float[]) cells).length; index++) {
+                float cell = ((float[]) cells)[index];
+                if (!Float.isInfinite(cell) && !Float.isNaN(cell)) {
+                    result += Math.pow(cell - mean, 2);
+                }
+            }
+        }
+        else {
+            Object[] values = (Object[]) cells;
+            for (int index = 0; index < values.length; index++) {
+                result += getVarianceSum(values[index], mean);
+            }
+        }
+        return result;
     }
     
 }

@@ -86,7 +86,7 @@ public abstract class AbstractSimulationTest {
         simulation.initialise();
         
         checkObservation("observable1", new ObservationElement(5));
-        checkObservation("observable2", new ObservationElement(7, new int[] {1}, new int[] {7}));
+        checkObservation("observable2", new ObservationElement(7, new int[] {1}, "cytosol", new float[] {7}));
     }
 
     @Test
@@ -107,7 +107,7 @@ public abstract class AbstractSimulationTest {
         simulation.initialise();
         
         checkObservation("observable2", new ObservationElement(5));
-        checkObservation("observable1", new ObservationElement(12, new int[] {4}, new int[] {5, 0, 0, 7}));
+        checkObservation("observable1", new ObservationElement(12, new int[] {4}, "cytosol", new float[] {5, 0, 0, 7}));
     }
 
     @Test
@@ -128,7 +128,7 @@ public abstract class AbstractSimulationTest {
         
         simulation.initialise();
         
-        checkObservation("observable1", new ObservationElement(12, new int[] {3, 2}, new int[][] {{5, 0}, {0, 0}, {0, 7}}));
+        checkObservation("observable1", new ObservationElement(12, new int[] {3, 2}, "cytosol", new float[][] {{5, 0}, {0, 0}, {0, 7}}));
         checkObservation("observable2", new ObservationElement(5));
     }
 
@@ -228,7 +228,7 @@ public abstract class AbstractSimulationTest {
         simulation.initialise();
         
         checkGetQuantity(simulation.getVariable("observable1"), new ObservationElement(5));
-        checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(7, new int[] {1}, new int[] {7}));
+        checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(7, new int[] {1}, "cytosol", new float[] {7}));
     }
 
     @Test
@@ -246,7 +246,7 @@ public abstract class AbstractSimulationTest {
         
         simulation.initialise();
         
-        checkGetQuantity(simulation.getVariable("observable1"), new ObservationElement(12, new int[] {4}, new int[] {5, 0, 0, 7}));
+        checkGetQuantity(simulation.getVariable("observable1"), new ObservationElement(12, new int[] {4}, "cytosol", new float[] {5, 0, 0, 7}));
         checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(5));
     }
 
@@ -266,7 +266,7 @@ public abstract class AbstractSimulationTest {
         
         simulation.initialise();
         
-        checkGetQuantity(simulation.getVariable("observable1"), new ObservationElement(12, new int[] {3, 2}, new int[][] {{5, 0}, {0, 0}, {0, 7}}));
+        checkGetQuantity(simulation.getVariable("observable1"), new ObservationElement(12, new int[] {3, 2}, "cytosol", new float[][] {{5, 0}, {0, 0}, {0, 7}}));
         checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(5));
     }
 

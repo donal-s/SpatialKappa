@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.demonsoft.spatialkappa.model.Agent;
-import org.demonsoft.spatialkappa.model.AggregateAgent;
+import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.ComplexMatcher;
 import org.demonsoft.spatialkappa.model.ComplexStore;
@@ -20,7 +20,6 @@ import org.demonsoft.spatialkappa.model.LocatedComplex;
 import org.demonsoft.spatialkappa.model.LocatedTransform;
 import org.demonsoft.spatialkappa.model.LocatedTransition;
 import org.demonsoft.spatialkappa.model.Location;
-import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.ObservationListener;
@@ -182,13 +181,13 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
 
     public abstract ObservationElement getComplexQuantity(Variable observable);
 
-    protected final void addCellValue(Object cellValues, int quantity, CellIndexExpression[] indices) {
+    protected final void addCellValue(Object cellValues, float quantity, CellIndexExpression[] indices) {
         Object slice = cellValues;
         for (int index = 0; index < indices.length - 1; index++) {
             slice = ((Object[]) slice)[indices[index].evaluateIndex(NO_VARIABLES)];
         }
         int index = indices[indices.length - 1].evaluateIndex(NO_VARIABLES);
-        ((int[]) slice)[index] = ((int[]) slice)[index] + quantity;
+        ((float[]) slice)[index] = ((float[]) slice)[index] + quantity;
     }
 
     private final void resetTransformsFiredCount() {
@@ -205,7 +204,7 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
         }
         long elapsedTime = Calendar.getInstance().getTimeInMillis() - startTime;
         long estimatedRemainingTime = ((long) (elapsedTime / progress)) - elapsedTime;
-        return new Observation(time, kappaModel.getPlottedVariables(), result, finalEvent, elapsedTime, estimatedRemainingTime);
+        return new Observation(time, eventCount, kappaModel.getPlottedVariables(), result, finalEvent, elapsedTime, estimatedRemainingTime);
     }
 
     public void initialise() {
@@ -321,14 +320,20 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
         for (Map.Entry<LocatedTransition, Float> entry : finiteRateTransitionActivityMap.entrySet()) {
             totalQuantity += entry.getValue();
         }
+        LocatedTransition lastTransition = null;
         float item = (float) (totalQuantity * Math.random());
         for (Map.Entry<LocatedTransition, Float> entry : finiteRateTransitionActivityMap.entrySet()) {
-            if (entry.getValue() > 0 && item <= entry.getValue()) {
-                return entry.getKey();
+            if (entry.getValue() > 0) {
+                lastTransition = entry.getKey();
+                if (item <= entry.getValue()) {
+                    return entry.getKey();
+                }
+                item -= entry.getValue();
             }
-            item -= entry.getValue();
         }
-        return null;
+        
+        // To handle rounding errors, the last non-zero rate transition, if any, is returned by default
+        return lastTransition;
     }
 
     private final LocatedTransition pickInfiniteRateTransform() {
@@ -495,19 +500,19 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
     protected final Map<String, Integer> getCountsPerAgent() {
         Map<String, Integer> result = new HashMap<String, Integer>();
 
-        for (AggregateAgent agent : kappaModel.getAggregateAgentMap().values()) {
+        for (String agentName : kappaModel.getAggregateAgentMap().keySet()) {
             int count = 0;
             for (Complex complex : complexStore.getComplexes()) {
                 int instanceCount = 0;
                 for (Agent currentAgent : complex.agents) {
-                    if (agent.getName().equals(currentAgent.name)) {
+                    if (agentName.equals(currentAgent.name)) {
                         instanceCount++;
                     }
                 }
                 count += complexStore.getComplexQuantity(complex) * instanceCount;
             }
 
-            result.put(agent.getName(), count);
+            result.put(agentName, count);
         }
 
         return result;

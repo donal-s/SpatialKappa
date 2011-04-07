@@ -129,4 +129,14 @@ public class Variable {
         }
     }
 
+    public int evaluate(IKappaModel kappaModel) {
+        switch (type) {
+        case VARIABLE_EXPRESSION:
+            return expression.evaluate(kappaModel);
+            
+        default:
+            throw new IllegalStateException();
+        }
+    }
+
 }

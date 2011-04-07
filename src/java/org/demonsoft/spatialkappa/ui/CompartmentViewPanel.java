@@ -184,7 +184,7 @@ public class CompartmentViewPanel extends JPanel implements ObservationListener,
 
         for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
             for (int columnIndex = 0; columnIndex < columns; columnIndex++) {
-                int value = element.getCellValue(columnIndex, rowIndex);
+                float value = element.getCellValue(columnIndex, rowIndex);
                 dataset.setValue(rowIndex, columnIndex, value);
             }
         }
@@ -398,9 +398,9 @@ public class CompartmentViewPanel extends JPanel implements ObservationListener,
 
         private final int rows;
         private final int columns;
-        private final int[][] data;
-        private int dynamicMaxValue = 0;
-        private int maxValue = 0;
+        private final float[][] data;
+        private float dynamicMaxValue = 0;
+        private float maxValue = 0;
         private final List<DatasetChangeListener> listeners = new ArrayList<DatasetChangeListener>();
         private DatasetGroup group;
         private boolean useDynamicMaximum = true;
@@ -408,14 +408,14 @@ public class CompartmentViewPanel extends JPanel implements ObservationListener,
         public DefaultCellDataset(int rows, int columns) {
             this.rows = rows;
             this.columns = columns;
-            this.data = new int[columns][rows];
+            this.data = new float[columns][rows];
         }
 
         public void setUseDynamicMaximum(boolean value) {
             useDynamicMaximum = value;
         }
 
-        public void setValue(int row, int column, int value) {
+        public void setValue(int row, int column, float value) {
             data[column][row] = value;
             dynamicMaxValue = 0;
             notifyListeners();
