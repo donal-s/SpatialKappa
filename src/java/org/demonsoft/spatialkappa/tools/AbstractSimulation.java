@@ -47,12 +47,11 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
     protected final Map<Variable, Integer> transitionsFiredMap = new HashMap<Variable, Integer>();
     final ComplexStore complexStore = new ComplexStore();
 
-    private boolean initialised = false;
     protected boolean stop = false;
     protected boolean noTransitionsPossible = false;
-    protected float time;
+    protected float time = 0;
     protected long startTime;
-    private int eventCount;
+    private int eventCount = 0;
 
     protected final IKappaModel kappaModel;
     private final List<ObservationListener> observationListeners = new ArrayList<ObservationListener>();
@@ -63,6 +62,29 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
 
     public AbstractSimulation(IKappaModel kappaModel) {
         this.kappaModel = kappaModel;
+        
+        for (Map.Entry<LocatedComplex, Integer> entry : kappaModel.getFixedLocatedInitialValuesMap().entrySet()) {
+            complexStore.increaseComplexQuantity(entry.getKey().complex, entry.getKey().location, entry.getValue());
+        }
+
+        for (Variable variable : kappaModel.getVariables().values()) {
+            if (variable.type == Type.KAPPA_EXPRESSION) {
+                observableComplexMap.put(variable, new ArrayList<ObservableMapValue>());
+            }
+        }
+
+        for (LocatedTransition transition : kappaModel.getFixedLocatedTransitions()) {
+            if (transition.transition.getRate().isInfinite(kappaModel.getVariables())) {
+                infiniteRateTransitions.add(transition);
+            }
+            else {
+                finiteRateTransitions.add(transition);
+            }
+        }
+        
+        perturbations.addAll(kappaModel.getPerturbations());
+
+        updateTransitionsFiredMap();
     }
 
     @Override
@@ -77,9 +99,6 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
     public final void runByEvent(int steps, int eventsPerStep) {
         startTime = Calendar.getInstance().getTimeInMillis();
         stop = false;
-        if (!initialised) {
-            initialise();
-        }
 
         for (int stepCount = 0; stepCount < steps && !noTransitionsPossible && !stop; stepCount++) {
             resetTransformsFiredCount();
@@ -102,9 +121,6 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
     public final void runByTime(float totalTime, float timePerStep) {
         startTime = Calendar.getInstance().getTimeInMillis();
         stop = false;
-        if (!initialised) {
-            initialise();
-        }
 
         do {
             resetTransformsFiredCount();
@@ -139,10 +155,6 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
         observationListeners.remove(listener);
     }
 
-    public final int getEventCount() {
-        return eventCount;
-    }
-
 
     private final void notifyObservationListeners(boolean finalEvent, float progress) {
         Observation observation = getCurrentObservation(finalEvent, progress);
@@ -155,10 +167,10 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
         return getCurrentObservation(false, 1);
     }
 
-    public final void reset() {
-        initialise();
+    public final int getEventCount() {
+        return eventCount;
     }
-
+    
     public final float getTime() {
         return time;
     }
@@ -205,44 +217,6 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
         long elapsedTime = Calendar.getInstance().getTimeInMillis() - startTime;
         long estimatedRemainingTime = ((long) (elapsedTime / progress)) - elapsedTime;
         return new Observation(time, eventCount, kappaModel.getPlottedVariables(), result, finalEvent, elapsedTime, estimatedRemainingTime);
-    }
-
-    public void initialise() {
-        initialised = true;
-        time = 0.0f;
-        eventCount = 0;
-        noTransitionsPossible = false;
-        resetTransformsFiredCount();
-        complexStore.clear();
-        for (Map.Entry<LocatedComplex, Integer> entry : kappaModel.getFixedLocatedInitialValuesMap().entrySet()) {
-            complexStore.increaseComplexQuantity(entry.getKey().complex, entry.getKey().location, entry.getValue());
-        }
-
-        observableComplexMap.clear();
-        for (Variable variable : kappaModel.getVariables().values()) {
-            if (variable.type == Type.KAPPA_EXPRESSION) {
-                observableComplexMap.put(variable, new ArrayList<ObservableMapValue>());
-            }
-        }
-
-        infiniteRateTransitions.clear();
-        finiteRateTransitions.clear();
-        for (LocatedTransition transition : kappaModel.getFixedLocatedTransitions()) {
-            if (transition.transition.getRate().isInfinite(kappaModel.getVariables())) {
-                infiniteRateTransitions.add(transition);
-            }
-            else {
-                finiteRateTransitions.add(transition);
-            }
-        }
-        
-        finiteRateTransitionActivityMap.clear();
-        infiniteRateTransitionActivityMap.clear();
-
-        perturbations.clear();
-        perturbations.addAll(kappaModel.getPerturbations());
-
-        updateTransitionsFiredMap();
     }
 
     private final boolean runSingleEvent() {

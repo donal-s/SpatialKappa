@@ -357,7 +357,6 @@ public abstract class AbstractSpatialTest {
         nodes.setTokenStream(tokens);
         SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
         simulation = createSimulation(walker.prog());
-        simulation.reset();
         currentObservation = simulation.getCurrentObservation();
         
         simulation.addObservationListener(new ObservationListener() {

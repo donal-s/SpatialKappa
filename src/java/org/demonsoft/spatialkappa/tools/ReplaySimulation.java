@@ -213,8 +213,6 @@ public class ReplaySimulation implements Simulation {
                 return false;
             return true;
         }
-        
-        
     }
     
 

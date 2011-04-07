@@ -1,7 +1,8 @@
 package org.demonsoft.spatialkappa.ui;
 import java.io.File;
 
-import org.demonsoft.spatialkappa.tools.AbstractSimulation;
+import org.demonsoft.spatialkappa.model.IKappaModel;
+import org.demonsoft.spatialkappa.tools.Simulation;
 import org.demonsoft.spatialkappa.tools.TransitionMatchingSimulation;
 
 public class TransitionMatchingSimulatorGui extends AbstractSimulatorGui {
@@ -11,8 +12,8 @@ public class TransitionMatchingSimulatorGui extends AbstractSimulatorGui {
     }
 
     @Override
-    protected AbstractSimulation createSimulation(File inputFile) throws Exception {
-        return TransitionMatchingSimulation.createSimulation(inputFile);
+    protected Simulation createSimulation(IKappaModel kappaModel) throws Exception {
+        return new TransitionMatchingSimulation(kappaModel);
     }
 
     @Override

@@ -59,7 +59,7 @@ public abstract class AbstractSimulationTest {
         agents.add(new Agent("agent2"));
         kappaModel.addVariable(agents, "label3", null);
         
-        simulation.initialise();
+        simulation = createSimulation(kappaModel);
         observation = simulation.getCurrentObservation();
         checkObservation(observation, "label", "label2");
     }
@@ -83,7 +83,7 @@ public abstract class AbstractSimulationTest {
         kappaModel.addPlot("observable2");
         kappaModel.addInitialValue(agents, "7", new Location("nucleus"));
         
-        simulation.initialise();
+        simulation = createSimulation(kappaModel);
         
         checkObservation("observable1", new ObservationElement(5));
         checkObservation("observable2", new ObservationElement(7, new int[] {1}, "cytosol", new float[] {7}));
@@ -104,7 +104,7 @@ public abstract class AbstractSimulationTest {
         kappaModel.addInitialValue(agents, "5", new Location("cytosol", new CellIndexExpression("0")));
         kappaModel.addInitialValue(agents, "7", new Location("cytosol", new CellIndexExpression("3")));
         
-        simulation.initialise();
+        simulation = createSimulation(kappaModel);
         
         checkObservation("observable2", new ObservationElement(5));
         checkObservation("observable1", new ObservationElement(12, new int[] {4}, "cytosol", new float[] {5, 0, 0, 7}));
@@ -126,7 +126,7 @@ public abstract class AbstractSimulationTest {
         kappaModel.addInitialValue(agents, "5", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("0")));
         kappaModel.addInitialValue(agents, "7", new Location("cytosol", new CellIndexExpression("2"), new CellIndexExpression("1")));
         
-        simulation.initialise();
+        simulation = createSimulation(kappaModel);
         
         checkObservation("observable1", new ObservationElement(12, new int[] {3, 2}, "cytosol", new float[][] {{5, 0}, {0, 0}, {0, 7}}));
         checkObservation("observable2", new ObservationElement(5));
@@ -156,7 +156,7 @@ public abstract class AbstractSimulationTest {
     
     private void checkQuantity(String label, int expected, Agent...agents) {
         kappaModel.addVariable(Arrays.asList(agents), label, null);
-        simulation.initialise();
+        simulation = createSimulation(kappaModel);
         Variable variable = simulation.getVariable(label);
         assertEquals(new ObservationElement(expected), simulation.getComplexQuantity(variable));
     }
@@ -189,7 +189,7 @@ public abstract class AbstractSimulationTest {
         agents.add(new Agent("agent3", new AgentSite("x", null, "2")));
         agents.add(new Agent("agent4", new AgentSite("x", null, "2"), new AgentSite("y", null, null)));
         kappaModel.addInitialValue(agents, "5", null);
-        simulation.initialise();
+        simulation = createSimulation(kappaModel);
         
         checkQuantity("agent1()", 8, new Agent("agent1"));
         checkQuantity("agent4()", 8, new Agent("agent4"));
@@ -225,7 +225,7 @@ public abstract class AbstractSimulationTest {
         kappaModel.addVariable(agents, "observable2", new Location("nucleus"));
         kappaModel.addInitialValue(agents, "7", new Location("nucleus"));
         
-        simulation.initialise();
+        simulation = createSimulation(kappaModel);
         
         checkGetQuantity(simulation.getVariable("observable1"), new ObservationElement(5));
         checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(7, new int[] {1}, "cytosol", new float[] {7}));
@@ -244,7 +244,7 @@ public abstract class AbstractSimulationTest {
         kappaModel.addInitialValue(agents, "5", new Location("cytosol", new CellIndexExpression("0")));
         kappaModel.addInitialValue(agents, "7", new Location("cytosol", new CellIndexExpression("3")));
         
-        simulation.initialise();
+        simulation = createSimulation(kappaModel);
         
         checkGetQuantity(simulation.getVariable("observable1"), new ObservationElement(12, new int[] {4}, "cytosol", new float[] {5, 0, 0, 7}));
         checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(5));
@@ -264,7 +264,7 @@ public abstract class AbstractSimulationTest {
         kappaModel.addInitialValue(agents, "5", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("0")));
         kappaModel.addInitialValue(agents, "7", new Location("cytosol", new CellIndexExpression("2"), new CellIndexExpression("1")));
         
-        simulation.initialise();
+        simulation = createSimulation(kappaModel);
         
         checkGetQuantity(simulation.getVariable("observable1"), new ObservationElement(12, new int[] {3, 2}, "cytosol", new float[][] {{5, 0}, {0, 0}, {0, 7}}));
         checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(5));

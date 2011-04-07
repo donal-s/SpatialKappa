@@ -1,7 +1,5 @@
 package org.demonsoft.spatialkappa.tools;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,10 +9,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.antlr.runtime.ANTLRInputStream;
-import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.tree.CommonTree;
-import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.ComplexMapping;
@@ -30,9 +24,6 @@ import org.demonsoft.spatialkappa.model.Transform;
 import org.demonsoft.spatialkappa.model.Transport;
 import org.demonsoft.spatialkappa.model.Utils;
 import org.demonsoft.spatialkappa.model.Variable;
-import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
-import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
-import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
 
 
 public class TransitionMatchingSimulation extends AbstractSimulation {
@@ -48,17 +39,40 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
 
     public TransitionMatchingSimulation() {
         super();
+        initialiseActivityMaps();
     }
 
     public TransitionMatchingSimulation(IKappaModel kappaModel) {
         super(kappaModel);
-    }
-
-    @Override
-    public void initialise() {
-        super.initialise();
         initialiseActivityMaps();
     }
+
+    private void initialiseActivityMaps() {
+        for (LocatedTransition transform : getAllLocatedTransitions()) {
+            if (transform.transition.sourceComplexes.size() > 0) {
+                for (Complex component : transform.transition.sourceComplexes) {
+                    componentComplexMappingMap.put(component, transform.sourceLocation, new ArrayList<ComplexMapping>());
+                }
+            }
+            else { // transition without source complexes
+                List<LocatedTransition> transitionMap = emptySubstrateTransitionMap.get(transform.sourceLocation);
+                if (transitionMap == null) {
+                    transitionMap = new ArrayList<LocatedTransition>();
+                    emptySubstrateTransitionMap.put(transform.sourceLocation, transitionMap);
+                }
+                transitionMap.add(transform);
+                updateTransitionActivity(transform, false);
+            }
+        }
+
+        for (LocatedComplex complex : complexStore.getLocatedComplexes()) {
+            int quantity = complexStore.getComplexQuantity(complex.complex, complex.location);
+            for (int index = 0; index < quantity; index++) {
+                increaseTransitionActivities(complex.complex.clone(), complex.location);
+            }
+        }
+    }
+
 
     @Override
     public String getDebugOutput() {
@@ -237,42 +251,6 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
         }
     }
 
-    private void initialiseActivityMaps() {
-        finiteRateTransitionActivityMap.clear();
-        infiniteRateTransitionActivityMap.clear();
-
-        transitionComponentActivity.clear();
-        complexComponentMap.clear();
-        complexTransitionMap.clear();
-        componentComplexMappingMap.clear();
-        locationComplexMap.clear();
-        emptySubstrateTransitionMap.clear();
-
-        for (LocatedTransition transform : getAllLocatedTransitions()) {
-            if (transform.transition.sourceComplexes.size() > 0) {
-                for (Complex component : transform.transition.sourceComplexes) {
-                    componentComplexMappingMap.put(component, transform.sourceLocation, new ArrayList<ComplexMapping>());
-                }
-            }
-            else { // transition without source complexes
-                List<LocatedTransition> transitionMap = emptySubstrateTransitionMap.get(transform.sourceLocation);
-                if (transitionMap == null) {
-                    transitionMap = new ArrayList<LocatedTransition>();
-                    emptySubstrateTransitionMap.put(transform.sourceLocation, transitionMap);
-                }
-                transitionMap.add(transform);
-                updateTransitionActivity(transform, false);
-            }
-        }
-
-        for (LocatedComplex complex : complexStore.getLocatedComplexes()) {
-            int quantity = complexStore.getComplexQuantity(complex.complex, complex.location);
-            for (int index = 0; index < quantity; index++) {
-                increaseTransitionActivities(complex.complex.clone(), complex.location);
-            }
-        }
-    }
-
     private List<LocatedTransition> getAllLocatedTransitions() {
         List<LocatedTransition> result = new ArrayList<LocatedTransition>(finiteRateTransitions);
         result.addAll(infiniteRateTransitions);
@@ -293,18 +271,6 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
     protected int getComponentFreeTransitionActivity(LocatedTransition transition) {
         List<Complex> complexes = locationComplexMap.get(transition.sourceLocation);
         return complexes == null ? 0 : complexes.size();
-    }
-
-    public static TransitionMatchingSimulation createSimulation(File inputFile) throws Exception {
-        ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(inputFile));
-        CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));
-        SpatialKappaParser.prog_return r = new SpatialKappaParser(tokens).prog();
-        CommonTree t = (CommonTree) r.getTree();
-
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
-        nodes.setTokenStream(tokens);
-        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
-        return new TransitionMatchingSimulation(walker.prog());
     }
 
     private ComplexMapping pickComplexMapping(Complex component, Location location) {

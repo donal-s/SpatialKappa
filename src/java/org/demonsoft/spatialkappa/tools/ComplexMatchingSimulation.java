@@ -1,7 +1,5 @@
 package org.demonsoft.spatialkappa.tools;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,10 +9,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.antlr.runtime.ANTLRInputStream;
-import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.tree.CommonTree;
-import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.ComplexMapping;
@@ -30,9 +24,6 @@ import org.demonsoft.spatialkappa.model.Transition;
 import org.demonsoft.spatialkappa.model.Transport;
 import org.demonsoft.spatialkappa.model.Utils;
 import org.demonsoft.spatialkappa.model.Variable;
-import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
-import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
-import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
 
 
 public class ComplexMatchingSimulation extends AbstractSimulation {
@@ -51,44 +42,27 @@ public class ComplexMatchingSimulation extends AbstractSimulation {
 
     public ComplexMatchingSimulation() {
         super();
+        initialise();
     }
 
     public ComplexMatchingSimulation(IKappaModel kappaModel) {
         super(kappaModel);
+        initialise();
     }
 
-    public static ComplexMatchingSimulation createSimulation(File inputFile) throws Exception {
-        ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(inputFile));
-        CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));
-        SpatialKappaParser.prog_return r = new SpatialKappaParser(tokens).prog();
-        CommonTree t = (CommonTree) r.getTree();
-
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
-        nodes.setTokenStream(tokens);
-        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
-        return new ComplexMatchingSimulation(walker.prog());
+    private void initialise() {
+        updateObservableComplexMap();
+        updateTransitionComplexMap();
+        updateComplexTransitionMap();
+        initialiseActivityMaps();
     }
-
+    
     @Override
     public String getDebugOutput() {
         StringBuilder builder = new StringBuilder();
         builder.append(super.getDebugOutput());
         builder.append("Distinct concrete transforms: " + transformCache.size() + "\n");
         return builder.toString();
-    }
-
-
-    @Override
-    public void initialise() {
-        super.initialise();
-        transformCache.clear();
-        complexTransitionMap.clear();
-        unusedComplexes.clear();
-        transitionComplexMap.clear();
-        updateObservableComplexMap();
-        updateTransitionComplexMap();
-        updateComplexTransitionMap();
-        initialiseActivityMaps();
     }
 
     private void increaseTransitionActivities(Complex complex, Location location) {

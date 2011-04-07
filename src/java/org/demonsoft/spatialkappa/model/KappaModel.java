@@ -1,5 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,7 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.antlr.runtime.ANTLRInputStream;
+import org.antlr.runtime.CommonTokenStream;
+import org.antlr.runtime.tree.CommonTree;
+import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.demonsoft.spatialkappa.model.Variable.Type;
+import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
+import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
+import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
 
 
 public class KappaModel implements IKappaModel {
@@ -501,6 +510,20 @@ public class KappaModel implements IKappaModel {
         }
         
     }
+    
+    public static IKappaModel createModel(File inputFile) throws Exception {
+        ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(inputFile));
+        CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));
+        SpatialKappaParser.prog_return r = new SpatialKappaParser(tokens).prog();
+        CommonTree t = (CommonTree) r.getTree();
+
+        CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
+        nodes.setTokenStream(tokens);
+        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
+        return walker.prog();
+    }
+
+
 
     public static class ModelOnlySimulationState implements SimulationState {
 

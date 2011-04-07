@@ -1,8 +1,9 @@
 package org.demonsoft.spatialkappa.ui;
 import java.io.File;
 
-import org.demonsoft.spatialkappa.tools.AbstractSimulation;
+import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.tools.ComplexMatchingSimulation;
+import org.demonsoft.spatialkappa.tools.Simulation;
 
 public class ComplexMatchingSimulatorGui extends AbstractSimulatorGui {
 
@@ -11,8 +12,8 @@ public class ComplexMatchingSimulatorGui extends AbstractSimulatorGui {
     }
 
     @Override
-    protected AbstractSimulation createSimulation(File inputFile) throws Exception {
-        return ComplexMatchingSimulation.createSimulation(inputFile);
+    protected Simulation createSimulation(IKappaModel kappaModel) throws Exception {
+        return new ComplexMatchingSimulation(kappaModel);
     }
 
     @Override
@@ -26,11 +27,9 @@ public class ComplexMatchingSimulatorGui extends AbstractSimulatorGui {
         if (args.length == 1) {
             File kappaFile = new File(args[0]);
             if (kappaFile.exists()) {
-                simulator.openKappaFile(kappaFile, false);
+                simulator.openKappaFile(kappaFile);
                 simulator.runSimulation();
             }
         }
     }
-
-
 }

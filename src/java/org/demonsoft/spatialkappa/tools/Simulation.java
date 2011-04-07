@@ -5,8 +5,6 @@ import org.demonsoft.spatialkappa.model.ObservationListener;
 
 public interface Simulation {
 
-    void reset();
-
     Observation getCurrentObservation();
 
     void removeObservationListener(ObservationListener listener);

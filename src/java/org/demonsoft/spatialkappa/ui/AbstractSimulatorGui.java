@@ -38,6 +38,8 @@ import javax.swing.JToolBar;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
+import org.demonsoft.spatialkappa.model.IKappaModel;
+import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.ObservationListener;
@@ -83,6 +85,7 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
     private static final String KAPPA_FILE_SUFFIX = ".ka";
     private static final String REPLAY_FILE_SUFFIX = ".kareplay";
 
+    private IKappaModel model;
     protected Simulation simulation;
     protected File kappaFile;
     protected File replayFile;
@@ -279,22 +282,18 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
         return button;
     }
 
-    protected void openKappaFile(File inputFile, boolean recordSimulation) {
+    protected void openKappaFile(File inputFile) {
         textStatus.setText(STATUS_LOADING);
         setToolbarMode(ToolbarMode.PROCESSING);
         consoleTextArea.setText("");
+        removeSimulation();
+        kappaFile = inputFile;
+        replayFile = null;
 
         try {
-            if (recordSimulation) {
-                simulation = createRecordSimulation(inputFile);
-            }
-            else {
-                kappaFile = inputFile;
-                simulation = createSimulation(inputFile);
-            }
-            simulation.addObservationListener(this);
+            model = KappaModel.createModel(inputFile);
 
-            textAreaData.setText(simulation.toString() + "\n");
+            textAreaData.setText(model.toString() + "\n");
 
             textStatus.setText("File loaded");
             setToolbarMode(ToolbarMode.KAPPA_READY);
@@ -306,10 +305,16 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
         }
     }
 
-    private Simulation createRecordSimulation(File inputFile) throws Exception {
-        replayFile = createRecordFile(inputFile);
-        kappaFile = inputFile;
-        return new RecordSimulation(createSimulation(inputFile), replayFile);
+    private void removeSimulation() {
+        if (simulation != null) {
+            simulation.removeObservationListener(this);
+            simulation = null;
+        }
+    }
+
+    private Simulation createRecordSimulation() throws Exception {
+        replayFile = createRecordFile(kappaFile);
+        return new RecordSimulation(createSimulation(model), replayFile);
     }
 
     private File createRecordFile(File inputFile) throws Exception {
@@ -333,12 +338,13 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
         setToolbarMode(ToolbarMode.PROCESSING);
         consoleTextArea.setText("");
 
+        removeSimulation();
+        model = null;
+        kappaFile = null;
+        replayFile = inputFile;
+        
         try {
-            simulation = createReplaySimulation(inputFile);
-            simulation.addObservationListener(this);
-
-            textAreaData.setText(simulation.toString() + "\n");
-            replayFile = inputFile;
+            textAreaData.setText("");
 
             textStatus.setText("Replay file ready");
             setToolbarMode(ToolbarMode.REPLAY_READY);
@@ -351,19 +357,19 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
     
     
 
-    private Simulation createReplaySimulation(File inputFile) throws FileNotFoundException {
-        return new ReplaySimulation(new FileReader(inputFile), (Integer) toolbarSpinnerModelReplayInterval.getValue());
+    private Simulation createReplaySimulation() throws FileNotFoundException {
+        return new ReplaySimulation(new FileReader(replayFile), (Integer) toolbarSpinnerModelReplayInterval.getValue());
     }
 
-    protected abstract Simulation createSimulation(File inputFile) throws Exception;
+    protected abstract Simulation createSimulation(IKappaModel kappaModel) throws Exception;
     
     void runSimulation() {
-        runSimulation(kappaFile == null);
+        runSimulation(model == null);
     }
     
     
     void runSimulation(final boolean replay) {
-        if (!replay && kappaFile == null || replay && replayFile == null) {
+        if (!replay && model == null || replay && replayFile == null) {
             return;
         }
         try {
@@ -375,8 +381,15 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
             });
             stopSimulation = false;
             firstObservation = true;
+            removeSimulation();
             
-            simulation.reset();
+            if (replay) {
+                simulation = createReplaySimulation();
+            }
+            else {
+                simulation = createRecordSimulation();
+            }
+            simulation.addObservationListener(this);
 
             String simulationName = replay ? replayFile.getName() : kappaFile.getName();
             Observation observation = simulation.getCurrentObservation();
@@ -583,7 +596,7 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
 
     protected void openFile(File file) {
         if (file.getName().endsWith(KAPPA_FILE_SUFFIX)) {
-            openKappaFile(file, false);
+            openKappaFile(file);
         }
         else if (file.getName().endsWith(REPLAY_FILE_SUFFIX)) {
             openReplayFile(file);
@@ -596,7 +609,7 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
 
     protected void actionReloadFile() {
         if (kappaFile != null) {
-            openKappaFile(kappaFile, false);
+            openKappaFile(kappaFile);
         }
     }
 
@@ -606,7 +619,6 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
     }
 
     private void actionRunSimulation() {
-        openKappaFile(kappaFile, true);
         new Thread() {
             @Override
             public void run() {
@@ -616,7 +628,6 @@ public abstract class AbstractSimulatorGui implements ActionListener, Observatio
     }
 
     private void actionReplaySimulation() {
-        openReplayFile(replayFile);
         new Thread() {
             @Override
             public void run() {
