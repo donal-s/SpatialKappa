@@ -498,7 +498,7 @@ public class SpatialTranslator {
 
     
     public static void main(String[] args) throws Exception {
-        if (args.length < 1 && args.length > 2) {
+        if (args.length < 1 || args.length > 2) {
             System.err.println("SpatialTranslator version " + Version.VERSION);
             System.err.println("Usage: SpatialTranslator <input file path> [<output file path>]");
             return;
