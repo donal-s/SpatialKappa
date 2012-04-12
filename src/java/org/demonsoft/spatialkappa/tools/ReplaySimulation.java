@@ -134,7 +134,18 @@ public class ReplaySimulation implements Simulation {
             
             Map<String, ObservationElement> elements = new HashMap<String, ObservationElement>();
             for (String observableName : observableNames) {
-                elements.put(observableName, new ObservationElement(Float.parseFloat(tokens.nextToken())));
+                String token = tokens.nextToken();
+                float value;
+                if ("INF".equalsIgnoreCase(token)) {
+                    value = Float.POSITIVE_INFINITY;
+                }
+                else if ("NAN".equalsIgnoreCase(token)) {
+                    value = Float.NaN;
+                }
+                else {
+                    value = Float.parseFloat(token);
+                }
+                elements.put(observableName, new ObservationElement(value));
             }
             constructCompartmentObservations(elements);
             Observation result = new Observation(time, event, outputObservableNames, elements, nextLine == null, 0, 0);

@@ -39,6 +39,15 @@ public class ReplaySimulationTest {
         }
     }
     
+    @Test
+    public void testBadNumberSimulation() {
+        ReplaySimulation simulation = new ReplaySimulation(new StringReader(BAD_NUMBER_INPUT), 0);
+        checkObservationEquals(BAD_NUMBER_OUTPUT[0], simulation.getCurrentObservation());
+        for (int index = 1; index < BAD_NUMBER_OUTPUT.length; index++) {
+            checkObservationEquals(BAD_NUMBER_OUTPUT[index], simulation.readObservation());
+        }
+    }
+    
     private void checkObservationEquals(Observation expected, Observation actual) {
         assertEquals(expected.time, actual.time, 0);
         assertEquals(expected.orderedObservables, actual.orderedObservables);
@@ -180,4 +189,51 @@ public class ReplaySimulationTest {
         return result;
     }
     
+    
+    private static final String BAD_NUMBER_INPUT = 
+            "    # time E 'AB' 'BC' 'ABC' 'B' 'ABC_fraction'\n" + 
+            "    0.000000E+00 0 0.000000E+00 0.000000E+00 0.000000E+00 0.000000E+00 NAN\n" + 
+            "    6.000000E+01 0 0.000000E+00 0.000000E+00 0.000000E+00 0.000000E+00 NAN\n" + 
+            "    1.800000E+02 83 1.000000E+00 2.000000E+00 1.000000E+00 0.000000E+00 INF\n" + 
+            "    2.400000E+02 153 2.000000E+00 2.000000E+00 2.000000E+00 0.000000E+00 INF\n";
+        
+    private static final Observation[] BAD_NUMBER_OUTPUT = {
+        new Observation(0, 0, getList("AB", "BC", "ABC", "B", "ABC_fraction"),
+                getObservationElementMap(new Object[][] {
+                        {"AB", new ObservationElement(0)},
+                        {"BC", new ObservationElement(0)},
+                        {"ABC", new ObservationElement(0)},
+                        {"B", new ObservationElement(0)},
+                        {"ABC_fraction", new ObservationElement(Float.NaN)}
+                }), 
+                false, 0, 0),
+        new Observation(60f, 0, getList("AB", "BC", "ABC", "B", "ABC_fraction"),
+                getObservationElementMap(new Object[][] {
+                        {"AB", new ObservationElement(0)},
+                        {"BC", new ObservationElement(0)},
+                        {"ABC", new ObservationElement(0)},
+                        {"B", new ObservationElement(0)},
+                        {"ABC_fraction", new ObservationElement(Float.NaN)}
+                }), 
+                false, 0, 0),
+        new Observation(180f, 83, getList("AB", "BC", "ABC", "B", "ABC_fraction"),
+                getObservationElementMap(new Object[][] {
+                        {"AB", new ObservationElement(1)},
+                        {"BC", new ObservationElement(2)},
+                        {"ABC", new ObservationElement(1)},
+                        {"B", new ObservationElement(0)},
+                        {"ABC_fraction", new ObservationElement(Float.POSITIVE_INFINITY)}
+                }), 
+                false, 0, 0),
+        new Observation(240f, 153, getList("AB", "BC", "ABC", "B", "ABC_fraction"),
+                getObservationElementMap(new Object[][] {
+                        {"AB", new ObservationElement(2)},
+                        {"BC", new ObservationElement(2)},
+                        {"ABC", new ObservationElement(2)},
+                        {"B", new ObservationElement(0)},
+                        {"ABC_fraction", new ObservationElement(Float.POSITIVE_INFINITY)}
+                }), 
+                true, 0, 0),
+    };
+
 }
