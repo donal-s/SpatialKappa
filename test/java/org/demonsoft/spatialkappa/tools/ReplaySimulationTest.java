@@ -193,8 +193,8 @@ public class ReplaySimulationTest {
     private static final String BAD_NUMBER_INPUT = 
             "    # time E 'AB' 'BC' 'ABC' 'B' 'ABC_fraction'\n" + 
             "    0.000000E+00 0 0.000000E+00 0.000000E+00 0.000000E+00 0.000000E+00 NAN\n" + 
-            "    6.000000E+01 0 0.000000E+00 0.000000E+00 0.000000E+00 0.000000E+00 NAN\n" + 
-            "    1.800000E+02 83 1.000000E+00 2.000000E+00 1.000000E+00 0.000000E+00 INF\n" + 
+            "    6.000000E+01 0 0.000000E+00 0.000000E+00 0.000000E+00 0.000000E+00 -NAN\n" + 
+            "    1.800000E+02 83 1.000000E+00 2.000000E+00 1.000000E+00 0.000000E+00 -INF\n" + 
             "    2.400000E+02 153 2.000000E+00 2.000000E+00 2.000000E+00 0.000000E+00 INF\n";
         
     private static final Observation[] BAD_NUMBER_OUTPUT = {
@@ -222,7 +222,7 @@ public class ReplaySimulationTest {
                         {"BC", new ObservationElement(2)},
                         {"ABC", new ObservationElement(1)},
                         {"B", new ObservationElement(0)},
-                        {"ABC_fraction", new ObservationElement(Float.POSITIVE_INFINITY)}
+                        {"ABC_fraction", new ObservationElement(Float.NEGATIVE_INFINITY)}
                 }), 
                 false, 0, 0),
         new Observation(240f, 153, getList("AB", "BC", "ABC", "B", "ABC_fraction"),

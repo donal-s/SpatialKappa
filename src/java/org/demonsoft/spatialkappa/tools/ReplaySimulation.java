@@ -139,7 +139,10 @@ public class ReplaySimulation implements Simulation {
                 if ("INF".equalsIgnoreCase(token)) {
                     value = Float.POSITIVE_INFINITY;
                 }
-                else if ("NAN".equalsIgnoreCase(token)) {
+                else if ("-INF".equalsIgnoreCase(token)) {
+                    value = Float.NEGATIVE_INFINITY;
+                }
+                else if ("NAN".equalsIgnoreCase(token) || "-NAN".equalsIgnoreCase(token)) {
                     value = Float.NaN;
                 }
                 else {
