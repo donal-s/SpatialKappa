@@ -1,0 +1,30 @@
+%agent: A(s,loc~cytosol,loc_index_1~0~1)
+%agent: B(s,loc~cytosol,loc_index_1~0~1)
+
+
+
+%init: 1000 A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1)
+
+%var: 'all dimer' A(s!_)
+%var: 'all monomer A' A(s)
+%var: 'all monomer B' B(s)
+%var: 'dimer AB' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1)
+%var: 'dimer BA' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~0)
+%var: 'same voxel dimer AB' A(s!1,loc~cytosol),B(s!1,loc~cytosol)
+%var: 'same voxel dimer BA' A(s!1,loc~cytosol),B(s!1,loc~cytosol)
+%plot: 'all monomer A'
+%plot: 'all monomer B'
+%plot: 'all dimer'
+%plot: 'dimer AB'
+%plot: 'dimer BA'
+%var: 'same voxel dimer AB :loc~cytosol,loc_index_1~0' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0)
+%plot: 'same voxel dimer AB :loc~cytosol,loc_index_1~0'
+%var: 'same voxel dimer AB :loc~cytosol,loc_index_1~1' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1)
+%plot: 'same voxel dimer AB :loc~cytosol,loc_index_1~1'
+%plot: 'same voxel dimer AB'
+%var: 'same voxel dimer BA :loc~cytosol,loc_index_1~0' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0)
+%plot: 'same voxel dimer BA :loc~cytosol,loc_index_1~0'
+%var: 'same voxel dimer BA :loc~cytosol,loc_index_1~1' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1)
+%plot: 'same voxel dimer BA :loc~cytosol,loc_index_1~1'
+%plot: 'same voxel dimer BA'
+

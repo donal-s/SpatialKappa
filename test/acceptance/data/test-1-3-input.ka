@@ -1,0 +1,35 @@
+%agent: A(s)
+%agent: B(s)
+
+%compartment: cytosol [2]
+%compartment: membrane [2]
+
+# TODO force use of transport links between compartments
+
+'dimerise AB' A:cytosol(s),B:membrane(s) -> A:cytosol(s!1),B:membrane(s!1) @ 1.0
+'dimerise BA' A:membrane(s),B:cytosol(s) -> A:membrane(s!1),B:cytosol(s!1) @ 1.0
+
+'break AB'    A:cytosol(s!1),B:membrane(s!1) -> A:cytosol(s),B:membrane(s) @ 'break-rate'
+'break BA'    A:membrane(s!1),B:cytosol(s!1) -> A:membrane(s),B:cytosol(s) @ 'break-rate'
+
+%init: 1000 A:cytosol
+%init: 1000 A:membrane
+%init: 1000 B:cytosol
+%init: 1000 B:membrane
+
+%var: 'break-rate' 50.0
+
+%obs: 'all monomer A' A(s)
+%obs: 'all monomer B' B(s)
+%obs: 'cytosol monomer A' A:cytosol(s)
+%obs: 'membrane monomer A' membrane A(s)
+%obs: 'cytosol voxel monomer B' B:cytosol[0](s)
+%obs: 'membrane voxel monomer B' membrane[0] B(s)
+
+%obs: 'all dimer' A(s!_)
+%obs: 'dimer AB' A:cytosol(s!1),B:membrane(s!1)
+%obs: 'dimer BA' B:cytosol(s!1),A:membrane(s!1)
+
+%obs: 'same voxel dimer AB' cytosol A(s!1),B(s!1) # Expect none
+%obs: 'same voxel dimer BA' cytosol A(s!1),B(s!1) # Expect none
+
