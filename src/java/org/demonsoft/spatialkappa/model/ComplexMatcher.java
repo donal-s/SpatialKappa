@@ -8,7 +8,27 @@ import java.util.Map;
 
 public class ComplexMatcher {
     public boolean isExactMatch(Complex template, Complex target) {
-        return getMatches(template, target, true).size() > 0;
+        return isExactMatch(template, target, false);
+    }
+
+    public boolean isExactMatch(Complex template, Complex target, boolean locationCheck) {
+    	if (!locationCheck) {
+    		return getMatches(template, target, true).size() > 0;
+    	}
+    	
+    	for (ComplexMapping mapping : getMatches(template, target, true)) {
+    		boolean found = true;
+    		for (Map.Entry<Agent, Agent> entry : mapping.mapping.entrySet()) {
+    			if (!Utils.equal(entry.getKey().location, entry.getValue().location)) {
+    				found = false;
+    				break;
+    			}
+    		}
+    		if (found) {
+    			return true;
+    		}
+    	}
+    	return false;
     }
 
     public boolean isPartialMatch(Complex template, Complex target) {

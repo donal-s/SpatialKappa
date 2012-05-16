@@ -73,12 +73,12 @@ public class SpatialKappaWalkerTest {
 
         Location location = new Location("cytosol");
 
-        checkRuleExpr("'label' 'cytosol' A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+        checkRuleExpr("'label' cytosol A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), location);
 
         location = new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1"));
 
-        checkRuleExpr("'label' 'cytosol'[0][1] A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+        checkRuleExpr("'label' cytosol[0][1] A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), location);
     }
     
@@ -96,22 +96,24 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testInitExpr() throws Exception {
-        checkInitExpr_value("%init: 5 (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", 5, null);
+        checkInitExpr_value("%init: 5 A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, null);
         
-        checkInitExpr_reference("%init: 'label' (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", "label", null);
+        checkInitExpr_reference("%init: 'label' A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", null);
     }
 
     @Test
     public void testInitExpr_spatial() throws Exception {
 
-        checkInitExpr_value("%init: 'cytosol' 5 (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", 5, new Location("cytosol"));
-        checkInitExpr_value("%init: 'cytosol'[0][1] 5 (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", 5, 
+        checkInitExpr_value("%init: 5 cytosol A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, new Location("cytosol"));
+        checkInitExpr_value("%init: 5 cytosol[0][1] A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, 
                 new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")));
         
-        checkInitExpr_reference("%init: 'cytosol' 'label' (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", "label", new Location("cytosol"));
-        checkInitExpr_reference("%init: 'cytosol'[0][1] 'label' (A(x~a,a!1),B(y~d,a!1))", "[A(a!1,x~a), B(a!1,y~d)]", "label", 
+        checkInitExpr_reference("%init: 'label' cytosol A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", new Location("cytosol"));
+        checkInitExpr_reference("%init: 'label' cytosol[0][1] A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", 
                 new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")));
     }
+    
+    //TODO test agent specific locations
 
     private void checkInitExpr_reference(String inputText, String leftSideAgents, String label, Location location) throws Exception {
         lhsAgents.reset();
@@ -135,13 +137,13 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testCompartmentExpr() throws Exception {
-        checkCompartmentExpr("%compartment: 'label'", "label", new Integer[0]);
-        checkCompartmentExpr("%compartment: 'label'[1]", "label", new Integer[] {1});
-        checkCompartmentExpr("%compartment: 'label'[1][20]", "label", new Integer[] {1, 20});
-        checkCompartmentExpr("%compartment: 'complex label-with-!�$%'", "complex label-with-!�$%", new Integer[0]);
+        checkCompartmentExpr("%compartment: label", "label", new Integer[0]);
+        checkCompartmentExpr("%compartment: label[1]", "label", new Integer[] {1});
+        checkCompartmentExpr("%compartment: label[1][20]", "label", new Integer[] {1, 20});
+        checkCompartmentExpr("%compartment: 0_complex1Label-with-Stuff", "0_complex1Label-with-Stuff", new Integer[0]);
 
         try {
-            runParserRule("compartmentExpr", "%compartment: 'label'[0]");
+            runParserRule("compartmentExpr", "%compartment: label[0]");
             fail("invalid should have failed");
         }
         catch (Exception ex) {
@@ -160,16 +162,16 @@ public class SpatialKappaWalkerTest {
     @Test
     public void testCompartmentLinkExpr() throws Exception {
         // Forward
-        checkCompartmentLinkExpr("%link: 'label' 'compartment1' -> 'compartment2'", "label: compartment1 -> compartment2");
-        checkCompartmentLinkExpr("%link: 'label' 'compartment1'['x'] -> 'compartment2'[2]['x'+1]", "label: compartment1['x'] -> compartment2[2][('x' + 1)]");
+        checkCompartmentLinkExpr("%link: 'label' compartment1 -> compartment2", "label: compartment1 -> compartment2");
+        checkCompartmentLinkExpr("%link: 'label' compartment1['x'] -> compartment2[2]['x'+1]", "label: compartment1['x'] -> compartment2[2][('x' + 1)]");
         
         // Back
-        checkCompartmentLinkExpr("%link: 'label' 'compartment1' <- 'compartment2'", "label: compartment1 <- compartment2");
-        checkCompartmentLinkExpr("%link: 'label' 'compartment1'['x'] <- 'compartment2'[2]['x'+1]", "label: compartment1['x'] <- compartment2[2][('x' + 1)]");
+        checkCompartmentLinkExpr("%link: 'label' compartment1 <- compartment2", "label: compartment1 <- compartment2");
+        checkCompartmentLinkExpr("%link: 'label' compartment1['x'] <- compartment2[2]['x'+1]", "label: compartment1['x'] <- compartment2[2][('x' + 1)]");
         
         // Both
-        checkCompartmentLinkExpr("%link: 'label' 'compartment1' <-> 'compartment2'", "label: compartment1 <-> compartment2");
-        checkCompartmentLinkExpr("%link: 'label' 'compartment1'['x'] <-> 'compartment2'[2]['x'+1]", "label: compartment1['x'] <-> compartment2[2][('x' + 1)]");
+        checkCompartmentLinkExpr("%link: 'label' compartment1 <-> compartment2", "label: compartment1 <-> compartment2");
+        checkCompartmentLinkExpr("%link: 'label' compartment1['x'] <-> compartment2[2]['x'+1]", "label: compartment1['x'] <-> compartment2[2][('x' + 1)]");
     }
     
     private void checkCompartmentLinkExpr(String inputText, String linkText) throws Exception {
@@ -223,8 +225,8 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testObsExpr_spatial() throws Exception {
-        checkObsExpr("obsExpr", "%obs: 'label' 'cytosol' A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol"), true);
-        checkObsExpr("obsExpr", "%obs: 'label' 'cytosol'[0][1] A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")), true);
+        checkObsExpr("obsExpr", "%obs: 'label' cytosol A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol"), true);
+        checkObsExpr("obsExpr", "%obs: 'label' cytosol[0][1] A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")), true);
     }
 
     private void checkObsExpr(String ruleName, String inputText, String label, String leftSideAgents, Location location, boolean inObservations) throws Exception {
@@ -307,7 +309,7 @@ public class SpatialKappaWalkerTest {
     public void testModExpr() throws Exception {
         checkModExpr("%mod: ([T]>10) && ('v1'/'v2') < 1 do $ADD 'n' C(x1~p)", "(([T] > 10.0) && (('v1' / 'v2') < 1.0)) do $ADD 'n' [C(x1~p)]");
         checkModExpr("%mod: ([log][E]>10) || [true] do $SNAPSHOT until [false]", "(([log] ([E]) > 10.0) || [true]) do $SNAPSHOT until [false]");
-        checkModExpr("%mod: ([mod] [T] 100)=0 do $DEL [inf] C() until [T]>1000", "(([mod] [T] 100.0) = 0.0) do $DEL [inf] [C()] until ([T] > 1000.0)");
+        checkModExpr("%mod: ([mod] [T] 100)=0 do $DEL [inf] C() until [T]>1000", "(([mod] [T] 100.0) = 0.0) do $DEL [inf] [C] until ([T] > 1000.0)");
         checkModExpr("%mod: [not][false] do 'rule_name' := [inf]", "[not] [false] do 'rule_name' := [inf]");
     }
     
@@ -342,8 +344,8 @@ public class SpatialKappaWalkerTest {
     public void testEffect() throws Exception {
         checkEffect("$SNAPSHOT", "$SNAPSHOT");
         checkEffect("$STOP", "$STOP");
-        checkEffect("$ADD 'n' + 1 C()", "$ADD ('n' + 1.0) [C()]");
-        checkEffect("$DEL [inf] C(), C(x1~p)", "$DEL [inf] [C(), C(x1~p)]");
+        checkEffect("$ADD 'n' + 1 C()", "$ADD ('n' + 1.0) [C]");
+        checkEffect("$DEL [inf] C(), C(x1~p)", "$DEL [inf] [C, C(x1~p)]");
         checkEffect("'rule' := 'n' + 1", "'rule' := ('n' + 1.0)");
     }
     
@@ -398,15 +400,21 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testAgent() throws Exception {
-        checkAgent("A()", "A()");
+//        checkAgent("A", "A");
+//        checkAgent("A", "A()");
+        checkAgent("A:cytosol", "A:cytosol");
+        checkAgent("A:cytosol", "A:cytosol()");
+        checkAgent("A:cytosol[0][1]", "A:cytosol[0][1]");
+        checkAgent("A:cytosol[0][1]", "A:cytosol[0][1]()");
         checkAgent("A(l!1,x~a)", "A(x~a,l!1)");
-        checkAgent("A_new()", "A_new()");
-        checkAgent("A-new()", "A-new()");
-        checkAgent("EBOX-CLK-BMAL1()", "EBOX-CLK-BMAL1()");
+        checkAgent("A_new", "A_new()");
+        checkAgent("A-new", "A-new()");
+        checkAgent("EBOX-CLK-BMAL1", "EBOX-CLK-BMAL1()");
         checkAgent("Predator(loc~domain,loc_index_1~0,loc_index_2~0)", "Predator(loc~domain,loc_index_1~0,loc_index_2~0)");
     }
     
-   
+   // TODO - test nil file and compartment not declared
+    // TODO test naming conflict - Agent/compartment
 
     private void checkAgent(String expected, String input) throws Exception {
         checkParserRule("agent", input, expected);
@@ -414,9 +422,9 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testLocationExpr() throws Exception {
-        checkCompartmentReference("label", (Location) runParserRule("locationExpr", "'label'"));
-        checkCompartmentReference("label[1]", (Location) runParserRule("locationExpr", "'label'[1]"));
-        checkCompartmentReference("label[1][(20 + 'x')]", (Location) runParserRule("locationExpr", "'label'[1][20+'x']"));
+        checkCompartmentReference("label", (Location) runParserRule("locationExpr", "label"));
+        checkCompartmentReference("label[1]", (Location) runParserRule("locationExpr", "label[1]"));
+        checkCompartmentReference("label[1][(20 + 'x')]", (Location) runParserRule("locationExpr", "label[1][20+'x']"));
     }
     
     private void checkCompartmentReference(String expected, Location actual) {
@@ -431,7 +439,7 @@ public class SpatialKappaWalkerTest {
 
 
     @Test
-    public void testTransformExpr_spatial() throws Exception {
+    public void testTransformExpr_spatial() throws Exception { //TODO ?
         checkTransform("[A(s!1), B(x!1)]", "[A(s), B(x)]", runParserRule("transformExpr", "A(s!1),B(x!1)   -> A(s),  B(x)"));
     }
 

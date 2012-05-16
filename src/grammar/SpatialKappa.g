@@ -87,6 +87,7 @@ line
   ;
 
 ruleExpr
+options {backtrack=true;}
   :
   label? transformExpr kineticExpr 
     -> 
@@ -97,6 +98,7 @@ ruleExpr
   ;
 
 transformExpr
+options {backtrack=true;}
   :
   a=agentGroup transformTransition b=agentGroup
     ->
@@ -132,9 +134,9 @@ agentGroup
 
 agent
   :
-  id '(' (iface (',' iface)*)? ')'
+  id (':' locationExpr)? ('(' (iface (',' iface)*)? ')')?
     ->
-      ^(AGENT id iface*)
+      ^(AGENT id locationExpr? iface*)
   ;
 
 iface
@@ -174,10 +176,10 @@ kineticExpr
 initExpr
 options {backtrack=true;}
   :
-  '%init:' locationExpr? INT '(' agentGroup ')'
+  '%init:' INT locationExpr? agentGroup
     ->
       ^(INIT agentGroup INT locationExpr?)
-  | '%init:' locationExpr? label '(' agentGroup ')'
+  | '%init:' label locationExpr? agentGroup
     ->
       ^(INIT agentGroup label locationExpr?)
   ;
@@ -192,9 +194,9 @@ agentExpr
 
 compartmentExpr
   :
-  '%compartment:' label ('[' INT ']')*
+  '%compartment:' id ('[' INT ']')*
     ->
-      ^(COMPARTMENT label ^(DIMENSION INT)*)
+      ^(COMPARTMENT id ^(DIMENSION INT)*)
   ;
 
 compartmentLinkExpr
@@ -213,7 +215,7 @@ transportExpr
 
 locationExpr
   :
-  sourceCompartment=label compartmentIndexExpr*
+  sourceCompartment=id compartmentIndexExpr*
     ->
       ^(LOCATION $sourceCompartment compartmentIndexExpr*)
   ;
@@ -233,26 +235,27 @@ plotExpr
   ;
 
 obsExpr
+options {backtrack=true;}
   :
   '%obs:' label? agentGroup
     ->
       ^(OBSERVATION agentGroup label?)
-  | '%obs:' label locationExpr agentGroup
+  | '%obs:' label? locationExpr agentGroup
     ->
-      ^(OBSERVATION agentGroup label locationExpr)
+      ^(OBSERVATION agentGroup label? locationExpr)
   ;
 
 varExpr
 options {backtrack=true;}
   :
-  '%var:' label agentGroup
-    ->
-      ^(VARIABLE agentGroup label)
-  |
   '%var:' label varAlgebraExpr
     ->
       ^(VARIABLE varAlgebraExpr label)
-  ;
+   |
+  '%var:' label agentGroup
+    ->
+      ^(VARIABLE agentGroup label)
+ ;
 
 varAlgebraExpr
 options {backtrack=true;}
@@ -407,9 +410,8 @@ options {backtrack=true;}
   ;
   
 id
-options {backtrack=true;}
   :
-    ( ID_FRAGMENT | INT ) ( ID_FRAGMENT | INT | '_' | '-' )*
+    ( INT | ID_FRAGMENT ) 
    ->
     {new CommonTree(new CommonToken(ID,$id.text.toString()))} // Avoid lexing as mutiple tokens
   ;
@@ -515,23 +517,26 @@ FLOAT
 
 ID_FRAGMENT
   :
-  ALPHANUMERIC
-  ;
-
-fragment
-ALPHANUMERIC
-  :
   (
-    NUMERIC
-    | 'a'..'z'
-    | 'A'..'Z'
-  )+
+    ALPHANUMERIC
+  ) 
+  (
+    ALPHANUMERIC
+    | '_'
+    | '-'
+  )*
   ;
 
 fragment
 NUMERIC
   :
   ('0'..'9')+
+  ;
+  
+fragment
+ALPHANUMERIC
+  :
+  (NUMERIC | 'a'..'z' | 'A'..'Z')+
   ;
   
 fragment

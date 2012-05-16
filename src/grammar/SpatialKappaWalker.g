@@ -74,6 +74,7 @@ options {backtrack=true;}
   ;
 
 transformExpr returns [List<Agent> lhs, List<Agent> rhs]
+options {backtrack=true;}
   :
   ^(
     t=transformTransition
@@ -126,13 +127,13 @@ agent returns [Agent result]
   }
   :
   ^(
-    AGENT id
+    AGENT id locationExpr?
     (
       iface {sites.add($iface.result);}
     )*
    )
   {
-    $result = new Agent($id.text, sites);
+    $result = new Agent($id.text, $locationExpr.result, sites);
   }
   ;
 
@@ -173,6 +174,7 @@ kineticExpr returns [VariableExpression rate]
   ;
 
 initExpr
+options {backtrack=true;}
   :
   ^(INIT agentGroup INT locationExpr?)
   {
@@ -198,9 +200,9 @@ compartmentExpr
   List<Integer> dimensions = new ArrayList<Integer>();
   }
   :
-  ^(COMPARTMENT label (^(DIMENSION INT {dimensions.add(Integer.parseInt($INT.text));}))*)
+  ^(COMPARTMENT id (^(DIMENSION INT {dimensions.add(Integer.parseInt($INT.text));}))*)
   {
-    kappaModel.addCompartment($label.result, dimensions);
+    kappaModel.addCompartment($id.result, dimensions);
   }
   ;
   
@@ -233,7 +235,7 @@ locationExpr returns [Location result]
   List<CellIndexExpression> dimensions = new ArrayList<CellIndexExpression>();
   }
   :
-  ^(LOCATION name=label (compartmentIndexExpr {dimensions.add($compartmentIndexExpr.result);})*)
+  ^(LOCATION name=id (compartmentIndexExpr {dimensions.add($compartmentIndexExpr.result);})*)
   {
     $result = new Location($name.result, dimensions);
   }
@@ -258,6 +260,7 @@ plotExpr
 
 
 obsExpr
+options {backtrack=true;}
   :
   ^(OBSERVATION agentGroup)
   {

@@ -72,7 +72,7 @@ public class Location implements Serializable {
         return hashCode;
     }
 
-    public void calculateHashCode() {
+    private void calculateHashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + Arrays.hashCode(indices);

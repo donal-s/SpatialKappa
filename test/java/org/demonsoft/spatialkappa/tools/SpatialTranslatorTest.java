@@ -8,14 +8,17 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.apache.commons.io.FileUtils;
+import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.CompartmentLink;
@@ -34,14 +37,14 @@ import org.junit.Test;
 
 public class SpatialTranslatorTest {
 
-    private VariableReference refX = new VariableReference("x");
+	private VariableReference refX = new VariableReference("x");
     private VariableReference refY = new VariableReference("y");
     
     private SpatialTranslator translator;
     
     @Before
     public void setUp() throws Exception {
-        translator = new SpatialTranslator("%compartment: 'cytosol' [4]\n");
+        translator = new SpatialTranslator("%compartment: cytosol [4]\n");
     }
     
     @Test
@@ -367,30 +370,185 @@ public class SpatialTranslatorTest {
         assertEquals("loc~label,loc_index_1~2,loc_index_2~7", translator.getKappaString(location, variables, 2));
     }
 
+    @Test
+    public void testGetPartitionedLocations() throws Exception {
+    	assertEquals(0, translator.getPartitionedLocations(null).size());
+    	
+    	IKappaModel model = new KappaModel();
+    	Compartment cytosol = new Compartment("cytosol", 2, 2);
+    	Compartment membrane = new Compartment("membrane", 3);
+    	model.addCompartment(cytosol);
+    	model.addCompartment(membrane);
+    	translator = new SpatialTranslator(model);
+    	
+    	List<Agent> agents = new ArrayList<Agent>();
+    	Set<Location> expected = new HashSet<Location>();
 
+    	agents.add(new Agent("A", new Location("cytosol")));
+    	expected.add(new Location("cytosol"));
+    	assertEquals(expected, translator.getPartitionedLocations(agents));
+
+    	agents.clear();
+    	expected.clear();
+    	
+    	agents.add(new Agent("A", new Location("cytosol", new CellIndexExpression("1"))));
+    	expected.add(new Location("cytosol", new CellIndexExpression("1")));
+    	assertEquals(expected, translator.getPartitionedLocations(agents));
+
+    	agents.clear();
+    	expected.clear();
+    	
+    	agents.add(new Agent("A", new Location("cytosol", new CellIndexExpression("1"), new CellIndexExpression("1"))));
+    	assertEquals(expected, translator.getPartitionedLocations(agents));
+
+    	agents.clear();
+    	expected.clear();
+    	
+    	agents.add(new Agent("A", new Location("cytosol")));
+    	agents.add(new Agent("B", new Location("cytosol")));
+    	expected.add(new Location("cytosol"));
+    	assertEquals(expected, translator.getPartitionedLocations(agents));
+
+    	agents.clear();
+    	expected.clear();
+    	
+    	agents.add(new Agent("A", new Location("cytosol")));
+    	agents.add(new Agent("B", new Location("membrane")));
+    	expected.add(new Location("cytosol"));
+    	expected.add(new Location("membrane"));
+    	assertEquals(expected, translator.getPartitionedLocations(agents));
+    }
+    
+    @Test
+    public void testCreatePartitionMaps() throws Exception {
+    	
+    	IKappaModel model = new KappaModel();
+    	Compartment cytosol = new Compartment("cytosol", 2, 2);
+    	Compartment membrane = new Compartment("membrane", 3);
+    	Location locationCytosol = new Location("cytosol");
+    	Location locationMembrane = new Location("membrane");
+    	
+    	model.addCompartment(cytosol);
+    	model.addCompartment(membrane);
+    	translator = new SpatialTranslator(model);
+    	
+    	List<Location> locations = new ArrayList<Location>();
+    	List<Map<Location, String>> expected = new ArrayList<Map<Location,String>>();
+    	
+    	assertEquals(expected, translator.createPartitionMaps(locations));
+    	
+    	locations.add(new Location("cytosol"));
+    	Map<Location, String> rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~0");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~0");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~1");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~1");
+    	
+    	assertEquals(expected, translator.createPartitionMaps(locations));
+
+    	locations.clear();
+    	expected.clear();
+
+    	locations.add(new Location("membrane"));
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~0");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~1");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~2");
+    	
+       	assertEquals(expected, translator.createPartitionMaps(locations));
+
+       	locations.clear();
+    	expected.clear();
+
+    	locations.add(new Location("cytosol"));
+    	locations.add(new Location("membrane"));
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~0");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~0");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~0");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~1");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~0");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~2");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~0");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~0");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~0");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~1");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~0");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~2");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~1");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~0");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~1");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~1");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~1");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~2");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~1");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~0");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~1");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~1");
+    	rowMap = new HashMap<Location, String>();
+    	expected.add(rowMap);
+    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~1");
+    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~2");
+    	
+       	assertEquals(expected, translator.createPartitionMaps(locations));
+    }
+    
     private static final String SIMPLE_TEST_INPUT = 
-        "%compartment: 'cytosol' [4]\n" + 
-        "%link: 'intra-cytosol' 'cytosol' ['x'] <-> 'cytosol' ['x'+1]\n" + 
+        "%compartment: cytosol [4]\n" + 
+        "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
         "\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + 
         "%transport: 'diffusion-red' 'intra-cytosol' A(state~red) @ 0.1\n" + 
-        "'heating' 'cytosol'[0] A(state~blue) -> A(state~red) @ 1.0\n" + 
-        "'cooling' 'cytosol' A(state~red) -> A(state~blue) @ 0.05\n" + 
+        "'heating' cytosol[0] A(state~blue) -> A(state~red) @ 1.0\n" + 
+        "'cooling' cytosol A(state~red) -> A(state~blue) @ 0.05\n" + 
         "\n" + 
         "%var: 'green count' 800\n" + 
-        "%init: 'cytosol' 800 (A(state~blue)) \n" + 
-        "%init: 'green count' (A(state~green)) \n" + 
-        "%init: 'cytosol'[0] 800 (A(state~red)) \n" + 
+        "%init: 800 cytosol A(state~blue) \n" + 
+        "%init: 'green count' A(state~green) \n" + 
+        "%init: 800 cytosol[0] A(state~red) \n" + 
         "%var: 'constant' 12\n" + 
         "%var: 'all A not plotted' A()\n" + 
         "%var: 'all A plotted' A()\n" + 
         "%plot: 'all A plotted'\n" + 
         "%obs: 'all red' A(state~red)\n" + 
-        "%obs: 'cytosol blue' 'cytosol' A(state~blue)\n" + 
-        "%obs: 'red[0]' 'cytosol'[0] A(state~red) \n" + 
-        "%obs: 'red[1]' 'cytosol'[1] A(state~red) \n" + 
-        "%obs: 'red[2]' 'cytosol'[2] A(state~red) \n" + 
-        "%obs: 'red[3]' 'cytosol'[3] A(state~red) \n";
+        "%obs: 'cytosol blue' cytosol A(state~blue)\n" + 
+        "%obs: 'red[0]' cytosol[0] A(state~red) \n" + 
+        "%obs: 'red[1]' cytosol[1] A(state~red) \n" + 
+        "%obs: 'red[2]' cytosol[2] A(state~red) \n" + 
+        "%obs: 'red[3]' cytosol[3] A(state~red) \n";
     
     private static final String SIMPLE_TEST_OUTPUT = 
         "%agent: A(state~blue~green~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
@@ -414,15 +572,15 @@ public class SpatialTranslatorTest {
         "'cooling-3' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~blue,loc~cytosol,loc_index_1~2) @ 0.05\n" + 
         "'cooling-4' A(state~red,loc~cytosol,loc_index_1~3) -> A(state~blue,loc~cytosol,loc_index_1~3) @ 0.05\n" + 
         "\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~0))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~1))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~2))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~3))\n" + 
-        "%init: 800 (A(state~green))\n" + 
-        "%init: 800 (A(state~red,loc~cytosol,loc_index_1~0))\n" + 
+        "%init: 200 A(state~blue,loc~cytosol,loc_index_1~0)\n" + 
+        "%init: 200 A(state~blue,loc~cytosol,loc_index_1~1)\n" + 
+        "%init: 200 A(state~blue,loc~cytosol,loc_index_1~2)\n" + 
+        "%init: 200 A(state~blue,loc~cytosol,loc_index_1~3)\n" + 
+        "%init: 800 A(state~green)\n" + 
+        "%init: 800 A(state~red,loc~cytosol,loc_index_1~0)\n" + 
         "\n" + 
-        "%var: 'all A not plotted' A()\n" + 
-        "%var: 'all A plotted' A()\n" + 
+        "%var: 'all A not plotted' A\n" + 
+        "%var: 'all A plotted' A\n" + 
         "%var: 'all red' A(state~red)\n" + 
         "%var: 'constant' 12.0\n" + 
         "%var: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
@@ -450,23 +608,23 @@ public class SpatialTranslatorTest {
         "";
 
     private static final String INFINITE_RATE_INPUT = 
-        "%compartment: 'cytosol' [4]\n" + 
-        "%link: 'intra-cytosol' 'cytosol' ['x'] <-> 'cytosol' ['x'+1]\n" + 
+        "%compartment: cytosol [4]\n" + 
+        "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
         "\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ [inf]\n" + 
         "%transport: 'diffusion-red' 'intra-cytosol' A(state~red) @ [inf]\n" + 
-        "'heating' 'cytosol'[0] A(state~blue) -> A(state~red) @ [inf]\n" + 
-        "'cooling' 'cytosol' A(state~red) -> A(state~blue) @ [inf]\n" + 
+        "'heating' cytosol[0] A(state~blue) -> A(state~red) @ [inf]\n" + 
+        "'cooling' cytosol A(state~red) -> A(state~blue) @ [inf]\n" + 
         "\n" + 
-        "%init: 'cytosol' 800 (A(state~blue)) \n" + 
-        "%init: 800 (A(state~green)) \n" + 
-        "%init: 'cytosol'[0] 800 (A(state~red)) \n" + 
+        "%init: 800 cytosol A(state~blue) \n" + 
+        "%init: 800 A(state~green) \n" + 
+        "%init: 800 cytosol[0] A(state~red) \n" + 
         "%obs: 'all red' A(state~red)\n" + 
-        "%obs: 'cytosol blue' 'cytosol' A(state~blue)\n" + 
-        "%obs: 'red[0]' 'cytosol'[0] A(state~red) \n" + 
-        "%obs: 'red[1]' 'cytosol'[1] A(state~red) \n" + 
-        "%obs: 'red[2]' 'cytosol'[2] A(state~red) \n" + 
-        "%obs: 'red[3]' 'cytosol'[3] A(state~red) \n";
+        "%obs: 'cytosol blue' cytosol A(state~blue)\n" + 
+        "%obs: 'red[0]' cytosol[0] A(state~red) \n" + 
+        "%obs: 'red[1]' cytosol[1] A(state~red) \n" + 
+        "%obs: 'red[2]' cytosol[2] A(state~red) \n" + 
+        "%obs: 'red[3]' cytosol[3] A(state~red) \n";
     
     private static final String INFINITE_RATE_OUTPUT = 
         "%agent: A(state~blue~green~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
@@ -490,12 +648,12 @@ public class SpatialTranslatorTest {
         "'cooling-3' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~blue,loc~cytosol,loc_index_1~2) @ [inf]\n" + 
         "'cooling-4' A(state~red,loc~cytosol,loc_index_1~3) -> A(state~blue,loc~cytosol,loc_index_1~3) @ [inf]\n" + 
         "\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~0))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~1))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~2))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~3))\n" + 
-        "%init: 800 (A(state~green))\n" + 
-        "%init: 800 (A(state~red,loc~cytosol,loc_index_1~0))\n" + 
+        "%init: 200 A(state~blue,loc~cytosol,loc_index_1~0)\n" + 
+        "%init: 200 A(state~blue,loc~cytosol,loc_index_1~1)\n" + 
+        "%init: 200 A(state~blue,loc~cytosol,loc_index_1~2)\n" + 
+        "%init: 200 A(state~blue,loc~cytosol,loc_index_1~3)\n" + 
+        "%init: 800 A(state~green)\n" + 
+        "%init: 800 A(state~red,loc~cytosol,loc_index_1~0)\n" + 
         "\n" + 
         "%var: 'all red' A(state~red)\n" + 
         "%var: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
@@ -521,18 +679,18 @@ public class SpatialTranslatorTest {
         "";
 
     private static final String TRANSPORT_ONLY_INPUT = 
-        "%compartment: 'cytosol' [4]\n" + 
-        "%compartment: 'membrane' [4]\n" + 
-        "%link: 'intra-cytosol' 'cytosol' ['x'] <-> 'cytosol' ['x'+1]\n" + 
-        "%link: 'interface1' 'cytosol' ['x'] -> 'membrane' ['x'+2]\n" +
-        "%link: 'interface2' 'membrane' ['x'] <- 'cytosol' ['x'+2]\n" +
+        "%compartment: cytosol [4]\n" + 
+        "%compartment: membrane [4]\n" + 
+        "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
+        "%link: 'interface1' cytosol ['x'] -> membrane ['x'+2]\n" +
+        "%link: 'interface2' membrane ['x'] <- cytosol ['x'+2]\n" +
         "\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + // TODO - remember only works for single agents
         "%transport: 'diffusion-red' 'intra-cytosol' A(state~red) @ 0.1\n" + 
         "%transport: 'diffusion-other' 'intra-cytosol' B() @ 0.1\n" + 
         "%transport: 'cell exit1' 'interface1' B() @ 0.2\n" + 
         "%transport: 'cell exit2' 'interface2' B() @ 0.3\n" + 
-        "%init: 800 (A(state~red),B())\n" + 
+        "%init: 800 A(state~red),B()\n" + 
         "\n" + 
         "";
     
@@ -570,7 +728,7 @@ public class SpatialTranslatorTest {
         "'cell exit2-2' B(loc~cytosol,loc_index_1~3) -> B(loc~membrane,loc_index_1~1) @ 0.3\n" + 
         "\n" + 
         "\n" + 
-        "%init: 800 (A(state~red),B())\n" + 
+        "%init: 800 A(state~red),B\n" + 
         "\n" + 
         "\n" + 
         "";
@@ -579,20 +737,20 @@ public class SpatialTranslatorTest {
     // TODO - test localised agent and complex creation
     
     private static final String TRANSPORT_DIFFERENT_DIMENSIONS_INPUT = 
-        "%compartment: 'cytosol' [4][5]\n" + 
-        "%compartment: 'membrane' [3]\n" + 
-        "%compartment: 'nucleus'\n" + 
-        "%link: 'interface1' 'nucleus' <-> 'membrane' [2]\n" +
-        "%link: 'interface2' 'nucleus' <-> 'cytosol' [1][2]\n" +
-        "%link: 'interface3' 'membrane' ['x'] <-> 'cytosol' ['x']['x'+2]\n" +
+        "%compartment: cytosol [4][5]\n" + 
+        "%compartment: membrane [3]\n" + 
+        "%compartment: nucleus\n" + 
+        "%link: 'interface1' nucleus <-> membrane [2]\n" +
+        "%link: 'interface2' nucleus <-> cytosol [1][2]\n" +
+        "%link: 'interface3' membrane ['x'] <-> cytosol ['x']['x'+2]\n" +
         "\n" + 
         "%transport: 'diffusion-blue' 'interface1'  A(state~blue) @ 0.1\n" + 
         "%transport: 'diffusion-red' 'interface2' A(state~red) @ 0.2\n" + 
         "%transport: 'diffusion-other' 'interface3' B() @ 0.3\n" + 
         "\n" +
-        "%init: 'cytosol' 800 (A(state~blue)) \n" + 
-        "%init: 'membrane' 900 (A(state~red)) \n" + 
-        "%init: 'nucleus' 800 (B()) \n" + 
+        "%init: 800 cytosol A(state~blue) \n" + 
+        "%init: 900 membrane A(state~red) \n" + 
+        "%init: 800 nucleus B() \n" + 
         "";
     
     private static final String TRANSPORT_DIFFERENT_DIMENSIONS_OUTPUT = 
@@ -611,42 +769,42 @@ public class SpatialTranslatorTest {
         "'diffusion-other-6' B(loc~cytosol,loc_index_1~2,loc_index_2~4) -> B(loc~membrane,loc_index_1~2,loc_index_2~0) @ 0.3\n" + 
         "\n" + 
         "\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~0))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~0))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~0))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~0))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~1))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~1))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~1))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~1))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~2))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~2))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~2))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~2))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~3))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~3))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~3))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~3))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~4))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~4))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~4))\n" + 
-        "%init: 40 (A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~4))\n" + 
-        "%init: 300 (A(state~red,loc~membrane,loc_index_1~0))\n" + 
-        "%init: 300 (A(state~red,loc~membrane,loc_index_1~1))\n" + 
-        "%init: 300 (A(state~red,loc~membrane,loc_index_1~2))\n" + 
-        "%init: 800 (B(loc~nucleus))\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~0)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~0)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~0)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~0)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~1)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~1)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~1)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~1)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~2)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~2)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~2)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~2)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~3)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~3)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~3)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~3)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~4)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~4)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~2,loc_index_2~4)\n" + 
+        "%init: 40 A(state~blue,loc~cytosol,loc_index_1~3,loc_index_2~4)\n" + 
+        "%init: 300 A(state~red,loc~membrane,loc_index_1~0)\n" + 
+        "%init: 300 A(state~red,loc~membrane,loc_index_1~1)\n" + 
+        "%init: 300 A(state~red,loc~membrane,loc_index_1~2)\n" + 
+        "%init: 800 B(loc~nucleus)\n" + 
         "\n" + 
         "\n" + 
         "";
 
     private static final String TRANSPORT_6WAY_INPUT = 
-        "%compartment: 'cytosol' [3][3]\n" + 
-        "%link: '6way' 'cytosol' ['x']['y'] <-> 'cytosol' ['x'+1]['y'] \n" + 
-        "%link: '6way' 'cytosol' ['x']['y'] <-> 'cytosol' ['x']['y'+1] \n" + 
-        "%link: '6way' 'cytosol' ['x']['y'] <-> 'cytosol' ['x'+1][('y'+1)-(2*('x'%2))] \n" + 
+        "%compartment: cytosol [3][3]\n" + 
+        "%link: '6way' cytosol ['x']['y'] <-> cytosol ['x'+1]['y'] \n" + 
+        "%link: '6way' cytosol ['x']['y'] <-> cytosol ['x']['y'+1] \n" + 
+        "%link: '6way' cytosol ['x']['y'] <-> cytosol ['x'+1][('y'+1)-(2*('x'%2))] \n" + 
         "\n" + 
         "%transport: 'diffusion RED' '6way' RED() @ 0.05 \n" + 
-        "%init: 40 (RED())\n" + 
+        "%init: 40 RED()\n" + 
         "";
     
     private static final String TRANSPORT_6WAY_OUTPUT = 
@@ -686,14 +844,14 @@ public class SpatialTranslatorTest {
         "'diffusion RED-32' RED(loc~cytosol,loc_index_1~2,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.05\n" + 
         "\n" + 
         "\n" + 
-        "%init: 40 (RED())\n" + 
+        "%init: 40 RED\n" + 
         "\n" + 
         "\n" + 
         "";
 
     private static final String TRANSPORT_LIMITED_LINKS_INPUT = 
-        "%compartment: 'cytosol' [4]\n" + 
-        "%link: 'intra-cytosol' 'cytosol' ['x'] <-> 'cytosol' ['x'+1]\n" + 
+        "%compartment: cytosol [4]\n" + 
+        "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
         "\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" +
         "%transport: 'diffusion-complex' 'intra-cytosol' A(l1!1),B(l1!1) @ 0.1\n" + 
@@ -753,10 +911,10 @@ public class SpatialTranslatorTest {
         "";
 
     private static final String REACTION_ONLY_INPUT = 
-        "%compartment: 'cytosol' [4]\n" + 
-        "'heating' 'cytosol'[0] A(state~blue) -> A(state~red) @ 1.0\n" + 
-        "'cooling' 'cytosol' A(state~red) -> A(state~blue) @ 0.05\n" + 
-        "'dimerisation' 'cytosol' A(),A() -> B() @ 0.05\n" + 
+        "%compartment: cytosol [4]\n" + 
+        "'heating' cytosol[0] A(state~blue) -> A(state~red) @ 1.0\n" + 
+        "'cooling' cytosol A(state~red) -> A(state~blue) @ 0.05\n" + 
+        "'dimerisation' cytosol A(),A() -> B() @ 0.05\n" + 
         "";
     
     private static final String REACTION_ONLY_OUTPUT = 
@@ -795,14 +953,14 @@ public class SpatialTranslatorTest {
         "";
 
     private static final String OBSERVATIONS_ONLY_INPUT = 
-        "%compartment: 'cytosol' [4]\n" + 
+        "%compartment: cytosol [4]\n" + 
         "%obs: A(state~blue)\n" + 
         "%obs: 'all red' A(state~red)\n" + 
-        "%obs: 'cytosol blue' 'cytosol' A(state~blue)\n" + 
-        "%obs: 'red[0]' 'cytosol'[0] A(state~red) \n" + 
-        "%obs: 'red[1]' 'cytosol'[1] A(state~red) \n" + 
-        "%obs: 'red[2]' 'cytosol'[2] A(state~red) \n" + 
-        "%obs: 'red[3]' 'cytosol'[3] A(state~red) \n";
+        "%obs: 'cytosol blue' cytosol A(state~blue)\n" + 
+        "%obs: 'red[0]' cytosol[0] A(state~red) \n" + 
+        "%obs: 'red[1]' cytosol[1] A(state~red) \n" + 
+        "%obs: 'red[2]' cytosol[2] A(state~red) \n" + 
+        "%obs: 'red[3]' cytosol[3] A(state~red) \n";
     
     private static final String OBSERVATIONS_ONLY_OUTPUT = 
         "%agent: A(state~blue~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
@@ -838,26 +996,55 @@ public class SpatialTranslatorTest {
     // TODO handle plot of transport and transforms
     
     private static final String INIT_ONLY_INPUT = 
-        "%compartment: 'cytosol' [4]\n" + 
-        "%init: 'cytosol' 800 (A(state~blue)) \n" + 
-        "%init: 800 (A(state~green)) \n" + 
-        "%init: 'cytosol'[0] 800 (A(state~red)) \n" +
+        "%compartment: cytosol [4]\n" + 
+		"%init: 800 A(state~green),B(s~right) \n" + 
+		"%init: 800 A(state~purple),B:cytosol(s~centre) \n" + 
+		"%init: 800 A(state~orange),B:cytosol[3](s~left) \n" + 
+        "%init: 800 cytosol A(state~blue),B(s~outside) \n" + 
+        "%init: 800 cytosol A(state~yellow),B:cytosol(s~bottom) \n" +
+        "%init: 800 cytosol A(state~brown),B:cytosol[3](s~middle) \n" +
+        "%init: 800 cytosol[0] A(state~white),B(s~top) \n" +
+        "%init: 800 cytosol[0] A(state~black),B:cytosol(s~inside) \n" +
+        "%init: 800 cytosol[0] A(state~red),B:cytosol[0](s~back) \n" +
+        "%init: 800 cytosol[0] A(state~cyan),B:cytosol[3](s~front) \n" +
         "";
     
     private static final String INIT_ONLY_OUTPUT = 
-        "%agent: A(state~blue~green~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
+        "%agent: A(state~black~blue~brown~cyan~green~orange~purple~red~white~yellow,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
+        "%agent: B(s~back~bottom~centre~front~inside~left~middle~outside~right~top,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "\n" + 
         "\n" + 
         "\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~0))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~1))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~2))\n" + 
-        "%init: 200 (A(state~blue,loc~cytosol,loc_index_1~3))\n" + 
-        "%init: 800 (A(state~green))\n" + 
-        "%init: 800 (A(state~red,loc~cytosol,loc_index_1~0))\n" + 
+        "%init: 800 A(state~green),B(s~right)\n" + 
+		"%init: 200 A(state~purple),B(s~centre,loc~cytosol,loc_index_1~0)\n" + 
+		"%init: 200 A(state~purple),B(s~centre,loc~cytosol,loc_index_1~1)\n" + 
+		"%init: 200 A(state~purple),B(s~centre,loc~cytosol,loc_index_1~2)\n" + 
+		"%init: 200 A(state~purple),B(s~centre,loc~cytosol,loc_index_1~3)\n" + 
+		"%init: 800 A(state~orange),B(s~left,loc~cytosol,loc_index_1~3)\n" +
+		"%init: 200 A(state~blue,loc~cytosol,loc_index_1~0),B(s~outside,loc~cytosol,loc_index_1~0)\n" + 
+		"%init: 200 A(state~blue,loc~cytosol,loc_index_1~1),B(s~outside,loc~cytosol,loc_index_1~1)\n" + 
+		"%init: 200 A(state~blue,loc~cytosol,loc_index_1~2),B(s~outside,loc~cytosol,loc_index_1~2)\n" + 
+		"%init: 200 A(state~blue,loc~cytosol,loc_index_1~3),B(s~outside,loc~cytosol,loc_index_1~3)\n" +
+		"%init: 200 A(state~yellow,loc~cytosol,loc_index_1~0),B(s~bottom,loc~cytosol,loc_index_1~0)\n" + 
+		"%init: 200 A(state~yellow,loc~cytosol,loc_index_1~1),B(s~bottom,loc~cytosol,loc_index_1~1)\n" + 
+		"%init: 200 A(state~yellow,loc~cytosol,loc_index_1~2),B(s~bottom,loc~cytosol,loc_index_1~2)\n" + 
+		"%init: 200 A(state~yellow,loc~cytosol,loc_index_1~3),B(s~bottom,loc~cytosol,loc_index_1~3)\n" + 
+		"%init: 200 A(state~brown,loc~cytosol,loc_index_1~0),B(s~middle,loc~cytosol,loc_index_1~3)\n" + 
+		"%init: 200 A(state~brown,loc~cytosol,loc_index_1~1),B(s~middle,loc~cytosol,loc_index_1~3)\n" + 
+		"%init: 200 A(state~brown,loc~cytosol,loc_index_1~2),B(s~middle,loc~cytosol,loc_index_1~3)\n" + 
+		"%init: 200 A(state~brown,loc~cytosol,loc_index_1~3),B(s~middle,loc~cytosol,loc_index_1~3)\n" + 
+		"%init: 800 A(state~white,loc~cytosol,loc_index_1~0),B(s~top,loc~cytosol,loc_index_1~0)\n" +
+		"%init: 200 A(state~black,loc~cytosol,loc_index_1~0),B(s~inside,loc~cytosol,loc_index_1~0)\n" + 
+		"%init: 200 A(state~black,loc~cytosol,loc_index_1~0),B(s~inside,loc~cytosol,loc_index_1~1)\n" + 
+		"%init: 200 A(state~black,loc~cytosol,loc_index_1~0),B(s~inside,loc~cytosol,loc_index_1~2)\n" + 
+		"%init: 200 A(state~black,loc~cytosol,loc_index_1~0),B(s~inside,loc~cytosol,loc_index_1~3)\n" + 
+		"%init: 800 A(state~red,loc~cytosol,loc_index_1~0),B(s~back,loc~cytosol,loc_index_1~0)\n" + 
+		"%init: 800 A(state~cyan,loc~cytosol,loc_index_1~0),B(s~front,loc~cytosol,loc_index_1~3)\n" + 
         "\n" + 
         "\n" + 
         "";
+    // TODO aggregate inits when possible ?
+    
     
     private static final String TEST_INPUT_FILENAME = "test/data/spatial-1D-array.ka";
     private static final String TEST_OUTPUT_FILENAME = "test/data/spatial-1D-array-target.ka";

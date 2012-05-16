@@ -15,19 +15,29 @@ public class Agent implements Serializable {
     final Map<String, AgentSite> sites = new HashMap<String, AgentSite>();
     final List<String> orderedSiteNames = new ArrayList<String>();
     public final String name;
+    public Location location;
     private Complex complex;
     private String stateHash;
 
     public Agent(String name) {
+        this(name, (Location) null);
+    }
+
+    public Agent(String name, Location location) {
         if (name == null) {
             throw new NullPointerException();
         }
         this.name = name;
         updateStateHash();
+        this.location = location;
     }
 
     public Agent(String name, Collection<AgentSite> sites) {
-        this(name);
+        this(name, null, sites);
+    }
+
+    public Agent(String name, Location location, Collection<AgentSite> sites) {
+        this(name, location);
         for (AgentSite site : sites) {
             this.sites.put(site.name, new AgentSite(this, site));
         }
@@ -36,7 +46,11 @@ public class Agent implements Serializable {
     }
 
     public Agent(String name, AgentSite... sites) {
-        this(name);
+        this(name, null, sites);
+    }
+
+    public Agent(String name, Location location, AgentSite... sites) {
+        this(name, location);
         if (sites == null) {
             throw new NullPointerException();
         }
@@ -138,24 +152,36 @@ public class Agent implements Serializable {
         }
         
         StringBuilder builder = new StringBuilder();
-        builder.append(name).append("(");
-
-        if (orderedSiteNames.size() > 0) {
-            builder.append(sites.get(orderedSiteNames.get(0)));
-            for (int index = 1; index < orderedSiteNames.size(); index++) {
-                builder.append(",").append(sites.get(orderedSiteNames.get(index)));
-            }
+        builder.append(name);
+        
+        if (location != null && siteSuffix.length() == 0) {
+        	builder.append(':').append(location.toString());
         }
         
-        if (siteSuffix.length() > 0) {
-            if (orderedSiteNames.size() > 0) {
-                builder.append(",");
-            }
-            builder.append(siteSuffix);
+        if (orderedSiteNames.size() > 0 || siteSuffix.length() > 0) {
+	        builder.append("(");
+	
+	        if (orderedSiteNames.size() > 0) {
+	            builder.append(sites.get(orderedSiteNames.get(0)));
+	            for (int index = 1; index < orderedSiteNames.size(); index++) {
+	                builder.append(",").append(sites.get(orderedSiteNames.get(index)));
+	            }
+	        }
+	        
+	        if (siteSuffix.length() > 0) {
+	            if (orderedSiteNames.size() > 0) {
+	                builder.append(",");
+	            }
+	            builder.append(siteSuffix);
+	        }
+	        
+	        builder.append(")");
         }
-        
-        builder.append(")");
         return builder.toString();
     }
+
+	public void setLocation(Location location) {
+		this.location = location;
+	}
 
 }

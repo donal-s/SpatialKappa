@@ -44,13 +44,13 @@ public class InitialValueTest {
         }
 
         InitialValue initialValue = new InitialValue(complexes, 5, location);
-        assertEquals("[[A()], [B(x!1), C(y!1)]]", initialValue.complexes.toString());
+        assertEquals("[[A], [B(x!1), C(y!1)]]", initialValue.complexes.toString());
         assertEquals(5, initialValue.quantity);
         assertNull(initialValue.reference);
         assertEquals(location, initialValue.location);
 
         initialValue = new InitialValue(complexes, 5, null);
-        assertEquals("[[A()], [B(x!1), C(y!1)]]", initialValue.complexes.toString());
+        assertEquals("[[A], [B(x!1), C(y!1)]]", initialValue.complexes.toString());
         assertEquals(5, initialValue.quantity);
         assertNull(initialValue.reference);
         assertEquals(null, initialValue.location);
@@ -87,13 +87,13 @@ public class InitialValueTest {
         }
 
         InitialValue initialValue = new InitialValue(complexes, reference, location);
-        assertEquals("[[A()], [B(x!1), C(y!1)]]", initialValue.complexes.toString());
+        assertEquals("[[A], [B(x!1), C(y!1)]]", initialValue.complexes.toString());
         assertEquals(0, initialValue.quantity);
         assertSame(reference, initialValue.reference);
         assertEquals(location, initialValue.location);
 
         initialValue = new InitialValue(complexes, reference, null);
-        assertEquals("[[A()], [B(x!1), C(y!1)]]", initialValue.complexes.toString());
+        assertEquals("[[A], [B(x!1), C(y!1)]]", initialValue.complexes.toString());
         assertEquals(0, initialValue.quantity);
         assertSame(reference, initialValue.reference);
         assertEquals(null, initialValue.location);

@@ -1,21 +1,21 @@
-%compartment: 'cytosol' [30][30] 
+%compartment: cytosol [30][30] 
 
 # 6-way diffusion
-%link: '6way' 'cytosol' ['x']['y'] <-> 'cytosol' ['x'+1]['y'] 
-%link: '6way' 'cytosol' ['x']['y'] <-> 'cytosol' ['x']['y'+1] 
-%link: '6way' 'cytosol' ['x']['y'] <-> 'cytosol' ['x'+1][('y'+1)-(2*('x'%2))] 
-%link: '6way' 'cytosol' [29]['y'] <-> 'cytosol' [0]['y'] 
-%link: '6way' 'cytosol' ['x'][29] <-> 'cytosol' ['x'][0] 
-%link: '6way' 'cytosol' [29]['y'] <-> 'cytosol' [0]['y'-1] 
-%link: '6way' 'cytosol' [29][0] <-> 'cytosol' [0][29] 
+%link: '6way' cytosol ['x']['y'] <-> cytosol ['x'+1]['y'] 
+%link: '6way' cytosol ['x']['y'] <-> cytosol ['x']['y'+1] 
+%link: '6way' cytosol['x']['y'] <-> cytosol ['x'+1][('y'+1)-(2*('x'%2))] 
+%link: '6way' cytosol [29]['y'] <-> cytosol [0]['y'] 
+%link: '6way' cytosol ['x'][29] <-> cytosol ['x'][0] 
+%link: '6way' cytosol [29]['y'] <-> cytosol [0]['y'-1] 
+%link: '6way' cytosol [29][0] <-> cytosol [0][29] 
 
 %transport: 'diffusion' '6way' A() @ 0.4 
 %transport: 'diffusion' '6way' B() @ 0.4 
 %transport: 'diffusion' '6way' C() @ 0.4 
 
-%init: 'cytosol'[2][28] 100 (A()) 
-%init: 'cytosol'[10][14] 100 (B()) 
-%init: 'cytosol'[14][14] 100 (C()) 
+%init: cytosol[2][28] 100 (A()) 
+%init: cytosol[10][14] 100 (B()) 
+%init: cytosol[14][14] 100 (C()) 
 
 %var: 'sin' [sin] [T]
 %plot: 'sin'

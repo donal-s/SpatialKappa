@@ -29,13 +29,13 @@ public class TransformPrimitiveTest {
         AgentLink agentLink = new AgentLink(sourceSite, targetSite);
         String state = "u";
 
-        assertEquals("CHANGE_STATE(source(), sourceSite~s!1, u)", TransformPrimitive.getChangeState(sourceAgent, sourceSite, state).toString());
-        assertEquals("CREATE_AGENT(source(), target())", TransformPrimitive.getCreateAgent(sourceAgent, targetAgent).toString());
-        assertEquals("CREATE_COMPLEX([source()])", TransformPrimitive.getCreateComplex(complex).toString());
+        assertEquals("CHANGE_STATE(source, sourceSite~s!1, u)", TransformPrimitive.getChangeState(sourceAgent, sourceSite, state).toString());
+        assertEquals("CREATE_AGENT(source, target)", TransformPrimitive.getCreateAgent(sourceAgent, targetAgent).toString());
+        assertEquals("CREATE_COMPLEX([source])", TransformPrimitive.getCreateComplex(complex).toString());
         assertEquals("CREATE_LINK(null [sourceSite~s!1] <-> null [targetSite~t!1])", TransformPrimitive.getCreateLink(sourceSite, targetSite).toString());
-        assertEquals("DELETE_AGENT(source())", TransformPrimitive.getDeleteAgent(sourceAgent).toString());
+        assertEquals("DELETE_AGENT(source)", TransformPrimitive.getDeleteAgent(sourceAgent).toString());
         assertEquals("DELETE_LINK(sourceSite~s!1<->targetSite~t!1)", TransformPrimitive.getDeleteLink(agentLink).toString());
-        assertEquals("MERGE_COMPLEXES(source(), target())", TransformPrimitive.getMergeComplexes(sourceAgent, targetAgent).toString());
+        assertEquals("MERGE_COMPLEXES(source, target)", TransformPrimitive.getMergeComplexes(sourceAgent, targetAgent).toString());
     }
 
     @Test

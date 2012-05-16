@@ -49,16 +49,16 @@
 'cooling-9' A(state~red,loc~cytosol,loc_index_1~8) -> A(state~blue,loc~cytosol,loc_index_1~8) @ 0.05
 'cooling-10' A(state~red,loc~cytosol,loc_index_1~9) -> A(state~blue,loc~cytosol,loc_index_1~9) @ 0.05
 
-%init: 200 (A(state~blue,loc~cytosol,loc_index_1~0))
-%init: 200 (A(state~blue,loc~cytosol,loc_index_1~1))
-%init: 200 (A(state~blue,loc~cytosol,loc_index_1~2))
-%init: 200 (A(state~blue,loc~cytosol,loc_index_1~3))
-%init: 200 (A(state~blue,loc~cytosol,loc_index_1~4))
-%init: 200 (A(state~blue,loc~cytosol,loc_index_1~5))
-%init: 200 (A(state~blue,loc~cytosol,loc_index_1~6))
-%init: 200 (A(state~blue,loc~cytosol,loc_index_1~7))
-%init: 200 (A(state~blue,loc~cytosol,loc_index_1~8))
-%init: 200 (A(state~blue,loc~cytosol,loc_index_1~9))
+%init: 200 A(state~blue,loc~cytosol,loc_index_1~0)
+%init: 200 A(state~blue,loc~cytosol,loc_index_1~1)
+%init: 200 A(state~blue,loc~cytosol,loc_index_1~2)
+%init: 200 A(state~blue,loc~cytosol,loc_index_1~3)
+%init: 200 A(state~blue,loc~cytosol,loc_index_1~4)
+%init: 200 A(state~blue,loc~cytosol,loc_index_1~5)
+%init: 200 A(state~blue,loc~cytosol,loc_index_1~6)
+%init: 200 A(state~blue,loc~cytosol,loc_index_1~7)
+%init: 200 A(state~blue,loc~cytosol,loc_index_1~8)
+%init: 200 A(state~blue,loc~cytosol,loc_index_1~9)
 
 %var: 'all red' A(state~red)
 %var: 'cytosol blue' A(state~blue,loc~cytosol)

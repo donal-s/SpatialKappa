@@ -500,12 +500,16 @@ public class Transform extends Transition {
 
     @Override
     public String toString() {
+        return toString(false);
+    }
+
+    public String toString(boolean showPrimitives) {
         String leftText = sourceComplexes.toString();
         String rightText = targetComplexes.toString();
 
         String result = "'" + label + "' " + ": " + leftText.substring(1, leftText.length() - 1) + " -> " + rightText.substring(1, rightText.length() - 1)
                 + " @ " + rate + "\n";
-        if (bestPrimitives != null) {
+        if (showPrimitives && bestPrimitives != null) {
             for (TransformPrimitive primitive : bestPrimitives) {
                 result += "\t" + primitive + "\n";
             }

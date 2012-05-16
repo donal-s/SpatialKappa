@@ -59,7 +59,9 @@ public class TransformTest extends TransitionTest {
         checkTransform("label", leftComplexes, rightComplexes, 0f, true, transform);
 
         // Ensure [inf] is still shown in toString output
-        assertEquals("'label' : [agent1()] -> [agent2()] @ [inf]\n" + "\tDELETE_AGENT(agent1())\n" + "\tCREATE_COMPLEX([agent2()])\n", transform.toString());
+        assertEquals("'label' : [agent1] -> [agent2] @ [inf]\n" + 
+        		"\tDELETE_AGENT(agent1)\n" + 
+        		"\tCREATE_COMPLEX([agent2])\n", transform.toString(true));
 
         leftComplexes = getComplexes(new Agent("A", new AgentSite("state", "red", null), new AgentSite("loc", "cytosol", null), new AgentSite("loc_index", "0",
                 null)));

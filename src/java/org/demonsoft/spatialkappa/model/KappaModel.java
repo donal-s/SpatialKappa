@@ -49,11 +49,13 @@ public class KappaModel implements IKappaModel {
         }
         locatedTransforms.add(transform);
         for (Complex complex : transform.transition.sourceComplexes) {
+        	propogateLocation(complex.agents, transform.sourceLocation);
             for (Agent agent : complex.agents) {
                 aggregateAgent(agent);
             }
         }
         for (Complex complex : transform.transition.targetComplexes) {
+        	propogateLocation(complex.agents, transform.sourceLocation);
             for (Agent agent : complex.agents) {
                 aggregateAgent(agent);
             }
@@ -67,7 +69,7 @@ public class KappaModel implements IKappaModel {
         aggregateAgentMap.get(agent.name).addSites(agent.getSites());
     }
 
-    public void addInitialValue(List<Agent> agents, String valueText, Location compartment) {
+    public void addInitialValue(List<Agent> agents, String valueText, Location location) {
         if (agents == null || valueText == null) {
             throw new NullPointerException();
         }
@@ -75,34 +77,45 @@ public class KappaModel implements IKappaModel {
             throw new IllegalArgumentException("Empty complex");
         }
         int quantity = Integer.parseInt(valueText);
+        propogateLocation(agents, location);
         for (Agent agent : agents) {
             aggregateAgent(agent);
         }
         List<Complex> complexes = getCanonicalComplexes(Utils.getComplexes(agents));
         
-        initialValues.add(new InitialValue(complexes, quantity, compartment));
+        initialValues.add(new InitialValue(complexes, quantity, location));
     }
 
-    public void addInitialValue(List<Agent> agents, VariableReference reference, Location compartment) {
+    private void propogateLocation(List<Agent> agents, Location location) {
+		for (Agent agent : agents) {
+			if (agent.location == null) {
+				agent.setLocation(location);
+			}
+		}
+	}
+
+
+	public void addInitialValue(List<Agent> agents, VariableReference reference, Location location) {
         if (agents == null || reference == null) {
             throw new NullPointerException();
         }
         if (agents.size() == 0) {
             throw new IllegalArgumentException("Empty complex");
         }
+        propogateLocation(agents, location);
         for (Agent agent : agents) {
             aggregateAgent(agent);
         }
         List<Complex> complexes = getCanonicalComplexes(Utils.getComplexes(agents));
         
-        initialValues.add(new InitialValue(complexes, reference, compartment));
+        initialValues.add(new InitialValue(complexes, reference, location));
     }
 
     private List<Complex> getCanonicalComplexes(List<Complex> complexes) {
         for (int index = 0; index < complexes.size(); index++) {
             boolean found = false;
             for (Complex current : canonicalComplexes) {
-                if (matcher.isExactMatch(current, complexes.get(index))) {
+                if (matcher.isExactMatch(current, complexes.get(index), true)) {
                     complexes.set(index, current);
                     break;
                 }

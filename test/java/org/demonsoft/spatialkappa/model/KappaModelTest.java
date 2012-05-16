@@ -57,15 +57,15 @@ public class KappaModelTest {
 
     @Test
     public void testAddTransform_withCompartment() {
-        List<Complex> leftComplexes = TransformTest.getComplexes(new Agent("agent1", new AgentSite("interface1", "state1", "link1"), new AgentSite("interface2", "state2", "link1")));
-        List<Complex> rightComplexes = TransformTest.getComplexes(new Agent("agent2"));
-        List<Agent> leftAgents = Transform.getAgents(leftComplexes);
-        List<Agent> rightAgents = Transform.getAgents(rightComplexes);
-        Location location = new Location("cytosol", new CellIndexExpression("2"));
+    	Location location = new Location("cytosol", new CellIndexExpression("2"));
+        List<Agent> leftAgents = TestUtils.getList(new Agent("agent1", new AgentSite("interface1", "state1", "link1"), new AgentSite("interface2", "state2", "link1")));
+        List<Agent> rightAgents = TestUtils.getList(new Agent("agent2"));
 
         model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), location);
 
-        Transform transform1 = new Transform("label", leftComplexes, rightComplexes, 0.1f);
+        List<Complex> expectedLeftComplexes = TransformTest.getComplexes(new Agent("agent1", location, new AgentSite("interface1", "state1", "link1"), new AgentSite("interface2", "state2", "link1")));
+        List<Complex> expectedRightComplexes = TransformTest.getComplexes(new Agent("agent2", location));
+        Transform transform1 = new Transform("label", expectedLeftComplexes, expectedRightComplexes, 0.1f);
         checkTransforms(model, location, new Transform[] { transform1 });
         assertEquals(new Variable("label"), model.getVariables().get("label"));
 
@@ -73,14 +73,14 @@ public class KappaModelTest {
                 "state2", "link1"));
         checkAggregateAgents(expectedAgent, new AggregateAgent("agent2"));
 
-        leftComplexes = TransformTest.getComplexes(new Agent("agent1", new AgentSite("interface1", "state4", "link4"), new AgentSite("interface3", "state3", "link4")));
-        rightComplexes = TransformTest.getComplexes(new Agent("agent3"), new Agent("agent4"));
-        leftAgents = Transform.getAgents(leftComplexes);
-        rightAgents = Transform.getAgents(rightComplexes);
+        leftAgents = TestUtils.getList(new Agent("agent1", new AgentSite("interface1", "state4", "link4"), new AgentSite("interface3", "state3", "link4")));
+        rightAgents = TestUtils.getList(new Agent("agent3"), new Agent("agent4"));
 
         model.addTransform("label2", leftAgents, rightAgents, new VariableExpression(0.1f), location);
 
-        checkTransforms(model, location, new Transform[] { transform1, new Transform("label2", leftComplexes, rightComplexes, 0.1f) });
+        expectedLeftComplexes = TransformTest.getComplexes(new Agent("agent1", location, new AgentSite("interface1", "state4", "link4"), new AgentSite("interface3", "state3", "link4")));
+        expectedRightComplexes = TransformTest.getComplexes(new Agent("agent3", location), new Agent("agent4", location));
+        checkTransforms(model, location, new Transform[] { transform1, new Transform("label2", expectedLeftComplexes, expectedRightComplexes, 0.1f) });
         assertEquals(new Variable("label2"), model.getVariables().get("label2"));
 
         expectedAgent = new AggregateAgent("agent1", new AggregateSite("interface1", new String[] { "state1", "state4" }, new String[] { "link1", "link4" }),
@@ -117,7 +117,7 @@ public class KappaModelTest {
         agents.add(new Agent("agent2"));
 
         model.addTransport("label", "linkName", agents, new VariableExpression(0.1f));
-        checkTransports(model.getTransports(), new String[] {"label: linkName agent1(),agent2() @ 0.1"});
+        checkTransports(model.getTransports(), new String[] {"label: linkName agent1,agent2 @ 0.1"});
         assertEquals(new Variable("label"), model.getVariables().get("label"));
         
         model = new KappaModel();
@@ -180,7 +180,7 @@ public class KappaModelTest {
             // Expected exception
         }
 
-        model.addInitialValue(agents, "3", location);
+        model.addInitialValue(agents, "3", null);
 
         agents = getList(new Agent("agent1", new AgentSite("x", null, "1")), 
                 new Agent("agent2", new AgentSite("x", null, "1")), 
@@ -194,18 +194,47 @@ public class KappaModelTest {
         model.addInitialValue(agents, "7", otherLocation);
 
         Complex expectedComplex1 = new Complex(new Agent("agent1"));
-        Complex expectedComplex2 = new Complex(new Agent("agent1", new AgentSite("x", null, "1")), new Agent("agent2", new AgentSite("x", null, "1")));
-        Complex expectedComplex3 = new Complex(new Agent("agent3", new AgentSite("x", null, "2")), new Agent("agent4", new AgentSite("x", null, "2")));
+        Complex expectedComplex2 = new Complex(new Agent("agent1", location, new AgentSite("x", null, "1")), new Agent("agent2", location, new AgentSite("x", null, "1")));
+        Complex expectedComplex3 = new Complex(new Agent("agent3", location, new AgentSite("x", null, "2")), new Agent("agent4", location, new AgentSite("x", null, "2")));
+        Complex expectedComplex4 = new Complex(new Agent("agent3", otherLocation, new AgentSite("x", null, "7")), new Agent("agent4", otherLocation, new AgentSite("x", null, "7")));
 
         checkConcreteLocatedInitialValues(new Object[][] { 
-                { expectedComplex1, 3, location }, 
+                { expectedComplex1, 3, null }, 
                 { expectedComplex2, 5, location }, 
                 { expectedComplex3, 5, location }, 
-                { expectedComplex3, 7, otherLocation } });
+                { expectedComplex4, 7, otherLocation } });
         checkAggregateAgents(new AggregateAgent("agent1", new AggregateSite("x", null, "1")), 
                 new AggregateAgent("agent2", new AggregateSite("x", null, "1")),
                 new AggregateAgent("agent3", new AggregateSite("x", null, new String[] {"2", "7"})), 
                 new AggregateAgent("agent4", new AggregateSite("x", null, new String[] {"2", "7"})));
+    }
+    
+    @Test
+    public void testAddInitialValue_propogateLocationsToAgents() {
+        List<Agent> agents = getList(new Agent("agent1"));
+        Location location = new Location("cytosol", new CellIndexExpression("2"));
+        Location otherLocation = new Location("nucleus", new CellIndexExpression("2"));
+
+        model.addInitialValue(agents, "3", location);
+
+        agents = getList(new Agent("agent1", new AgentSite("x", null, "1")), 
+                new Agent("agent2", otherLocation, new AgentSite("x", null, "1")), 
+                new Agent("agent3", new AgentSite("x", null, "2")), 
+                new Agent("agent4", location, new AgentSite("x", null, "2")));
+        model.addInitialValue(agents, "5", location);
+        
+        Complex expectedComplex1 = new Complex(new Agent("agent1", location));
+        Complex expectedComplex2 = new Complex(new Agent("agent1", location, new AgentSite("x", null, "1")), new Agent("agent2", otherLocation, new AgentSite("x", null, "1")));
+        Complex expectedComplex3 = new Complex(new Agent("agent3", location, new AgentSite("x", null, "2")), new Agent("agent4", location, new AgentSite("x", null, "2")));
+
+        checkConcreteLocatedInitialValues(new Object[][] { 
+                { expectedComplex1, 3, location }, 
+                { expectedComplex2, 5, location }, 
+                { expectedComplex3, 5, location } });
+        checkAggregateAgents(new AggregateAgent("agent1", new AggregateSite("x", null, "1")), 
+                new AggregateAgent("agent2", new AggregateSite("x", null, "1")),
+                new AggregateAgent("agent3", new AggregateSite("x", null, new String[] {"2"})), 
+                new AggregateAgent("agent4", new AggregateSite("x", null, new String[] {"2"})));
     }
     
     @Test
@@ -254,15 +283,16 @@ public class KappaModelTest {
                 new Agent("agent4", new AgentSite("x", null, "7")));
         model.addInitialValue(agents, "7", otherLocation);
 
-        Complex expectedComplex1 = new Complex(new Agent("agent1"));
-        Complex expectedComplex2 = new Complex(new Agent("agent1", new AgentSite("x", null, "1")), new Agent("agent2", new AgentSite("x", null, "1")));
-        Complex expectedComplex3 = new Complex(new Agent("agent3", new AgentSite("x", null, "2")), new Agent("agent4", new AgentSite("x", null, "2")));
+        Complex expectedComplex1 = new Complex(new Agent("agent1", location));
+        Complex expectedComplex2 = new Complex(new Agent("agent1", location, new AgentSite("x", null, "1")), new Agent("agent2", location, new AgentSite("x", null, "1")));
+        Complex expectedComplex3 = new Complex(new Agent("agent3", location, new AgentSite("x", null, "2")), new Agent("agent4", location, new AgentSite("x", null, "2")));
+        Complex expectedComplex4 = new Complex(new Agent("agent3", otherLocation, new AgentSite("x", null, "7")), new Agent("agent4", otherLocation, new AgentSite("x", null, "7")));
 
         checkConcreteLocatedInitialValues(new Object[][] { 
                 { expectedComplex1, 3, location }, 
                 { expectedComplex2, 5, location }, 
                 { expectedComplex3, 5, location }, 
-                { expectedComplex3, 7, otherLocation } });
+                { expectedComplex4, 7, otherLocation } });
         checkAggregateAgents(new AggregateAgent("agent1", new AggregateSite("x", null, "1")), 
                 new AggregateAgent("agent2", new AggregateSite("x", null, "1")),
                 new AggregateAgent("agent3", new AggregateSite("x", null, new String[] {"2", "7"})), 
@@ -463,7 +493,7 @@ public class KappaModelTest {
 
         model.addVariable(agents1, "label", null);
 
-        checkVariables(model, "'label' ([agent1()])");
+        checkVariables(model, "'label' ([agent1])");
         checkAggregateAgents(new AggregateAgent("agent1"));
 
         List<Agent> agents2 = new ArrayList<Agent>();
@@ -471,7 +501,7 @@ public class KappaModelTest {
         agents2.add(new Agent("agent2"));
         model.addVariable(agents2, "label2", null);
 
-        checkVariables(model, "'label' ([agent1()])", "'label2' ([agent1(), agent2()])");
+        checkVariables(model, "'label' ([agent1])", "'label2' ([agent1, agent2])");
         checkAggregateAgents(new AggregateAgent("agent1"), new AggregateAgent("agent2"));
     }
 
@@ -498,7 +528,7 @@ public class KappaModelTest {
 
         model.addVariable(agents1, "label", location);
 
-        checkVariables(model, "'label' cytosol[2] ([agent1()])");
+        checkVariables(model, "'label' cytosol[2] ([agent1])");
         checkAggregateAgents(new AggregateAgent("agent1"));
 
         List<Agent> agents2 = new ArrayList<Agent>();
@@ -506,7 +536,7 @@ public class KappaModelTest {
         agents2.add(new Agent("agent2"));
         model.addVariable(agents2, "label2", location);
 
-        checkVariables(model, "'label' cytosol[2] ([agent1()])", "'label2' cytosol[2] ([agent1(), agent2()])");
+        checkVariables(model, "'label' cytosol[2] ([agent1])", "'label2' cytosol[2] ([agent1, agent2])");
         checkAggregateAgents(new AggregateAgent("agent1"), new AggregateAgent("agent2"));
     }
 
@@ -610,7 +640,10 @@ public class KappaModelTest {
             actual.add(transform.toString());
         }
         for (Transform expectedTransform : expectedTransforms) {
-            assertTrue(actual.contains(new LocatedTransform(expectedTransform, location).toString()));
+        	String transformString = new LocatedTransform(expectedTransform, location).toString();
+        	if (!actual.contains(transformString)) {
+        		fail("Transform not found: " + transformString + "\nin:" + actual);
+        	}
         }
     }
 
@@ -622,7 +655,7 @@ public class KappaModelTest {
             assertNotNull(agent);
             assertEquals(expectedAgent.getName(), agent.getName());
             assertEquals(expectedAgent.getSites().size(), agent.getSites().size());
-            assertTrue(agent.getSites().containsAll(expectedAgent.getSites()));
+            assertTrue("Sites missing from: " + expectedAgent.getSites(), agent.getSites().containsAll(expectedAgent.getSites()));
         }
     }
 
@@ -642,7 +675,7 @@ public class KappaModelTest {
                     break;
                 }
             }
-            assertTrue(found);
+            assertTrue("Complex not found: " + complexString, found);
         }
         
         // Check canonicalisation
@@ -651,7 +684,7 @@ public class KappaModelTest {
         for (LocatedComplex current : quantityMap.keySet()) {
             boolean found = false;
             for (Complex complex : complexes) {
-                if (matcher.isExactMatch(complex, current.complex)) {
+                if (matcher.isExactMatch(complex, current.complex, true)) {
                     assertSame(complex, current.complex);
                     found = true;
                     break;

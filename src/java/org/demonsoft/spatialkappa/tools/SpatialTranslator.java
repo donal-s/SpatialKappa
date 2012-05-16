@@ -8,8 +8,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -64,7 +66,7 @@ public class SpatialTranslator {
         this.kappaModel = kappaModel;
     }
 
-    private IKappaModel getKappaModel(InputStream inputStream) throws Exception {
+    static IKappaModel getKappaModel(InputStream inputStream) throws Exception {
         ANTLRInputStream input = new ANTLRInputStream(inputStream);
         CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));
         SpatialKappaParser.prog_return r = new SpatialKappaParser(tokens).prog();
@@ -241,9 +243,18 @@ public class SpatialTranslator {
 
     String getAgentKappaString(List<Agent> agents, String stateSuffix) {
         StringBuilder builder = new StringBuilder();
-        builder.append(agents.get(0).toString(stateSuffix));
-        for (int index = 1; index < agents.size(); index++) {
-            builder.append(",").append(agents.get(index).toString(stateSuffix));
+        boolean first = true;
+        for (Agent agent : agents) {
+        	if (!first) {
+        		builder.append(",");
+        	}
+        	if (agent.location != null) {
+        		builder.append(agent.toString(getKappaString(agent.location)));
+        	}
+        	else {
+        		builder.append(agent.toString(stateSuffix));
+        	}
+        	first = false;
         }
         return builder.toString();
     }
@@ -398,32 +409,57 @@ public class SpatialTranslator {
     String getKappaString(LocatedTransform transition) {
         StringBuilder builder = new StringBuilder();
         Transform transform = (Transform) transition.transition;
-        boolean partition = false;
-        Compartment compartment = null;
-        Location reference = transition.sourceLocation;
+        Set<Location> partitionLocations = new HashSet<Location>();
+        
+        partitionLocations.addAll(getPartitionedLocations(transform.leftAgents));
+        partitionLocations.addAll(getPartitionedLocations(transform.rightAgents));
 
-        if (reference != null) {
-            compartment = reference.getReferencedCompartment(kappaModel.getCompartments());
-            if (compartment.getDimensions().length != reference.getIndices().length) {
-                partition = true;
-            }
-        }
-
-        if (partition && compartment != null) {
-            String[] stateSuffixes = compartment.getCellStateSuffixes();
+        List<Map<Location, String>> partitionMaps = createPartitionMaps(new ArrayList<Location>(partitionLocations));
+        
+        if (partitionMaps.size() > 0) {
             int labelSuffix = 1;
-            for (int cellIndex = 0; cellIndex < stateSuffixes.length; cellIndex++) {
+            for (Map<Location, String> partitionMap : partitionMaps) {
                 if (transform.label != null) {
                     builder.append("'").append(transform.label).append("-").append(labelSuffix++).append("' ");
                 }
-                if (transform.leftAgents.size() > 0) {
-                    builder.append(getAgentKappaString(transform.leftAgents, stateSuffixes[cellIndex])).append(" ");
+                boolean first = true;
+            	for (Agent agent : transform.leftAgents) {
+            		if (!first) {
+            			builder.append(",");
+            		}
+                	if (agent.location != null) {
+                		if (partitionMap.containsKey(agent.location)) {
+                			builder.append(agent.toString(partitionMap.get(agent.location)));
+                		}
+                		else {
+                			builder.append(agent.toString(getKappaString(agent.location)));
+                		}
+                	}
+                	else {
+                		builder.append(agent.toString());
+                	}
+                	first = false;
                 }
-                builder.append("-> ");
-                if (transform.rightAgents.size() > 0) {
-                    builder.append(getAgentKappaString(transform.rightAgents, stateSuffixes[cellIndex])).append(" ");
+                builder.append(" -> ");
+                first = true;
+            	for (Agent agent : transform.rightAgents) {
+            		if (!first) {
+            			builder.append(",");
+            		}
+                	if (agent.location != null) {
+                		if (partitionMap.containsKey(agent.location)) {
+                			builder.append(agent.toString(partitionMap.get(agent.location)));
+                		}
+                		else {
+                			builder.append(agent.toString(getKappaString(agent.location)));
+                		}
+                	}
+                	else {
+                		builder.append(agent.toString());
+                	}
+                	first = false;
                 }
-                builder.append("@ ").append(transform.getRate().toString()).append("\n");
+                builder.append(" @ ").append(transform.getRate().toString()).append("\n");
 
             }
         }
@@ -432,11 +468,11 @@ public class SpatialTranslator {
                 builder.append("'").append(transform.label).append("' ");
             }
             if (transform.leftAgents.size() > 0) {
-                builder.append(getAgentKappaString(transform.leftAgents, transition.sourceLocation)).append(" ");
+                builder.append(getAgentKappaString(transform.leftAgents, "")).append(" ");
             }
             builder.append("-> ");
             if (transform.rightAgents.size() > 0) {
-                builder.append(getAgentKappaString(transform.rightAgents, transition.sourceLocation)).append(" ");
+                builder.append(getAgentKappaString(transform.rightAgents, "")).append(" ");
             }
             builder.append("@ ").append(transform.getRate().toString()).append("\n");
         }
@@ -444,38 +480,113 @@ public class SpatialTranslator {
 
     }
     
+    List<Map<Location, String>> createPartitionMaps(List<Location> partitionLocations) {
+    	List<Map<Location, String>> result = new ArrayList<Map<Location,String>>();
+    	if (partitionLocations.size() == 1) {
+    		Location location = partitionLocations.get(0);
+    		Compartment compartment = location.getReferencedCompartment(kappaModel.getCompartments());
+
+    		String[] suffixes = compartment.getCellStateSuffixes();
+    		for (String suffix : suffixes) {
+				Map<Location, String> map = new HashMap<Location, String>();
+				result.add(map);
+				map.put(location, suffix);
+    		}
+    	}
+    	else if (partitionLocations.size() > 1) {
+    		Location location = partitionLocations.get(0);
+    		Compartment compartment = location.getReferencedCompartment(kappaModel.getCompartments());
+
+    		List<Location> remainingLocations = new ArrayList<Location>(partitionLocations);
+    		remainingLocations.remove(location);
+    		List<Map<Location, String>> otherLocations = createPartitionMaps(remainingLocations);
+    		
+    		String[] suffixes = compartment.getCellStateSuffixes();
+    		for (String suffix : suffixes) {
+    			for (Map<Location, String> otherPartition : otherLocations) {
+    				Map<Location, String> map = new HashMap<Location, String>(otherPartition);
+    				result.add(map);
+    				map.put(location, suffix);
+    			}
+    		}
+    	}
+		return result;
+	}
+
+	Set<Location> getPartitionedLocations(List<Agent> agents) {
+		Set<Location> result = new HashSet<Location>();
+
+		if (agents != null) {
+			for (Agent agent : agents) {
+				Location location = agent.location;
+				if (location != null && isPartitionable(location)) {
+					result.add(location);
+				}
+			}
+		}
+		return result;
+	}
+
+
+	boolean isPartitionable(Location location) {
+        Compartment compartment = location.getReferencedCompartment(kappaModel.getCompartments());
+        return compartment.getDimensions().length != location.getIndices().length;
+    }
+    
     String getKappaString(InitialValue initialValue) {
         StringBuilder builder = new StringBuilder();
-        boolean partition = false;
-        Compartment compartment = null;
         int quantity = initialValue.quantity;
         if (initialValue.reference != null) {
             Variable target = kappaModel.getVariables().get(initialValue.reference.variableName);
             quantity = target.evaluate(kappaModel);
         }
         
-        Location location = initialValue.location;
-        if (location != null) {
-            compartment = location.getReferencedCompartment(kappaModel.getCompartments());
-            if (compartment.getDimensions().length != location.getIndices().length) {
-                partition = true;
-            }
+        Set<Location> partitionLocations = new HashSet<Location>();
+        
+        for (Complex complex : initialValue.complexes) {
+        	partitionLocations.addAll(getPartitionedLocations(complex.agents));
         }
 
-        if (partition && compartment != null) {
-            int[] cellCounts = compartment.getDistributedCellCounts(quantity);
-            String[] stateSuffixes = compartment.getCellStateSuffixes();
+        List<Map<Location, String>> partitionMaps = createPartitionMaps(new ArrayList<Location>(partitionLocations));
+        
+        if (partitionMaps.size() > 0) {
+        	int totalCellCount = partitionMaps.size();
+            int baseValue = quantity / totalCellCount;
+            int remainder = quantity % totalCellCount;
+            
+            int index = 0;
+            
+            for (Map<Location, String> partitionMap : partitionMaps) {
+                builder.append("%init: ").append(baseValue + (index++ < remainder ? 1 : 0)).append(" ");
+                boolean first = true;
+            	for (Complex complex : initialValue.complexes) {
 
-            for (int cellIndex = 0; cellIndex < cellCounts.length; cellIndex++) {
-                builder.append("%init: ").append(cellCounts[cellIndex]).append(" (");
-                builder.append(getComplexKappaString(initialValue.complexes, stateSuffixes[cellIndex]));
-                builder.append(")\n");
+	            	for (Agent agent : complex.agents) {
+	            		if (!first) {
+	            			builder.append(",");
+	            		}
+	                	if (agent.location != null) {
+	                		if (partitionMap.containsKey(agent.location)) {
+	                			builder.append(agent.toString(partitionMap.get(agent.location)));
+	                		}
+	                		else {
+	                			builder.append(agent.toString(getKappaString(agent.location)));
+	                		}
+	                	}
+	                	else {
+	                		builder.append(agent.toString());
+	                	}
+	                	first = false;
+	                }
+            	}
+                builder.append("\n");
+
             }
         }
         else {
-            builder.append("%init: ").append(quantity).append(" (");
-            builder.append(getComplexKappaString(initialValue.complexes, getKappaString(location)));
-            builder.append(")\n");
+            builder.append("%init: ").append(quantity).append(" ");
+            builder.append(getComplexKappaString(initialValue.complexes, ""));
+            builder.append("\n");
         }
         return builder.toString();
     }

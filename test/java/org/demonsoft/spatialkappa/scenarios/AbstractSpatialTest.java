@@ -124,7 +124,7 @@ public abstract class AbstractSpatialTest {
     
     @Test
     public void testDeleteObservableNoSitesCase() throws Exception {
-        checkEventSimulation(DELETE_COMPLEX_INPUT_NO_SITES, new String[] {"[A()]"}, 2000, 50, new float[][] {
+        checkEventSimulation(DELETE_COMPLEX_INPUT_NO_SITES, new String[] {"[A]"}, 2000, 50, new float[][] {
                 {10000}, {8000}, {6000}, {4000}, {2000}, {0}
         });
     }
@@ -212,39 +212,39 @@ public abstract class AbstractSpatialTest {
 
     private static final String SIMPLE_STATE_INPUT = 
         "A(x~s) -> A(x~t) @ 0.1\n" + 
-        "%init: 1000 (A(x~s))\n" + 
+        "%init: 1000 A(x~s)\n" + 
         "%obs: A(x~s)\n" + 
         "%obs: A(x~t)\n";
     
     private static final String VARIABLE_REFERENCE_COMPLEX_INPUT = 
-        "%init: 1000 (A(x~s))\n" + 
+        "%init: 1000 A(x~s)\n" + 
         "%var: 'as' A(x~s)\n" + 
         "%plot: 'as'\n";
     
     private static final String SIMPLE_INFINITE_RATE_INPUT = 
         "A(x~s) -> A(x~t) @ [inf]\n" + 
-        "%init: 1000 (A(x~s))\n" + 
+        "%init: 1000 A(x~s)\n" + 
         "%obs: A(x~s)\n" + 
         "%obs: A(x~t)\n";
     
     private static final String INFINITE_RATE_GRADUAL_SUBSTRATE_INPUT = 
         "A(x~s) -> A(x~t) @ 0.1\n" + 
         "A(x~t) -> A(x~u) @ [inf]\n" + 
-        "%init: 1000 (A(x~s))\n" + 
+        "%init: 1000 A(x~s)\n" + 
         "%obs: A(x~s)\n" + 
         "%obs: A(x~t)\n" +
         "%obs: A(x~u)\n";
     
     private static final String ERROR_CASE1_INPUT = 
         "A(a), B(a) -> A(a!1),B(a!1) @ 1\n" + 
-        "%init: 1000 (A(a,b)) \n" + 
-        "%init: 1000 (A(a!2, b!1), B(a, c!1, b), B(a!2, c, b)) \n" + 
+        "%init: 1000 A(a,b) \n" + 
+        "%init: 1000 A(a!2, b!1), B(a, c!1, b), B(a!2, c, b) \n" + 
         "%obs: A(a) \n" + 
         "%obs: 'result' A(a!2, b!1), B(a!3, c!1, b), B(a!2, c, b), A(a!3, b)\n";
     
     private static final String ADDITIONAL_STATE_INPUT = 
         "A(x~s) -> A(x~t) @ 0.1\n" + 
-        "%init: 1000 (A(x~s,y~a))\n" + 
+        "%init: 1000 A(x~s,y~a)\n" + 
         "%obs: A(x~s)\n" + 
         "%obs: A(x~t,y~a)\n";
     
@@ -286,14 +286,14 @@ public abstract class AbstractSpatialTest {
 
     private static final String SIMPLE_LINK_INPUT = 
         "A(x),B(y) -> A(x!1),B(y!1) @ 0.1\n" + 
-        "%init: 10000 (A(x),B(y))\n" + 
+        "%init: 10000 A(x),B(y)\n" + 
         "%obs: A(x)\n" + 
         "%obs: A(x!_)\n";
     
     private static final String TIMED_PERTURBATION_INPUT = 
         "A(x~a) -> A(x~b) @ 0.1\n" + 
         "'triggered' C(z~a) -> C(z~b) @ 0\n" + 
-        "%init: 10000 (A(x~a),C(z~a))\n" + 
+        "%init: 10000 A(x~a),C(z~a)\n" + 
         "%obs: A(x~a)\n" +
         "%obs: C(z~a)\n" +
         "%mod: [T] > 7 do 'triggered' := 0.1\n";
@@ -301,49 +301,49 @@ public abstract class AbstractSpatialTest {
     private static final String TIMED_INFINITE_RATE_PERTURBATION_INPUT = 
         "A(x~a) -> A(x~b) @ 0.1\n" + 
         "'triggered' C(z~a) -> C(z~b) @ 0\n" + 
-        "%init: 10000 (A(x~a),C(z~a))\n" + 
+        "%init: 10000 A(x~a),C(z~a)\n" + 
         "%obs: A(x~a)\n" +
         "%obs: C(z~a)\n" +
         "%mod: [T] > 3 do 'triggered' := [inf]\n";
     
     private static final String CREATE_AGENT_LINK_INPUT = 
         "A(x) -> A(x!1),B(y!1) @ 0.1\n" + 
-        "%init: 10000 (A(x))\n" + 
+        "%init: 10000 A(x)\n" + 
         "%obs: A(x)\n" + 
         "%obs: A(x!1),B(y!1)\n";
     
     private static final String CREATE_COMPLEX_INPUT = 
         "A(x) -> A(x),B(y!1),C(z!1) @ 0.1\n" + 
-        "%init: 10000 (A(x))\n" + 
+        "%init: 10000 A(x)\n" + 
         "%obs: A(x)\n" + 
         "%obs: B(y!1),C(z!1)\n";
     
     private static final String DELETE_LINK_INPUT = 
         "A(x!1),B(y!1) -> A(x),B(y)  @ 0.1\n" + 
-        "%init: 10000 (A(x!1),B(y!1))\n" + 
+        "%init: 10000 A(x!1),B(y!1)\n" + 
         "%obs: B(y)\n" + 
         "%obs: A(x!_)\n";
     
     private static final String DELETE_AGENT_LINK_INPUT = 
         "A(x!1),B(y!1) -> A(x) @ 0.1\n" + 
-        "%init: 10000 (A(x!1),B(y!1))\n" + 
+        "%init: 10000 A(x!1),B(y!1)\n" + 
         "%obs: B(y?)\n";
     
     private static final String DELETE_COMPLEX_INPUT = 
         "A(x) ->  @ 0.1\n" + 
-        "%init: 10000 (A(x))\n" + 
+        "%init: 10000 A(x)\n" + 
         "%obs: A(x)\n" + 
         "%obs: A(x!_)\n";
     
     private static final String DELETE_COMPLEX_INPUT_NO_SITES = 
         "A() ->  @ 0.1\n" + 
-        "%init: 10000 (A())\n" + 
+        "%init: 10000 A()\n" + 
         "%obs: A()\n";
     
     private static final String SIMPLE_LINK_EQUILIBRIUM_INPUT = 
         "A(x),B(y) -> A(x!1),B(y!1) @ 1\n" + 
         "A(x!1),B(y!1) -> A(x),B(y) @ 1\n" + 
-        "%init: 10000 (A(x),B(y))\n" + 
+        "%init: 10000 A(x),B(y)\n" + 
         "%obs: A(x)\n" + 
         "%obs: A(x!_)\n";
 
@@ -451,122 +451,122 @@ public abstract class AbstractSpatialTest {
     }
     
     private static final String VERY_SIMPLE_TRANSPORT_INPUT = 
-        "%compartment: 'cytosol' [2]\n" + 
-        "%link: 'intra-cytosol' 'cytosol' ['x'] -> 'cytosol' ['x'+1]\n" + 
+        "%compartment: cytosol [2]\n" + 
+        "%link: 'intra-cytosol' cytosol ['x'] -> cytosol ['x'+1]\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + 
-        "%init: 'cytosol'[0] 10 (A()) \n" + 
-        "%obs: 'val[0]' 'cytosol'[0] A() \n" + 
-        "%obs: 'val[1]' 'cytosol'[1] A() \n" + 
+        "%init: 10 cytosol[0] A() \n" + 
+        "%obs: 'val[0]' cytosol[0] A() \n" + 
+        "%obs: 'val[1]' cytosol[1] A() \n" + 
         "";
     
     private static final String SIMPLE_TRANSPORT_INPUT = 
-        "%compartment: 'cytosol' [4]\n" + 
-        "%link: 'intra-cytosol' 'cytosol' ['x'] <-> 'cytosol' ['x'+1]\n" + 
+        "%compartment: cytosol [4]\n" + 
+        "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + 
-        "%init: 'cytosol'[0] 2000 (A()) \n" + 
-        "%obs: 'val[0]' 'cytosol'[0] A() \n" + 
-        "%obs: 'val[1]' 'cytosol'[1] A() \n" + 
-        "%obs: 'val[2]' 'cytosol'[2] A() \n" + 
-        "%obs: 'val[3]' 'cytosol'[3] A() \n" + 
+        "%init: 2000 cytosol[0] A() \n" + 
+        "%obs: 'val[0]' cytosol[0] A() \n" + 
+        "%obs: 'val[1]' cytosol[1] A() \n" + 
+        "%obs: 'val[2]' cytosol[2] A() \n" + 
+        "%obs: 'val[3]' cytosol[3] A() \n" + 
         "";
     
     private static final String DIRECTIONAL_TRANSPORT_INPUT = 
-        "%compartment: 'cytosol' [3]\n" + 
-        "%link: 'forward' 'cytosol' ['x'] -> 'cytosol' ['x'+1]\n" + 
-        "%link: 'backward' 'cytosol' ['x'] <- 'cytosol' ['x'+1]\n" + 
+        "%compartment: cytosol [3]\n" + 
+        "%link: 'forward' cytosol ['x'] -> cytosol ['x'+1]\n" + 
+        "%link: 'backward' cytosol ['x'] <- cytosol ['x'+1]\n" + 
         "%transport: 'forward'       'forward'       A() @ 0.1\n" + 
         "%transport: 'backward'      'backward'      B() @ 0.1\n" + 
-        "%init: 'cytosol'[0] 1000 (A()) \n" + 
-        "%init: 'cytosol'[2] 1000 (B()) \n" + 
-        "%obs: 'val[0]A' 'cytosol'[0] A() \n" + 
-        "%obs: 'val[1]A' 'cytosol'[1] A() \n" + 
-        "%obs: 'val[2]A' 'cytosol'[2] A() \n" + 
-        "%obs: 'val[0]B' 'cytosol'[0] B() \n" + 
-        "%obs: 'val[1]B' 'cytosol'[1] B() \n" + 
-        "%obs: 'val[2]B' 'cytosol'[2] B() \n" + 
+        "%init: 1000 cytosol[0] A() \n" + 
+        "%init: 1000 cytosol[2] B() \n" + 
+        "%obs: 'val[0]A' cytosol[0] A() \n" + 
+        "%obs: 'val[1]A' cytosol[1] A() \n" + 
+        "%obs: 'val[2]A' cytosol[2] A() \n" + 
+        "%obs: 'val[0]B' cytosol[0] B() \n" + 
+        "%obs: 'val[1]B' cytosol[1] B() \n" + 
+        "%obs: 'val[2]B' cytosol[2] B() \n" + 
         "";
     
     private static final String MULTIPLE_NAMES_DISCRETE_COMPLEX_TRANSPORT_INPUT = 
-        "%compartment: 'cytosol' [2]\n" + 
-        "%link: 'forward' 'cytosol' ['x'] -> 'cytosol' ['x'+1]\n" + 
+        "%compartment: cytosol [2]\n" + 
+        "%link: 'forward' cytosol ['x'] -> cytosol ['x'+1]\n" + 
         "%transport: 'forward'       'forward'       B(),A() @ 0.1\n" + 
-        "%init: 'cytosol'[0] 1000 (A()) \n" + 
-        "%init: 'cytosol'[1] 1000 (B()) \n" + 
-        "%obs: 'val[0]A' 'cytosol'[0] A() \n" + 
-        "%obs: 'val[1]A' 'cytosol'[1] A() \n" + 
-        "%obs: 'val[0]B' 'cytosol'[0] B() \n" + 
-        "%obs: 'val[1]B' 'cytosol'[1] B() \n" + 
+        "%init: 1000 cytosol[0] A() \n" + 
+        "%init: 1000 cytosol[1] B() \n" + 
+        "%obs: 'val[0]A' cytosol[0] A() \n" + 
+        "%obs: 'val[1]A' cytosol[1] A() \n" + 
+        "%obs: 'val[0]B' cytosol[0] B() \n" + 
+        "%obs: 'val[1]B' cytosol[1] B() \n" + 
         "";
     
     private static final String INITIAL_DISTRIBUTION_INPUT = 
-        "%compartment: 'cytosol' [5]\n" + 
-        "%compartment: 'nucleus' \n" + 
-        "%init:              120 (A()) \n" + 
-        "%init: 'cytosol'    2000 (A()) \n" + 
-        "%init: 'cytosol'[2] 600 (A()) \n" + 
-        "%obs: 'nucleus' 'nucleus'   A() \n" + 
-        "%obs: 'val[0]' 'cytosol'[0] A() \n" + 
-        "%obs: 'val[1]' 'cytosol'[1] A() \n" + 
-        "%obs: 'val[2]' 'cytosol'[2] A() \n" + 
-        "%obs: 'val[3]' 'cytosol'[3] A() \n" + 
-        "%obs: 'val[4]' 'cytosol'[4] A() \n" + 
+        "%compartment: cytosol [5]\n" + 
+        "%compartment: nucleus \n" + 
+        "%init: 120 A() \n" + 
+        "%init: 2000 cytosol    A() \n" + 
+        "%init: 600 cytosol[2] A() \n" + 
+        "%obs: 'nucleus' nucleus   A() \n" + 
+        "%obs: 'val[0]' cytosol[0] A() \n" + 
+        "%obs: 'val[1]' cytosol[1] A() \n" + 
+        "%obs: 'val[2]' cytosol[2] A() \n" + 
+        "%obs: 'val[3]' cytosol[3] A() \n" + 
+        "%obs: 'val[4]' cytosol[4] A() \n" + 
         "";
     
     private static final String CELL_LIMITED_TRANSFORM_INPUT = 
-        "%compartment: 'cytosol' [2]\n" + 
-        "%compartment: 'membrane'\n" + 
-        "'react' 'cytosol'[1] A(S~x) -> A(S~y) @ 0.1\n" + 
-        "%init: 'cytosol' 2000 (A(S~x)) \n" + 
-        "%init: 'membrane' 500 (A(S~x)) \n" + 
-        "%obs: 'cytosol[0]' 'cytosol'[0] A(S~x) \n" + 
-        "%obs: 'cytosol[1]' 'cytosol'[1] A(S~x) \n" + 
-        "%obs: 'membrane[1]' 'membrane' A(S~x) \n" + 
+        "%compartment: cytosol [2]\n" + 
+        "%compartment: membrane\n" + 
+        "'react' cytosol[1] A(S~x) -> A(S~y) @ 0.1\n" + 
+        "%init: 2000 cytosol A(S~x) \n" + 
+        "%init: 500 membrane A(S~x) \n" + 
+        "%obs: 'cytosol[0]' cytosol[0] A(S~x) \n" + 
+        "%obs: 'cytosol[1]' cytosol[1] A(S~x) \n" + 
+        "%obs: 'membrane[1]' membrane A(S~x) \n" + 
         "";
     
     private static final String COMPARTMENT_LIMITED_TRANSFORM_INPUT = 
-        "%compartment: 'cytosol' [2]\n" + 
-        "%compartment: 'membrane'\n" + 
-        "'react' 'cytosol' A(S~x) -> A(S~y) @ 0.1\n" + 
-        "%init: 'cytosol' 2000 (A(S~x)) \n" + 
-        "%init: 'membrane' 500 (A(S~x)) \n" + 
-        "%obs: 'cytosol[0]' 'cytosol'[0] A(S~x) \n" + 
-        "%obs: 'cytosol[1]' 'cytosol'[1] A(S~x) \n" + 
-        "%obs: 'membrane[1]' 'membrane' A(S~x) \n" + 
+        "%compartment: cytosol [2]\n" + 
+        "%compartment: membrane\n" + 
+        "'react' cytosol A(S~x) -> A(S~y) @ 0.1\n" + 
+        "%init: 2000 cytosol A(S~x) \n" + 
+        "%init: 500 membrane A(S~x) \n" + 
+        "%obs: 'cytosol[0]' cytosol[0] A(S~x) \n" + 
+        "%obs: 'cytosol[1]' cytosol[1] A(S~x) \n" + 
+        "%obs: 'membrane[1]' membrane A(S~x) \n" + 
         "";
     
     private static final String UNLIMITED_TRANSFORM_INPUT = 
-        "%compartment: 'cytosol' [2]\n" + 
-        "%compartment: 'membrane'\n" + 
+        "%compartment: cytosol [2]\n" + 
+        "%compartment: membrane\n" + 
         "'react' A(S~x) -> A(S~y) @ 0.1\n" + 
-        "%init: 'cytosol' 2000 (A(S~x)) \n" + 
-        "%init: 'membrane' 1000 (A(S~x)) \n" + 
-        "%obs: 'cytosol[0]' 'cytosol'[0] A(S~x) \n" + 
-        "%obs: 'cytosol[1]' 'cytosol'[1] A(S~x) \n" + 
-        "%obs: 'membrane[1]' 'membrane' A(S~x) \n" + 
+        "%init: 2000 cytosol A(S~x) \n" + 
+        "%init: 1000 membrane A(S~x) \n" + 
+        "%obs: 'cytosol[0]' cytosol[0] A(S~x) \n" + 
+        "%obs: 'cytosol[1]' cytosol[1] A(S~x) \n" + 
+        "%obs: 'membrane[1]' membrane A(S~x) \n" + 
         "";
     
     private static final String TRANSITION_ACTIVATION_INPUT = 
-        "%compartment: 'cytosol' [3] \n" + 
-        "%link: 'intra-cytosola' 'cytosol' [0] -> 'cytosol' [1] \n" + 
-        "%link: 'intra-cytosolb' 'cytosol' [2] -> 'cytosol' [1] \n" + 
-        "'react' 'cytosol' A(x),B(x) -> A(x!1),B(x!1) @ 0.1\n" + 
+        "%compartment: cytosol [3] \n" + 
+        "%link: 'intra-cytosola' cytosol [0] -> cytosol [1] \n" + 
+        "%link: 'intra-cytosolb' cytosol [2] -> cytosol [1] \n" + 
+        "'react' cytosol A(x),B(x) -> A(x!1),B(x!1) @ 0.1\n" + 
         "%transport: 'diffusion-a' 'intra-cytosola' A(x) @ 0.1 \n" + 
         "%transport: 'diffusion-b' 'intra-cytosolb' B(x) @ 0.1 \n" + 
-        "%init: 'cytosol'[0] 1000 (A(x)) \n" + 
-        "%init: 'cytosol'[2] 1000 (B(x)) \n" + 
-        "%obs: 'C' 'cytosol' A(x!1),B(x!1)\n" + 
+        "%init: 1000 cytosol[0] A(x) \n" + 
+        "%init: 1000 cytosol[2] B(x) \n" + 
+        "%obs: 'C' cytosol A(x!1),B(x!1)\n" + 
         "";
     
     private static final String STEADY_STATE_CONCENTRATION_GRADIENT_INPUT = 
-        "%compartment: 'cytosol' [4]\n" + 
-        "%link: 'intra-cytosol' 'cytosol' ['x'] <-> 'cytosol' ['x'+1]\n" + 
+        "%compartment: cytosol [4]\n" + 
+        "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + 
-        "'source' 'cytosol'[0] -> A() @ 5\n" + 
-        "'sink' 'cytosol'[3] A() -> @ [inf]\n" + 
-        "%obs: 'val[0]' 'cytosol'[0] A() \n" + 
-        "%obs: 'val[1]' 'cytosol'[1] A() \n" + 
-        "%obs: 'val[2]' 'cytosol'[2] A() \n" + 
-        "%obs: 'val[3]' 'cytosol'[3] A() \n" + 
+        "'source' cytosol[0] -> A() @ 5\n" + 
+        "'sink' cytosol[3] A() -> @ [inf]\n" + 
+        "%obs: 'val[0]' cytosol[0] A() \n" + 
+        "%obs: 'val[1]' cytosol[1] A() \n" + 
+        "%obs: 'val[2]' cytosol[2] A() \n" + 
+        "%obs: 'val[3]' cytosol[3] A() \n" + 
         "";
     
 

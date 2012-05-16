@@ -27,9 +27,21 @@ public class AgentTest {
         
         Agent agent = new Agent("name");
         assertEquals("name", agent.name);
-        assertEquals("name()", agent.toString());
+        assertNull(agent.location);
+        assertEquals("name", agent.toString());
         assertEquals("", agent.getStateHash());
         assertTrue(agent.getSites().isEmpty());
+        
+        agent = new Agent("name", (Location) null);
+        assertEquals("name", agent.name);
+        assertNull(agent.location);
+        assertEquals("name", agent.toString());
+        
+        Location location = new Location("location");
+        agent = new Agent("name", location);
+        assertEquals("name", agent.name);
+        assertSame(location, agent.location);
+        assertEquals("name:location", agent.toString());
     }
 
     @Test
@@ -56,6 +68,7 @@ public class AgentTest {
         
         Agent agent = new Agent("name", sites);
         assertEquals("name", agent.name);
+        assertNull(agent.location);
         assertEquals("name(site1~state1!link1,site2~state2!link2)", agent.toString());
         
         Set<AgentSite> expectedSites = new HashSet<AgentSite>();
@@ -67,6 +80,17 @@ public class AgentTest {
         for (AgentSite site : agent.getSites()) {
             assertSame(agent, site.agent);
         }
+        
+        agent = new Agent("name", null, sites);
+        assertEquals("name", agent.name);
+        assertNull(agent.location);
+        assertEquals("name(site1~state1!link1,site2~state2!link2)", agent.toString());
+        
+        Location location = new Location("location");
+        agent = new Agent("name", location, sites);
+        assertEquals("name", agent.name);
+        assertSame(location, agent.location);
+        assertEquals("name:location(site1~state1!link1,site2~state2!link2)", agent.toString());
     }
 
     @Test
@@ -93,6 +117,7 @@ public class AgentTest {
         Agent agent = new Agent("name", site1, site2);
         assertEquals("name(site1~state1!link1,site2~state2!link2)", agent.toString());
         assertEquals("name", agent.name);
+        assertNull(agent.location);
         
         Set<AgentSite> expectedSites = new HashSet<AgentSite>();
         expectedSites.add(new AgentSite(agent, site1));
@@ -103,6 +128,17 @@ public class AgentTest {
         for (AgentSite site : agent.getSites()) {
             assertSame(agent, site.agent);
         }
+        
+        agent = new Agent("name", (Location) null, site1, site2);
+        assertEquals("name(site1~state1!link1,site2~state2!link2)", agent.toString());
+        assertEquals("name", agent.name);
+        assertNull(agent.location);
+        
+        Location location = new Location("location");
+        agent = new Agent("name", location, site1, site2);
+        assertEquals("name", agent.name);
+        assertSame(location, agent.location);
+        assertEquals("name:location(site1~state1!link1,site2~state2!link2)", agent.toString());
     }
 
     @Test
@@ -163,4 +199,29 @@ public class AgentTest {
         assertSame(expected.getLinkName(), actual.getLinkName());
         assertSame(expected.getState(), actual.getState());
     }
+    
+    @Test
+    public void testToString() {
+        try {
+        	new Agent("name").toString(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        Agent agent = new Agent("name");
+        assertEquals("name", agent.toString());
+        assertEquals("name(suffix)", agent.toString("suffix"));
+
+        Set<AgentSite> sites = new HashSet<AgentSite>();
+        sites.add(new AgentSite("site1", "state1", "link1"));
+        sites.add(new AgentSite("site2", "state2", "link2"));
+        
+        agent = new Agent("name", sites);
+        assertEquals("name(site1~state1!link1,site2~state2!link2)", agent.toString());
+        assertEquals("name(site1~state1!link1,site2~state2!link2,suffix)", agent.toString("suffix"));
+    }
+
+
 }

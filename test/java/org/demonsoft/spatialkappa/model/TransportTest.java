@@ -49,7 +49,7 @@ public class TransportTest extends TransitionTest {
         assertEquals("linkName", transport.getCompartmentLinkName());
         assertEquals(agents, transport.getAgents());
         assertEquals(0.1f, transport.getRate().evaluate(state).value, 0.01f);
-        assertEquals("label: linkName agent1(),agent2() @ 0.1", transport.toString());
+        assertEquals("label: linkName agent1,agent2 @ 0.1", transport.toString());
         
         transport = new Transport(null, "linkName", null, new VariableExpression(0.1f));
         assertEquals(null, transport.label);

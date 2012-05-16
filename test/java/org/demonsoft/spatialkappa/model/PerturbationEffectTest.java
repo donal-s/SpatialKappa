@@ -77,11 +77,11 @@ public class PerturbationEffectTest {
         
         PerturbationEffect effect = new PerturbationEffect(Type.ADD, expression, agents);
         assertEquals(Type.ADD, effect.type);
-        assertEquals("$ADD 2.0 [A()]", effect.toString());
+        assertEquals("$ADD 2.0 [A]", effect.toString());
         
         effect = new PerturbationEffect(Type.REMOVE, expression, agents);
         assertEquals(Type.REMOVE, effect.type);
-        assertEquals("$DEL 2.0 [A()]", effect.toString());
+        assertEquals("$DEL 2.0 [A]", effect.toString());
         
         effect = new PerturbationEffect("label", expression);
         assertEquals(Type.SET, effect.type);

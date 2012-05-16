@@ -20,11 +20,11 @@ public class UtilsTest {
     public void testGetFlatString() {
         Object[] input = { "test", 5, null, new Agent("test2") };
         
-        assertEquals("test,5,null,test2()", Utils.getFlatString(Arrays.asList(input)));
+        assertEquals("test,5,null,test2", Utils.getFlatString(Arrays.asList(input)));
         
-        assertEquals("test,5,null,test2()", Utils.getFlatString(",", false, input));
-        assertEquals("test,5,test2()", Utils.getFlatString(",", true, input));
-        assertEquals("test 5 null test2()", Utils.getFlatString(" ", false, input));
+        assertEquals("test,5,null,test2", Utils.getFlatString(",", false, input));
+        assertEquals("test,5,test2", Utils.getFlatString(",", true, input));
+        assertEquals("test 5 null test2", Utils.getFlatString(" ", false, input));
     }
 
     @Test
