@@ -42,6 +42,34 @@ public class SpatialTranslatorTest {
         assertEquals(testOutput, translator.translateToKappa());
     }
 
+    @Test
+    public void testTest1_5_initialComplexesBetweenCompartments() throws Exception {
+        translator = new SpatialTranslator(new File(TEST_DATA_DIRECTORY, "test-1-5-input.ka"));
+        String testOutput = FileUtils.readFileToString(new File(TEST_DATA_DIRECTORY, "test-1-5-output.ka"));
+        assertEquals(testOutput, translator.translateToKappa());
+    }
+
+    @Test
+    public void testTest1_7_constructPentamerReceptors() throws Exception {
+        translator = new SpatialTranslator(new File(TEST_DATA_DIRECTORY, "test-1-7-input.ka"));
+        String testOutput = FileUtils.readFileToString(new File(TEST_DATA_DIRECTORY, "test-1-7-output.ka"));
+        assertEquals(testOutput, translator.translateToKappa());
+    }
+
+    @Test
+    public void testTest1_8_allostericActivation() throws Exception {
+        translator = new SpatialTranslator(new File(TEST_DATA_DIRECTORY, "test-1-8-input.ka"));
+        String testOutput = FileUtils.readFileToString(new File(TEST_DATA_DIRECTORY, "test-1-8-output.ka"));
+        assertEquals(testOutput, translator.translateToKappa());
+    }
+
+    @Test
+    public void testTest1_9_spatialEGFRModel() throws Exception {
+        translator = new SpatialTranslator(new File(TEST_DATA_DIRECTORY, "test-1-9-input.ka"));
+        String testOutput = FileUtils.readFileToString(new File(TEST_DATA_DIRECTORY, "test-1-9-output.ka"));
+        assertEquals(testOutput, translator.translateToKappa());
+    }
+
     private static final String TEST_DATA_DIRECTORY = "test/acceptance/data/";
     
 }

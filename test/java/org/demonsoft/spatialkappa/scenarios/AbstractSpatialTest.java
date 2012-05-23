@@ -110,7 +110,7 @@ public abstract class AbstractSpatialTest {
     
     @Test
     public void testDeleteAgentLinkCase() throws Exception {
-        checkEventSimulation(DELETE_AGENT_LINK_INPUT, new String[] {"[B(y!?)]"}, 2000, 50, new float[][] {
+        checkEventSimulation(DELETE_AGENT_LINK_INPUT, new String[] {"[B(y?)]"}, 2000, 50, new float[][] {
                 {10000}, {8000}, {6000}, {4000}, {2000}, {0}
         });
     }
@@ -211,23 +211,27 @@ public abstract class AbstractSpatialTest {
 
 
     private static final String SIMPLE_STATE_INPUT = 
+        "%agent: A(x~s~t)\n" +
         "A(x~s) -> A(x~t) @ 0.1\n" + 
         "%init: 1000 A(x~s)\n" + 
         "%obs: A(x~s)\n" + 
         "%obs: A(x~t)\n";
     
     private static final String VARIABLE_REFERENCE_COMPLEX_INPUT = 
+        "%agent: A(x~s)\n" +
         "%init: 1000 A(x~s)\n" + 
         "%var: 'as' A(x~s)\n" + 
         "%plot: 'as'\n";
     
     private static final String SIMPLE_INFINITE_RATE_INPUT = 
+        "%agent: A(x~s~t)\n" +
         "A(x~s) -> A(x~t) @ [inf]\n" + 
         "%init: 1000 A(x~s)\n" + 
         "%obs: A(x~s)\n" + 
         "%obs: A(x~t)\n";
     
     private static final String INFINITE_RATE_GRADUAL_SUBSTRATE_INPUT = 
+        "%agent: A(x~s~t~u)\n" +
         "A(x~s) -> A(x~t) @ 0.1\n" + 
         "A(x~t) -> A(x~u) @ [inf]\n" + 
         "%init: 1000 A(x~s)\n" + 
@@ -236,6 +240,8 @@ public abstract class AbstractSpatialTest {
         "%obs: A(x~u)\n";
     
     private static final String ERROR_CASE1_INPUT = 
+        "%agent: A(a,b)\n" +
+        "%agent: B(a,b,c)\n" +
         "A(a), B(a) -> A(a!1),B(a!1) @ 1\n" + 
         "%init: 1000 A(a,b) \n" + 
         "%init: 1000 A(a!2, b!1), B(a, c!1, b), B(a!2, c, b) \n" + 
@@ -243,12 +249,14 @@ public abstract class AbstractSpatialTest {
         "%obs: 'result' A(a!2, b!1), B(a!3, c!1, b), B(a!2, c, b), A(a!3, b)\n";
     
     private static final String ADDITIONAL_STATE_INPUT = 
+        "%agent: A(x~s~t,y~a)\n" +
         "A(x~s) -> A(x~t) @ 0.1\n" + 
         "%init: 1000 A(x~s,y~a)\n" + 
         "%obs: A(x~s)\n" + 
         "%obs: A(x~t,y~a)\n";
     
     private static final String MATH_FUNCTIONS_INPUT = 
+        "%agent: A\n" +
         " -> A() @ 1\n" + 
         "%var: 'log' [log] (([E] * 10) + 1)\n" + 
         "%var: 'sin' [sin] [E]\n" + 
@@ -266,6 +274,7 @@ public abstract class AbstractSpatialTest {
         "%plot: 'pi'\n";
     
     private static final String SIMULATION_TOKENS_INPUT = 
+        "%agent: A\n" +
         " -> A() @ 20\n" + 
         "%var: 'events' [E]\n" + 
         "%var: 'time' [T]\n" + // TODO - handle obs
@@ -273,24 +282,31 @@ public abstract class AbstractSpatialTest {
         "%plot: 'time'\n";
     
     private static final String STOPPED_SIMULATION_INPUT = 
+        "%agent: A\n" +
         " -> A() @ 1\n" + 
         "%var: 'events' [E]\n" + 
         "%plot: 'events'\n" +
         "%mod: [E] = 150 do $STOP\n";
     
     private static final String TRANSITIONS_FIRED_INPUT = 
+        "%agent: A\n" +
+        "%agent: B\n" +
         "'A created' -> A() @ 2\n" + 
         "'B created' -> B() @ 1\n" + 
         "%plot: 'A created'\n" + 
         "%plot: 'B created'\n";
 
     private static final String SIMPLE_LINK_INPUT = 
+        "%agent: A(x)\n" +
+        "%agent: B(y)\n" +
         "A(x),B(y) -> A(x!1),B(y!1) @ 0.1\n" + 
         "%init: 10000 A(x),B(y)\n" + 
         "%obs: A(x)\n" + 
         "%obs: A(x!_)\n";
     
     private static final String TIMED_PERTURBATION_INPUT = 
+        "%agent: A(x~a~b)\n" +
+        "%agent: C(z~a~b)\n" +
         "A(x~a) -> A(x~b) @ 0.1\n" + 
         "'triggered' C(z~a) -> C(z~b) @ 0\n" + 
         "%init: 10000 A(x~a),C(z~a)\n" + 
@@ -299,6 +315,8 @@ public abstract class AbstractSpatialTest {
         "%mod: [T] > 7 do 'triggered' := 0.1\n";
     
     private static final String TIMED_INFINITE_RATE_PERTURBATION_INPUT = 
+        "%agent: A(x~a~b)\n" +
+        "%agent: C(z~a~b)\n" +
         "A(x~a) -> A(x~b) @ 0.1\n" + 
         "'triggered' C(z~a) -> C(z~b) @ 0\n" + 
         "%init: 10000 A(x~a),C(z~a)\n" + 
@@ -307,40 +325,53 @@ public abstract class AbstractSpatialTest {
         "%mod: [T] > 3 do 'triggered' := [inf]\n";
     
     private static final String CREATE_AGENT_LINK_INPUT = 
+        "%agent: A(x)\n" +
+        "%agent: B(y)\n" +
         "A(x) -> A(x!1),B(y!1) @ 0.1\n" + 
         "%init: 10000 A(x)\n" + 
         "%obs: A(x)\n" + 
         "%obs: A(x!1),B(y!1)\n";
     
     private static final String CREATE_COMPLEX_INPUT = 
+        "%agent: A(x)\n" +
+        "%agent: B(y)\n" +
+        "%agent: C(z)\n" +
         "A(x) -> A(x),B(y!1),C(z!1) @ 0.1\n" + 
         "%init: 10000 A(x)\n" + 
         "%obs: A(x)\n" + 
         "%obs: B(y!1),C(z!1)\n";
     
     private static final String DELETE_LINK_INPUT = 
+        "%agent: A(x)\n" +
+        "%agent: B(y)\n" +
         "A(x!1),B(y!1) -> A(x),B(y)  @ 0.1\n" + 
         "%init: 10000 A(x!1),B(y!1)\n" + 
         "%obs: B(y)\n" + 
         "%obs: A(x!_)\n";
     
     private static final String DELETE_AGENT_LINK_INPUT = 
+        "%agent: A(x)\n" +
+        "%agent: B(y)\n" +
         "A(x!1),B(y!1) -> A(x) @ 0.1\n" + 
         "%init: 10000 A(x!1),B(y!1)\n" + 
         "%obs: B(y?)\n";
     
     private static final String DELETE_COMPLEX_INPUT = 
+        "%agent: A(x)\n" +
         "A(x) ->  @ 0.1\n" + 
         "%init: 10000 A(x)\n" + 
         "%obs: A(x)\n" + 
         "%obs: A(x!_)\n";
     
     private static final String DELETE_COMPLEX_INPUT_NO_SITES = 
+        "%agent: A\n" +
         "A() ->  @ 0.1\n" + 
         "%init: 10000 A()\n" + 
         "%obs: A()\n";
     
     private static final String SIMPLE_LINK_EQUILIBRIUM_INPUT = 
+        "%agent: A(x)\n" +
+        "%agent: B(y)\n" +
         "A(x),B(y) -> A(x!1),B(y!1) @ 1\n" + 
         "A(x!1),B(y!1) -> A(x),B(y) @ 1\n" + 
         "%init: 10000 A(x),B(y)\n" + 
@@ -451,6 +482,7 @@ public abstract class AbstractSpatialTest {
     }
     
     private static final String VERY_SIMPLE_TRANSPORT_INPUT = 
+        "%agent: A()\n" +
         "%compartment: cytosol [2]\n" + 
         "%link: 'intra-cytosol' cytosol ['x'] -> cytosol ['x'+1]\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + 
@@ -460,6 +492,7 @@ public abstract class AbstractSpatialTest {
         "";
     
     private static final String SIMPLE_TRANSPORT_INPUT = 
+        "%agent: A()\n" +
         "%compartment: cytosol [4]\n" + 
         "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + 
@@ -471,6 +504,8 @@ public abstract class AbstractSpatialTest {
         "";
     
     private static final String DIRECTIONAL_TRANSPORT_INPUT = 
+        "%agent: A()\n" +
+        "%agent: B()\n" +
         "%compartment: cytosol [3]\n" + 
         "%link: 'forward' cytosol ['x'] -> cytosol ['x'+1]\n" + 
         "%link: 'backward' cytosol ['x'] <- cytosol ['x'+1]\n" + 
@@ -487,6 +522,8 @@ public abstract class AbstractSpatialTest {
         "";
     
     private static final String MULTIPLE_NAMES_DISCRETE_COMPLEX_TRANSPORT_INPUT = 
+        "%agent: A()\n" +
+        "%agent: B()\n" +
         "%compartment: cytosol [2]\n" + 
         "%link: 'forward' cytosol ['x'] -> cytosol ['x'+1]\n" + 
         "%transport: 'forward'       'forward'       B(),A() @ 0.1\n" + 
@@ -499,6 +536,7 @@ public abstract class AbstractSpatialTest {
         "";
     
     private static final String INITIAL_DISTRIBUTION_INPUT = 
+        "%agent: A()\n" +
         "%compartment: cytosol [5]\n" + 
         "%compartment: nucleus \n" + 
         "%init: 120 A() \n" + 
@@ -513,6 +551,7 @@ public abstract class AbstractSpatialTest {
         "";
     
     private static final String CELL_LIMITED_TRANSFORM_INPUT = 
+        "%agent: A(S~x~y)\n" +
         "%compartment: cytosol [2]\n" + 
         "%compartment: membrane\n" + 
         "'react' cytosol[1] A(S~x) -> A(S~y) @ 0.1\n" + 
@@ -524,6 +563,7 @@ public abstract class AbstractSpatialTest {
         "";
     
     private static final String COMPARTMENT_LIMITED_TRANSFORM_INPUT = 
+        "%agent: A(S~x~y)\n" +
         "%compartment: cytosol [2]\n" + 
         "%compartment: membrane\n" + 
         "'react' cytosol A(S~x) -> A(S~y) @ 0.1\n" + 
@@ -535,6 +575,7 @@ public abstract class AbstractSpatialTest {
         "";
     
     private static final String UNLIMITED_TRANSFORM_INPUT = 
+        "%agent: A(S~x~y)\n" +
         "%compartment: cytosol [2]\n" + 
         "%compartment: membrane\n" + 
         "'react' A(S~x) -> A(S~y) @ 0.1\n" + 
@@ -546,6 +587,9 @@ public abstract class AbstractSpatialTest {
         "";
     
     private static final String TRANSITION_ACTIVATION_INPUT = 
+        "%agent: A(x)\n" +
+        "%agent: B(x)\n" +
+        "%agent: C(x)\n" +
         "%compartment: cytosol [3] \n" + 
         "%link: 'intra-cytosola' cytosol [0] -> cytosol [1] \n" + 
         "%link: 'intra-cytosolb' cytosol [2] -> cytosol [1] \n" + 
@@ -558,6 +602,7 @@ public abstract class AbstractSpatialTest {
         "";
     
     private static final String STEADY_STATE_CONCENTRATION_GRADIENT_INPUT = 
+        "%agent: A()\n" +
         "%compartment: cytosol [4]\n" + 
         "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
         "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + 

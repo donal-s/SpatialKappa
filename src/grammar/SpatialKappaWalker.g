@@ -11,6 +11,8 @@ package org.demonsoft.spatialkappa.parser;
 
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
+import org.demonsoft.spatialkappa.model.AggregateAgent;
+import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.BooleanExpression;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.CompartmentLink;
@@ -43,7 +45,7 @@ prog returns [IKappaModel result]
   :
   (
     line
-  )+
+  )*
   ;
 
 line
@@ -188,12 +190,33 @@ options {backtrack=true;}
   ;
   
 agentExpr
+  @init {
+  List<AggregateSite> sites = new ArrayList<AggregateSite>();
+  }
   :
-  AGENT_DECL
+  ^(AGENT_DECL id (
+      agentIfaceExpr {sites.add($agentIfaceExpr.result);}
+    )*
+  )
   {
-    // Do nothing for now
+    kappaModel.addAgentDeclaration(new AggregateAgent($id.text, sites));
   }
   ;
+  
+agentIfaceExpr returns [AggregateSite result]
+  @init {
+  List<String> states = new ArrayList<String>();
+  }
+  :
+  ^(INTERFACE id (
+      stateExpr {states.add($stateExpr.result);}
+    )*
+  )
+  {
+    $result = new AggregateSite($id.text, states, null);
+  }
+  ;
+
   
 compartmentExpr
   @init {

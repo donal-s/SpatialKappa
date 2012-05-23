@@ -11,7 +11,8 @@ public class AgentLinkTest {
     private AgentSite interface1 = new AgentSite("interface1", null, null);
     private AgentSite interface2 = new AgentSite("interface2", null, null);
 
-    @Test
+    @SuppressWarnings("unused")
+	@Test
     public void testConstructor() {
         try {
             new AgentLink(null, interface2);

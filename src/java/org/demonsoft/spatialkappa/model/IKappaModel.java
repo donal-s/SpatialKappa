@@ -3,9 +3,6 @@ package org.demonsoft.spatialkappa.model;
 import java.util.List;
 import java.util.Map;
 
-
-
-
 public interface IKappaModel {
 
     public void addTransform(String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, VariableExpression rate, Location location);
@@ -27,7 +24,7 @@ public interface IKappaModel {
 
     public void addCompartmentLink(CompartmentLink link);
 
-
+    public void addAgentDeclaration(AggregateAgent agent);
 
     public void validate();
     
@@ -49,8 +46,10 @@ public interface IKappaModel {
     
     public List<Transport> getTransports();
     
-    public Map<String, AggregateAgent> getAggregateAgentMap();
+    public Map<String, AggregateAgent> getAgentDeclarationMap();
     
     public List<Perturbation> getPerturbations();
+
+	public List<String> getOrderedVariableNames();
 
 }

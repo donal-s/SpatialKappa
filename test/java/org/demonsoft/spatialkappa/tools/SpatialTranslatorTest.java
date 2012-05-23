@@ -47,6 +47,7 @@ public class SpatialTranslatorTest {
         translator = new SpatialTranslator("%compartment: cytosol [4]\n");
     }
     
+    @SuppressWarnings("unused")
     @Test
     public void testSpatialTranslatorFile() throws Exception {
         try {
@@ -62,6 +63,7 @@ public class SpatialTranslatorTest {
         assertEquals(testOutput, translator.translateToKappa());
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testSpatialTranslatorString() throws Exception {
         try {
@@ -74,6 +76,12 @@ public class SpatialTranslatorTest {
         
         translator = new SpatialTranslator(SIMPLE_TEST_INPUT);
         assertEquals(SIMPLE_TEST_OUTPUT, translator.translateToKappa());
+    }
+
+    @Test
+    public void testEmptyInput() throws Exception {
+        translator = new SpatialTranslator("");
+        assertEquals("", translator.translateToKappa().trim());
     }
 
     @Test
@@ -98,6 +106,12 @@ public class SpatialTranslatorTest {
     public void testReactionsOnly() throws Exception {
         translator = new SpatialTranslator(REACTION_ONLY_INPUT);
         assertEquals(REACTION_ONLY_OUTPUT, translator.translateToKappa());
+    }
+
+    @Test
+    public void testVariablesOnly() throws Exception {
+        translator = new SpatialTranslator(VARIABLES_ONLY_INPUT);
+        assertEquals(VARIABLES_ONLY_OUTPUT, translator.translateToKappa());
     }
 
     @Test
@@ -130,6 +144,7 @@ public class SpatialTranslatorTest {
         assertEquals(AGENT_ORDERING_OUTPUT, translator.translateToKappa());
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testSpatialTranslatorKappaModel() throws Exception {
         try {
@@ -527,6 +542,7 @@ public class SpatialTranslatorTest {
     }
     
     private static final String SIMPLE_TEST_INPUT = 
+        "%agent: A(state~blue~red~green)\n" +
         "%compartment: cytosol [4]\n" + 
         "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
         "\n" + 
@@ -551,7 +567,7 @@ public class SpatialTranslatorTest {
         "%obs: 'red[3]' cytosol[3] A(state~red) \n";
     
     private static final String SIMPLE_TEST_OUTPUT = 
-        "%agent: A(state~blue~green~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
+        "%agent: A(state~blue~red~green,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "\n" + 
         "'diffusion-all-1' A(loc~cytosol,loc_index_1~0) -> A(loc~cytosol,loc_index_1~1) @ 0.1\n" + 
         "'diffusion-all-2' A(loc~cytosol,loc_index_1~1) -> A(loc~cytosol,loc_index_1~0) @ 0.1\n" + 
@@ -579,12 +595,12 @@ public class SpatialTranslatorTest {
         "%init: 800 A(state~green)\n" + 
         "%init: 800 A(state~red,loc~cytosol,loc_index_1~0)\n" + 
         "\n" + 
+        "%var: 'green count' 800.0\n" + 
+        "%var: 'constant' 12.0\n" + 
         "%var: 'all A not plotted' A\n" + 
         "%var: 'all A plotted' A\n" + 
         "%var: 'all red' A(state~red)\n" + 
-        "%var: 'constant' 12.0\n" + 
         "%var: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
-        "%var: 'green count' 800.0\n" + 
         "%var: 'red[0]' A(state~red,loc~cytosol,loc_index_1~0)\n" + 
         "%var: 'red[1]' A(state~red,loc~cytosol,loc_index_1~1)\n" + 
         "%var: 'red[2]' A(state~red,loc~cytosol,loc_index_1~2)\n" + 
@@ -608,6 +624,7 @@ public class SpatialTranslatorTest {
         "";
 
     private static final String INFINITE_RATE_INPUT = 
+        "%agent: A(state~blue~red~green)\n" +
         "%compartment: cytosol [4]\n" + 
         "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
         "\n" + 
@@ -627,7 +644,7 @@ public class SpatialTranslatorTest {
         "%obs: 'red[3]' cytosol[3] A(state~red) \n";
     
     private static final String INFINITE_RATE_OUTPUT = 
-        "%agent: A(state~blue~green~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
+        "%agent: A(state~blue~red~green,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "\n" + 
         "'diffusion-all-1' A(loc~cytosol,loc_index_1~0) -> A(loc~cytosol,loc_index_1~1) @ [inf]\n" + 
         "'diffusion-all-2' A(loc~cytosol,loc_index_1~1) -> A(loc~cytosol,loc_index_1~0) @ [inf]\n" + 
@@ -679,6 +696,8 @@ public class SpatialTranslatorTest {
         "";
 
     private static final String TRANSPORT_ONLY_INPUT = 
+        "%agent: A(state~red)\n" + 
+        "%agent: B\n" +
         "%compartment: cytosol [4]\n" + 
         "%compartment: membrane [4]\n" + 
         "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
@@ -737,6 +756,8 @@ public class SpatialTranslatorTest {
     // TODO - test localised agent and complex creation
     
     private static final String TRANSPORT_DIFFERENT_DIMENSIONS_INPUT = 
+        "%agent: A(state~blue~red)\n" + 
+        "%agent: B\n" + 
         "%compartment: cytosol [4][5]\n" + 
         "%compartment: membrane [3]\n" + 
         "%compartment: nucleus\n" + 
@@ -798,6 +819,7 @@ public class SpatialTranslatorTest {
         "";
 
     private static final String TRANSPORT_6WAY_INPUT = 
+		"%agent: RED\n" + 
         "%compartment: cytosol [3][3]\n" + 
         "%link: '6way' cytosol ['x']['y'] <-> cytosol ['x'+1]['y'] \n" + 
         "%link: '6way' cytosol ['x']['y'] <-> cytosol ['x']['y'+1] \n" + 
@@ -808,7 +830,7 @@ public class SpatialTranslatorTest {
         "";
     
     private static final String TRANSPORT_6WAY_OUTPUT = 
-        "%agent: RED(loc~cytosol,loc_index_1~0~1~2,loc_index_2~0~1~2)\n" + 
+		"%agent: RED(loc~cytosol,loc_index_1~0~1~2,loc_index_2~0~1~2)\n" + 
         "\n" + 
         "'diffusion RED-1' RED(loc~cytosol,loc_index_1~0,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~0) @ 0.05\n" + 
         "'diffusion RED-2' RED(loc~cytosol,loc_index_1~1,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~0,loc_index_2~0) @ 0.05\n" + 
@@ -850,6 +872,10 @@ public class SpatialTranslatorTest {
         "";
 
     private static final String TRANSPORT_LIMITED_LINKS_INPUT = 
+        "%agent: A(l1,l2)\n" +
+        "%agent: B(l1)\n" +
+        "%agent: C(l1,l2)\n" +
+        "%agent: D(l1)\n" +
         "%compartment: cytosol [4]\n" + 
         "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
         "\n" + 
@@ -911,12 +937,14 @@ public class SpatialTranslatorTest {
         "";
 
     private static final String REACTION_ONLY_INPUT = 
+        "%agent: A(state~blue~red)\n" + 
+        "%agent: B\n" + 
         "%compartment: cytosol [4]\n" + 
         "'heating' cytosol[0] A(state~blue) -> A(state~red) @ 1.0\n" + 
         "'cooling' cytosol A(state~red) -> A(state~blue) @ 0.05\n" + 
         "'dimerisation' cytosol A(),A() -> B() @ 0.05\n" + 
         "";
-    
+        
     private static final String REACTION_ONLY_OUTPUT = 
         "%agent: A(state~blue~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "%agent: B(loc~cytosol,loc_index_1~0~1~2~3)\n" + 
@@ -936,7 +964,31 @@ public class SpatialTranslatorTest {
         "\n" + 
         "";
 
+    private static final String VARIABLES_ONLY_INPUT = 
+        "%agent: egfr-inside(Y1068~pY)\n" + 
+        "%var: 'RP-1' egfr-inside(Y1068~pY?)\n" + 
+        "%var: 'C' 300\n" + 
+        "%var: 'B' 200\n" + 
+        "%var: 'A' 100\n" + 
+        "";
+    
+    private static final String VARIABLES_ONLY_OUTPUT = 
+        "%agent: egfr-inside(Y1068~pY)\n" + 
+        "\n" + 
+        "\n" + 
+        "\n" + 
+        "\n" + 
+        "%var: 'RP-1' egfr-inside(Y1068~pY?)\n" + 
+        "%var: 'C' 300.0\n" + 
+        "%var: 'B' 200.0\n" + 
+        "%var: 'A' 100.0\n" + 
+        "\n" + 
+        "";
+
     private static final String AGENT_ORDERING_INPUT = 
+        "%agent: DNA(binding,downstream,upstream)\n" + 
+        "%agent: RNA(downstream)\n" + 
+        "%agent: RNAP(rna,dna)\n" + 
         "DNA(binding!1,downstream!3), RNAP(dna!1,rna!2), RNA(downstream!2), DNA(upstream!3,binding!_) -> DNA(binding,downstream!1), RNAP(dna,rna), RNA(downstream), DNA(upstream!1,binding!_) @ 1.0\n";
     
     private static final String AGENT_ORDERING_OUTPUT = 
@@ -953,6 +1005,7 @@ public class SpatialTranslatorTest {
         "";
 
     private static final String OBSERVATIONS_ONLY_INPUT = 
+        "%agent: A(state~blue~red)\n" +
         "%compartment: cytosol [4]\n" + 
         "%obs: A(state~blue)\n" + 
         "%obs: 'all red' A(state~red)\n" + 
@@ -996,6 +1049,8 @@ public class SpatialTranslatorTest {
     // TODO handle plot of transport and transforms
     
     private static final String INIT_ONLY_INPUT = 
+        "%agent: A(state~blue~red~green~purple~orange~yellow~brown~white~black~cyan)\n" +
+        "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front)\n" +
         "%compartment: cytosol [4]\n" + 
 		"%init: 800 A(state~green),B(s~right) \n" + 
 		"%init: 800 A(state~purple),B:cytosol(s~centre) \n" + 
@@ -1010,8 +1065,8 @@ public class SpatialTranslatorTest {
         "";
     
     private static final String INIT_ONLY_OUTPUT = 
-        "%agent: A(state~black~blue~brown~cyan~green~orange~purple~red~white~yellow,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
-        "%agent: B(s~back~bottom~centre~front~inside~left~middle~outside~right~top,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
+        "%agent: A(state~blue~red~green~purple~orange~yellow~brown~white~black~cyan,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
+        "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "\n" + 
         "\n" + 
         "\n" + 

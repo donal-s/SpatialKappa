@@ -19,6 +19,7 @@ import org.junit.Test;
 
 public class VariableExpressionTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testConstructor() {
         VariableReference reference = new VariableReference("x");

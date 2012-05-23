@@ -20,6 +20,7 @@ import org.junit.Test;
 
 public class TransformTest extends TransitionTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testTransform() {
         List<Complex> leftComplexes = getComplexes(new Agent("agent1"));
@@ -249,6 +250,7 @@ public class TransformTest extends TransitionTest {
         transform.createTransformMap(leftAgents, rightAgents);
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testCreateCloneMap() {
         List<Agent> leftAgents = new ArrayList<Agent>();

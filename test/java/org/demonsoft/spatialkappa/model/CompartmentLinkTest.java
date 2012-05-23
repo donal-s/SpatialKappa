@@ -13,6 +13,7 @@ import org.junit.Test;
 
 public class CompartmentLinkTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testCompartmentLink() {
         Location reference1 = new Location("a");

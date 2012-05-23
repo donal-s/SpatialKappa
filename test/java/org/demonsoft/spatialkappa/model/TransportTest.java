@@ -14,6 +14,7 @@ import org.junit.Test;
 
 public class TransportTest extends TransitionTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testTransport_invalid() {
         List<Agent> agents = new ArrayList<Agent>();

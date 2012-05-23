@@ -21,6 +21,7 @@ import org.antlr.runtime.Parser;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.demonsoft.spatialkappa.model.Agent;
+import org.demonsoft.spatialkappa.model.AggregateAgent;
 import org.demonsoft.spatialkappa.model.BooleanExpression;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.CompartmentLink;
@@ -247,6 +248,29 @@ public class SpatialKappaWalkerTest {
         checkPlotExpr("%plot: 'label'\n", "label");
     }
 
+    @Test
+    public void testProg_emptyInput() throws Exception {
+        reset(mocks);
+        replay(mocks);
+        runParserRule("prog", "");
+        verify(mocks);
+
+        reset(mocks);
+        replay(mocks);
+        runParserRule("prog", "\n");
+        verify(mocks);
+
+        reset(mocks);
+        replay(mocks);
+        runParserRule("prog", "# comment");
+        verify(mocks);
+
+        reset(mocks);
+        replay(mocks);
+        runParserRule("prog", "# comment\n");
+        verify(mocks);
+    }
+    
     private void checkPlotExpr(String inputText, String label) throws Exception {
         reset(mocks);
         kappaModel.addPlot(label);
@@ -371,16 +395,19 @@ public class SpatialKappaWalkerTest {
         Method getTreeMethod = ruleOutput.getClass().getMethod("getTree", (Class[]) null);
         CommonTree tree = (CommonTree) getTreeMethod.invoke(ruleOutput, (Object[]) null);
 
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
-        nodes.setTokenStream(tokens);
-        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
-        walker.setKappaModel(kappaModel);
-        ruleMethod = SpatialKappaWalker.class.getMethod(rulename, (Class[]) null);
-        if (!"void".equals(ruleMethod.getReturnType().getName())) {
-            return ruleMethod.invoke(walker, (Object[]) null);
+        if (tree != null) {
+	        CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
+	        nodes.setTokenStream(tokens);
+	        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
+	        walker.setKappaModel(kappaModel);
+	        ruleMethod = SpatialKappaWalker.class.getMethod(rulename, (Class[]) null);
+	        if (!"void".equals(ruleMethod.getReturnType().getName())) {
+	            return ruleMethod.invoke(walker, (Object[]) null);
+	        }
+	        ruleMethod.invoke(walker, (Object[]) null);
+	        return walker.kappaModel;
         }
-        ruleMethod.invoke(walker, (Object[]) null);
-        return walker.kappaModel;
+		return kappaModel;
     }
 
     @Test
@@ -399,6 +426,26 @@ public class SpatialKappaWalkerTest {
     }
 
     @Test
+    public void testAgentExpr() throws Exception {
+        checkAgentExpr("Agent", "%agent: Agent");
+        checkAgentExpr("Agent", "%agent: Agent()");
+        checkAgentExpr("Agent(none,single~value,multiple~val1~val2~val3)", 
+        		"%agent: Agent(none,single~value,multiple~val1~val2~val3)");
+    }
+    
+
+    
+    private void checkAgentExpr(String expected, String inputText) throws Exception {
+        Capture<AggregateAgent> agent = new Capture<AggregateAgent>();
+        reset(mocks);
+        kappaModel.addAgentDeclaration(capture(agent));
+        replay(mocks);
+        runParserRule("agentExpr", inputText);
+        verify(mocks);
+        assertEquals(expected, agent.getValue().toString());
+	}
+
+	@Test
     public void testAgent() throws Exception {
 //        checkAgent("A", "A");
 //        checkAgent("A", "A()");

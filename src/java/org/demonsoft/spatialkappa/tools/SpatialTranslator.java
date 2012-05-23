@@ -28,6 +28,7 @@ import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.InitialValue;
+import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.LocatedTransform;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Transform;
@@ -73,6 +74,9 @@ public class SpatialTranslator {
 
         CommonTree t = (CommonTree) r.getTree();
 
+        if (t == null) {
+        	return new KappaModel();
+        }
         CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
         nodes.setTokenStream(tokens);
         SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
@@ -84,11 +88,11 @@ public class SpatialTranslator {
 
         String aggregateLocationState = getAggregateLocationState(kappaModel.getCompartments());
         
-        List<String> agentNames = new ArrayList<String>(kappaModel.getAggregateAgentMap().keySet());
+        List<String> agentNames = new ArrayList<String>(kappaModel.getAgentDeclarationMap().keySet());
         Collections.sort(agentNames);
         
         for (String agentName : agentNames) {
-            builder.append(getKappaString(kappaModel.getAggregateAgentMap().get(agentName), aggregateLocationState));
+            builder.append(getKappaString(kappaModel.getAgentDeclarationMap().get(agentName), aggregateLocationState));
         }
         builder.append("\n");
         
@@ -108,8 +112,7 @@ public class SpatialTranslator {
             builder.append(getKappaString(initialValue));
         }
         builder.append("\n");
-        List<String> variableNames = new ArrayList<String>(kappaModel.getVariables().keySet());
-        Collections.sort(variableNames); // TODO need to sort to fix referencing issues
+        List<String> variableNames = new ArrayList<String>(kappaModel.getOrderedVariableNames());
         
         for (String variableName : variableNames) {
             Variable variable = kappaModel.getVariables().get(variableName);
@@ -192,9 +195,7 @@ public class SpatialTranslator {
                 firstElement = false;
             }
             builder.append(site.getName());
-            List<String> states = new ArrayList<String>(site.getStates());
-            Collections.sort(states);
-            for (String state : states) {
+            for (String state : site.getStates()) {
                 builder.append("~").append(state);
             }
         }
@@ -329,15 +330,15 @@ public class SpatialTranslator {
             String[][] stateSuffixPairs = getLinkStateSuffixPairs(compartmentLink, kappaModel.getCompartments());
             List<Agent> agents = transport.getAgents();
             if (agents != null) {
-                labelSuffix = writeAgents(builder, stateSuffixPairs, transport, compartmentLink, agents, labelSuffix, kappaModel.getAggregateAgentMap(), forceSuffix);
+                labelSuffix = writeAgents(builder, stateSuffixPairs, transport, compartmentLink, agents, labelSuffix, kappaModel.getAgentDeclarationMap(), forceSuffix);
             }
             else {
-                agents = getAggregateAgents(kappaModel.getAggregateAgentMap());
+                agents = getAggregateAgents(kappaModel.getAgentDeclarationMap());
                 List<Agent> currentAgents = new ArrayList<Agent>();
                 for (Agent agent : agents) {
                     currentAgents.clear();
                     currentAgents.add(agent);
-                    labelSuffix =  writeAgents(builder, stateSuffixPairs, transport, compartmentLink, currentAgents, labelSuffix, kappaModel.getAggregateAgentMap(), forceSuffix);
+                    labelSuffix =  writeAgents(builder, stateSuffixPairs, transport, compartmentLink, currentAgents, labelSuffix, kappaModel.getAgentDeclarationMap(), forceSuffix);
                 }
             }
         }

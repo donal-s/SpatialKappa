@@ -56,8 +56,19 @@ public class AgentSite implements Serializable {
     
     @Override
     public String toString() {
-        return name + (state != null ? ("~" + state) : "") + (linkName != null ? ("!" + linkName) : "");
-        
+    	StringBuilder output = new StringBuilder(name);
+    	if (state != null) {
+    		output.append("~").append(state);
+    	}
+    	if (linkName != null) {
+    		if ("?".equals(linkName)) {
+    			output.append("?");
+    		}
+    		else {
+    			output.append("!").append(linkName);
+    		}
+    	}
+        return output.toString();
     }
     
     @Override

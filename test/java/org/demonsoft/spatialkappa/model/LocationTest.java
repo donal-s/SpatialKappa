@@ -10,6 +10,7 @@ import org.junit.Test;
 
 public class LocationTest {
 
+    @SuppressWarnings("unused")
 	@Test
 	public void testConstructor() {
         try {

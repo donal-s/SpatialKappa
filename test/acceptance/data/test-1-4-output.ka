@@ -5,9 +5,9 @@
 
 %init: 1000 A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1)
 
-%var: 'all dimer' A(s!_)
 %var: 'all monomer A' A(s)
 %var: 'all monomer B' B(s)
+%var: 'all dimer' A(s!_)
 %var: 'dimer AB' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1)
 %var: 'dimer BA' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~0)
 %var: 'same voxel dimer AB' A(s!1,loc~cytosol),B(s!1,loc~cytosol)

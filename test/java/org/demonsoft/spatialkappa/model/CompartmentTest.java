@@ -12,6 +12,7 @@ import org.junit.Test;
 
 public class CompartmentTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testCompartment() {
         try {

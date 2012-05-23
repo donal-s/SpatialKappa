@@ -15,6 +15,7 @@ import org.junit.Test;
 
 public class AgentTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testAgent_nameOnly() {
         try {
@@ -44,6 +45,7 @@ public class AgentTest {
         assertEquals("name:location", agent.toString());
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testAgent_nameAndInterfaces() {
         Set<AgentSite> sites = new HashSet<AgentSite>();
@@ -93,10 +95,11 @@ public class AgentTest {
         assertEquals("name:location(site1~state1!link1,site2~state2!link2)", agent.toString());
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testAgent_nameAndInterfaces_varArgs() {
         AgentSite site1 = new AgentSite("site1", "state1", "link1");
-        AgentSite site2 = new AgentSite("site2", "state2", "link2");
+        AgentSite site2 = new AgentSite("site2", "state2", "?");
         
         try {
             new Agent(null, site1, site2);
@@ -115,7 +118,7 @@ public class AgentTest {
         }
         
         Agent agent = new Agent("name", site1, site2);
-        assertEquals("name(site1~state1!link1,site2~state2!link2)", agent.toString());
+        assertEquals("name(site1~state1!link1,site2~state2?)", agent.toString());
         assertEquals("name", agent.name);
         assertNull(agent.location);
         
@@ -130,7 +133,7 @@ public class AgentTest {
         }
         
         agent = new Agent("name", (Location) null, site1, site2);
-        assertEquals("name(site1~state1!link1,site2~state2!link2)", agent.toString());
+        assertEquals("name(site1~state1!link1,site2~state2?)", agent.toString());
         assertEquals("name", agent.name);
         assertNull(agent.location);
         
@@ -138,7 +141,7 @@ public class AgentTest {
         agent = new Agent("name", location, site1, site2);
         assertEquals("name", agent.name);
         assertSame(location, agent.location);
-        assertEquals("name:location(site1~state1!link1,site2~state2!link2)", agent.toString());
+        assertEquals("name:location(site1~state1!link1,site2~state2?)", agent.toString());
     }
 
     @Test
@@ -216,11 +219,11 @@ public class AgentTest {
 
         Set<AgentSite> sites = new HashSet<AgentSite>();
         sites.add(new AgentSite("site1", "state1", "link1"));
-        sites.add(new AgentSite("site2", "state2", "link2"));
+        sites.add(new AgentSite("site2", "state2", "?"));
         
         agent = new Agent("name", sites);
-        assertEquals("name(site1~state1!link1,site2~state2!link2)", agent.toString());
-        assertEquals("name(site1~state1!link1,site2~state2!link2,suffix)", agent.toString("suffix"));
+        assertEquals("name(site1~state1!link1,site2~state2?)", agent.toString());
+        assertEquals("name(site1~state1!link1,site2~state2?,suffix)", agent.toString("suffix"));
     }
 
 

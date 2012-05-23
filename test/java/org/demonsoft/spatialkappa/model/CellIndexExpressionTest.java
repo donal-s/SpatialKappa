@@ -14,6 +14,7 @@ import org.junit.Test;
 
 public class CellIndexExpressionTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testConstructor() {
         CellIndexExpression expr1 = new CellIndexExpression(new VariableReference("x"));

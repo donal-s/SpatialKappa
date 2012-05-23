@@ -67,7 +67,7 @@ tokens {
 
 prog
   :
-  (line)+
+  (line)*
   ;
 
 line
@@ -186,11 +186,18 @@ options {backtrack=true;}
 
 agentExpr
   :
-  '%agent:' id '(' (id stateExpr* (',' id stateExpr*)*)? ')'
+  '%agent:' agentName=id ('(' (agentIfaceExpr (',' agentIfaceExpr)*)? ')')?
     ->
-     // TODO ignore for now
-     AGENT_DECL
+     ^(AGENT_DECL $agentName agentIfaceExpr*)
   ;
+
+agentIfaceExpr
+  :
+  id stateExpr*
+    ->
+      ^(INTERFACE id stateExpr*)
+  ;
+
 
 compartmentExpr
   :
@@ -556,7 +563,7 @@ COMMENT
     '\n'
     | '\r'
    )*
-  NEWLINE {$channel=HIDDEN;}
+  {$channel=HIDDEN;}
   ;
 
 WS

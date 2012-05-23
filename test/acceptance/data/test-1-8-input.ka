@@ -1,0 +1,20 @@
+%agent: Receptor-membrane(dl,ligand)
+%agent: Receptor-cytosol(dl,state~inactive~active)
+%agent: Ligand(r)
+
+%compartment: cytosol [2]
+%compartment: membrane [2]
+
+%init: 1000 Receptor-cytosol:cytosol(dl!1),Receptor-membrane:membrane(dl!1)
+%init: 100 Ligand:membrane(r)
+
+Ligand(r),Receptor-membrane(dl!1,ligand),Receptor-cytosol(dl!1,state~inactive) -> \
+  Ligand(r!2),Receptor-membrane(dl!1,ligand!2),Receptor-cytosol(dl!1,state~active) @ 'link rate'
+Ligand(r!2),Receptor-membrane(dl!1,ligand!2),Receptor-cytosol(dl!1,state~active) -> \
+  Ligand(r),Receptor-membrane(dl!1,ligand),Receptor-cytosol(dl!1,state~inactive) @ 'unlink rate'
+
+%var: 'link rate' 10
+%var: 'unlink rate' 10
+
+%obs: 'inactive' Receptor-cytosol(state~inactive)
+%obs: 'active' Receptor-cytosol(state~active)

@@ -17,8 +17,7 @@ import org.junit.Test;
 
 public class SpatialKappaParserTest {
 
-	// TODO test empty input file
-	// TODO test comments eating up newlines
+    //TODO require %agent tags for default state specification
 	
     @Test
     public void testRuleExpr() throws Exception {
@@ -127,9 +126,11 @@ public class SpatialKappaParserTest {
 
     @Test
     public void testAgentExpr() throws Exception {
-        // TODO agent expressions ignored for now
-        runParserRule("agentExpr", "%agent: Agent()", "AGENT_DECL");
-        runParserRule("agentExpr", "%agent: Agent(none,single~value,multiple~val1~val2~val3)", "AGENT_DECL");
+        runParserRule("agentExpr", "%agent: Agent", "(AGENT_DECL Agent)");
+        runParserRule("agentExpr", "%agent: Agent()", "(AGENT_DECL Agent)");
+        runParserRule("agentExpr", "%agent: Agent(none,single~value,multiple~val1~val2~val3)", 
+        		"(AGENT_DECL Agent (INTERFACE none) (INTERFACE single (STATE value)) " +
+        		"(INTERFACE multiple (STATE val1) (STATE val2) (STATE val3)))");
     }
     
 
@@ -194,6 +195,26 @@ public class SpatialKappaParserTest {
 //        runParserRuleFail("varExpr", "%var: A(x~a),B(y~d)"); // TODO - handle this
     }
 
+    @Test
+    public void testProg_withLineComments() throws Exception {
+    	
+        runParserRule("prog", "%var: 'kp1' 1.667e-06\n" + 
+        		"%var: 'km1' 0.06\n", 
+                "(VARIABLE (VAR_EXPR 1.667e-06) kp1) (VARIABLE (VAR_EXPR 0.06) km1)");
+        
+        runParserRule("prog", "%var: 'kp1' 1.667e-06 # ligand-monomer binding (scaled)\n" + 
+        		"%var: 'km1' 0.06 # ligand-monomer dissociation\n", 
+                "(VARIABLE (VAR_EXPR 1.667e-06) kp1) (VARIABLE (VAR_EXPR 0.06) km1)");
+    }
+    
+    @Test
+    public void testProg_emptyInput() throws Exception {
+        runParserRule("prog", "", null);
+        runParserRule("prog", "\n", null);
+        runParserRule("prog", "# comment", null);
+        runParserRule("prog", "# comment\n", null);
+    }
+    
     @Test
     public void testModExpr() throws Exception {
         runParserRule("modExpr", "%mod: ([T]>10) && ('v1'/'v2') < 1 do $ADD 'n' C(x1~p)", 

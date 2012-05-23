@@ -14,6 +14,7 @@ import org.junit.Test;
 
 public class PerturbationEffectTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testPerturbationEffect() {
         VariableExpression expression = new VariableExpression("2");

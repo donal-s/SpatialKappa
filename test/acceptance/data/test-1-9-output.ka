@@ -1,0 +1,133 @@
+%agent: Grb2(SH2,SH3,loc~cytosol~extracellular)
+%agent: Shc(PTB,Y317~Y~pY,loc~cytosol~extracellular)
+%agent: Sos(dom,loc~cytosol~extracellular)
+%agent: egf(r,loc~cytosol~extracellular)
+%agent: egfr-inside(dl,r,Y1068~Y~pY,Y1148~Y~pY,loc~cytosol~extracellular)
+%agent: egfr-outside(l,dl,loc~cytosol~extracellular)
+
+
+egfr-outside(dl!1,l),egfr-inside(dl!1,r),egf(r) -> egfr-outside(dl!1,l!2),egfr-inside(dl!1,r),egf(r!2) @ 'kp1'
+egfr-outside(dl!1,l!2),egfr-inside(dl!1,r),egf(r!2) -> egfr-outside(dl!1,l),egfr-inside(dl!1,r),egf(r) @ 'km1'
+egfr-outside(dl!1,l!_),egfr-inside(dl!1,r),egfr-outside(dl!2,l!_),egfr-inside(dl!2,r) -> egfr-outside(dl!1,l!_),egfr-inside(dl!1,r!3),egfr-outside(dl!2,l!_),egfr-inside(dl!2,r!3) @ 'kp2'
+egfr-outside(dl!1,l!_),egfr-inside(dl!1,r!3),egfr-outside(dl!2,l!_),egfr-inside(dl!2,r!3) -> egfr-outside(dl!1,l!_),egfr-inside(dl!1,r),egfr-outside(dl!2,l!_),egfr-inside(dl!2,r) @ 'km2'
+egfr-inside(Y1068~Y,r!_) -> egfr-inside(Y1068~pY,r!_) @ 'kp3'
+egfr-inside(Y1148~Y,r!_) -> egfr-inside(Y1148~pY,r!_) @ 'kp3'
+egfr-inside(Y1068~pY) -> egfr-inside(Y1068~Y) @ 'km3'
+egfr-inside(Y1148~pY) -> egfr-inside(Y1148~Y) @ 'km3'
+egfr-inside(Y1148~pY!1,r!_),Shc(PTB!1,Y317~Y) -> egfr-inside(Y1148~pY!1,r!_),Shc(PTB!1,Y317~pY) @ 'kp14'
+Shc(PTB!_,Y317~pY) -> Shc(PTB!_,Y317~Y) @ 'km14'
+egfr-inside(Y1068~pY),Grb2(SH2,SH3) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3) @ 'kp9'
+egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1068~pY),Grb2(SH2,SH3) @ 'km9'
+egfr-inside(Y1068~pY),Grb2(SH2,SH3!_) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!_) @ 'kp11'
+egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!_) -> egfr-inside(Y1068~pY),Grb2(SH2,SH3!_) @ 'km11'
+egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) @ 'kp10'
+egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) @ 'km10'
+egfr-inside(Y1148~pY),Shc(PTB,Y317~Y) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~Y) @ 'kp13'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~Y) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~Y) @ 'km13'
+egfr-inside(Y1148~pY),Shc(PTB,Y317~pY) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY) @ 'kp15'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY) @ 'km15'
+egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp18'
+egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'km18'
+egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'kp20'
+egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'km20'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) @ 'kp17'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) @ 'km17'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp24'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) @ 'km24'
+Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp19'
+Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km19'
+Shc(PTB,Y317~pY),Grb2(SH2,SH3) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp21'
+Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3) @ 'km21'
+Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) @ 'kp23'
+Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) @ 'km23'
+Shc(PTB,Y317~pY) -> Shc(PTB,Y317~Y) @ 'km16'
+Grb2(SH2,SH3),Sos(dom) -> Grb2(SH2,SH3!1),Sos(dom!1) @ 'kp12'
+Grb2(SH2,SH3!1),Sos(dom!1) -> Grb2(SH2,SH3),Sos(dom) @ 'km12'
+Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp22'
+Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km22'
+
+%init: 1200000 egf(loc~extracellular)
+%init: 100000 Grb2(loc~cytosol)
+%init: 270000 Shc(loc~cytosol)
+%init: 13000 Sos(loc~cytosol)
+%init: 180000 egfr-inside(dl!1,loc~cytosol),egfr-outside(dl!1,loc~extracellular)
+%init: 49000 Grb2(SH3!1,loc~cytosol),Sos(dom!1,loc~cytosol)
+
+%var: 'egf_tot' 1200000.0
+%var: 'egfr_tot' 180000.0
+%var: 'Grb2_tot' 100000.0
+%var: 'Shc_tot' 270000.0
+%var: 'Sos_tot' 13000.0
+%var: 'Grb2_Sos_tot' 49000.0
+%var: 'kp1' 1.667E-6
+%var: 'km1' 0.06
+%var: 'kp2' 5.556E-6
+%var: 'km2' 0.1
+%var: 'kp3' 0.5
+%var: 'km3' 4.505
+%var: 'kp14' 3.0
+%var: 'km14' 0.03
+%var: 'km16' 0.005
+%var: 'kp9' 8.333E-7
+%var: 'km9' 0.05
+%var: 'kp10' 5.556E-6
+%var: 'km10' 0.06
+%var: 'kp11' 1.25E-6
+%var: 'km11' 0.03
+%var: 'kp13' 2.5E-5
+%var: 'km13' 0.6
+%var: 'kp15' 2.5E-7
+%var: 'km15' 0.3
+%var: 'kp17' 1.667E-6
+%var: 'km17' 0.1
+%var: 'kp18' 2.5E-7
+%var: 'km18' 0.3
+%var: 'kp19' 5.556E-6
+%var: 'km19' 0.0214
+%var: 'kp20' 6.667E-8
+%var: 'km20' 0.12
+%var: 'kp24' 5.0E-6
+%var: 'km24' 0.0429
+%var: 'kp21' 1.667E-6
+%var: 'km21' 0.01
+%var: 'kp23' 1.167E-5
+%var: 'km23' 0.1
+%var: 'kp12' 5.556E-8
+%var: 'km12' 0.0015
+%var: 'kp22' 1.667E-5
+%var: 'km22' 0.064
+%var: 'Dimers' egfr-inside(r!1),egfr-inside(r!1)
+%var: 'Sos_act-1' Grb2(SH2!2,SH3!3),Shc(PTB!_,Y317~pY!2),Sos(dom!3)
+%var: 'Sos_act-2' Grb2(SH2!1,SH3!2),Sos(dom!2),egfr-inside(Y1068~pY!1)
+%var: 'Sos_act' ('Sos_act-1' + 'Sos_act-2')
+%var: 'RP-1' egfr-inside(Y1068~pY?)
+%var: 'RP-2' egfr-inside(Y1148~pY?)
+%var: 'RP' ('RP-1' + 'RP-2')
+%var: 'Shc_Grb' Grb2(SH2!1),Shc(Y317~pY!1)
+%var: 'Shc_Grb_Sos' Grb2(SH2!1,SH3!2),Shc(Y317~pY!1),Sos(dom!2)
+%var: 'R_Grb2' Grb2(SH2!1),egfr-inside(Y1068~pY!1)
+%var: 'R_Shc' Shc(PTB!1,Y317~Y),egfr-inside(Y1148~pY!1)
+%var: 'R_ShcP' Shc(PTB!1,Y317~pY?),egfr-inside(Y1148~pY!1)
+%var: 'ShcP' Shc(Y317~pY?)
+%var: 'R_G_S' Grb2(SH2!1,SH3!2),Sos(dom!2),egfr-inside(Y1068~pY!1)
+%var: 'R_S_G_S' Grb2(SH2!2,SH3!3),Shc(PTB!1,Y317~pY!2),Sos(dom!3),egfr-inside(Y1148~pY!1)
+%var: 'Efgr_total' egfr-inside
+%var: 'Shc_total' Shc
+%var: 'Sos_total' Sos
+%var: 'Grb2_total' Grb2
+%plot: 'Dimers'
+%plot: 'Sos_act'
+%plot: 'RP'
+%plot: 'Shc_Grb'
+%plot: 'Shc_Grb_Sos'
+%plot: 'R_Grb2'
+%plot: 'R_Shc'
+%plot: 'R_ShcP'
+%plot: 'ShcP'
+%plot: 'R_G_S'
+%plot: 'R_S_G_S'
+%plot: 'Efgr_total'
+%plot: 'Shc_total'
+%plot: 'Sos_total'
+%plot: 'Grb2_total'
+

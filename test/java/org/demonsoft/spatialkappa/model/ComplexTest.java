@@ -16,6 +16,7 @@ import org.junit.Test;
 
 public class ComplexTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testComplex_collection() {
         try {
@@ -75,6 +76,7 @@ public class ComplexTest {
 
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testComplex_varargs() {
         try {
@@ -126,6 +128,7 @@ public class ComplexTest {
         assertEquals(new Complex(agent1, agent2).toString(), new Complex(agent2, agent1).toString());
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testAgentLinks() {
         Complex complex = new Complex(new Agent("agent1"), new Agent("agent2"), new Agent("agent3"));

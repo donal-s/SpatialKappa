@@ -28,16 +28,16 @@
 %init: 500 B(loc~membrane,loc_index_1~0)
 %init: 500 B(loc~membrane,loc_index_1~1)
 
-%var: 'all dimer' A(s!_)
+%var: 'break-rate' 50.0
 %var: 'all monomer A' A(s)
 %var: 'all monomer B' B(s)
-%var: 'break-rate' 50.0
 %var: 'cytosol monomer A' A(s,loc~cytosol)
+%var: 'membrane monomer A' A(s,loc~membrane)
 %var: 'cytosol voxel monomer B' B(s,loc~cytosol,loc_index_1~0)
+%var: 'membrane voxel monomer B' B(s,loc~membrane,loc_index_1~0)
+%var: 'all dimer' A(s!_)
 %var: 'dimer AB' A(s!1,loc~cytosol),B(s!1,loc~membrane)
 %var: 'dimer BA' A(s!1,loc~membrane),B(s!1,loc~cytosol)
-%var: 'membrane monomer A' A(s,loc~membrane)
-%var: 'membrane voxel monomer B' B(s,loc~membrane,loc_index_1~0)
 %var: 'same voxel dimer AB' A(s!1,loc~cytosol),B(s!1,loc~cytosol)
 %var: 'same voxel dimer BA' A(s!1,loc~cytosol),B(s!1,loc~cytosol)
 %plot: 'all monomer A'

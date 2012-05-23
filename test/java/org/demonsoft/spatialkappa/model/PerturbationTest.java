@@ -13,6 +13,7 @@ public class PerturbationTest {
     private PerturbationEffect effect = EasyMock.createMock(PerturbationEffect.class);
     private BooleanExpression conditionFalse = new BooleanExpression(false);
 
+    @SuppressWarnings("unused")
     @Test
     public void testPerturbation() {
         

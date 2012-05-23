@@ -8,6 +8,7 @@ import org.junit.Test;
 
 public class VariableReferenceTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testConstructor() {
         try {

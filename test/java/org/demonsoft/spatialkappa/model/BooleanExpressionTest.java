@@ -16,6 +16,7 @@ import org.junit.Test;
 
 public class BooleanExpressionTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testBooleanExpression() {
         VariableExpression expr1 = new VariableExpression(2);

@@ -15,6 +15,7 @@ import org.junit.Test;
 
 public class VariableTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testVariable_variableExpression() {
         VariableExpression expression = new VariableExpression(new VariableReference("x"));
@@ -44,6 +45,7 @@ public class VariableTest {
         assertSame(Type.VARIABLE_EXPRESSION, variable.type);
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testVariable_kappaExpression() {
         Complex complex = new Complex(new Agent("agent1"));
@@ -82,6 +84,7 @@ public class VariableTest {
         assertSame(Type.KAPPA_EXPRESSION, variable.type);
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testVariable_transition() {
         try {

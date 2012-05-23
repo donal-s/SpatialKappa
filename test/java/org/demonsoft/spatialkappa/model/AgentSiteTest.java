@@ -9,6 +9,7 @@ import org.junit.Test;
 
 public class AgentSiteTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testAgentInterface_singleState() {
         try {
@@ -23,11 +24,25 @@ public class AgentSiteTest {
         assertEquals("name", site.name);
         assertEquals("state", site.getState());
         assertEquals("link", site.getLinkName());
+        assertEquals("name~state!link", site.toString());
+        
+        site = new AgentSite("name", "state", "_");
+        assertEquals("name", site.name);
+        assertEquals("state", site.getState());
+        assertEquals("_", site.getLinkName());
+        assertEquals("name~state!_", site.toString());
+
+        site = new AgentSite("name", "state", "?");
+        assertEquals("name", site.name);
+        assertEquals("state", site.getState());
+        assertEquals("?", site.getLinkName());
+        assertEquals("name~state?", site.toString());
 
         site = new AgentSite("name", (String) null, null);
         assertEquals("name", site.name);
         assertEquals(null, site.getState());
         assertEquals(null, site.getLinkName());
+        assertEquals("name", site.toString());
     }
 
     @Test

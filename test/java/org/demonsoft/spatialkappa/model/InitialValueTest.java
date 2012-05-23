@@ -14,6 +14,7 @@ import org.junit.Test;
 
 public class InitialValueTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testInitialValue_value() {
         List<Complex> complexes = Utils.getComplexes(getList(new Agent("A"), 
@@ -56,6 +57,7 @@ public class InitialValueTest {
         assertEquals(null, initialValue.location);
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testInitialValue_reference() {
         List<Complex> complexes = Utils.getComplexes(getList(new Agent("A"), 

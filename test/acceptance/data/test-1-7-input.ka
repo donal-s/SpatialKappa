@@ -1,0 +1,53 @@
+%agent: Receptor-membrane(dl)
+%agent: Receptor-cytosol(dl,l,r)
+
+%compartment: cytosol [2]
+%compartment: membrane [2]
+
+%init: 1000 Receptor-cytosol:cytosol(dl!1),Receptor-membrane:membrane(dl!1)
+
+Receptor-cytosol(l,r),Receptor-cytosol(l,r) -> \
+  Receptor-cytosol(l!1,r),Receptor-cytosol(l,r!1) @ 'link rate'
+Receptor-cytosol(l,r),Receptor-cytosol(l!1,r),Receptor-cytosol(l,r!1) -> \
+  Receptor-cytosol(l!2,r),Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1) @ 'link rate'
+Receptor-cytosol(l,r),Receptor-cytosol(l!2,r),\
+  Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1) -> \
+  Receptor-cytosol(l!3,r),Receptor-cytosol(l!2,r!3),\
+  Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1) @ 'link rate'
+Receptor-cytosol(l,r),Receptor-cytosol(l!3,r),Receptor-cytosol(l!2,r!3),\
+  Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1) -> \
+  Receptor-cytosol(l!4,r),Receptor-cytosol(l!3,r!4),Receptor-cytosol(l!2,r!3),\
+  Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1) @ 'link rate'
+
+Receptor-cytosol(l!2,r),Receptor-cytosol(l,r!2),\
+  Receptor-cytosol(l!1,r),Receptor-cytosol(l,r!1) -> \
+  Receptor-cytosol(l!2,r),Receptor-cytosol(l!3,r!2),\
+  Receptor-cytosol(l!1,r!3),Receptor-cytosol(l,r!1) @ 'link rate'
+Receptor-cytosol(l!2,r),Receptor-cytosol(l,r!2),Receptor-cytosol(l!3,r),\
+  Receptor-cytosol(l!1,r!3),Receptor-cytosol(l,r!1) -> \
+  Receptor-cytosol(l!2,r),Receptor-cytosol(l!4,r!2),Receptor-cytosol(l!3,r!4),\
+  Receptor-cytosol(l!1,r!3),Receptor-cytosol(l,r!1) @ 'link rate'
+
+Receptor-cytosol(l!1),Receptor-cytosol(r!1) -> \
+  Receptor-cytosol(l),Receptor-cytosol(r) @ 'unlink rate'
+
+Receptor-cytosol(l!4,r),Receptor-cytosol(l!3,r!4),Receptor-cytosol(l!2,r!3),\
+  Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1) -> \
+  Receptor-cytosol(l!4,r!5),Receptor-cytosol(l!3,r!4),Receptor-cytosol(l!2,r!3),\
+  Receptor-cytosol(l!1,r!2),Receptor-cytosol(l!5,r!1) @ 'close rate'
+
+
+%var: 'link rate' 10
+%var: 'unlink rate' 10
+%var: 'open rate' 10
+%var: 'close rate' 100
+
+%obs: 'all 1mer' Receptor-cytosol(l,r)
+%obs: 'all 2mer' Receptor-cytosol(l!1,r),Receptor-cytosol(l,r!1)
+%obs: 'all 3mer' Receptor-cytosol(l!2,r),Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1)
+%obs: 'all 4mer' Receptor-cytosol(l!3,r),Receptor-cytosol(l!2,r!3),\
+  Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1)
+%obs: 'all open 5mer' Receptor-cytosol(l!4,r),Receptor-cytosol(l!3,r!4),\
+  Receptor-cytosol(l!2,r!3),Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1)
+%obs: 'all closed 5mer' Receptor-cytosol(l!4,r!5),Receptor-cytosol(l!3,r!4),\
+  Receptor-cytosol(l!2,r!3),Receptor-cytosol(l!1,r!2),Receptor-cytosol(l!5,r!1)

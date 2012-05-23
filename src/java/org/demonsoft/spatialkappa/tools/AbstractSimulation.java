@@ -474,7 +474,7 @@ public abstract class AbstractSimulation implements Simulation, SimulationState 
     protected final Map<String, Integer> getCountsPerAgent() {
         Map<String, Integer> result = new HashMap<String, Integer>();
 
-        for (String agentName : kappaModel.getAggregateAgentMap().keySet()) {
+        for (String agentName : kappaModel.getAgentDeclarationMap().keySet()) {
             int count = 0;
             for (Complex complex : complexStore.getComplexes()) {
                 int instanceCount = 0;

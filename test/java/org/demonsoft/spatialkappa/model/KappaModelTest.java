@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
+import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.demonsoft.spatialkappa.model.VariableExpression.SimulationToken;
 import org.junit.Test;
 
@@ -494,6 +494,7 @@ public class KappaModelTest {
         model.addVariable(agents1, "label", null);
 
         checkVariables(model, "'label' ([agent1])");
+        checkOrderedVariableNames(model, "label");
         checkAggregateAgents(new AggregateAgent("agent1"));
 
         List<Agent> agents2 = new ArrayList<Agent>();
@@ -502,7 +503,27 @@ public class KappaModelTest {
         model.addVariable(agents2, "label2", null);
 
         checkVariables(model, "'label' ([agent1])", "'label2' ([agent1, agent2])");
+        checkOrderedVariableNames(model, "label", "label2");
         checkAggregateAgents(new AggregateAgent("agent1"), new AggregateAgent("agent2"));
+    }
+
+
+    @Test
+    public void testAddVariable_orderingOfNames() {
+        List<Agent> agents1 = new ArrayList<Agent>();
+        agents1.add(new Agent("agent1"));
+
+        model.addVariable(agents1, "C", null);
+
+        List<Agent> agents2 = new ArrayList<Agent>();
+        agents2.add(new Agent("agent1"));
+        agents2.add(new Agent("agent2"));
+        model.addVariable(agents2, "A", null);
+
+        model.addVariable(new VariableExpression(100f), "B");
+
+        checkVariables(model, "'A' ([agent1, agent2])", "'B' (100.0)", "'C' ([agent1])");
+        checkOrderedVariableNames(model, "C", "A", "B");
     }
 
     @Test
@@ -529,6 +550,7 @@ public class KappaModelTest {
         model.addVariable(agents1, "label", location);
 
         checkVariables(model, "'label' cytosol[2] ([agent1])");
+        checkOrderedVariableNames(model, "label");
         checkAggregateAgents(new AggregateAgent("agent1"));
 
         List<Agent> agents2 = new ArrayList<Agent>();
@@ -537,6 +559,7 @@ public class KappaModelTest {
         model.addVariable(agents2, "label2", location);
 
         checkVariables(model, "'label' cytosol[2] ([agent1])", "'label2' cytosol[2] ([agent1, agent2])");
+        checkOrderedVariableNames(model, "label", "label2");
         checkAggregateAgents(new AggregateAgent("agent1"), new AggregateAgent("agent2"));
     }
 
@@ -555,6 +578,28 @@ public class KappaModelTest {
 
         assertEquals(2, model.getPlottedVariables().size());
         assertTrue(model.getPlottedVariables().containsAll(getList("label", "label2")));
+    }
+
+    @Test
+    public void testAddAgentDeclaration() {
+        try {
+            model.addAgentDeclaration(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        assertNotNull(model.getAgentDeclarationMap());
+        assertEquals(0, model.getAgentDeclarationMap().size());
+
+        AggregateAgent agent1 = new AggregateAgent("name1");
+        AggregateAgent agent2 = new AggregateAgent("name2");
+        model.addAgentDeclaration(agent1);
+        model.addAgentDeclaration(agent2);
+        assertEquals(2, model.getAgentDeclarationMap().size());
+        assertEquals(agent1, model.getAgentDeclarationMap().get("name1"));
+        assertEquals(agent2, model.getAgentDeclarationMap().get("name2"));
     }
 
     @Test
@@ -700,6 +745,10 @@ public class KappaModelTest {
         checkListByString(kappaModel.getVariables().values(), expectedVariables);
     }
 
+    private void checkOrderedVariableNames(KappaModel kappaModel, String... expectedVariableNames) {
+        checkListByString(kappaModel.getOrderedVariableNames(), expectedVariableNames);
+    }
+
     private void checkListByString(Collection<? extends Object> objects, String[] expected) {
         assertEquals(expected.length, objects.size());
 
@@ -769,12 +818,14 @@ public class KappaModelTest {
         
         // Plot reference to transform
         model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addTransform("transformRef", getList(new Agent("agent1")), null, new VariableExpression(2f), null);
         model.addPlot("transformRef");
         model.validate();
         
         // Plot reference to kappa expression
         model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addVariable(getList(new Agent("agent1")), "kappaRef", null);
         model.addPlot("kappaRef");
         model.validate();
@@ -801,11 +852,13 @@ public class KappaModelTest {
         
         // Initial value reference to variable
         model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addVariable(new VariableExpression(2f), "variableRef");
         model.addInitialValue(getList(new Agent("agent1")), new VariableReference("variableRef"), null);
         model.validate();
         
         model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addVariable(new VariableExpression(2f), "variableRef");
         model.addVariable(new VariableExpression(new VariableReference("variableRef")), "other");
         model.addInitialValue(getList(new Agent("agent1")), new VariableReference("other"), null);
@@ -813,6 +866,7 @@ public class KappaModelTest {
         
         // Initial value concrete
         model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addInitialValue(getList(new Agent("agent1")), "1000", null);
         model.validate();
     }
@@ -864,6 +918,7 @@ public class KappaModelTest {
     public void testValidate_transform() {
         // Missing transform reference
         model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addTransform(null, getList(new Agent("agent1")), null, 
                 new VariableExpression(new VariableReference("unknown")), 
                 null);
@@ -871,6 +926,7 @@ public class KappaModelTest {
         
         // Non fixed transform reference
         model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addVariable(new VariableExpression(SimulationToken.EVENTS), "variableRef");
         model.addTransform(null, getList(new Agent("agent1")), null, 
                 new VariableExpression(new VariableReference("variableRef")), 
@@ -878,6 +934,7 @@ public class KappaModelTest {
         checkValidate_failure("Reference 'variableRef' not fixed");
         
         model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addTransform(null, getList(new Agent("agent1")), null, 
                 new VariableExpression(Constant.INFINITY), 
                 null);
@@ -910,6 +967,7 @@ public class KappaModelTest {
         
         // Variable reference to kappa expression
         model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addVariable(getList(new Agent("agent1")), "kappaRef", null);
         model.addVariable(new VariableExpression(new VariableReference("kappaRef")), "label");
         model.validate();
@@ -947,6 +1005,32 @@ public class KappaModelTest {
 
          * 
          */
+    }
+    
+    @Test
+    public void testValidate_agentDeclaration() {
+        model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("A"));
+        model.addAgentDeclaration(new AggregateAgent("B", new AggregateSite("site1", "x", null)));
+        model.validate();
+    }
+    
+    @Test
+    public void testValidate_agentDeclarationInvalid() {
+        model = new KappaModel();
+        model.addVariable(TestUtils.getList(new Agent("A")), "test", null);
+        checkValidate_failure("Agent 'A' not declared");
+
+        model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("A", new AggregateSite("site2", (String) null, null)));
+        model.addVariable(TestUtils.getList(new Agent("A", new AgentSite("site1", null, null))), "test", null);
+        checkValidate_failure("Agent site A(site1) not declared");
+        
+        model = new KappaModel();
+        model.addAgentDeclaration(new AggregateAgent("A", new AggregateSite("site1", "x", null)));
+        model.addVariable(TestUtils.getList(new Agent("A", new AgentSite("site1", "y", null))), "test", null);
+        checkValidate_failure("Agent state A(site1~y) not declared");
+        
     }
     
     private void checkValidate_failure(String expectedMessage) {

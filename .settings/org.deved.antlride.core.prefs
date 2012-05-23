@@ -1,9 +1,8 @@
-#Tue Jul 13 20:53:39 BST 2010
 antlr_core_code_generator_XdbgST=false
 antlr_core_code_generator_append_java_package_to_out_folder=false
 antlr_core_code_generator_debug=false
 antlr_core_code_generator_max_memory=0
-antlr_core_code_generator_out_folder=src/java/parser
+antlr_core_code_generator_out_folder=src/java/org/demonsoft/spatialkappa/parser
 antlr_core_code_generator_out_option=p
 antlr_core_code_generator_profile=false
 antlr_core_code_generator_trace=false

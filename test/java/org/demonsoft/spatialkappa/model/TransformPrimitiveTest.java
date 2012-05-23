@@ -38,6 +38,7 @@ public class TransformPrimitiveTest {
         assertEquals("MERGE_COMPLEXES(source, target)", TransformPrimitive.getMergeComplexes(sourceAgent, targetAgent).toString());
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testApply_MergeComplexes() {
 
@@ -75,6 +76,7 @@ public class TransformPrimitiveTest {
 
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testApply_DeleteAgent() {
 
@@ -113,6 +115,7 @@ public class TransformPrimitiveTest {
         checkApplyDeleteAgent(templateAgent, transformMap, new String[] { "[other1(x), other2(y)]" });
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testApply_ChangeState() {
 

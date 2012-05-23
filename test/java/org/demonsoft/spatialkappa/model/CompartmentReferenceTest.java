@@ -18,6 +18,7 @@ import org.junit.Test;
 
 public class CompartmentReferenceTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testConstructor() {
         CellIndexExpression expr1 = new CellIndexExpression("2");

@@ -1,3 +1,4 @@
+%agent: A(state~blue~red)
 %compartment: cytosol [10]
 %link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]
 
