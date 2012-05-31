@@ -1,9 +1,9 @@
 %agent: A(state~blue~red)
 %compartment: cytosol [10]
-%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]
+%channel: intra-cytosol cytosol [x] <-> cytosol [x+1]
 
-%transport: 'diffusion-all' 'intra-cytosol' @ 0.1
-%transport: 'diffusion-red' 'intra-cytosol' A(state~red) @ 0.1
+%transport: 'diffusion-all' intra-cytosol @ 0.1
+%transport: 'diffusion-red' intra-cytosol A(state~red) @ 0.1
 'heating' cytosol[0] A(state~blue) -> A(state~red) @ 1.0
 'cooling' cytosol A(state~red) -> A(state~blue) @ 0.05
 

@@ -4,9 +4,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.*;
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.demonsoft.spatialkappa.model.Agent;
@@ -26,17 +29,20 @@ public class AgentTest {
             // Expected exception
         }
         
+        try {
+            new Agent(null, (Location) null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
         Agent agent = new Agent("name");
         assertEquals("name", agent.name);
-        assertNull(agent.location);
+        assertSame(NOT_LOCATED, agent.location);
         assertEquals("name", agent.toString());
         assertEquals("", agent.getStateHash());
         assertTrue(agent.getSites().isEmpty());
-        
-        agent = new Agent("name", (Location) null);
-        assertEquals("name", agent.name);
-        assertNull(agent.location);
-        assertEquals("name", agent.toString());
         
         Location location = new Location("location");
         agent = new Agent("name", location);
@@ -68,9 +74,17 @@ public class AgentTest {
             // Expected exception
         }
         
+        try {
+            new Agent("name", null, sites);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
         Agent agent = new Agent("name", sites);
         assertEquals("name", agent.name);
-        assertNull(agent.location);
+        assertSame(NOT_LOCATED, agent.location);
         assertEquals("name(site1~state1!link1,site2~state2!link2)", agent.toString());
         
         Set<AgentSite> expectedSites = new HashSet<AgentSite>();
@@ -82,11 +96,6 @@ public class AgentTest {
         for (AgentSite site : agent.getSites()) {
             assertSame(agent, site.agent);
         }
-        
-        agent = new Agent("name", null, sites);
-        assertEquals("name", agent.name);
-        assertNull(agent.location);
-        assertEquals("name(site1~state1!link1,site2~state2!link2)", agent.toString());
         
         Location location = new Location("location");
         agent = new Agent("name", location, sites);
@@ -117,10 +126,18 @@ public class AgentTest {
             // Expected exception
         }
         
+        try {
+            new Agent("name", (Location) null, site1, site2);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
         Agent agent = new Agent("name", site1, site2);
         assertEquals("name(site1~state1!link1,site2~state2?)", agent.toString());
         assertEquals("name", agent.name);
-        assertNull(agent.location);
+        assertSame(NOT_LOCATED, agent.location);
         
         Set<AgentSite> expectedSites = new HashSet<AgentSite>();
         expectedSites.add(new AgentSite(agent, site1));
@@ -132,11 +149,6 @@ public class AgentTest {
             assertSame(agent, site.agent);
         }
         
-        agent = new Agent("name", (Location) null, site1, site2);
-        assertEquals("name(site1~state1!link1,site2~state2?)", agent.toString());
-        assertEquals("name", agent.name);
-        assertNull(agent.location);
-        
         Location location = new Location("location");
         agent = new Agent("name", location, site1, site2);
         assertEquals("name", agent.name);
@@ -144,6 +156,82 @@ public class AgentTest {
         assertEquals("name:location(site1~state1!link1,site2~state2?)", agent.toString());
     }
 
+    @Test
+    public void testSetLocation() {
+        Agent agent = new Agent("name");
+        assertSame(NOT_LOCATED, agent.location);
+
+        try {
+            agent.setLocation(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        Location location = new Location("location");
+        agent.setLocation(location);
+        assertSame(location, agent.location);
+        
+        agent.setLocation(NOT_LOCATED);
+        assertSame(NOT_LOCATED, agent.location);
+    }
+
+    @Test
+    public void testGetLocatedAgents() {
+        AgentSite site1 = new AgentSite("site1", "state1", "link1");
+        AgentSite site2 = new AgentSite("site2", "state2", "?");
+        
+        Location location = new Location("unknown");
+        Agent agent = new Agent("name", location, site1, site2);
+        List<Compartment> compartments = new ArrayList<Compartment>();
+        compartments.add(new Compartment("nucleus"));
+        compartments.add(new Compartment("cytosol", 2, 2));
+        
+        try {
+            agent.getLocatedAgents(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            agent.getLocatedAgents(compartments);
+            fail("unknown location should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        agent.location = NOT_LOCATED;
+        checkGetLocatedAgents(agent, compartments, agent);
+
+        agent.location = new Location("nucleus");
+        checkGetLocatedAgents(agent, compartments, agent);
+
+        agent.location = new Location("cytosol", new CellIndexExpression("1"), new CellIndexExpression("1"));
+        checkGetLocatedAgents(agent, compartments, agent);
+
+        agent.location = new Location("cytosol");
+        checkGetLocatedAgents(agent, compartments, 
+                new Agent("name", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("0")), site1, site2),
+                new Agent("name", new Location("cytosol", new CellIndexExpression("1"), new CellIndexExpression("0")), site1, site2),
+                new Agent("name", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")), site1, site2),
+                new Agent("name", new Location("cytosol", new CellIndexExpression("1"), new CellIndexExpression("1")), site1, site2)
+                );
+    }
+
+    private void checkGetLocatedAgents(Agent inputAgent, List<Compartment> compartments, Agent... expectedAgents) {
+        List<Agent> result = inputAgent.getLocatedAgents(compartments);
+        assertEquals(expectedAgents.length, result.size());
+        for (int i = 0; i < expectedAgents.length; i++) {
+            Agent expectedAgent = expectedAgents[i];
+            Agent actualAgent = result.get(i);
+            assertEquals(expectedAgent.toString(), actualAgent.toString());
+        }
+    }
+    
     @Test
     public void testGetStateHash() {
         AgentSite site1 = new AgentSite("site1", "state1", "link1");
@@ -206,7 +294,7 @@ public class AgentTest {
     @Test
     public void testToString() {
         try {
-        	new Agent("name").toString(null);
+        	new Agent("name").toString(null, true);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -215,7 +303,7 @@ public class AgentTest {
         
         Agent agent = new Agent("name");
         assertEquals("name", agent.toString());
-        assertEquals("name(suffix)", agent.toString("suffix"));
+        assertEquals("name(suffix)", agent.toString("suffix", true));
 
         Set<AgentSite> sites = new HashSet<AgentSite>();
         sites.add(new AgentSite("site1", "state1", "link1"));
@@ -223,7 +311,7 @@ public class AgentTest {
         
         agent = new Agent("name", sites);
         assertEquals("name(site1~state1!link1,site2~state2?)", agent.toString());
-        assertEquals("name(site1~state1!link1,site2~state2?,suffix)", agent.toString("suffix"));
+        assertEquals("name(site1~state1!link1,site2~state2?,suffix)", agent.toString("suffix", true));
     }
 
 

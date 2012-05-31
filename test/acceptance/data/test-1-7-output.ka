@@ -11,10 +11,8 @@ Receptor-cytosol(l!2,r),Receptor-cytosol(l,r!2),Receptor-cytosol(l!3,r),Receptor
 Receptor-cytosol(l!1),Receptor-cytosol(r!1) -> Receptor-cytosol(l),Receptor-cytosol(r) @ 'unlink rate'
 Receptor-cytosol(l!4,r),Receptor-cytosol(l!3,r!4),Receptor-cytosol(l!2,r!3),Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1) -> Receptor-cytosol(l!4,r!5),Receptor-cytosol(l!3,r!4),Receptor-cytosol(l!2,r!3),Receptor-cytosol(l!1,r!2),Receptor-cytosol(l!5,r!1) @ 'close rate'
 
-%init: 250 Receptor-cytosol(dl!1,loc~cytosol,loc_index_1~0),Receptor-membrane(dl!1,loc~membrane,loc_index_1~0)
-%init: 250 Receptor-cytosol(dl!1,loc~cytosol,loc_index_1~0),Receptor-membrane(dl!1,loc~membrane,loc_index_1~1)
-%init: 250 Receptor-cytosol(dl!1,loc~cytosol,loc_index_1~1),Receptor-membrane(dl!1,loc~membrane,loc_index_1~0)
-%init: 250 Receptor-cytosol(dl!1,loc~cytosol,loc_index_1~1),Receptor-membrane(dl!1,loc~membrane,loc_index_1~1)
+%init: 500 Receptor-cytosol(dl!1,loc~cytosol,loc_index_1~0),Receptor-membrane(dl!1,loc~membrane,loc_index_1~0)
+%init: 500 Receptor-cytosol(dl!1,loc~cytosol,loc_index_1~1),Receptor-membrane(dl!1,loc~membrane,loc_index_1~1)
 
 %var: 'link rate' 10.0
 %var: 'unlink rate' 10.0

@@ -8,8 +8,6 @@ import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.tools.SpatialTranslator;
 import org.junit.Test;
 
-//TODO - extension to allow mixed rule and agent locations
-
 public class SpatialTranslatorTest {
 
     private SpatialTranslator translator;
@@ -46,6 +44,13 @@ public class SpatialTranslatorTest {
     public void testTest1_5_initialComplexesBetweenCompartments() throws Exception {
         translator = new SpatialTranslator(new File(TEST_DATA_DIRECTORY, "test-1-5-input.ka"));
         String testOutput = FileUtils.readFileToString(new File(TEST_DATA_DIRECTORY, "test-1-5-output.ka"));
+        assertEquals(testOutput, translator.translateToKappa());
+    }
+
+    @Test
+    public void testTest1_6_buildPolymerPlaque() throws Exception {
+        translator = new SpatialTranslator(new File(TEST_DATA_DIRECTORY, "test-1-6-input.ka"));
+        String testOutput = FileUtils.readFileToString(new File(TEST_DATA_DIRECTORY, "test-1-6-output.ka"));
         assertEquals(testOutput, translator.translateToKappa());
     }
 

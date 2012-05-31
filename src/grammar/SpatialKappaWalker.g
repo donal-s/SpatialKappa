@@ -15,7 +15,7 @@ import org.demonsoft.spatialkappa.model.AggregateAgent;
 import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.BooleanExpression;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
-import org.demonsoft.spatialkappa.model.CompartmentLink;
+import org.demonsoft.spatialkappa.model.Channel;
 import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.IKappaModel;
@@ -52,7 +52,7 @@ line
   :
   ruleExpr
   | compartmentExpr
-  | compartmentLinkExpr
+  | channelDecl
   | transportExpr
   | initExpr
   | plotExpr
@@ -67,9 +67,9 @@ options {backtrack=true;}
   :
   ^(TRANSFORM a=transformExpr b=kineticExpr label?)
   {
-    kappaModel.addTransform($label.result, $a.lhs, $a.rhs, $b.rate, null);
+    kappaModel.addTransform($label.result, $a.lhs, $a.rhs, $b.rate, Location.NOT_LOCATED);
   }
-  | ^(TRANSFORM a=transformExpr b=kineticExpr label c=locationExpr)
+  | ^(TRANSFORM a=transformExpr b=kineticExpr label? c=locationExpr)
   {
     kappaModel.addTransform($label.result, $a.lhs, $a.rhs, $b.rate, $c.result );
   }
@@ -135,7 +135,12 @@ agent returns [Agent result]
     )*
    )
   {
-    $result = new Agent($id.text, $locationExpr.result, sites);
+    if ($locationExpr.result != null) {
+      $result = new Agent($id.text, $locationExpr.result, sites);
+    }
+    else {
+      $result = new Agent($id.text, Location.NOT_LOCATED, sites);
+    }
   }
   ;
 
@@ -143,7 +148,7 @@ iface returns [AgentSite result]
   :
   ^(INTERFACE id a=stateExpr? b=linkExpr?)
   {
-    $result = new AgentSite($id.text, $a.result, $b.result);
+    $result = new AgentSite($id.text, $a.result, $b.linkName, $b.channelName);
   }
   ;
 
@@ -155,16 +160,16 @@ stateExpr returns [String result]
   }
   ;
 
-linkExpr returns [String result]
+linkExpr returns [String linkName, String channelName]
   :
-  ^(LINK INT)
-  {$result = $INT.text;}
+  ^(LINK (^(CHANNEL channel=id))? INT)
+  {$linkName = $INT.text; $channelName = $channel.text;}
   |
-  ^(LINK OCCUPIED)
-  {$result = "_";}
+  ^(LINK (^(CHANNEL channel=id))? OCCUPIED)
+  {$linkName = "_"; $channelName = $channel.text;}
   |
   ^(LINK ANY)
-  {$result = "?";}
+  {$linkName = "?"; $channelName = null;}
   ;
 
 kineticExpr returns [VariableExpression rate]
@@ -180,12 +185,22 @@ options {backtrack=true;}
   :
   ^(INIT agentGroup INT locationExpr?)
   {
-    kappaModel.addInitialValue($agentGroup.result, $INT.text, $locationExpr.result);
+    if ($locationExpr.result != null) {
+      kappaModel.addInitialValue($agentGroup.result, $INT.text, $locationExpr.result);
+    }
+    else {
+      kappaModel.addInitialValue($agentGroup.result, $INT.text, Location.NOT_LOCATED);
+    }
   }
   |
   ^(INIT agentGroup label locationExpr?)
   {
-    kappaModel.addInitialValue($agentGroup.result, new VariableReference($label.result), $locationExpr.result);
+    if ($locationExpr.result != null) {
+      kappaModel.addInitialValue($agentGroup.result, new VariableReference($label.result), $locationExpr.result);
+    }
+    else {
+      kappaModel.addInitialValue($agentGroup.result, new VariableReference($label.result), Location.NOT_LOCATED);
+    }
   }
   ;
   
@@ -229,19 +244,19 @@ compartmentExpr
   }
   ;
   
-compartmentLinkExpr
+channelDecl
   :
-  ^(COMPARTMENT_LINK linkName=label sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr)
+  ^(CHANNEL linkName=id sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr)
   {
-    kappaModel.addCompartmentLink(new CompartmentLink($linkName.result, $sourceCompartment.result, $targetCompartment.result, $transportTransition.result));
+    kappaModel.addChannel(new Channel($linkName.text, $sourceCompartment.result, $targetCompartment.result, $transportTransition.result));
   }
   ;
   
 transportExpr
   :
-  ^(TRANSPORT linkName=label agentGroup? b=transportKineticExpr (transportName=label)?)
+  ^(TRANSPORT linkName=id agentGroup? b=transportKineticExpr (transportName=label)?)
   {
-    kappaModel.addTransport($transportName.result, $linkName.result, $agentGroup.result, $b.result);
+    kappaModel.addTransport($transportName.result, $linkName.text, $agentGroup.result, $b.result);
   }
   ;
   
@@ -287,12 +302,12 @@ options {backtrack=true;}
   :
   ^(OBSERVATION agentGroup)
   {
-    kappaModel.addVariable($agentGroup.result, $agentGroup.result.toString(), null);
+    kappaModel.addVariable($agentGroup.result, $agentGroup.result.toString(), Location.NOT_LOCATED);
     kappaModel.addPlot($agentGroup.result.toString());
   }
   | ^(OBSERVATION agentGroup label)
   {
-    kappaModel.addVariable($agentGroup.result, $label.result, null);
+    kappaModel.addVariable($agentGroup.result, $label.result, Location.NOT_LOCATED);
     kappaModel.addPlot($label.result);
   }
   | ^(OBSERVATION agentGroup label locationExpr)
@@ -306,7 +321,7 @@ varExpr
   :
   ^(VARIABLE agentGroup label)
   {
-    kappaModel.addVariable($agentGroup.result, $label.result, null);
+    kappaModel.addVariable($agentGroup.result, $label.result, Location.NOT_LOCATED);
   }
   |
   ^(VARIABLE varAlgebraExpr label)
@@ -462,9 +477,9 @@ cellIndexExpr returns [CellIndexExpression result]
   {
     $result = new CellIndexExpression($INT.text);
   }    
-  | ^(CELL_INDEX_EXPR label)
+  | ^(CELL_INDEX_EXPR id)
   {
-    $result = new CellIndexExpression(new VariableReference($label.result));
+    $result = new CellIndexExpression(new VariableReference($id.text));
   }    
   ;
 

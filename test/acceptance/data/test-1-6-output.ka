@@ -1,0 +1,58 @@
+%agent: A(l1,l2,l3,l4,l5,l6,loc~cytosol,loc_index_1~0~1~2~3,loc_index_2~0~1~2~3)
+
+
+A(l1,loc~cytosol,loc_index_1~0,loc_index_2~0),A(l4,loc~cytosol,loc_index_1~0,loc_index_2~1) -> A(l1!1,loc~cytosol,loc_index_1~0,loc_index_2~0),A(l4!1,loc~cytosol,loc_index_1~0,loc_index_2~1) @ 'link rate'
+A(l1,loc~cytosol,loc_index_1~1,loc_index_2~0),A(l4,loc~cytosol,loc_index_1~1,loc_index_2~1) -> A(l1!1,loc~cytosol,loc_index_1~1,loc_index_2~0),A(l4!1,loc~cytosol,loc_index_1~1,loc_index_2~1) @ 'link rate'
+A(l1,loc~cytosol,loc_index_1~2,loc_index_2~0),A(l4,loc~cytosol,loc_index_1~2,loc_index_2~1) -> A(l1!1,loc~cytosol,loc_index_1~2,loc_index_2~0),A(l4!1,loc~cytosol,loc_index_1~2,loc_index_2~1) @ 'link rate'
+A(l1,loc~cytosol,loc_index_1~3,loc_index_2~0),A(l4,loc~cytosol,loc_index_1~3,loc_index_2~1) -> A(l1!1,loc~cytosol,loc_index_1~3,loc_index_2~0),A(l4!1,loc~cytosol,loc_index_1~3,loc_index_2~1) @ 'link rate'
+A(l1,loc~cytosol,loc_index_1~0,loc_index_2~1),A(l4,loc~cytosol,loc_index_1~0,loc_index_2~2) -> A(l1!1,loc~cytosol,loc_index_1~0,loc_index_2~1),A(l4!1,loc~cytosol,loc_index_1~0,loc_index_2~2) @ 'link rate'
+A(l1,loc~cytosol,loc_index_1~1,loc_index_2~1),A(l4,loc~cytosol,loc_index_1~1,loc_index_2~2) -> A(l1!1,loc~cytosol,loc_index_1~1,loc_index_2~1),A(l4!1,loc~cytosol,loc_index_1~1,loc_index_2~2) @ 'link rate'
+A(l1,loc~cytosol,loc_index_1~2,loc_index_2~1),A(l4,loc~cytosol,loc_index_1~2,loc_index_2~2) -> A(l1!1,loc~cytosol,loc_index_1~2,loc_index_2~1),A(l4!1,loc~cytosol,loc_index_1~2,loc_index_2~2) @ 'link rate'
+A(l1,loc~cytosol,loc_index_1~3,loc_index_2~1),A(l4,loc~cytosol,loc_index_1~3,loc_index_2~2) -> A(l1!1,loc~cytosol,loc_index_1~3,loc_index_2~1),A(l4!1,loc~cytosol,loc_index_1~3,loc_index_2~2) @ 'link rate'
+A(l1,loc~cytosol,loc_index_1~0,loc_index_2~2),A(l4,loc~cytosol,loc_index_1~0,loc_index_2~3) -> A(l1!1,loc~cytosol,loc_index_1~0,loc_index_2~2),A(l4!1,loc~cytosol,loc_index_1~0,loc_index_2~3) @ 'link rate'
+A(l1,loc~cytosol,loc_index_1~1,loc_index_2~2),A(l4,loc~cytosol,loc_index_1~1,loc_index_2~3) -> A(l1!1,loc~cytosol,loc_index_1~1,loc_index_2~2),A(l4!1,loc~cytosol,loc_index_1~1,loc_index_2~3) @ 'link rate'
+A(l1,loc~cytosol,loc_index_1~2,loc_index_2~2),A(l4,loc~cytosol,loc_index_1~2,loc_index_2~3) -> A(l1!1,loc~cytosol,loc_index_1~2,loc_index_2~2),A(l4!1,loc~cytosol,loc_index_1~2,loc_index_2~3) @ 'link rate'
+A(l1,loc~cytosol,loc_index_1~3,loc_index_2~2),A(l4,loc~cytosol,loc_index_1~3,loc_index_2~3) -> A(l1!1,loc~cytosol,loc_index_1~3,loc_index_2~2),A(l4!1,loc~cytosol,loc_index_1~3,loc_index_2~3) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~0,loc_index_2~0),A(l5,loc~cytosol,loc_index_1~1,loc_index_2~0) -> A(l2!1,loc~cytosol,loc_index_1~0,loc_index_2~0),A(l5!1,loc~cytosol,loc_index_1~1,loc_index_2~0) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~1,loc_index_2~0),A(l5,loc~cytosol,loc_index_1~2,loc_index_2~0) -> A(l2!1,loc~cytosol,loc_index_1~1,loc_index_2~0),A(l5!1,loc~cytosol,loc_index_1~2,loc_index_2~0) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~2,loc_index_2~0),A(l5,loc~cytosol,loc_index_1~3,loc_index_2~0) -> A(l2!1,loc~cytosol,loc_index_1~2,loc_index_2~0),A(l5!1,loc~cytosol,loc_index_1~3,loc_index_2~0) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~0,loc_index_2~1),A(l5,loc~cytosol,loc_index_1~1,loc_index_2~1) -> A(l2!1,loc~cytosol,loc_index_1~0,loc_index_2~1),A(l5!1,loc~cytosol,loc_index_1~1,loc_index_2~1) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~1,loc_index_2~1),A(l5,loc~cytosol,loc_index_1~2,loc_index_2~1) -> A(l2!1,loc~cytosol,loc_index_1~1,loc_index_2~1),A(l5!1,loc~cytosol,loc_index_1~2,loc_index_2~1) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~2,loc_index_2~1),A(l5,loc~cytosol,loc_index_1~3,loc_index_2~1) -> A(l2!1,loc~cytosol,loc_index_1~2,loc_index_2~1),A(l5!1,loc~cytosol,loc_index_1~3,loc_index_2~1) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~0,loc_index_2~2),A(l5,loc~cytosol,loc_index_1~1,loc_index_2~2) -> A(l2!1,loc~cytosol,loc_index_1~0,loc_index_2~2),A(l5!1,loc~cytosol,loc_index_1~1,loc_index_2~2) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~1,loc_index_2~2),A(l5,loc~cytosol,loc_index_1~2,loc_index_2~2) -> A(l2!1,loc~cytosol,loc_index_1~1,loc_index_2~2),A(l5!1,loc~cytosol,loc_index_1~2,loc_index_2~2) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~2,loc_index_2~2),A(l5,loc~cytosol,loc_index_1~3,loc_index_2~2) -> A(l2!1,loc~cytosol,loc_index_1~2,loc_index_2~2),A(l5!1,loc~cytosol,loc_index_1~3,loc_index_2~2) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~0,loc_index_2~3),A(l5,loc~cytosol,loc_index_1~1,loc_index_2~3) -> A(l2!1,loc~cytosol,loc_index_1~0,loc_index_2~3),A(l5!1,loc~cytosol,loc_index_1~1,loc_index_2~3) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~1,loc_index_2~3),A(l5,loc~cytosol,loc_index_1~2,loc_index_2~3) -> A(l2!1,loc~cytosol,loc_index_1~1,loc_index_2~3),A(l5!1,loc~cytosol,loc_index_1~2,loc_index_2~3) @ 'link rate'
+A(l2,loc~cytosol,loc_index_1~2,loc_index_2~3),A(l5,loc~cytosol,loc_index_1~3,loc_index_2~3) -> A(l2!1,loc~cytosol,loc_index_1~2,loc_index_2~3),A(l5!1,loc~cytosol,loc_index_1~3,loc_index_2~3) @ 'link rate'
+A(l3,loc~cytosol,loc_index_1~0,loc_index_2~0),A(l6,loc~cytosol,loc_index_1~1,loc_index_2~1) -> A(l3!1,loc~cytosol,loc_index_1~0,loc_index_2~0),A(l6!1,loc~cytosol,loc_index_1~1,loc_index_2~1) @ 'link rate'
+A(l3,loc~cytosol,loc_index_1~2,loc_index_2~0),A(l6,loc~cytosol,loc_index_1~3,loc_index_2~1) -> A(l3!1,loc~cytosol,loc_index_1~2,loc_index_2~0),A(l6!1,loc~cytosol,loc_index_1~3,loc_index_2~1) @ 'link rate'
+A(l3,loc~cytosol,loc_index_1~0,loc_index_2~1),A(l6,loc~cytosol,loc_index_1~1,loc_index_2~2) -> A(l3!1,loc~cytosol,loc_index_1~0,loc_index_2~1),A(l6!1,loc~cytosol,loc_index_1~1,loc_index_2~2) @ 'link rate'
+A(l3,loc~cytosol,loc_index_1~1,loc_index_2~1),A(l6,loc~cytosol,loc_index_1~2,loc_index_2~0) -> A(l3!1,loc~cytosol,loc_index_1~1,loc_index_2~1),A(l6!1,loc~cytosol,loc_index_1~2,loc_index_2~0) @ 'link rate'
+A(l3,loc~cytosol,loc_index_1~2,loc_index_2~1),A(l6,loc~cytosol,loc_index_1~3,loc_index_2~2) -> A(l3!1,loc~cytosol,loc_index_1~2,loc_index_2~1),A(l6!1,loc~cytosol,loc_index_1~3,loc_index_2~2) @ 'link rate'
+A(l3,loc~cytosol,loc_index_1~0,loc_index_2~2),A(l6,loc~cytosol,loc_index_1~1,loc_index_2~3) -> A(l3!1,loc~cytosol,loc_index_1~0,loc_index_2~2),A(l6!1,loc~cytosol,loc_index_1~1,loc_index_2~3) @ 'link rate'
+A(l3,loc~cytosol,loc_index_1~1,loc_index_2~2),A(l6,loc~cytosol,loc_index_1~2,loc_index_2~1) -> A(l3!1,loc~cytosol,loc_index_1~1,loc_index_2~2),A(l6!1,loc~cytosol,loc_index_1~2,loc_index_2~1) @ 'link rate'
+A(l3,loc~cytosol,loc_index_1~2,loc_index_2~2),A(l6,loc~cytosol,loc_index_1~3,loc_index_2~3) -> A(l3!1,loc~cytosol,loc_index_1~2,loc_index_2~2),A(l6!1,loc~cytosol,loc_index_1~3,loc_index_2~3) @ 'link rate'
+A(l3,loc~cytosol,loc_index_1~1,loc_index_2~3),A(l6,loc~cytosol,loc_index_1~2,loc_index_2~2) -> A(l3!1,loc~cytosol,loc_index_1~1,loc_index_2~3),A(l6!1,loc~cytosol,loc_index_1~2,loc_index_2~2) @ 'link rate'
+
+%init: 1 A(loc~cytosol,loc_index_1~0,loc_index_2~0)
+%init: 1 A(loc~cytosol,loc_index_1~1,loc_index_2~0)
+%init: 1 A(loc~cytosol,loc_index_1~2,loc_index_2~0)
+%init: 1 A(loc~cytosol,loc_index_1~3,loc_index_2~0)
+%init: 1 A(loc~cytosol,loc_index_1~0,loc_index_2~1)
+%init: 1 A(loc~cytosol,loc_index_1~1,loc_index_2~1)
+%init: 1 A(loc~cytosol,loc_index_1~2,loc_index_2~1)
+%init: 1 A(loc~cytosol,loc_index_1~3,loc_index_2~1)
+%init: 1 A(loc~cytosol,loc_index_1~0,loc_index_2~2)
+%init: 1 A(loc~cytosol,loc_index_1~1,loc_index_2~2)
+%init: 1 A(loc~cytosol,loc_index_1~2,loc_index_2~2)
+%init: 1 A(loc~cytosol,loc_index_1~3,loc_index_2~2)
+%init: 1 A(loc~cytosol,loc_index_1~0,loc_index_2~3)
+%init: 1 A(loc~cytosol,loc_index_1~1,loc_index_2~3)
+%init: 1 A(loc~cytosol,loc_index_1~2,loc_index_2~3)
+%init: 1 A(loc~cytosol,loc_index_1~3,loc_index_2~3)
+
+%var: 'link rate' 10.0
+%var: 'unlinked' A(l1,l2,l3,l4,l5,l6)
+%plot: 'unlinked'
+

@@ -5,14 +5,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CompartmentLink {
+import org.demonsoft.spatialkappa.model.VariableExpression.Type;
 
+public class Channel {
+
+    // TODO remove complex variable specs and bidirectional channels
+    
     private final String name;
     private final Location sourceReference;
     private final Location targetReference;
     private final Direction direction;
 
-    public CompartmentLink(String name, Location sourceReference, Location targetReference, Direction direction) {
+    public Channel(String name, Location sourceReference, Location targetReference, Direction direction) {
         if (name == null || sourceReference == null || targetReference == null || direction == null) {
             throw new NullPointerException();
         }
@@ -107,5 +111,69 @@ public class CompartmentLink {
 
     public Direction getDirection() {
         return direction;
+    }
+
+    public boolean canUseChannel(Location location, List<Compartment> compartments) {
+        if (location == null || compartments == null) {
+            throw new NullPointerException();
+        }
+        Compartment compartment = sourceReference.getReferencedCompartment(compartments);
+        if (compartment == null) {
+            throw new IllegalArgumentException("Unknown compartment: " + sourceReference.getName());
+        }
+        if (location.getIndices().length != sourceReference.getIndices().length 
+                || !location.getName().equals(sourceReference.getName())) {
+            return false;
+        }
+        for (int index = 0; index < sourceReference.getIndices().length; index++) {
+            CellIndexExpression sourceIndex = sourceReference.getIndices()[index];
+            CellIndexExpression inputIndex = location.getIndices()[index];
+            if (!inputIndex.isFixed()) {
+                return false;
+            }
+            if (sourceIndex.isFixed()) {
+                if (!sourceIndex.equals(inputIndex)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public List<Location> applyChannel(Location location, List<Compartment> compartments) {
+        if (location == null || compartments == null) {
+            throw new NullPointerException();
+        }
+        List<Location> result = new ArrayList<Location>();
+        if (canUseChannel(location, compartments)) {
+            Map<String, Integer> variables = new HashMap<String, Integer>();
+            for (int index = 0; index < sourceReference.getIndices().length; index++) {
+                CellIndexExpression sourceIndex = sourceReference.getIndices()[index];
+                if (sourceIndex.type == Type.VARIABLE_REFERENCE) {
+                    CellIndexExpression inputIndex = location.getIndices()[index];
+                    variables.put(sourceIndex.reference.variableName, (int) inputIndex.value);
+                }
+            }
+
+            boolean valid = true;
+            Compartment compartment = targetReference.getReferencedCompartment(compartments);
+            
+            List<CellIndexExpression> targetIndices = new ArrayList<CellIndexExpression>();
+            for (int index = 0; index < targetReference.getIndices().length; index++) {
+                CellIndexExpression targetIndex = targetReference.getIndices()[index];
+                int targetIndexValue = targetIndex.evaluateIndex(variables);
+                if (targetIndexValue < 0 || targetIndexValue >= compartment.getDimensions()[index]) {
+                    valid = false;
+                    break;
+                }
+                targetIndices.add(new CellIndexExpression("" + targetIndexValue));
+            }
+            
+            if (valid) {
+                Location targetLocation = new Location(targetReference.getName(), targetIndices);
+                result.add(targetLocation);
+            }
+        }
+        return result;
     }
 }

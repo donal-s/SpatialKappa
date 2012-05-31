@@ -33,7 +33,7 @@ public class CellIndexExpression extends VariableExpression {
             return "" + ((int) value);
             
         case VARIABLE_REFERENCE:
-            return reference.toString();
+            return reference.variableName;
             
         default:
             throw new IllegalStateException("Unknown expression");

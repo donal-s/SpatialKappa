@@ -1,5 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
@@ -29,7 +31,7 @@ public class KappaModel implements IKappaModel {
     private final List<InitialValue> initialValues = new ArrayList<InitialValue>();
     private final List<Perturbation> perturbations = new ArrayList<Perturbation>();
     private final List<Compartment> compartments = new ArrayList<Compartment>();
-    private final List<CompartmentLink> compartmentLinks = new ArrayList<CompartmentLink>();
+    private final List<Channel> channels = new ArrayList<Channel>();
     private final List<Transport> transports = new ArrayList<Transport>();
     private final Set<Complex> canonicalComplexes = new HashSet<Complex>();
     private final List<String> plottedVariables = new ArrayList<String>();
@@ -90,7 +92,7 @@ public class KappaModel implements IKappaModel {
 
     private void propogateLocation(List<Agent> agents, Location location) {
 		for (Agent agent : agents) {
-			if (agent.location == null) {
+			if (agent.location == NOT_LOCATED) {
 				agent.setLocation(location);
 			}
 		}
@@ -132,6 +134,7 @@ public class KappaModel implements IKappaModel {
     public void addVariable(List<Agent> agents, String label, Location location) {
         variables.put(label, new Variable(new Complex(agents), location, label));
         orderedVariableNames.add(label);
+        propogateLocation(agents, location);
 
         for (Agent agent : agents) {
             aggregateAgent(agent);
@@ -173,11 +176,11 @@ public class KappaModel implements IKappaModel {
         compartments.add(compartment);
     }
 
-    public void addCompartmentLink(CompartmentLink link) {
-        if (link == null) {
+    public void addChannel(Channel channel) {
+        if (channel == null) {
             throw new NullPointerException();
         }
-        compartmentLinks.add(link);
+        channels.add(channel);
     }
 
     @Override
@@ -189,7 +192,7 @@ public class KappaModel implements IKappaModel {
             result.append(compartment).append("\n");
         }
         result.append("\nCOMPARTMENT LINKS\n");
-        for (CompartmentLink link : compartmentLinks) {
+        for (Channel link : channels) {
             result.append(link).append("\n");
         }
         result.append("\nTRANSPORT RULES\n");
@@ -232,7 +235,7 @@ public class KappaModel implements IKappaModel {
             }
             
             Location location = initialValue.location;
-            if (location != null) {
+            if (location != NOT_LOCATED) {
                 compartment = location.getReferencedCompartment(compartments);
                 if (compartment != null && compartment.getDimensions().length != location.getIndices().length) {
                     partition = true;
@@ -305,7 +308,7 @@ public class KappaModel implements IKappaModel {
         List<LocatedTransition> result = new ArrayList<LocatedTransition>();
         for (LocatedTransform transition : locatedTransforms) {
             Location location = transition.sourceLocation;
-            if (location != null) {
+            if (location != NOT_LOCATED) {
                 Compartment compartment = location.getReferencedCompartment(compartments);
                 if (compartment.getDimensions().length != location.getIndices().length) {
                     Location[] cellLocations = compartment.getDistributedCellReferences();
@@ -318,7 +321,7 @@ public class KappaModel implements IKappaModel {
                     result.add(transition.clone());
                 }
             }
-            else { // location == null
+            else { // location == NOT_LOCATED
                 if (compartments.size() > 0) {
                     Transform cloneTransform = ((Transform) transition.transition).clone();
                     for (Compartment compartment : compartments) {
@@ -335,10 +338,10 @@ public class KappaModel implements IKappaModel {
         }
 
         for (Transport transport : transports) {
-            List<CompartmentLink> links = getCompartmentLinks(transport.getCompartmentLinkName());
+            List<Channel> links = getChannels(transport.getCompartmentLinkName());
             if (links.size() > 0) {
                 Transport cloneTransport = transport.clone();
-                for (CompartmentLink link : links) {
+                for (Channel link : links) {
                     Location[][] cellLocations = link.getCellReferencePairs(compartments);
                     for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
                         Location sourceReference = (link.getDirection() != Direction.BACKWARD) ? cellLocations[cellIndex][0] : cellLocations[cellIndex][1];
@@ -355,10 +358,10 @@ public class KappaModel implements IKappaModel {
         return result;
     }
 
-    private List<CompartmentLink> getCompartmentLinks(String compartmentLinkName) {
-        List<CompartmentLink> result = new ArrayList<CompartmentLink>();
-        for (CompartmentLink current : compartmentLinks) {
-            if (current.getName().equals(compartmentLinkName)) {
+    private List<Channel> getChannels(String channelName) {
+        List<Channel> result = new ArrayList<Channel>();
+        for (Channel current : channels) {
+            if (current.getName().equals(channelName)) {
                 result.add(current);
             }
         }
@@ -373,8 +376,8 @@ public class KappaModel implements IKappaModel {
         return compartments;
     }
     
-    public List<CompartmentLink> getCompartmentLinks() {
-        return compartmentLinks;
+    public List<Channel> getChannels() {
+        return channels;
     }
     
     public List<Transport> getTransports() {
@@ -420,7 +423,7 @@ public class KappaModel implements IKappaModel {
             }
         }
         
-        for (CompartmentLink link : compartmentLinks) {
+        for (Channel link : channels) {
             boolean found = false;
             for (Compartment compartment : compartments) {
                 if (link.getSourceReference().getName().equals(compartment.getName())) {
@@ -488,7 +491,7 @@ public class KappaModel implements IKappaModel {
             }
             
             boolean found = false;
-            for (CompartmentLink link : compartmentLinks) {
+            for (Channel link : channels) {
                 if (transport.getCompartmentLinkName().equals(link.getName())) {
                     found = true;
                     break;

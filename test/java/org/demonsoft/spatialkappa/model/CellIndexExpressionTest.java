@@ -14,6 +14,16 @@ import org.junit.Test;
 
 public class CellIndexExpressionTest {
 
+    public static CellIndexExpression INDEX_0 = new CellIndexExpression("0");
+    public static CellIndexExpression INDEX_1 = new CellIndexExpression("1");
+    public static CellIndexExpression INDEX_2 = new CellIndexExpression("2");
+    public static CellIndexExpression INDEX_X = new CellIndexExpression(new VariableReference("x"));
+    public static CellIndexExpression INDEX_X_PLUS_1 = 
+            new CellIndexExpression(INDEX_X, Operator.PLUS, INDEX_1);
+    public static CellIndexExpression INDEX_Y = new CellIndexExpression(new VariableReference("y"));
+    public static CellIndexExpression INDEX_Y_PLUS_1 = 
+            new CellIndexExpression(INDEX_Y, Operator.PLUS, INDEX_1);
+    
     @SuppressWarnings("unused")
     @Test
     public void testConstructor() {
@@ -72,7 +82,7 @@ public class CellIndexExpressionTest {
         
         CellIndexExpression expr = new CellIndexExpression(new VariableReference("x"));
         assertEquals(Type.VARIABLE_REFERENCE, expr.type);
-        assertEquals("'x'", expr.toString());
+        assertEquals("x", expr.toString());
         assertFalse(expr.isFixed());
         
         expr = new CellIndexExpression("2");
@@ -82,7 +92,7 @@ public class CellIndexExpressionTest {
         
         expr = new CellIndexExpression(expr1, Operator.PLUS, expr2);
         assertEquals(Type.BINARY_EXPRESSION, expr.type);
-        assertEquals("('x' + 2)", expr.toString());
+        assertEquals("(x + 2)", expr.toString());
         assertFalse(expr.isFixed());
         
         expr = new CellIndexExpression(expr2, Operator.PLUS, expr2);

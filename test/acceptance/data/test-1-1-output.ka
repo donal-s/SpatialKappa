@@ -27,19 +27,11 @@
 %var: 'cross dimer' A(s!1,loc~cytosol,loc_index_1~0),A(s!1,loc~cytosol,loc_index_1~1)
 %plot: 'all monomer'
 %plot: 'compartment monomer - agent'
-%var: 'compartment monomer - complex :loc~cytosol,loc_index_1~0' A(s,loc~cytosol,loc_index_1~0)
-%plot: 'compartment monomer - complex :loc~cytosol,loc_index_1~0'
-%var: 'compartment monomer - complex :loc~cytosol,loc_index_1~1' A(s,loc~cytosol,loc_index_1~1)
-%plot: 'compartment monomer - complex :loc~cytosol,loc_index_1~1'
 %plot: 'compartment monomer - complex'
 %plot: 'voxel monomer - agent'
 %plot: 'voxel monomer - complex'
 %plot: 'all dimer'
 %plot: 'compartment dimer - agent'
-%var: 'compartment dimer - complex :loc~cytosol,loc_index_1~0' A(s!_,loc~cytosol,loc_index_1~0)
-%plot: 'compartment dimer - complex :loc~cytosol,loc_index_1~0'
-%var: 'compartment dimer - complex :loc~cytosol,loc_index_1~1' A(s!_,loc~cytosol,loc_index_1~1)
-%plot: 'compartment dimer - complex :loc~cytosol,loc_index_1~1'
 %plot: 'compartment dimer - complex'
 %plot: 'voxel dimer - agent'
 %plot: 'voxel dimer - complex'

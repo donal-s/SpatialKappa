@@ -1,5 +1,7 @@
 package org.demonsoft.spatialkappa.tools;
 
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -47,17 +49,17 @@ public abstract class AbstractSimulationTest {
         
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent2"));
-        kappaModel.addTransform("label", agents, new ArrayList<Agent>(), new VariableExpression(0.1f), null);
+        kappaModel.addTransform("label", agents, new ArrayList<Agent>(), new VariableExpression(0.1f), NOT_LOCATED);
         kappaModel.addPlot("label");
         
         agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
-        kappaModel.addVariable(agents, "label2", null);
+        kappaModel.addVariable(agents, "label2", NOT_LOCATED);
         kappaModel.addPlot("label2");
         
         agents = new ArrayList<Agent>();
         agents.add(new Agent("agent2"));
-        kappaModel.addVariable(agents, "label3", null);
+        kappaModel.addVariable(agents, "label3", NOT_LOCATED);
         
         simulation = createSimulation(kappaModel);
         observation = simulation.getCurrentObservation();
@@ -155,7 +157,7 @@ public abstract class AbstractSimulationTest {
     }
     
     private void checkQuantity(String label, int expected, Agent...agents) {
-        kappaModel.addVariable(Arrays.asList(agents), label, null);
+        kappaModel.addVariable(Arrays.asList(agents), label, NOT_LOCATED);
         simulation = createSimulation(kappaModel);
         Variable variable = simulation.getVariable(label);
         assertEquals(new ObservationElement(expected), simulation.getComplexQuantity(variable));
@@ -181,14 +183,14 @@ public abstract class AbstractSimulationTest {
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1", new AgentSite("x", null, null)));
         agents.add(new Agent("agent4", new AgentSite("y", "s", null)));
-        kappaModel.addInitialValue(agents, "3", null);
+        kappaModel.addInitialValue(agents, "3", NOT_LOCATED);
 
         agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1", new AgentSite("x", null, "1")));
         agents.add(new Agent("agent2", new AgentSite("x", null, "1")));
         agents.add(new Agent("agent3", new AgentSite("x", null, "2")));
         agents.add(new Agent("agent4", new AgentSite("x", null, "2"), new AgentSite("y", null, null)));
-        kappaModel.addInitialValue(agents, "5", null);
+        kappaModel.addInitialValue(agents, "5", NOT_LOCATED);
         simulation = createSimulation(kappaModel);
         
         checkQuantity("agent1()", 8, new Agent("agent1"));

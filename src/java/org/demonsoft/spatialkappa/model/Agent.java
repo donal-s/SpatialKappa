@@ -1,5 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,11 +22,11 @@ public class Agent implements Serializable {
     private String stateHash;
 
     public Agent(String name) {
-        this(name, (Location) null);
+        this(name, NOT_LOCATED);
     }
 
     public Agent(String name, Location location) {
-        if (name == null) {
+        if (name == null || location == null) {
             throw new NullPointerException();
         }
         this.name = name;
@@ -33,7 +35,7 @@ public class Agent implements Serializable {
     }
 
     public Agent(String name, Collection<AgentSite> sites) {
-        this(name, null, sites);
+        this(name, NOT_LOCATED, sites);
     }
 
     public Agent(String name, Location location, Collection<AgentSite> sites) {
@@ -46,7 +48,7 @@ public class Agent implements Serializable {
     }
 
     public Agent(String name, AgentSite... sites) {
-        this(name, null, sites);
+        this(name, NOT_LOCATED, sites);
     }
 
     public Agent(String name, Location location, AgentSite... sites) {
@@ -80,14 +82,19 @@ public class Agent implements Serializable {
         Collections.sort(orderedSiteNames);
     }
 
-
+    public void addSite(AgentSite site) {
+        this.sites.put(site.name, new AgentSite(this, site));
+        canonicalSortSites();
+        updateStateHash();
+    }
+    
     public Collection<AgentSite> getSites() {
         return sites.values();
     }
 
     @Override
     public String toString() {
-        return toString("");
+        return toString("", false);
     }
 
     public boolean hasLink(String link) {
@@ -137,7 +144,7 @@ public class Agent implements Serializable {
     }
     
     @Override
-    protected Agent clone() {
+    public Agent clone() {
         // AgentSites are cloned in agent constructor
         return new Agent(name, sites.values());
     }
@@ -146,7 +153,7 @@ public class Agent implements Serializable {
         return stateHash;
     }
 
-    public String toString(String siteSuffix) {
+    public String toString(String siteSuffix, boolean basicKappaOnly) {
         if (siteSuffix == null) {
             throw new NullPointerException();
         }
@@ -154,7 +161,7 @@ public class Agent implements Serializable {
         StringBuilder builder = new StringBuilder();
         builder.append(name);
         
-        if (location != null && siteSuffix.length() == 0) {
+        if (location != NOT_LOCATED && siteSuffix.length() == 0) {
         	builder.append(':').append(location.toString());
         }
         
@@ -162,9 +169,9 @@ public class Agent implements Serializable {
 	        builder.append("(");
 	
 	        if (orderedSiteNames.size() > 0) {
-	            builder.append(sites.get(orderedSiteNames.get(0)));
+	            builder.append(sites.get(orderedSiteNames.get(0)).toString(basicKappaOnly));
 	            for (int index = 1; index < orderedSiteNames.size(); index++) {
-	                builder.append(",").append(sites.get(orderedSiteNames.get(index)));
+	                builder.append(",").append(sites.get(orderedSiteNames.get(index)).toString(basicKappaOnly));
 	            }
 	        }
 	        
@@ -181,7 +188,39 @@ public class Agent implements Serializable {
     }
 
 	public void setLocation(Location location) {
+        if (location == null) {
+            throw new NullPointerException();
+        }
 		this.location = location;
 	}
+
+    public List<Agent> getLocatedAgents(List<Compartment> compartments) {
+        if (compartments == null) {
+            throw new NullPointerException();
+        }
+        List<Agent> result = new ArrayList<Agent>();
+        
+        if (location == NOT_LOCATED) {
+            result.add(this);
+        }
+        else {
+            Compartment compartment = location.getReferencedCompartment(compartments);
+            if (compartment == null) {
+                throw new IllegalArgumentException("Unknown location: " + location);
+            }
+            if (location.getIndices().length == compartment.getDimensions().length) {
+                result.add(this);
+            }
+            else {
+                Location[] locations = compartment.getDistributedCellReferences();
+                for (Location currentLocation : locations) {
+                    Agent locatedAgent = clone();
+                    locatedAgent.location = currentLocation;
+                    result.add(locatedAgent);
+                }
+            }
+        }
+        return result;
+    }
 
 }

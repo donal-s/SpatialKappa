@@ -22,7 +22,7 @@ public class Complex implements Serializable {
     private static final List<AgentLink> NO_LINKS = new ArrayList<AgentLink>();
     
     public final List<Agent> agents = new ArrayList<Agent>();
-    List<AgentLink> agentLinks = new ArrayList<AgentLink>();
+    public List<AgentLink> agentLinks = new ArrayList<AgentLink>();
     Map<Agent, List<AgentLink>> linksPerAgent = new HashMap<Agent, List<AgentLink>>();
     private String matchHash;
 

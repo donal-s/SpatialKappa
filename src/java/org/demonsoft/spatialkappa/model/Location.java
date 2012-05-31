@@ -1,6 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,8 @@ public class Location implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final Location NOT_LOCATED = new Location("##NOT LOCATED##");
+    
     private final String name;
     private final CellIndexExpression[] indices;
     private int hashCode;
@@ -120,6 +123,20 @@ public class Location implements Serializable {
     
     public static boolean doLocationsMatch(Location location1, Location location2, boolean matchNameOnly) {
         return location1 == null || location1.matches(location2, matchNameOnly);
+    }
+
+    public List<Location> getLinkedLocations(List<Compartment> compartments, Channel... channels) {
+        Compartment compartment = getReferencedCompartment(compartments);
+        if (compartment == null) {
+            throw new IllegalArgumentException("Unknown compartment: " + name);
+        }
+        List<Location> result = new ArrayList<Location>();
+        for (Channel channel : channels) {
+            if (channel.canUseChannel(this, compartments)) {
+                result.addAll(channel.applyChannel(this, compartments));
+            }
+        }
+        return result;
     }
     
 

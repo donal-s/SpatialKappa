@@ -3,21 +3,13 @@
 
 
 'dimerise AB-1' A(s,loc~cytosol,loc_index_1~0),B(s,loc~membrane,loc_index_1~0) -> A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~membrane,loc_index_1~0) @ 1.0
-'dimerise AB-2' A(s,loc~cytosol,loc_index_1~0),B(s,loc~membrane,loc_index_1~1) -> A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~membrane,loc_index_1~1) @ 1.0
-'dimerise AB-3' A(s,loc~cytosol,loc_index_1~1),B(s,loc~membrane,loc_index_1~0) -> A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~membrane,loc_index_1~0) @ 1.0
-'dimerise AB-4' A(s,loc~cytosol,loc_index_1~1),B(s,loc~membrane,loc_index_1~1) -> A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~membrane,loc_index_1~1) @ 1.0
+'dimerise AB-2' A(s,loc~cytosol,loc_index_1~1),B(s,loc~membrane,loc_index_1~1) -> A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~membrane,loc_index_1~1) @ 1.0
 'dimerise BA-1' A(s,loc~membrane,loc_index_1~0),B(s,loc~cytosol,loc_index_1~0) -> A(s!1,loc~membrane,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0) @ 1.0
-'dimerise BA-2' A(s,loc~membrane,loc_index_1~1),B(s,loc~cytosol,loc_index_1~0) -> A(s!1,loc~membrane,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~0) @ 1.0
-'dimerise BA-3' A(s,loc~membrane,loc_index_1~0),B(s,loc~cytosol,loc_index_1~1) -> A(s!1,loc~membrane,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1) @ 1.0
-'dimerise BA-4' A(s,loc~membrane,loc_index_1~1),B(s,loc~cytosol,loc_index_1~1) -> A(s!1,loc~membrane,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1) @ 1.0
+'dimerise BA-2' A(s,loc~membrane,loc_index_1~1),B(s,loc~cytosol,loc_index_1~1) -> A(s!1,loc~membrane,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1) @ 1.0
 'break AB-1' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~membrane,loc_index_1~0) -> A(s,loc~cytosol,loc_index_1~0),B(s,loc~membrane,loc_index_1~0) @ 'break-rate'
-'break AB-2' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~membrane,loc_index_1~1) -> A(s,loc~cytosol,loc_index_1~0),B(s,loc~membrane,loc_index_1~1) @ 'break-rate'
-'break AB-3' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~membrane,loc_index_1~0) -> A(s,loc~cytosol,loc_index_1~1),B(s,loc~membrane,loc_index_1~0) @ 'break-rate'
-'break AB-4' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~membrane,loc_index_1~1) -> A(s,loc~cytosol,loc_index_1~1),B(s,loc~membrane,loc_index_1~1) @ 'break-rate'
+'break AB-2' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~membrane,loc_index_1~1) -> A(s,loc~cytosol,loc_index_1~1),B(s,loc~membrane,loc_index_1~1) @ 'break-rate'
 'break BA-1' A(s!1,loc~membrane,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0) -> A(s,loc~membrane,loc_index_1~0),B(s,loc~cytosol,loc_index_1~0) @ 'break-rate'
-'break BA-2' A(s!1,loc~membrane,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~0) -> A(s,loc~membrane,loc_index_1~1),B(s,loc~cytosol,loc_index_1~0) @ 'break-rate'
-'break BA-3' A(s!1,loc~membrane,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1) -> A(s,loc~membrane,loc_index_1~0),B(s,loc~cytosol,loc_index_1~1) @ 'break-rate'
-'break BA-4' A(s!1,loc~membrane,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1) -> A(s,loc~membrane,loc_index_1~1),B(s,loc~cytosol,loc_index_1~1) @ 'break-rate'
+'break BA-2' A(s!1,loc~membrane,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1) -> A(s,loc~membrane,loc_index_1~1),B(s,loc~cytosol,loc_index_1~1) @ 'break-rate'
 
 %init: 500 A(loc~cytosol,loc_index_1~0)
 %init: 500 A(loc~cytosol,loc_index_1~1)
@@ -36,31 +28,23 @@
 %var: 'cytosol voxel monomer B' B(s,loc~cytosol,loc_index_1~0)
 %var: 'membrane voxel monomer B' B(s,loc~membrane,loc_index_1~0)
 %var: 'all dimer' A(s!_)
-%var: 'dimer AB' A(s!1,loc~cytosol),B(s!1,loc~membrane)
-%var: 'dimer BA' A(s!1,loc~membrane),B(s!1,loc~cytosol)
+%var: 'dimer AB-1' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~membrane,loc_index_1~0)
+%var: 'dimer AB-2' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~membrane,loc_index_1~1)
+%var: 'dimer AB' 'dimer AB-1' + 'dimer AB-2'
+%var: 'dimer BA-1' A(s!1,loc~membrane,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0)
+%var: 'dimer BA-2' A(s!1,loc~membrane,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1)
+%var: 'dimer BA' 'dimer BA-1' + 'dimer BA-2'
 %var: 'same voxel dimer AB' A(s!1,loc~cytosol),B(s!1,loc~cytosol)
 %var: 'same voxel dimer BA' A(s!1,loc~cytosol),B(s!1,loc~cytosol)
 %plot: 'all monomer A'
 %plot: 'all monomer B'
 %plot: 'cytosol monomer A'
-%var: 'membrane monomer A :loc~membrane,loc_index_1~0' A(s,loc~membrane,loc_index_1~0)
-%plot: 'membrane monomer A :loc~membrane,loc_index_1~0'
-%var: 'membrane monomer A :loc~membrane,loc_index_1~1' A(s,loc~membrane,loc_index_1~1)
-%plot: 'membrane monomer A :loc~membrane,loc_index_1~1'
 %plot: 'membrane monomer A'
 %plot: 'cytosol voxel monomer B'
 %plot: 'membrane voxel monomer B'
 %plot: 'all dimer'
 %plot: 'dimer AB'
 %plot: 'dimer BA'
-%var: 'same voxel dimer AB :loc~cytosol,loc_index_1~0' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0)
-%plot: 'same voxel dimer AB :loc~cytosol,loc_index_1~0'
-%var: 'same voxel dimer AB :loc~cytosol,loc_index_1~1' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1)
-%plot: 'same voxel dimer AB :loc~cytosol,loc_index_1~1'
 %plot: 'same voxel dimer AB'
-%var: 'same voxel dimer BA :loc~cytosol,loc_index_1~0' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0)
-%plot: 'same voxel dimer BA :loc~cytosol,loc_index_1~0'
-%var: 'same voxel dimer BA :loc~cytosol,loc_index_1~1' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1)
-%plot: 'same voxel dimer BA :loc~cytosol,loc_index_1~1'
 %plot: 'same voxel dimer BA'
 

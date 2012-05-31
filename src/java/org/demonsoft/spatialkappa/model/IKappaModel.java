@@ -22,7 +22,7 @@ public interface IKappaModel {
     public void addCompartment(String name, List<Integer> dimensions);
     public void addCompartment(Compartment compartment);
 
-    public void addCompartmentLink(CompartmentLink link);
+    public void addChannel(Channel link);
 
     public void addAgentDeclaration(AggregateAgent agent);
 
@@ -42,7 +42,7 @@ public interface IKappaModel {
 
     public List<Compartment> getCompartments();
     
-    public List<CompartmentLink> getCompartmentLinks();
+    public List<Channel> getChannels();
     
     public List<Transport> getTransports();
     

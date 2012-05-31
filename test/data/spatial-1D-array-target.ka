@@ -73,26 +73,6 @@
 %var: 'red[8]' A(state~red,loc~cytosol,loc_index_1~8)
 %var: 'red[9]' A(state~red,loc~cytosol,loc_index_1~9)
 %plot: 'all red'
-%var: 'cytosol blue :loc~cytosol,loc_index_1~0' A(state~blue,loc~cytosol,loc_index_1~0)
-%plot: 'cytosol blue :loc~cytosol,loc_index_1~0'
-%var: 'cytosol blue :loc~cytosol,loc_index_1~1' A(state~blue,loc~cytosol,loc_index_1~1)
-%plot: 'cytosol blue :loc~cytosol,loc_index_1~1'
-%var: 'cytosol blue :loc~cytosol,loc_index_1~2' A(state~blue,loc~cytosol,loc_index_1~2)
-%plot: 'cytosol blue :loc~cytosol,loc_index_1~2'
-%var: 'cytosol blue :loc~cytosol,loc_index_1~3' A(state~blue,loc~cytosol,loc_index_1~3)
-%plot: 'cytosol blue :loc~cytosol,loc_index_1~3'
-%var: 'cytosol blue :loc~cytosol,loc_index_1~4' A(state~blue,loc~cytosol,loc_index_1~4)
-%plot: 'cytosol blue :loc~cytosol,loc_index_1~4'
-%var: 'cytosol blue :loc~cytosol,loc_index_1~5' A(state~blue,loc~cytosol,loc_index_1~5)
-%plot: 'cytosol blue :loc~cytosol,loc_index_1~5'
-%var: 'cytosol blue :loc~cytosol,loc_index_1~6' A(state~blue,loc~cytosol,loc_index_1~6)
-%plot: 'cytosol blue :loc~cytosol,loc_index_1~6'
-%var: 'cytosol blue :loc~cytosol,loc_index_1~7' A(state~blue,loc~cytosol,loc_index_1~7)
-%plot: 'cytosol blue :loc~cytosol,loc_index_1~7'
-%var: 'cytosol blue :loc~cytosol,loc_index_1~8' A(state~blue,loc~cytosol,loc_index_1~8)
-%plot: 'cytosol blue :loc~cytosol,loc_index_1~8'
-%var: 'cytosol blue :loc~cytosol,loc_index_1~9' A(state~blue,loc~cytosol,loc_index_1~9)
-%plot: 'cytosol blue :loc~cytosol,loc_index_1~9'
 %plot: 'cytosol blue'
 %plot: 'red[0]'
 %plot: 'red[1]'

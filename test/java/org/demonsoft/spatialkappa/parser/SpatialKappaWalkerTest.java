@@ -1,5 +1,7 @@
 package org.demonsoft.spatialkappa.parser;
 
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.replay;
@@ -24,7 +26,7 @@ import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AggregateAgent;
 import org.demonsoft.spatialkappa.model.BooleanExpression;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
-import org.demonsoft.spatialkappa.model.CompartmentLink;
+import org.demonsoft.spatialkappa.model.Channel;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Perturbation;
@@ -33,6 +35,7 @@ import org.demonsoft.spatialkappa.model.VariableExpression;
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
 import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.demonsoft.spatialkappa.model.VariableReference;
+import org.demonsoft.spatialkappa.parser.SpatialKappaWalker.linkExpr_return;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -51,21 +54,21 @@ public class SpatialKappaWalkerTest {
     public void testRuleExpr() throws Exception {
 
         checkRuleExpr("A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
-                null, "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null);
+                null, "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), NOT_LOCATED);
 
         checkRuleExpr("'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
-                "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), null);
+                "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), NOT_LOCATED);
 
         checkRuleExpr("'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 'x'+[inf]", 
                 "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", 
-                new VariableExpression(new VariableExpression(new VariableReference("x")), Operator.PLUS, new VariableExpression(Constant.INFINITY)), null);
+                new VariableExpression(new VariableExpression(new VariableReference("x")), Operator.PLUS, new VariableExpression(Constant.INFINITY)), NOT_LOCATED);
 
         checkRuleExpr("'IPTG addition{77331}'  -> IPTG(laci) @ 0.0", 
-                "IPTG addition{77331}", null, "[IPTG(laci)]", new VariableExpression(0), null);
+                "IPTG addition{77331}", null, "[IPTG(laci)]", new VariableExpression(0), NOT_LOCATED);
 
         checkRuleExpr("'bin' CRY(clk),EBOX-CLK-BMAL1(cry) -> CRY(clk!2), EBOX-CLK-BMAL1(cry!2) @ 127.2862", 
                 "bin", "[CRY(clk), EBOX-CLK-BMAL1(cry)]", "[CRY(clk!2), EBOX-CLK-BMAL1(cry!2)]", 
-                new VariableExpression(127.2862f), null);
+                new VariableExpression(127.2862f), NOT_LOCATED);
 
     }
 
@@ -76,6 +79,9 @@ public class SpatialKappaWalkerTest {
 
         checkRuleExpr("'label' cytosol A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 "label", "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), location);
+
+        checkRuleExpr("cytosol A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+                null, "[A(s!1), B(x!1)]", "[A(s), B(x)]", new VariableExpression(1), location);
 
         location = new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1"));
 
@@ -97,9 +103,9 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testInitExpr() throws Exception {
-        checkInitExpr_value("%init: 5 A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, null);
+        checkInitExpr_value("%init: 5 A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, NOT_LOCATED);
         
-        checkInitExpr_reference("%init: 'label' A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", null);
+        checkInitExpr_reference("%init: 'label' A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", NOT_LOCATED);
     }
 
     @Test
@@ -161,28 +167,28 @@ public class SpatialKappaWalkerTest {
     }
 
     @Test
-    public void testCompartmentLinkExpr() throws Exception {
+    public void testChannelDecl() throws Exception {
         // Forward
-        checkCompartmentLinkExpr("%link: 'label' compartment1 -> compartment2", "label: compartment1 -> compartment2");
-        checkCompartmentLinkExpr("%link: 'label' compartment1['x'] -> compartment2[2]['x'+1]", "label: compartment1['x'] -> compartment2[2][('x' + 1)]");
+        checkChannelDecl("%channel: label compartment1 -> compartment2", "label: compartment1 -> compartment2");
+        checkChannelDecl("%channel: label compartment1[x] -> compartment2[2][x+1]", "label: compartment1[x] -> compartment2[2][(x + 1)]");
         
         // Back
-        checkCompartmentLinkExpr("%link: 'label' compartment1 <- compartment2", "label: compartment1 <- compartment2");
-        checkCompartmentLinkExpr("%link: 'label' compartment1['x'] <- compartment2[2]['x'+1]", "label: compartment1['x'] <- compartment2[2][('x' + 1)]");
+        checkChannelDecl("%channel: label compartment1 <- compartment2", "label: compartment1 <- compartment2");
+        checkChannelDecl("%channel: label compartment1[x] <- compartment2[2][x+1]", "label: compartment1[x] <- compartment2[2][(x + 1)]");
         
         // Both
-        checkCompartmentLinkExpr("%link: 'label' compartment1 <-> compartment2", "label: compartment1 <-> compartment2");
-        checkCompartmentLinkExpr("%link: 'label' compartment1['x'] <-> compartment2[2]['x'+1]", "label: compartment1['x'] <-> compartment2[2][('x' + 1)]");
+        checkChannelDecl("%channel: label compartment1 <-> compartment2", "label: compartment1 <-> compartment2");
+        checkChannelDecl("%channel: label compartment1[x] <-> compartment2[2][x+1]", "label: compartment1[x] <-> compartment2[2][(x + 1)]");
     }
     
-    private void checkCompartmentLinkExpr(String inputText, String linkText) throws Exception {
-        Capture<CompartmentLink> link = new Capture<CompartmentLink>();
+    private void checkChannelDecl(String inputText, String linkText) throws Exception {
+        Capture<Channel> channel = new Capture<Channel>();
         reset(mocks);
-        kappaModel.addCompartmentLink(capture(link));
+        kappaModel.addChannel(capture(channel));
         replay(mocks);
-        runParserRule("compartmentLinkExpr", inputText);
+        runParserRule("channelDecl", inputText);
         verify(mocks);
-        assertEquals(linkText, link.toString());
+        assertEquals(linkText, channel.toString());
     }
 
     
@@ -209,26 +215,46 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testLinkExpr() throws Exception {
-        checkParserRule("linkExpr", "! 0", "0");
-        checkParserRule("linkExpr", "! 1", "1");
-        checkParserRule("linkExpr", "!1", "1");
-        checkParserRule("linkExpr", "?", "?");
-        checkParserRule("linkExpr", "!_", "_");
-        checkParserRule("linkExpr", "! _", "_");
+        checkLinkExpr("! 0", "0", null);
+        checkLinkExpr("! 1", "1", null);
+        checkLinkExpr("!1", "1", null);
+        checkLinkExpr("?", "?", null);
+        checkLinkExpr("!_", "_", null);
+        checkLinkExpr("! _", "_", null);
     }
 
-
     @Test
+    public void testLinkExpr_withNamedChannel() throws Exception {
+        checkLinkExpr("! 0:channel", "0", "channel");
+        checkLinkExpr("! 1:channel", "1", "channel");
+        checkLinkExpr("!1:channel", "1", "channel");
+        checkLinkExpr("!_:channel", "_", "channel");
+        checkLinkExpr("! _:channel", "_", "channel");
+
+        // Suffix will be caught by next invoked rule
+        checkLinkExpr("?:channel", "?", null);
+        checkLinkExpr("?channel", "?", null);
+    }
+
+    private void checkLinkExpr(String input, String expectedLink, String expectedChannel) throws Exception {
+    	linkExpr_return result = (linkExpr_return) runParserRule("linkExpr", input);
+    	assertNotNull(result);
+    	assertEquals(expectedLink, result.linkName);
+		assertEquals(expectedChannel, result.channelName);
+	}
+
+	@Test
     public void testObsExpr() throws Exception {
-        checkObsExpr("obsExpr", "%obs: A(x~a),B(y~d)\n", "[A(x~a), B(y~d)]", "[A(x~a), B(y~d)]", null, true);
-        checkObsExpr("obsExpr", "%obs: 'label' A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", null, true);
+        checkObsExpr("obsExpr", "%obs: A(x~a),B(y~d)\n", "[A(x~a), B(y~d)]", "[A(x~a), B(y~d)]", NOT_LOCATED, true);
+        checkObsExpr("obsExpr", "%obs: 'label' A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", NOT_LOCATED, true);
     }
 
     @Test
     public void testObsExpr_spatial() throws Exception {
         checkObsExpr("obsExpr", "%obs: 'label' cytosol A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol"), true);
         checkObsExpr("obsExpr", "%obs: 'label' cytosol[0][1] A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")), true);
-    }
+        checkObsExpr("obsExpr", "%obs: 'label' A:cytosol[0][1](x~a),B:cytosol[0][1](y~d)\n", "label", "[A:cytosol[0][1](x~a), B:cytosol[0][1](y~d)]", NOT_LOCATED, true);
+           }
 
     private void checkObsExpr(String ruleName, String inputText, String label, String leftSideAgents, Location location, boolean inObservations) throws Exception {
         lhsAgents.reset();
@@ -281,13 +307,13 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testTransportExpr() throws Exception {
-        checkTransportExpr("%transport: 'intra-cytosol' @ 0.1", 
+        checkTransportExpr("%transport: intra-cytosol @ 0.1", 
                 null, "intra-cytosol", null, new VariableExpression(0.1f));
-        checkTransportExpr("%transport: 'transport-all' 'intra-cytosol' @ 0.1", 
+        checkTransportExpr("%transport: 'transport-all' intra-cytosol @ 0.1", 
                 "transport-all", "intra-cytosol", null, new VariableExpression(0.1f));
-        checkTransportExpr("%transport: 'intra-cytosol'  A(s),B(x) @ 0.1", 
+        checkTransportExpr("%transport: intra-cytosol  A(s),B(x) @ 0.1", 
                 null, "intra-cytosol", "[A(s), B(x)]", new VariableExpression(0.1f));
-        checkTransportExpr("%transport: 'transport-all' 'intra-cytosol'  A(s),B(x) @ 0.1", 
+        checkTransportExpr("%transport: 'transport-all' intra-cytosol  A(s),B(x) @ 0.1", 
                 "transport-all", "intra-cytosol", "[A(s), B(x)]", new VariableExpression(0.1f));
     }
     
@@ -303,7 +329,9 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testVarExpr() throws Exception {
-        checkObsExpr("varExpr", "%var: 'label' A(x~a),B(y~d)", "label", "[A(x~a), B(y~d)]", null, false);
+        checkObsExpr("varExpr", "%var: 'label' A(x~a),B(y~d)", "label", "[A(x~a), B(y~d)]", NOT_LOCATED, false);
+        checkObsExpr("varExpr", "%var: 'label' A:cytosol(x~a),B:cytosol(y~d)", 
+                "label", "[A:cytosol(x~a), B:cytosol(y~d)]", NOT_LOCATED, false);
         checkVarExpr("%var: 'label' 2.55e4", "25500.0", "label");
         checkVarExpr("%var: 'label' ('a' + 'b') * 2", "(('a' + 'b') * 2.0)", "label");
         checkVarExpr("%var: 'label' [inf] * 2", "([inf] * 2.0)", "label");
@@ -413,7 +441,7 @@ public class SpatialKappaWalkerTest {
     @Test
     public void testCellIndexExpr() throws Exception {
         checkCellIndexExpression("1", (CellIndexExpression) runParserRule("cellIndexExpr", "1"));
-        checkCellIndexExpression("'x'", (CellIndexExpression) runParserRule("cellIndexExpr", "'x'"));
+        checkCellIndexExpression("x", (CellIndexExpression) runParserRule("cellIndexExpr", "x"));
         checkCellIndexExpression("(2 + 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2 + 3"));
         checkCellIndexExpression("(2 - 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2 - 3"));
         checkCellIndexExpression("(2 / 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2 / 3"));
@@ -422,7 +450,7 @@ public class SpatialKappaWalkerTest {
         checkCellIndexExpression("(2 ^ 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2 ^ 3"));
         checkCellIndexExpression("(2 * 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "2*3"));
         checkCellIndexExpression("(2 * 3)", (CellIndexExpression) runParserRule("cellIndexExpr", "(2 * 3)"));
-        checkCellIndexExpression("('x' + ('y' * 2))", (CellIndexExpression) runParserRule("cellIndexExpr", "'x' + ('y' * 2)"));
+        checkCellIndexExpression("(x + (y * 2))", (CellIndexExpression) runParserRule("cellIndexExpr", "x + (y * 2)"));
     }
 
     @Test
@@ -447,8 +475,8 @@ public class SpatialKappaWalkerTest {
 
 	@Test
     public void testAgent() throws Exception {
-//        checkAgent("A", "A");
-//        checkAgent("A", "A()");
+        checkAgent("A", "A");
+        checkAgent("A", "A()");
         checkAgent("A:cytosol", "A:cytosol");
         checkAgent("A:cytosol", "A:cytosol()");
         checkAgent("A:cytosol[0][1]", "A:cytosol[0][1]");
@@ -468,10 +496,19 @@ public class SpatialKappaWalkerTest {
     }
 
     @Test
+    public void testIface() throws Exception {
+    	checkParserRule("iface", "l", "l");
+    	checkParserRule("iface", "l!1", "l!1");
+    	checkParserRule("iface", "l!1:channel", "l!1:channel");
+    	checkParserRule("iface", "x~a", "x~a");
+    }
+
+
+    @Test
     public void testLocationExpr() throws Exception {
         checkCompartmentReference("label", (Location) runParserRule("locationExpr", "label"));
         checkCompartmentReference("label[1]", (Location) runParserRule("locationExpr", "label[1]"));
-        checkCompartmentReference("label[1][(20 + 'x')]", (Location) runParserRule("locationExpr", "label[1][20+'x']"));
+        checkCompartmentReference("label[1][(20 + x)]", (Location) runParserRule("locationExpr", "label[1][20+x]"));
     }
     
     private void checkCompartmentReference(String expected, Location actual) {

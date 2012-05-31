@@ -117,7 +117,15 @@ public class TransformTest extends TransitionTest {
                 TransformPrimitive.getCreateLink(leftAgent3.getSite("downstream"), rightAgent3.getSite("upstream")),
                 TransformPrimitive.getCreateLink(leftAgent4.getSite("rna"), rightAgent3.getSite("downstream")),
         };
-        assertEquals(Arrays.asList(expected), transform.bestPrimitives); 
+        assertEquals(Arrays.asList(expected), transform.bestPrimitives);
+        
+        Map<Agent, Agent> expectedAgentMap = new HashMap<Agent, Agent>();
+        expectedAgentMap.put(leftAgent1, rightAgent1);
+        expectedAgentMap.put(leftAgent2, rightAgent2);
+        expectedAgentMap.put(leftAgent3, rightAgent4);
+        expectedAgentMap.put(leftAgent4, rightAgent5);
+        
+        assertEquals(expectedAgentMap, transform.getLeftRightAgentMap());
     }
 
     private AgentLink getAgentLink(List<Complex> complexes, String linkName) {

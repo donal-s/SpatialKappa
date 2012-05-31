@@ -484,8 +484,8 @@ public abstract class AbstractSpatialTest {
     private static final String VERY_SIMPLE_TRANSPORT_INPUT = 
         "%agent: A()\n" +
         "%compartment: cytosol [2]\n" + 
-        "%link: 'intra-cytosol' cytosol ['x'] -> cytosol ['x'+1]\n" + 
-        "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + 
+        "%channel: intra-cytosol cytosol [x] -> cytosol [x+1]\n" + 
+        "%transport: 'diffusion-all' intra-cytosol @ 0.1\n" + 
         "%init: 10 cytosol[0] A() \n" + 
         "%obs: 'val[0]' cytosol[0] A() \n" + 
         "%obs: 'val[1]' cytosol[1] A() \n" + 
@@ -494,8 +494,8 @@ public abstract class AbstractSpatialTest {
     private static final String SIMPLE_TRANSPORT_INPUT = 
         "%agent: A()\n" +
         "%compartment: cytosol [4]\n" + 
-        "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
-        "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + 
+        "%channel: intra-cytosol cytosol [x] <-> cytosol [x+1]\n" + 
+        "%transport: 'diffusion-all' intra-cytosol @ 0.1\n" + 
         "%init: 2000 cytosol[0] A() \n" + 
         "%obs: 'val[0]' cytosol[0] A() \n" + 
         "%obs: 'val[1]' cytosol[1] A() \n" + 
@@ -507,10 +507,10 @@ public abstract class AbstractSpatialTest {
         "%agent: A()\n" +
         "%agent: B()\n" +
         "%compartment: cytosol [3]\n" + 
-        "%link: 'forward' cytosol ['x'] -> cytosol ['x'+1]\n" + 
-        "%link: 'backward' cytosol ['x'] <- cytosol ['x'+1]\n" + 
-        "%transport: 'forward'       'forward'       A() @ 0.1\n" + 
-        "%transport: 'backward'      'backward'      B() @ 0.1\n" + 
+        "%channel: forward cytosol [x] -> cytosol [x+1]\n" + 
+        "%channel: backward cytosol [x] <- cytosol [x+1]\n" + 
+        "%transport: 'forward'       forward       A() @ 0.1\n" + 
+        "%transport: 'backward'      backward      B() @ 0.1\n" + 
         "%init: 1000 cytosol[0] A() \n" + 
         "%init: 1000 cytosol[2] B() \n" + 
         "%obs: 'val[0]A' cytosol[0] A() \n" + 
@@ -525,8 +525,8 @@ public abstract class AbstractSpatialTest {
         "%agent: A()\n" +
         "%agent: B()\n" +
         "%compartment: cytosol [2]\n" + 
-        "%link: 'forward' cytosol ['x'] -> cytosol ['x'+1]\n" + 
-        "%transport: 'forward'       'forward'       B(),A() @ 0.1\n" + 
+        "%channel: forward cytosol [x] -> cytosol [x+1]\n" + 
+        "%transport: 'forward'       forward       B(),A() @ 0.1\n" + 
         "%init: 1000 cytosol[0] A() \n" + 
         "%init: 1000 cytosol[1] B() \n" + 
         "%obs: 'val[0]A' cytosol[0] A() \n" + 
@@ -591,11 +591,11 @@ public abstract class AbstractSpatialTest {
         "%agent: B(x)\n" +
         "%agent: C(x)\n" +
         "%compartment: cytosol [3] \n" + 
-        "%link: 'intra-cytosola' cytosol [0] -> cytosol [1] \n" + 
-        "%link: 'intra-cytosolb' cytosol [2] -> cytosol [1] \n" + 
+        "%channel: intra-cytosola cytosol [0] -> cytosol [1] \n" + 
+        "%channel: intra-cytosolb cytosol [2] -> cytosol [1] \n" + 
         "'react' cytosol A(x),B(x) -> A(x!1),B(x!1) @ 0.1\n" + 
-        "%transport: 'diffusion-a' 'intra-cytosola' A(x) @ 0.1 \n" + 
-        "%transport: 'diffusion-b' 'intra-cytosolb' B(x) @ 0.1 \n" + 
+        "%transport: 'diffusion-a' intra-cytosola A(x) @ 0.1 \n" + 
+        "%transport: 'diffusion-b' intra-cytosolb B(x) @ 0.1 \n" + 
         "%init: 1000 cytosol[0] A(x) \n" + 
         "%init: 1000 cytosol[2] B(x) \n" + 
         "%obs: 'C' cytosol A(x!1),B(x!1)\n" + 
@@ -604,8 +604,8 @@ public abstract class AbstractSpatialTest {
     private static final String STEADY_STATE_CONCENTRATION_GRADIENT_INPUT = 
         "%agent: A()\n" +
         "%compartment: cytosol [4]\n" + 
-        "%link: 'intra-cytosol' cytosol ['x'] <-> cytosol ['x'+1]\n" + 
-        "%transport: 'diffusion-all' 'intra-cytosol' @ 0.1\n" + 
+        "%channel: intra-cytosol cytosol [x] <-> cytosol [x+1]\n" + 
+        "%transport: 'diffusion-all' intra-cytosol @ 0.1\n" + 
         "'source' cytosol[0] -> A() @ 5\n" + 
         "'sink' cytosol[3] A() -> @ [inf]\n" + 
         "%obs: 'val[0]' cytosol[0] A() \n" + 

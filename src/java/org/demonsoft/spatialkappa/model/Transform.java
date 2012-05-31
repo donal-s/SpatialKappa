@@ -23,6 +23,7 @@ public class Transform extends Transition {
 
     List<TransformPrimitive> bestPrimitives;
     int bestPrimitivesCost = Integer.MAX_VALUE;
+    int[] bestIndexMapLeftRight;
     public final List<Agent> leftAgents;
     public final List<Agent> rightAgents;
 
@@ -110,11 +111,12 @@ public class Transform extends Transition {
         createTransformMap(leftSideAgents, rightSideAgents, indexMapLeftRight, indexMapRightLeft, deletes);
     }
 
-    private void chooseLowerCostPrimitives(List<TransformPrimitive> currentPrimitives) {
+    private void chooseLowerCostPrimitives(List<TransformPrimitive> currentPrimitives, int[] indexMapLeftRight) {
         int currentScore = getPrimitivesCost(currentPrimitives);
         if (currentScore < bestPrimitivesCost) {
             bestPrimitives = currentPrimitives;
             bestPrimitivesCost = currentScore;
+            bestIndexMapLeftRight = Arrays.copyOf(indexMapLeftRight, indexMapLeftRight.length);
         }
     }
 
@@ -226,7 +228,9 @@ public class Transform extends Transition {
             int[] indexMapLeftRight, int[] indexMapRightLeft, Map<String, Integer> deletes) {
 
         if (countUnmappedNodes(indexMapLeftRight) == 0) {
-            chooseLowerCostPrimitives(createPrimitives(leftSideAgents, rightSideAgents, indexMapLeftRight, indexMapRightLeft));
+            chooseLowerCostPrimitives(
+                    createPrimitives(leftSideAgents, rightSideAgents, indexMapLeftRight, indexMapRightLeft), 
+                    indexMapLeftRight);
             return;
         }
 
@@ -610,11 +614,19 @@ public class Transform extends Transition {
             }
         }
     }
-
-
     
     @Override
     protected Transform clone() {
         return new Transform(label, sourceComplexes, targetComplexes, rate);
+    }
+
+    public Map<Agent, Agent> getLeftRightAgentMap() {
+        Map<Agent, Agent> result = new HashMap<Agent, Agent>();
+        for (int index = 0; index < bestIndexMapLeftRight.length; index++) {
+            if (bestIndexMapLeftRight[index] != UNMAPPED && bestIndexMapLeftRight[index] != DELETED) {
+                result.put(leftAgents.get(index), rightAgents.get(bestIndexMapLeftRight[index]));
+            }
+        }
+        return result;
     }
 }

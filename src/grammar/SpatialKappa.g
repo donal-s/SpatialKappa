@@ -15,6 +15,7 @@ tokens {
   INTERFACE;
   STATE;
   LINK;
+  CHANNEL;
   OCCUPIED;
   ANY;
   LHS;
@@ -23,7 +24,6 @@ tokens {
   PERTURBATION;
   COMPARTMENT;
   DIMENSION;
-  COMPARTMENT_LINK;
   LOCATION;
   CELL_INDEX_EXPR;
   INDEX;
@@ -75,7 +75,7 @@ line
   ruleExpr NEWLINE!
   | COMMENT!
   | compartmentExpr NEWLINE!
-  | compartmentLinkExpr NEWLINE!
+  | channelDecl NEWLINE!
   | transportExpr NEWLINE!
   | initExpr NEWLINE!
   | plotExpr NEWLINE!
@@ -92,9 +92,9 @@ options {backtrack=true;}
   label? transformExpr kineticExpr 
     -> 
       ^(TRANSFORM transformExpr kineticExpr label?)
-  | label locationExpr transformExpr kineticExpr 
+  | label? locationExpr transformExpr kineticExpr 
     -> 
-      ^(TRANSFORM transformExpr kineticExpr label locationExpr)
+      ^(TRANSFORM transformExpr kineticExpr label? locationExpr)
   ;
 
 transformExpr
@@ -155,12 +155,12 @@ stateExpr
 
 linkExpr
   :
-  '!' INT
+  '!' INT (':' channelName=id)?
     ->
-      ^(LINK INT)
-  | '!' '_'
+      ^(LINK ^(CHANNEL $channelName)? INT)
+  | '!' '_' (':' channelName=id)?
     ->
-      ^(LINK OCCUPIED)
+      ^(LINK ^(CHANNEL $channelName)? OCCUPIED)
   | '?'
     ->
       ^(LINK ANY)
@@ -206,16 +206,16 @@ compartmentExpr
       ^(COMPARTMENT id ^(DIMENSION INT)*)
   ;
 
-compartmentLinkExpr
+channelDecl
   :
-  '%link:' linkName=label sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr
+  '%channel:' linkName=id sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr
     ->
-      ^(COMPARTMENT_LINK $linkName $sourceCompartment transportTransition $targetCompartment)
+      ^(CHANNEL $linkName $sourceCompartment transportTransition $targetCompartment)
   ;
 
 transportExpr
   :
-  '%transport:' (transportName=label)? linkName=label (agentGroup)? kineticExpr
+  '%transport:' (transportName=label)? linkName=id (agentGroup)? kineticExpr
     ->
       ^(TRANSPORT $linkName agentGroup? kineticExpr $transportName?)
   ;
@@ -411,9 +411,9 @@ options {backtrack=true;}
   | INT
     ->
       ^(CELL_INDEX_EXPR INT)
-  | label
+  | id
     ->
-      ^(CELL_INDEX_EXPR label)
+      ^(CELL_INDEX_EXPR id)
   ;
   
 id

@@ -17,14 +17,6 @@
 %plot: 'all dimer'
 %plot: 'dimer AB'
 %plot: 'dimer BA'
-%var: 'same voxel dimer AB :loc~cytosol,loc_index_1~0' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0)
-%plot: 'same voxel dimer AB :loc~cytosol,loc_index_1~0'
-%var: 'same voxel dimer AB :loc~cytosol,loc_index_1~1' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1)
-%plot: 'same voxel dimer AB :loc~cytosol,loc_index_1~1'
 %plot: 'same voxel dimer AB'
-%var: 'same voxel dimer BA :loc~cytosol,loc_index_1~0' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0)
-%plot: 'same voxel dimer BA :loc~cytosol,loc_index_1~0'
-%var: 'same voxel dimer BA :loc~cytosol,loc_index_1~1' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1)
-%plot: 'same voxel dimer BA :loc~cytosol,loc_index_1~1'
 %plot: 'same voxel dimer BA'
 

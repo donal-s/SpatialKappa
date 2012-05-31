@@ -1,5 +1,7 @@
 package org.demonsoft.spatialkappa.tools;
 
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -316,7 +318,7 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
         boolean partition = false;
         List<ObservableMapValue> complexes = observableComplexMap.get(variable);
         if (complexes != null) {
-            if (variable.location != null) {
+            if (variable.location != NOT_LOCATED) {
                 Compartment compartment = variable.location.getReferencedCompartment(kappaModel.getCompartments());
                 if (compartment.getDimensions().length != variable.location.getIndices().length) {
                     partition = true;

@@ -27,10 +27,6 @@
 %plot: 'all monomer A'
 %plot: 'all monomer B'
 %plot: 'compartment monomer A - agent'
-%var: 'compartment monomer A - complex :loc~cytosol,loc_index_1~0' A(s,loc~cytosol,loc_index_1~0)
-%plot: 'compartment monomer A - complex :loc~cytosol,loc_index_1~0'
-%var: 'compartment monomer A - complex :loc~cytosol,loc_index_1~1' A(s,loc~cytosol,loc_index_1~1)
-%plot: 'compartment monomer A - complex :loc~cytosol,loc_index_1~1'
 %plot: 'compartment monomer A - complex'
 %plot: 'voxel monomer - agent'
 %plot: 'voxel monomer - complex'

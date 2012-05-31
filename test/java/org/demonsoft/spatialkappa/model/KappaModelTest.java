@@ -1,5 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.TestUtils.getList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -21,6 +23,10 @@ import org.junit.Test;
 
 public class KappaModelTest {
 
+	// TODO test name conflicts
+
+	// TODO test channel/location conflicts
+	
     private KappaModel model = new KappaModel();
 
     @Test
@@ -180,7 +186,7 @@ public class KappaModelTest {
             // Expected exception
         }
 
-        model.addInitialValue(agents, "3", null);
+        model.addInitialValue(agents, "3", NOT_LOCATED);
 
         agents = getList(new Agent("agent1", new AgentSite("x", null, "1")), 
                 new Agent("agent2", new AgentSite("x", null, "1")), 
@@ -199,7 +205,7 @@ public class KappaModelTest {
         Complex expectedComplex4 = new Complex(new Agent("agent3", otherLocation, new AgentSite("x", null, "7")), new Agent("agent4", otherLocation, new AgentSite("x", null, "7")));
 
         checkConcreteLocatedInitialValues(new Object[][] { 
-                { expectedComplex1, 3, null }, 
+                { expectedComplex1, 3, NOT_LOCATED }, 
                 { expectedComplex2, 5, location }, 
                 { expectedComplex3, 5, location }, 
                 { expectedComplex4, 7, otherLocation } });
@@ -306,9 +312,9 @@ public class KappaModelTest {
         
         // No compartments
         Complex complex1 = TransformTest.getComplexes(new Agent("agent1")).get(0);
-        model.addInitialValue(complex1.agents, "3", null);
+        model.addInitialValue(complex1.agents, "3", NOT_LOCATED);
 
-        checkConcreteLocatedInitialValues(new Object[][] { { complex1, 3, null } });
+        checkConcreteLocatedInitialValues(new Object[][] { { complex1, 3, NOT_LOCATED } });
         
         // add compartment
         model.addCompartment(new Compartment("cytosol", 3));
@@ -336,11 +342,11 @@ public class KappaModelTest {
         // No compartments
         List<Agent> leftAgents = getList(new Agent("agent1"));
         List<Agent> rightAgents = getList(new Agent("agent2"));
-        model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), null);
+        model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), NOT_LOCATED);
         Transform transform1 = new Transform("label", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.1f);
 
         checkLocatedTransitions(new LocatedTransform[] { 
-                new LocatedTransform(transform1, null)
+                new LocatedTransform(transform1, NOT_LOCATED)
                 });
         
         // add compartment
@@ -373,11 +379,11 @@ public class KappaModelTest {
         // No compartments
         List<Agent> leftAgents = getList(new Agent("agent1"));
         List<Agent> rightAgents = getList(new Agent("agent2"));
-        model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), null);
+        model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), NOT_LOCATED);
         Transform transform = new Transform("label", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.1f);
 
         checkLocatedTransitions(new LocatedTransform[] { 
-                new LocatedTransform(transform, null)
+                new LocatedTransform(transform, NOT_LOCATED)
                 });
         
         // add compartment
@@ -399,11 +405,11 @@ public class KappaModelTest {
         assertEquals(0, actual.size());
         
         model.addCompartment(new Compartment("cytosol", 3));
-        model.addCompartmentLink(new CompartmentLink("intra", 
+        model.addChannel(new Channel("intra", 
                 new Location("cytosol", new CellIndexExpression(new VariableReference("x"))), 
                 new Location("cytosol", new CellIndexExpression(new CellIndexExpression(new VariableReference("x")), Operator.PLUS, new CellIndexExpression("1"))),
                 Direction.BIDIRECTIONAL));
-        model.addCompartmentLink(new CompartmentLink("intra", 
+        model.addChannel(new Channel("intra", 
                 new Location("cytosol", new CellIndexExpression("2")), 
                 new Location("cytosol", new CellIndexExpression("0")),
                 Direction.BIDIRECTIONAL));
@@ -432,10 +438,10 @@ public class KappaModelTest {
         assertEquals(0, actual.size());
         
         model.addCompartment(new Compartment("cytosol", 3));
-        model.addCompartmentLink(new CompartmentLink("intra", 
+        model.addChannel(new Channel("intra", 
                 new Location("cytosol", new CellIndexExpression("0")), new Location("cytosol", new CellIndexExpression("1")),
                 Direction.BIDIRECTIONAL));
-        model.addCompartmentLink(new CompartmentLink("intra", 
+        model.addChannel(new Channel("intra", 
                 new Location("cytosol", new CellIndexExpression("1")), new Location("cytosol", new CellIndexExpression("2")),
                 Direction.BIDIRECTIONAL));
         
@@ -491,7 +497,7 @@ public class KappaModelTest {
             // Expected exception
         }
 
-        model.addVariable(agents1, "label", null);
+        model.addVariable(agents1, "label", NOT_LOCATED);
 
         checkVariables(model, "'label' ([agent1])");
         checkOrderedVariableNames(model, "label");
@@ -500,7 +506,7 @@ public class KappaModelTest {
         List<Agent> agents2 = new ArrayList<Agent>();
         agents2.add(new Agent("agent1"));
         agents2.add(new Agent("agent2"));
-        model.addVariable(agents2, "label2", null);
+        model.addVariable(agents2, "label2", NOT_LOCATED);
 
         checkVariables(model, "'label' ([agent1])", "'label2' ([agent1, agent2])");
         checkOrderedVariableNames(model, "label", "label2");
@@ -513,12 +519,12 @@ public class KappaModelTest {
         List<Agent> agents1 = new ArrayList<Agent>();
         agents1.add(new Agent("agent1"));
 
-        model.addVariable(agents1, "C", null);
+        model.addVariable(agents1, "C", NOT_LOCATED);
 
         List<Agent> agents2 = new ArrayList<Agent>();
         agents2.add(new Agent("agent1"));
         agents2.add(new Agent("agent2"));
-        model.addVariable(agents2, "A", null);
+        model.addVariable(agents2, "A", NOT_LOCATED);
 
         model.addVariable(new VariableExpression(100f), "B");
 
@@ -549,16 +555,17 @@ public class KappaModelTest {
 
         model.addVariable(agents1, "label", location);
 
-        checkVariables(model, "'label' cytosol[2] ([agent1])");
+        checkVariables(model, "'label' cytosol[2] ([agent1:cytosol[2]])");
         checkOrderedVariableNames(model, "label");
         checkAggregateAgents(new AggregateAgent("agent1"));
 
         List<Agent> agents2 = new ArrayList<Agent>();
-        agents2.add(new Agent("agent1"));
+        agents2.add(new Agent("agent1", new Location("cytosol", INDEX_0)));
         agents2.add(new Agent("agent2"));
         model.addVariable(agents2, "label2", location);
 
-        checkVariables(model, "'label' cytosol[2] ([agent1])", "'label2' cytosol[2] ([agent1, agent2])");
+        checkVariables(model, "'label' cytosol[2] ([agent1:cytosol[2]])", 
+                "'label2' cytosol[2] ([agent1:cytosol[0], agent2:cytosol[2]])");
         checkOrderedVariableNames(model, "label", "label2");
         checkAggregateAgents(new AggregateAgent("agent1"), new AggregateAgent("agent2"));
     }
@@ -656,25 +663,25 @@ public class KappaModelTest {
     }
 
     @Test
-    public void testAddCompartmentLink() {
+    public void testAddChannel() {
         try {
-            model.addCompartmentLink(null);
+            model.addChannel(null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
 
-        assertNotNull(model.getCompartmentLinks());
-        assertEquals(0, model.getCompartmentLinks().size());
+        assertNotNull(model.getChannels());
+        assertEquals(0, model.getChannels().size());
 
-        CompartmentLink link1 = new CompartmentLink("name1", new Location("1"), new Location("2"), Direction.BACKWARD);
-        CompartmentLink link2 = new CompartmentLink("name2", new Location("1"), new Location("3"), Direction.BIDIRECTIONAL);
-        model.addCompartmentLink(link1);
-        model.addCompartmentLink(link2);
-        assertEquals(2, model.getCompartmentLinks().size());
-        assertEquals(link1, model.getCompartmentLinks().get(0));
-        assertEquals(link2, model.getCompartmentLinks().get(1));
+        Channel link1 = new Channel("name1", new Location("1"), new Location("2"), Direction.BACKWARD);
+        Channel link2 = new Channel("name2", new Location("1"), new Location("3"), Direction.BIDIRECTIONAL);
+        model.addChannel(link1);
+        model.addChannel(link2);
+        assertEquals(2, model.getChannels().size());
+        assertEquals(link1, model.getChannels().get(0));
+        assertEquals(link2, model.getChannels().get(1));
     }
 
     private void checkTransforms(KappaModel kappaModel, Location location, Transform[] expectedTransforms) {
@@ -710,11 +717,11 @@ public class KappaModelTest {
         
         for (Object[] expected : expectedQuantities) {
             String complexString = expected[0].toString();
-            String locationString = expected[2] == null ? "" : expected[2].toString();
+            String locationString = expected[2] == NOT_LOCATED ? "" : expected[2].toString();
             boolean found = false;
             for (Map.Entry<LocatedComplex, Integer> entry : quantityMap.entrySet()) {
                 if (complexString.equals(entry.getKey().complex.toString()) && 
-                        locationString.equals(entry.getKey().location == null ? "" : entry.getKey().location.toString())) {
+                        locationString.equals(entry.getKey().location == NOT_LOCATED ? "" : entry.getKey().location.toString())) {
                     assertEquals(expected[1], entry.getValue());
                     found = true;
                     break;
@@ -811,7 +818,7 @@ public class KappaModelTest {
         // Plot reference to transport
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addCompartmentLink(new CompartmentLink("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
         model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(2f));
         model.addPlot("transportRef");
         model.validate();
@@ -819,14 +826,14 @@ public class KappaModelTest {
         // Plot reference to transform
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("agent1"));
-        model.addTransform("transformRef", getList(new Agent("agent1")), null, new VariableExpression(2f), null);
+        model.addTransform("transformRef", getList(new Agent("agent1")), null, new VariableExpression(2f), NOT_LOCATED);
         model.addPlot("transformRef");
         model.validate();
         
         // Plot reference to kappa expression
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("agent1"));
-        model.addVariable(getList(new Agent("agent1")), "kappaRef", null);
+        model.addVariable(getList(new Agent("agent1")), "kappaRef", NOT_LOCATED);
         model.addPlot("kappaRef");
         model.validate();
     }
@@ -835,39 +842,39 @@ public class KappaModelTest {
     public void testValidate_initialValue() {
         // Missing initial value reference
         model = new KappaModel();
-        model.addInitialValue(getList(new Agent("agent1")), new VariableReference("unknown"), null);
+        model.addInitialValue(getList(new Agent("agent1")), new VariableReference("unknown"), NOT_LOCATED);
         checkValidate_failure("Reference 'unknown' not found");
         
         // Non fixed initial value reference
         model = new KappaModel();
         model.addVariable(new VariableExpression(SimulationToken.EVENTS), "variableRef");
-        model.addInitialValue(getList(new Agent("agent1")), new VariableReference("variableRef"), null);
+        model.addInitialValue(getList(new Agent("agent1")), new VariableReference("variableRef"), NOT_LOCATED);
         checkValidate_failure("Reference 'variableRef' not fixed - cannot be initial value");
         
         // Infinite initial value reference
         model = new KappaModel();
         model.addVariable(new VariableExpression(Constant.INFINITY), "variableRef");
-        model.addInitialValue(getList(new Agent("agent1")), new VariableReference("variableRef"), null);
+        model.addInitialValue(getList(new Agent("agent1")), new VariableReference("variableRef"), NOT_LOCATED);
         checkValidate_failure("Reference 'variableRef' evaluates to infinity - cannot be initial value");
         
         // Initial value reference to variable
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addVariable(new VariableExpression(2f), "variableRef");
-        model.addInitialValue(getList(new Agent("agent1")), new VariableReference("variableRef"), null);
+        model.addInitialValue(getList(new Agent("agent1")), new VariableReference("variableRef"), NOT_LOCATED);
         model.validate();
         
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addVariable(new VariableExpression(2f), "variableRef");
         model.addVariable(new VariableExpression(new VariableReference("variableRef")), "other");
-        model.addInitialValue(getList(new Agent("agent1")), new VariableReference("other"), null);
+        model.addInitialValue(getList(new Agent("agent1")), new VariableReference("other"), NOT_LOCATED);
         model.validate();
         
         // Initial value concrete
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("agent1"));
-        model.addInitialValue(getList(new Agent("agent1")), "1000", null);
+        model.addInitialValue(getList(new Agent("agent1")), "1000", NOT_LOCATED);
         model.validate();
     }
     
@@ -876,7 +883,7 @@ public class KappaModelTest {
         // Missing transport reference
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addCompartmentLink(new CompartmentLink("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
         model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(new VariableReference("unknown")));
         checkValidate_failure("Reference 'unknown' not found");
         
@@ -888,26 +895,26 @@ public class KappaModelTest {
         // Non fixed transport reference
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addCompartmentLink(new CompartmentLink("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
         model.addVariable(new VariableExpression(SimulationToken.EVENTS), "variableRef");
         model.addTransport("other", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(new VariableReference("variableRef")));
         checkValidate_failure("Reference 'variableRef' not fixed");
         
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addCompartmentLink(new CompartmentLink("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
         model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(2));
         model.validate();
 
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addCompartmentLink(new CompartmentLink("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
         model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(Constant.INFINITY));
         model.validate();
         
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addCompartmentLink(new CompartmentLink("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
         model.addVariable(new VariableExpression(2), "variableRef");
         model.addTransport("other", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(new VariableReference("variableRef")));
         model.validate();
@@ -921,7 +928,7 @@ public class KappaModelTest {
         model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addTransform(null, getList(new Agent("agent1")), null, 
                 new VariableExpression(new VariableReference("unknown")), 
-                null);
+                NOT_LOCATED);
         checkValidate_failure("Reference 'unknown' not found");
         
         // Non fixed transform reference
@@ -930,14 +937,14 @@ public class KappaModelTest {
         model.addVariable(new VariableExpression(SimulationToken.EVENTS), "variableRef");
         model.addTransform(null, getList(new Agent("agent1")), null, 
                 new VariableExpression(new VariableReference("variableRef")), 
-                null);
+                NOT_LOCATED);
         checkValidate_failure("Reference 'variableRef' not fixed");
         
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addTransform(null, getList(new Agent("agent1")), null, 
                 new VariableExpression(Constant.INFINITY), 
-                null);
+                NOT_LOCATED);
         model.validate();
     }
     
@@ -968,28 +975,28 @@ public class KappaModelTest {
         // Variable reference to kappa expression
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("agent1"));
-        model.addVariable(getList(new Agent("agent1")), "kappaRef", null);
+        model.addVariable(getList(new Agent("agent1")), "kappaRef", NOT_LOCATED);
         model.addVariable(new VariableExpression(new VariableReference("kappaRef")), "label");
         model.validate();
 
     }
     
     @Test
-    public void testValidate_compartmentLink() {
+    public void testValidate_channel() {
         // Missing compartment link reference
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addCompartmentLink(new CompartmentLink("name", new Location("known"), new Location("unknown"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("name", new Location("known"), new Location("unknown"), Direction.BIDIRECTIONAL));
         checkValidate_failure("Compartment 'unknown' not found");
         
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addCompartmentLink(new CompartmentLink("name", new Location("known"), new Location("unknown"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("name", new Location("known"), new Location("unknown"), Direction.BIDIRECTIONAL));
         checkValidate_failure("Compartment 'unknown' not found");
         
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addCompartmentLink(new CompartmentLink("name", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("name", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
         model.validate();
 
         // TODO compartment link range out of bounds ?
@@ -1018,17 +1025,17 @@ public class KappaModelTest {
     @Test
     public void testValidate_agentDeclarationInvalid() {
         model = new KappaModel();
-        model.addVariable(TestUtils.getList(new Agent("A")), "test", null);
+        model.addVariable(TestUtils.getList(new Agent("A")), "test", NOT_LOCATED);
         checkValidate_failure("Agent 'A' not declared");
 
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("A", new AggregateSite("site2", (String) null, null)));
-        model.addVariable(TestUtils.getList(new Agent("A", new AgentSite("site1", null, null))), "test", null);
+        model.addVariable(TestUtils.getList(new Agent("A", new AgentSite("site1", null, null))), "test", NOT_LOCATED);
         checkValidate_failure("Agent site A(site1) not declared");
         
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("A", new AggregateSite("site1", "x", null)));
-        model.addVariable(TestUtils.getList(new Agent("A", new AgentSite("site1", "y", null))), "test", null);
+        model.addVariable(TestUtils.getList(new Agent("A", new AgentSite("site1", "y", null))), "test", NOT_LOCATED);
         checkValidate_failure("Agent state A(site1~y) not declared");
         
     }
