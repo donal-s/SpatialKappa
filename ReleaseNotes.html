@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Spatial Kappa Translator Release Notes v2.0.0</title>
+</head>
+<body>
+<h3 style="text-align: center;">Spatial Kappa Translator Release Notes v2.0.0</h3>
+<p style="text-align: center;">02-06-2012</p>
+
+<p style="text-align: center;">Copyright &copy; 2012 DemonSoft Ltd
+&lt;<a href="http://www.demonsoft.org/">http://www.demonsoft.co.uk/</a>&gt;</p>
+
+<h4>Summary of additions for v2.0.0</h4>
+
+<p>%link: declarations are now %channel: declarations.</p>
+<p>Channel and compartments names are now ids rather than labels, so no need to use single quotes.</p>
+<p>%init:, %obs:, %var: declarations and transform rules can now specify location. Agents can also specify location.</p>
+<p>Agent links can specify channel to define multi-voxel complexes.</p>
+
+<p>An issues and bug tracker will appear eventually. For now, please
+email any bug reports or feature requests to <a
+	href="mailto:spatialkappa@demonsoft.org">spatialkappa@demonsoft.org</a>.</p>
+
+<h4>Known issues</h4>
+
+<p>Validation of invalid models not catching all errors cleanly - requires some extension.</p>
+<p>Transform rules limited to single merged complex (on left or right).</p>
+<p>Issue handling the transform rule A() -> B() @ 1.0</p>
+<p>Location and channel extensions apply only to translator application, not the spatial kappa simulator.</p>
+<p>Evaluation of channels for link evaluation travels in forward direction only.</p>
+<p>Multiple definitions of same link not handled in translator - only one definition used.</p>
+
+</body>
+</html>
+
+
+
+
+

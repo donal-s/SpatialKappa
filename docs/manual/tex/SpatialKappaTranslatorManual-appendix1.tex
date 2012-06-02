@@ -1,0 +1,220 @@
+\chapter{Spatial Kappa Grammar}
+\label{chap:spatialGrammar}
+
+
+
+The following is a cut down version of the Antlr grammar used in the Kappa translator. The syntax has been trimmed for readability, as the original Antlr grammar has artificial constructs for dealing with left recursion, etc. It is read basically as BNF notation with assignments (\verb|variable=bnfConstruct|). The existing basic Kappa grammar is shown in \verb|black|, with the spatial constructs shown as \SaveVerb{Verb}|blue| \newbnf{\UseVerb{Verb}}. 
+
+
+\begin{bnfsource}
+prog :
+  (line)*
+
+line :
+  ruleExpr NEWLINE!
+  | \newbnf{compartmentExpr NEWLINE!}
+  | \newbnf{channelDecl NEWLINE!}
+  | \newbnf{transportExpr NEWLINE!}
+  | initExpr NEWLINE!
+  | plotExpr NEWLINE!
+  | obsExpr NEWLINE!
+  | varExpr NEWLINE!
+  | modExpr NEWLINE!
+  | agentExpr NEWLINE!
+  | COMMENT!
+  | NEWLINE!
+
+ruleExpr :
+  label? transformExpr kineticExpr 
+  | \newbnf{label? locationExpr transformExpr kineticExpr}
+
+transformExpr :
+  (a=agentGroup)? transformTransition (b=agentGroup)?
+
+agentGroup :
+  agent (',' agent)*
+
+agent :
+  id \newbnf{(':' locationExpr)?} ('(' (iface (',' iface)*)? ')')?
+
+iface :
+  id stateExpr? linkExpr?
+
+stateExpr :
+  '~' id
+
+linkExpr :
+  '!' INT \newbnf{(':' channelName=id)?}
+  | '!' '_' \newbnf{(':' channelName=id)?}
+  | '?'
+
+kineticExpr :
+  '@' varAlgebraExpr
+
+initExpr :
+  '\%init:' INT \newbnf{locationExpr?} agentGroup
+  | '\%init:' label \newbnf{locationExpr?} agentGroup
+
+agentExpr :
+  '\%agent:' agentName=id ('(' (agentIfaceExpr (',' agentIfaceExpr)*)? ')')?
+
+agentIfaceExpr :
+  id stateExpr*
+
+
+\newbnf{compartmentExpr :}
+  \newbnf{'\%compartment:' id ('[' INT ']')*}
+
+\newbnf{channelDecl :}
+  \newbnf{'\%channel:' linkName=id sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr}
+
+\newbnf{transportExpr :}
+  \newbnf{'\%transport:' (transportName=label)? linkName=id (agentGroup)? kineticExpr}
+
+\newbnf{locationExpr :}
+  \newbnf{sourceCompartment=id compartmentIndexExpr*}
+
+\newbnf{compartmentIndexExpr :}
+  \newbnf{'[' cellIndexExpr ']'}
+
+plotExpr :
+  '\%plot:' label
+
+obsExpr :
+  '\%obs:' label? agentGroup
+  | \newbnf{'\%obs:' label? locationExpr agentGroup}
+
+varExpr :
+  '\%var:' label varAlgebraExpr
+  | '\%var:' label agentGroup
+
+varAlgebraExpr :
+  (a=varAlgebraMultExpr) (op=operator_add b=varAlgebraMultExpr)*
+  
+varAlgebraMultExpr :
+  (a=varAlgebraExpExpr) (op=operator_mult b=varAlgebraExpExpr)*
+  
+varAlgebraExpExpr :
+  a=varAlgebraAtom operator_exp b=varAlgebraExpExpr
+  | a=varAlgebraAtom
+  
+varAlgebraAtom :
+  '(' varAlgebraExpr ')'
+  | number
+  | label
+  | '[' 'inf' ']'
+  | '[' 'pi' ']'
+  | '[' 'T' ']'
+  | '[' 'E' ']'
+  | operator_unary varAlgebraAtom
+  | operator_binary_prefix a=varAlgebraAtom b=varAlgebraAtom
+  
+modExpr :
+  '\%mod:' booleanExpression 'do' effect untilExpression?
+  
+
+booleanExpression :
+  (a=booleanAtom) (op=booleanOperator b=booleanAtom)*
+  
+booleanOperator :
+  '&&' | '||'
+
+relationalOperator :
+  '<' | '>' | '='
+
+  
+booleanAtom :
+  '(' booleanExpression ')'
+  | '[' 'true' ']'
+  | '[' 'false' ']'
+  | '[' 'not' ']' booleanAtom
+  | a=varAlgebraExpr relationalOperator b=varAlgebraExpr
+
+effect :
+  '\$SNAPSHOT'
+  | '\$STOP'
+  | '\$ADD' varAlgebraExpr agentGroup
+  | '\$DEL' varAlgebraExpr agentGroup
+  | label ':=' varAlgebraExpr
+  
+untilExpression :
+  'until' booleanExpression
+  
+\newbnf{cellIndexExpr :}
+  \newbnf{a=cellIndexAtom operator_cell_index b=cellIndexAtom}
+  \newbnf{| a=cellIndexAtom}
+  
+\newbnf{cellIndexAtom :}
+  \newbnf{'(' cellIndexExpr ')'}
+  \newbnf{| INT}
+  \newbnf{| id}
+  
+id :
+  ALPHANUMERIC ( ALPHANUMERIC | '_' | '-' )*
+
+label :
+  LABEL
+
+number :
+  ( INT | FLOAT )
+  
+\newbnf{operator_cell_index :}
+  \newbnf{'+' | '*' | '-' | '/' | '\%' | '^'}
+
+operator_exp :
+  | '^'
+
+operator_unary :
+  '[' 'log' ']'
+  | '[' 'sin' ']'
+  | '[' 'cos' ']'
+  | '[' 'tan' ']'
+  | '[' 'sqrt' ']'
+  | '[' 'exp' ']'
+
+operator_binary_prefix :
+  '[' 'mod' ']'
+
+operator_mult :
+  '*' | '/'
+
+operator_add :
+  '+' | '-'
+
+transformTransition :
+  ( '->' )
+
+\newbnf{transportTransition :}
+  \newbnf{( '->' | '<-' | '<->' )}
+
+
+INT :
+  NUMERIC
+
+FLOAT :
+  NUMERIC '.' NUMERIC EXPONENT?
+  | '.' NUMERIC EXPONENT?
+  | NUMERIC EXPONENT
+
+NUMERIC :
+  ('0'..'9')+
+  
+ALPHANUMERIC :
+  (NUMERIC | 'a'..'z' | 'A'..'Z')+
+  
+EXPONENT :
+  ('e'|'E') ('+'|'-')? NUMERIC
+
+LABEL :
+  '{\textbackslash}'' .* '{\textbackslash}''
+
+COMMENT :
+  '#' ~( '{\textbackslash}n' | '{\textbackslash}r' )*
+
+WS :
+  ( ' ' | '{\textbackslash}t' | '{\textbackslash}{\textbackslash}' NEWLINE )+
+
+NEWLINE :
+  '{\textbackslash}r'? '{\textbackslash}n' | '{\textbackslash}r'
+
+\end{bnfsource}
