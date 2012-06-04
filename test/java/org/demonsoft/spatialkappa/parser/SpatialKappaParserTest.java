@@ -331,35 +331,34 @@ public class SpatialKappaParserTest {
     public void testChannelDecl() throws Exception {
         //Forward
         runParserRule("channelDecl", "%channel: label compartment1 -> compartment2", 
-            "(CHANNEL label (LOCATION compartment1) -> (LOCATION compartment2))");
+            "(CHANNEL label (LOCATION_PAIR (LOCATION compartment1) (LOCATION compartment2)))");
         runParserRule("channelDecl", "%channel: label compartment1[x] -> compartment2[x+1]", 
-            "(CHANNEL label (LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x))) -> " +
-            "(LOCATION compartment2 (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1)))))");
-        
-        // TODO use ids instead of labels for x,y, etc
+            "(CHANNEL label (LOCATION_PAIR (LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x))) " +
+            "(LOCATION compartment2 (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1))))))");
+            
+        runParserRule("channelDecl", "%channel: label (compartment1[x] -> compartment2[x+1])", 
+            "(CHANNEL label (LOCATION_PAIR (LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x))) " +
+            "(LOCATION compartment2 (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1))))))");
+            
+        runParserRule("channelDecl", "%channel: label (compartment1[x] -> compartment2[x+1]) + " +
+    		"(compartment1[x] -> compartment2[x - 1])", 
+            "(CHANNEL label " +
+            "(LOCATION_PAIR (LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x))) " +
+            "(LOCATION compartment2 (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1))))) " +
+            "(LOCATION_PAIR (LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x))) " +
+            "(LOCATION compartment2 (INDEX (CELL_INDEX_EXPR - (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1)))))" +
+            ")");
+            
         // TODO handle x-1 as x - 1
         
         // TODO replace combination syntax with '+', use of ids, parentheses, etc
         
-        // Back
-        runParserRule("channelDecl", "%channel: label compartment1 <- compartment2", 
-            "(CHANNEL label (LOCATION compartment1) <- (LOCATION compartment2))");
-        runParserRule("channelDecl", "%channel: label compartment1[x] <- compartment2[x+1]", 
-            "(CHANNEL label (LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x))) <- " +
-            "(LOCATION compartment2 (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1)))))");
-        
-        // Both
-        runParserRule("channelDecl", "%channel: label compartment1 <-> compartment2", 
-            "(CHANNEL label (LOCATION compartment1) <-> (LOCATION compartment2))");
-        runParserRule("channelDecl", "%channel: label compartment1[x] <-> compartment2[x+1]", 
-            "(CHANNEL label (LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x))) <-> " +
-            "(LOCATION compartment2 (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1)))))");
-        
-        //Forward negative
-        runParserRule("channelDecl", "%channel: label compartment1[x] -> compartment2[x -1]", 
-            "(CHANNEL label (LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x))) -> " +
-            "(LOCATION compartment2 (INDEX (CELL_INDEX_EXPR - (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1)))))");
-
+        runParserRuleFail("channelDecl", "%channel: label compartment1 <- compartment2");
+        runParserRuleFail("channelDecl", "%channel: label ()");
+                
+        runParserRuleFail("channelDecl", "%channel: label (compartment1[x] -> compartment2[x+1]) + ()");
+        runParserRuleFail("channelDecl", "%channel: label (compartment1[x] -> compartment2[x+1]) + ");
+        runParserRuleFail("channelDecl", "%channel: label + (compartment1[x] -> compartment2[x+1])");
     }
 
     @Test
@@ -567,7 +566,9 @@ public class SpatialKappaParserTest {
         }
         else {
             if (tree.getClass() == CommonTree.class) {
-                assertTrue(tree.toStringTree().contains("mismatched token:") || tree.toStringTree().contains("unexpected"));
+                assertTrue(tree.toStringTree().contains("extraneous") || 
+                        tree.toStringTree().contains("mismatched") || 
+                        tree.toStringTree().contains("unexpected"));
             }
             else {
                 assertEquals(CommonErrorNode.class, tree.getClass());

@@ -171,14 +171,9 @@ public class SpatialKappaWalkerTest {
         // Forward
         checkChannelDecl("%channel: label compartment1 -> compartment2", "label: compartment1 -> compartment2");
         checkChannelDecl("%channel: label compartment1[x] -> compartment2[2][x+1]", "label: compartment1[x] -> compartment2[2][(x + 1)]");
-        
-        // Back
-        checkChannelDecl("%channel: label compartment1 <- compartment2", "label: compartment1 <- compartment2");
-        checkChannelDecl("%channel: label compartment1[x] <- compartment2[2][x+1]", "label: compartment1[x] <- compartment2[2][(x + 1)]");
-        
-        // Both
-        checkChannelDecl("%channel: label compartment1 <-> compartment2", "label: compartment1 <-> compartment2");
-        checkChannelDecl("%channel: label compartment1[x] <-> compartment2[2][x+1]", "label: compartment1[x] <-> compartment2[2][(x + 1)]");
+        checkChannelDecl("%channel: label (compartment1[x] -> compartment2[x+1]) + " +
+                "(compartment1[x] -> compartment2[x - 1])", 
+                "label: (compartment1[x] -> compartment2[(x + 1)]) + (compartment1[x] -> compartment2[(x - 1)])");
     }
     
     private void checkChannelDecl(String inputText, String linkText) throws Exception {

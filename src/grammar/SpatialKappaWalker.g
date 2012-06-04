@@ -16,7 +16,6 @@ import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.BooleanExpression;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Channel;
-import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.KappaModel;
@@ -79,7 +78,7 @@ transformExpr returns [List<Agent> lhs, List<Agent> rhs]
 options {backtrack=true;}
   :
   ^(
-    t=transformTransition
+    FORWARD_TRANSITION
     ^(LHS a=agentGroup?)
     ^(RHS b=agentGroup?)
    )
@@ -88,7 +87,7 @@ options {backtrack=true;}
     $rhs = $b.result;
   }
   | ^(
-    t=transformTransition
+    FORWARD_TRANSITION
     LHS
     ^(RHS b=agentGroup?)
    )
@@ -97,7 +96,7 @@ options {backtrack=true;}
     $rhs = $b.result;
   }
   | ^(
-    t=transformTransition
+    FORWARD_TRANSITION
     ^(LHS a=agentGroup?)
     RHS
    )
@@ -245,13 +244,25 @@ compartmentExpr
   ;
   
 channelDecl
+  @init {
+  List<Location[]> locations = new ArrayList<Location[]>();
+  }
   :
-  ^(CHANNEL linkName=id sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr)
+  ^(CHANNEL linkName=id (channelExpr {locations.add(new Location[] {$channelExpr.source, $channelExpr.target});})+)
   {
-    kappaModel.addChannel(new Channel($linkName.text, $sourceCompartment.result, $targetCompartment.result, $transportTransition.result));
+    kappaModel.addChannel(new Channel($linkName.text, locations));
   }
   ;
-  
+
+channelExpr returns [Location source, Location target]
+  :
+  ^(LOCATION_PAIR sourceCompartment=locationExpr targetCompartment=locationExpr)
+  {
+    $source = $sourceCompartment.result; $target = $targetCompartment.result;
+  }
+  ;
+
+
 transportExpr
   :
   ^(TRANSPORT linkName=id agentGroup? b=transportKineticExpr (transportName=label)?)
@@ -504,22 +515,6 @@ number
 operator
   :
   ( '+' | '*' | '-' | '/' | '%' | '^' )
-  ;
-
-transformTransition returns [Direction result]
-  :
-  ( 
-    FORWARD_TRANSITION       { $result = Direction.FORWARD; }
-  )
-  ;
-  
-transportTransition returns [Direction result]
-  :
-  ( 
-    FORWARD_TRANSITION       { $result = Direction.FORWARD; }
-    | BACKWARD_TRANSITION    { $result = Direction.BACKWARD; }
-    | EQUILIBRIUM_TRANSITION { $result = Direction.BIDIRECTIONAL; }
-  )
   ;
   
 

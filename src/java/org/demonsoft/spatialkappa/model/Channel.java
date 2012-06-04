@@ -9,65 +9,84 @@ import org.demonsoft.spatialkappa.model.VariableExpression.Type;
 
 public class Channel {
 
-    // TODO remove complex variable specs and bidirectional channels
-    
     private final String name;
-    private final Location sourceReference;
-    private final Location targetReference;
-    private final Direction direction;
+    private final List<Location[]> locations = new ArrayList<Location[]>();
 
-    public Channel(String name, Location sourceReference, Location targetReference, Direction direction) {
-        if (name == null || sourceReference == null || targetReference == null || direction == null) {
+    public Channel(String name, Location sourceReference, Location targetReference) {
+        if (name == null || sourceReference == null || targetReference == null) {
             throw new NullPointerException();
         }
         this.name = name;
-        this.sourceReference = sourceReference;
-        this.targetReference = targetReference;
-        this.direction = direction;
+        locations.add(new Location[] {sourceReference, targetReference});
+    }
+
+    public Channel(String name, List<Location[]> locations) {
+        if (name == null || locations == null) {
+            throw new NullPointerException();
+        }
+        if (locations.size() == 0) {
+            throw new IllegalArgumentException();
+        }
+        this.name = name;
+        this.locations.addAll(locations);
     }
 
     public String getName() {
         return name;
     }
 
-    public Location getSourceReference() {
-        return sourceReference;
-    }
-
-    public Location getTargetReference() {
-        return targetReference;
-    }
 
     @Override
     public String toString() {
-        return name + ": " + sourceReference + " " + direction + " " + targetReference;
+        StringBuilder builder = new StringBuilder();
+        builder.append(name).append(": ");
+        if (locations.size() == 1) {
+            builder.append(locations.get(0)[0]).append(" -> ").append(locations.get(0)[1]);
+        }
+        else {
+            boolean first = true;
+            for (Location[] locationPair : locations) {
+                if (!first) {
+                    builder.append(" + ");
+                }
+                builder.append("(").append(locationPair[0]).append(" -> ").append(locationPair[1]).append(")");
+                first = false;
+            }
+        }
+        
+        return builder.toString();
     }
 
     public Location[][] getCellReferencePairs(List<Compartment> compartments) {
         if (compartments == null) {
             throw new NullPointerException();
         }
-        Compartment sourceCompartment = sourceReference.getReferencedCompartment(compartments);
-        Compartment targetCompartment = targetReference.getReferencedCompartment(compartments);
-        if (sourceCompartment == null || targetCompartment == null) {
-            throw new IllegalArgumentException();
-        }
-
-        if (sourceCompartment.getDimensions().length != sourceReference.getIndices().length
-                || targetCompartment.getDimensions().length != targetReference.getIndices().length) {
-            throw new IllegalArgumentException();
-        }
         List<Location[]> result = new ArrayList<Location[]>();
-        if (isConcreteLink()) {
-            result.add(new Location[] { sourceReference, targetReference });
-        }
-        else {
-            Object[][] variableRanges = getVariableRanges(sourceReference, sourceCompartment);
-            Map<String, Integer> variables = new HashMap<String, Integer>();
-            for (int index = 0; index < variableRanges.length; index++) {
-                variables.put((String) variableRanges[index][0], 0);
+        for (Location[] locationPair : locations) {
+            Location source = locationPair[0];
+            Location target = locationPair[1];
+
+            Compartment sourceCompartment = source.getReferencedCompartment(compartments);
+            Compartment targetCompartment = target.getReferencedCompartment(compartments);
+            if (sourceCompartment == null || targetCompartment == null) {
+                throw new IllegalArgumentException();
             }
-            getCellReferencePairs(result, variableRanges, sourceCompartment, targetCompartment, variables, 0);
+    
+            if (sourceCompartment.getDimensions().length != source.getIndices().length
+                    || targetCompartment.getDimensions().length != target.getIndices().length) {
+                throw new IllegalArgumentException();
+            }
+            if (isConcreteLink(source, target)) {
+                result.add(new Location[] { source, target });
+            }
+            else {
+                Object[][] variableRanges = getVariableRanges(source, sourceCompartment);
+                Map<String, Integer> variables = new HashMap<String, Integer>();
+                for (int index = 0; index < variableRanges.length; index++) {
+                    variables.put((String) variableRanges[index][0], 0);
+                }
+                getCellReferencePairs(result, variableRanges, source, target, sourceCompartment, targetCompartment, variables, 0);
+            }
         }
         return result.toArray(new Location[result.size()][]);
     }
@@ -83,16 +102,16 @@ public class Channel {
         return result.toArray(new Object[result.size()][]);
     }
 
-    private void getCellReferencePairs(List<Location[]> result, Object[][] variableRanges, Compartment sourceCompartment,
-            Compartment targetCompartment, Map<String, Integer> variables, int variableIndex) {
+    private void getCellReferencePairs(List<Location[]> result, Object[][] variableRanges, Location source, Location target, 
+            Compartment sourceCompartment, Compartment targetCompartment, Map<String, Integer> variables, int variableIndex) {
         if (variableIndex >= variableRanges.length) {
             for (int index = 0; index < targetCompartment.getDimensions().length; index++) {
-                int value = targetReference.getIndices()[index].evaluateIndex(variables);
+                int value = target.getIndices()[index].evaluateIndex(variables);
                 if (value < 0 || value >= targetCompartment.getDimensions()[index]) {
                     return;
                 }
             }
-            result.add(new Location[] { sourceReference.getConcreteLocation(variables), targetReference.getConcreteLocation(variables) });
+            result.add(new Location[] { source.getConcreteLocation(variables), target.getConcreteLocation(variables) });
             return;
         }
 
@@ -101,39 +120,38 @@ public class Channel {
 
         for (int index = 0; index < currentSourceMax; index++) {
             variables.put(currentSourceVariable, index);
-            getCellReferencePairs(result, variableRanges, sourceCompartment, targetCompartment, variables, variableIndex + 1);
+            getCellReferencePairs(result, variableRanges, source, target, sourceCompartment, targetCompartment, variables, variableIndex + 1);
         }
     }
 
-    private boolean isConcreteLink() {
-        return sourceReference.isConcreteLocation() && targetReference.isConcreteLocation();
-    }
-
-    public Direction getDirection() {
-        return direction;
+    private boolean isConcreteLink(Location source, Location target) {
+        return source.isConcreteLocation() && target.isConcreteLocation();
     }
 
     public boolean canUseChannel(Location location, List<Compartment> compartments) {
         if (location == null || compartments == null) {
             throw new NullPointerException();
         }
-        Compartment compartment = sourceReference.getReferencedCompartment(compartments);
-        if (compartment == null) {
-            throw new IllegalArgumentException("Unknown compartment: " + sourceReference.getName());
-        }
-        if (location.getIndices().length != sourceReference.getIndices().length 
-                || !location.getName().equals(sourceReference.getName())) {
-            return false;
-        }
-        for (int index = 0; index < sourceReference.getIndices().length; index++) {
-            CellIndexExpression sourceIndex = sourceReference.getIndices()[index];
-            CellIndexExpression inputIndex = location.getIndices()[index];
-            if (!inputIndex.isFixed()) {
+        for (Location[] locationPair : locations) {
+            Location source = locationPair[0];
+            Compartment compartment = source.getReferencedCompartment(compartments);
+            if (compartment == null) {
+                throw new IllegalArgumentException("Unknown compartment: " + source.getName());
+            }
+            if (location.getIndices().length != source.getIndices().length 
+                    || !location.getName().equals(source.getName())) {
                 return false;
             }
-            if (sourceIndex.isFixed()) {
-                if (!sourceIndex.equals(inputIndex)) {
+            for (int index = 0; index < source.getIndices().length; index++) {
+                CellIndexExpression sourceIndex = source.getIndices()[index];
+                CellIndexExpression inputIndex = location.getIndices()[index];
+                if (!inputIndex.isFixed()) {
                     return false;
+                }
+                if (sourceIndex.isFixed()) {
+                    if (!sourceIndex.equals(inputIndex)) {
+                        return false;
+                    }
                 }
             }
         }
@@ -146,34 +164,69 @@ public class Channel {
         }
         List<Location> result = new ArrayList<Location>();
         if (canUseChannel(location, compartments)) {
-            Map<String, Integer> variables = new HashMap<String, Integer>();
-            for (int index = 0; index < sourceReference.getIndices().length; index++) {
-                CellIndexExpression sourceIndex = sourceReference.getIndices()[index];
-                if (sourceIndex.type == Type.VARIABLE_REFERENCE) {
-                    CellIndexExpression inputIndex = location.getIndices()[index];
-                    variables.put(sourceIndex.reference.variableName, (int) inputIndex.value);
-                }
-            }
+            for (Location[] locationPair : locations) {
+                Location source = locationPair[0];
+                Location target = locationPair[1];
 
-            boolean valid = true;
-            Compartment compartment = targetReference.getReferencedCompartment(compartments);
-            
-            List<CellIndexExpression> targetIndices = new ArrayList<CellIndexExpression>();
-            for (int index = 0; index < targetReference.getIndices().length; index++) {
-                CellIndexExpression targetIndex = targetReference.getIndices()[index];
-                int targetIndexValue = targetIndex.evaluateIndex(variables);
-                if (targetIndexValue < 0 || targetIndexValue >= compartment.getDimensions()[index]) {
-                    valid = false;
-                    break;
+                Map<String, Integer> variables = new HashMap<String, Integer>();
+                for (int index = 0; index < source.getIndices().length; index++) {
+                    CellIndexExpression sourceIndex = source.getIndices()[index];
+                    if (sourceIndex.type == Type.VARIABLE_REFERENCE) {
+                        CellIndexExpression inputIndex = location.getIndices()[index];
+                        variables.put(sourceIndex.reference.variableName, (int) inputIndex.value);
+                    }
                 }
-                targetIndices.add(new CellIndexExpression("" + targetIndexValue));
-            }
-            
-            if (valid) {
-                Location targetLocation = new Location(targetReference.getName(), targetIndices);
-                result.add(targetLocation);
+    
+                boolean valid = true;
+                Compartment compartment = target.getReferencedCompartment(compartments);
+                
+                List<CellIndexExpression> targetIndices = new ArrayList<CellIndexExpression>();
+                for (int index = 0; index < target.getIndices().length; index++) {
+                    CellIndexExpression targetIndex = target.getIndices()[index];
+                    int targetIndexValue = targetIndex.evaluateIndex(variables);
+                    if (targetIndexValue < 0 || targetIndexValue >= compartment.getDimensions()[index]) {
+                        valid = false;
+                        break;
+                    }
+                    targetIndices.add(new CellIndexExpression("" + targetIndexValue));
+                }
+                
+                if (valid) {
+                    Location targetLocation = new Location(target.getName(), targetIndices);
+                    result.add(targetLocation);
+                }
             }
         }
         return result;
+    }
+
+    public void validate(List<Compartment> compartments) {
+        if (compartments == null) {
+            throw new NullPointerException();
+        }
+        for (Location[] locationPair : locations) {
+            boolean found = false;
+            
+            for (Compartment compartment : compartments) {
+                if (locationPair[0].getName().equals(compartment.getName())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                throw new IllegalStateException("Compartment '" + locationPair[0].getName() + "' not found");
+            }
+            
+            found = false;
+            for (Compartment compartment : compartments) {
+                if (locationPair[1].getName().equals(compartment.getName())) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                throw new IllegalStateException("Compartment '" + locationPair[1].getName() + "' not found");
+            }
+        }
     }
 }

@@ -344,13 +344,10 @@ public class KappaModel implements IKappaModel {
                 for (Channel link : links) {
                     Location[][] cellLocations = link.getCellReferencePairs(compartments);
                     for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
-                        Location sourceReference = (link.getDirection() != Direction.BACKWARD) ? cellLocations[cellIndex][0] : cellLocations[cellIndex][1];
-                        Location targetReference = (link.getDirection() != Direction.BACKWARD) ? cellLocations[cellIndex][1] : cellLocations[cellIndex][0];
+                        Location sourceReference = cellLocations[cellIndex][0];
+                        Location targetReference = cellLocations[cellIndex][1];
     
                         result.add(new LocatedTransport(cloneTransport, sourceReference, targetReference));
-                        if (link.getDirection() == Direction.BIDIRECTIONAL) {
-                            result.add(new LocatedTransport(cloneTransport, targetReference, sourceReference));
-                        }
                     }
                 }
             }
@@ -423,28 +420,8 @@ public class KappaModel implements IKappaModel {
             }
         }
         
-        for (Channel link : channels) {
-            boolean found = false;
-            for (Compartment compartment : compartments) {
-                if (link.getSourceReference().getName().equals(compartment.getName())) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                throw new IllegalStateException("Compartment '" + link.getSourceReference().getName() + "' not found");
-            }
-            
-            found = false;
-            for (Compartment compartment : compartments) {
-                if (link.getTargetReference().getName().equals(compartment.getName())) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                throw new IllegalStateException("Compartment '" + link.getTargetReference().getName() + "' not found");
-            }
+        for (Channel channel : channels) {
+            channel.validate(compartments);
         }
        
         for (InitialValue initialValue : initialValues) {

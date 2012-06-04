@@ -25,6 +25,7 @@ tokens {
   COMPARTMENT;
   DIMENSION;
   LOCATION;
+  LOCATION_PAIR;
   CELL_INDEX_EXPR;
   INDEX;
   TRANSPORT;
@@ -100,28 +101,28 @@ options {backtrack=true;}
 transformExpr
 options {backtrack=true;}
   :
-  a=agentGroup transformTransition b=agentGroup
+  a=agentGroup FORWARD_TRANSITION b=agentGroup
     ->
       ^(
-        transformTransition
+        FORWARD_TRANSITION
         ^(LHS $a)
         ^(RHS $b)
        )
-  | agentGroup transformTransition
+  | agentGroup FORWARD_TRANSITION
     ->
       ^(
-        transformTransition
+        FORWARD_TRANSITION
         ^(LHS agentGroup)
         ^(RHS)
        )
-  | transformTransition agentGroup
+  | FORWARD_TRANSITION agentGroup
     ->
       ^(
-        transformTransition
+        FORWARD_TRANSITION
         ^(LHS)
         ^(RHS agentGroup)
        )
-  | transformTransition
+  | FORWARD_TRANSITION
     ->
   ;
 
@@ -208,9 +209,20 @@ compartmentExpr
 
 channelDecl
   :
-  '%channel:' linkName=id sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr
+  '%channel:' linkName=id channelExpr
     ->
-      ^(CHANNEL $linkName $sourceCompartment transportTransition $targetCompartment)
+      ^(CHANNEL $linkName channelExpr)
+  |
+  '%channel:' linkName=id '(' + channelExpr + ')' ('+' '('+ channelExpr + ')')*
+    ->
+      ^(CHANNEL $linkName channelExpr+)
+  ;
+
+channelExpr
+  :
+  sourceCompartment=locationExpr FORWARD_TRANSITION targetCompartment=locationExpr
+    ->
+      ^(LOCATION_PAIR $sourceCompartment $targetCompartment)
   ;
 
 transportExpr
@@ -487,28 +499,9 @@ transformTransition
   )
   ;
 
-transportTransition
-  :
-  ( 
-    FORWARD_TRANSITION
-    | BACKWARD_TRANSITION
-    | EQUILIBRIUM_TRANSITION
-  )
-  ;
-
-EQUILIBRIUM_TRANSITION
-  :
-  '<->'
-  ;
-
 FORWARD_TRANSITION
   :
   '->'
-  ;
-
-BACKWARD_TRANSITION
-  :
-  '<-'
   ;
 
 INT

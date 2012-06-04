@@ -20,6 +20,8 @@ public class CellIndexExpressionTest {
     public static CellIndexExpression INDEX_X = new CellIndexExpression(new VariableReference("x"));
     public static CellIndexExpression INDEX_X_PLUS_1 = 
             new CellIndexExpression(INDEX_X, Operator.PLUS, INDEX_1);
+    public static CellIndexExpression INDEX_X_MINUS_1 = 
+            new CellIndexExpression(INDEX_X, Operator.MINUS, INDEX_1);
     public static CellIndexExpression INDEX_Y = new CellIndexExpression(new VariableReference("y"));
     public static CellIndexExpression INDEX_Y_PLUS_1 = 
             new CellIndexExpression(INDEX_Y, Operator.PLUS, INDEX_1);

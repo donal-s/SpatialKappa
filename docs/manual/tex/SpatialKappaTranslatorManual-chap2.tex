@@ -149,24 +149,24 @@ In all situations where compartment references are used, it is only legal to ref
 
 The structure of a compartment is further defined by how voxels within the compartment are linked to each other and to connected compartments. This linkage is defined as follows
 \begin{bnfsource}
-'\%channel:' linkName=id sourceCompartment=locationExpr ( '->' | '<-' | '<->' )
-             targetCompartment=locationExpr
+'\%channel:' linkName=id sourceCompartment=locationExpr '->' targetCompartment=locationExpr
+| '\%channel:' linkName=id 
+    '(' sourceCompartment=locationExpr '->' targetCompartment=locationExpr ')'
+    ( '+' '(' sourceCompartment=locationExpr '->' targetCompartment=locationExpr ')' )* 
 \end{bnfsource}
 Where \verb|locationExpr| is as described above. For example
 \begin{kappasource}
 \%compartment: 2dArray [10][200]    # 10x200 voxels in size 
 
 # Link all voxels to their horizontally adjacent neighbours
-\%channel: meshlinks 2dArray[x][y] <-> 2dArray[x+1][y]
-
 # Link all voxels to their vertically adjacent neighbours
-\%channel: meshlinks 2dArray[x][y] <-> 2dArray[x][y+1]
-
 # Wrap around the voxels on the left and right edges to create a cylinder
-\%channel: meshlinks 2dArray[0][y] <-> 2dArray[9][y]
-
 # Wrap around the voxels on the top and bottom edges to create a torus
-\%channel: meshlinks 2dArray[x][0] <-> 2dArray[x][199]
+\%channel: meshlinks {\textbackslash}
+    (2dArray[x][y] -> 2dArray[x+1][y]) + (2dArray[x][y] -> 2dArray[x -1][y]) +{\textbackslash}
+    (2dArray[x][y] -> 2dArray[x][y+1]) + (2dArray[x][y] -> 2dArray[x][y -1]) +{\textbackslash}
+    (2dArray[0][y] -> 2dArray[9][y])   + (2dArray[9][y] -> 2dArray[0][y]) +{\textbackslash}
+    (2dArray[x][0] -> 2dArray[x][199]) + (2dArray[x][199] -> 2dArray[x][0])
 \end{kappasource}
 
 The above code defines a thin torus composed of a 2d mesh.
@@ -182,14 +182,14 @@ Further examples of compartment and channel specifications for common structures
 
 These rules define the rate at which species move from one compartment (or cell) to another.
 \begin{bnfsource}
-'\%transport:' (transportName=LABEL)? linkName=id (agentGroup)? transportKineticExpr
+'\%transport:' (transportName=LABEL)? linkName=id (agentGroup)? kineticExpr
 \end{bnfsource}
   where
 \begin{bnfsource}
 agentGroup :
   agent (',' agent)*
 
-transportKineticExpr :
+kineticExpr :
   '@' a=rateValueExpr
 
 rateValueExpr :
@@ -200,14 +200,14 @@ See appendix \ref{chap:spatialGrammar} for the definition of the remaining const
 
 \begin{kappasource}
 # All species diffusing around the torus defined above
-\%transport: 'general diffusion' 'meshlinks' @ 0.1
+\%transport: 'general diffusion' meshlinks @ 0.1
 
 # Immediate exit of the named species through a uni-directional channel.
 # Note the label for the transport is optional.
-\%transport: 'Ca channel' Calcium() @ \$INF
+\%transport: CaChannel Calcium() @ \$INF
 \end{kappasource}
 
-When referencing bidirectional compartment links (i.e. ones specified with '\verb|<->|', the rate applies equally in either direction across the link. In the second example above, care would need to be taken in defining the compartment link \verb|Ca channel| in the correct orientation.
+In the second example above, care would need to be taken in defining the channel \verb|CaChannel| in the correct direction.
 
 \section{Additions to existing language constructs}
 
@@ -218,23 +218,15 @@ New clauses were added to existing Kappa language constructs to allow the use of
 The following transform statement was added
 
 \begin{bnfsource}
-transformName=LABEL locationExpr transformExpr transformKineticExpr 
-\end{bnfsource}
-  where
-\begin{bnfsource}
-transformExpr :
-  (a=agentGroup)? ( '->' | '<->' ) (b=agentGroup)?
-
-transformKineticExpr :
-  '@' a=rateValueExpr (',' b=rateValueExpr)?
+transformName=LABEL locationExpr (a=agentGroup)? '->' (b=agentGroup)? kineticExpr 
 \end{bnfsource}
 For example
 \begin{kappasource}
 # mRNA degradation happens outside the nuclear membrane
-'degradation' 'cytosol' mRNA() -> @ 6.21
+'degradation' cytosol mRNA() -> @ 6.21
 
 # Heating of the agent occurs in cell 0 of the cytosol compartment
-'heating' 'cytosol'[0] A(state~blue) -> A(state~red) @ 1.0
+'heating' cytosol[0] A(state~blue) -> A(state~red) @ 1.0
 \end{kappasource}
 
 As mentioned before valid locations are either entire compartments or single compartment cells.
@@ -245,15 +237,15 @@ The following initial value statement was added
 
 \begin{bnfsource}
 initExpr :
-  '\%init:' locationExpr INT '*' '(' agentGroup ')'
+  '\%init:' INT locationExpr agentGroup
 \end{bnfsource}
 For example
 \begin{kappasource}
 # Distribute 2000 blue agents within the cells of cytosol equally
-\%init: 'cytosol' 2000 * (A(state~blue)) 
+\%init: 2000 cytosol A(state~blue) 
 
 # Add 500 red agents to cell 5 of the cytosol compartment
-\%init: 'cytosol'[5] 500 * (A(state~red)) 
+\%init: 500 cytosol[5] A(state~red) 
 \end{kappasource}
 
 \subsection{Observations}
@@ -267,10 +259,10 @@ obsExpr :
 For example
 \begin{kappasource}
 # Count all blue agents in all cells of the cytosol
-\%obs: 'cytosol blue' 'cytosol' A(state~blue)
+\%obs: 'cytosol blue' cytosol A(state~blue)
 
 # Count all red agents in cell 0 of the cytosol compartment
-\%obs: 'red[0]' 'cytosol'[0] A(state~red) 
+\%obs: 'red[0]' cytosol[0] A(state~red) 
 \end{kappasource}
 
 \subsection{Located agents}
@@ -304,7 +296,7 @@ linkExpr :
 \end{bnfsource}
 For example
 \begin{kappasource}
-\%channel: out cytosol [x] <-> membrane [x]
+\%channel: out cytosol [x] -> membrane [x]
 \%obs: 'dimer AB' A:cytosol(s!1:out),B:membrane(s!1) 
 \end{kappasource}
 

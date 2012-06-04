@@ -13,15 +13,16 @@ The following are generic shapes, with their equivalent Spatial Kappa representa
 
 \begin{kappasource}
 %compartment: array [n] # Replace n with length of array
-%channel: intra-array array [x] <-> array [x+1]
+%channel: intra-array (array [x] -> array [x+1]) + (array [x] -> array [x -1])
 \end{kappasource}
 
 \subsubsection{Circle}
 
 \begin{kappasource}
 %compartment: circle [n] # Replace n with number of cells in circle
-%channel: intra-circle circle [x] <-> circle [x+1]
-%channel: intra-circle circle [n-1] <-> circle [0] # Replace n-1 as above
+%channel: intra-circle {\textbackslash}
+    (circle [x] -> circle [x+1]) + (circle [x] -> circle [x -1]) + {\textbackslash}
+    (circle [n-1] -> circle [0]) + (circle [0] -> circle [n -1]) # Replace n-1 as above
 \end{kappasource}
 
 
@@ -35,14 +36,16 @@ There are 2 variants here, 4-way linked and 8-way linked.
 %compartment: mesh [n][m] # Replace n and m with dimensions of mesh
 
 # 4-way diffusion
-%channel: intra-mesh mesh [x][y] <-> mesh [x+1][y] 
-%channel: intra-mesh mesh [x][y] <-> mesh [x][y+1] 
+%channel: intra-mesh {\textbackslash}
+    (mesh [x][y] -> mesh [x+1][y]) + (mesh [x][y] -> mesh [x -1][y]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x][y+1]) + (mesh [x][y] -> mesh [x][y -1])
 
 # or 8-way diffusion
-%channel: intra-mesh mesh [x][y] <-> mesh [x+1][y] 
-%channel: intra-mesh mesh [x][y] <-> mesh [x][y+1] 
-%channel: intra-mesh mesh [x][y] <-> mesh [x+1][y+1] 
-%channel: intra-mesh mesh [x][y] <-> mesh [x+1][y-1] 
+%channel: intra-mesh {\textbackslash}
+    (mesh [x][y] -> mesh [x+1][y]) + (mesh [x][y] -> mesh [x -1][y]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x][y+1]) + (mesh [x][y] -> mesh [x][y -1]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x+1][y+1]) + (mesh [x][y] -> mesh [x -1][y -1]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x+1][y -1]) + (mesh [x][y] -> mesh [x -1][y+1])
 \end{kappasource}
 
 \subsubsection{Hexagonal mesh}
@@ -55,14 +58,18 @@ The second variant demonstrates handling of alternate odd-even linkage depending
 %compartment: mesh [n][m] # Replace n and m with dimensions of mesh
 
 # Variant 1 - rhomboid mesh
-%channel: intra-mesh mesh [x][y] <-> mesh [x][y+1] 
-%channel: intra-mesh mesh [x][y] <-> mesh [x+1][y] 
-%channel: intra-mesh mesh [x][y] <-> mesh [x+1][y+1] 
+%channel: intra-mesh {\textbackslash}
+    (mesh [x][y] -> mesh [x][y+1]) + (mesh [x][y] -> mesh [x][y -1]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x+1][y]) + (mesh [x][y] -> mesh [x -1][y]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x+1][y+1]) + (mesh [x][y] -> mesh [x -1][y-1])
 
 # Variant 2 - rectangular mesh
-%channel: intra-mesh mesh [x][y] <-> mesh [x][y+1] 
-%channel: intra-mesh mesh [x][y] <-> mesh [x+1][y] 
-%channel: intra-mesh mesh [x][y] <-> mesh [x+1][(y+1)-(2*(x%2))] 
+%channel: intra-mesh {\textbackslash}
+    (mesh [x][y] -> mesh [x][y+1]) + (mesh [x][y] -> mesh [x][y -1]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x+1][y]) + (mesh [x][y] -> mesh [x -1][y]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x+1][(y+1)-(2*(x%2))]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x -1][(y -1)+(2*((x -1)%2))])
+
 # The above statement alternates [x+1][y+1] and [x+1][y-1] as x increases
 \end{kappasource}
 
@@ -74,15 +81,27 @@ By connecting together the top and bottom edges of a mesh as described above, we
 \begin{kappasource}
 %compartment: mesh [n][m] # Replace n and m with dimensions of mesh
 
-# 4-way diffusion
+# 4-way diffusion mesh
+%channel: intra-mesh {\textbackslash}
+    (mesh [x][y] -> mesh [x+1][y]) + (mesh [x][y] -> mesh [x -1][y]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x][y+1]) + (mesh [x][y] -> mesh [x][y -1])
 %channel: intra-mesh mesh [x][y] <-> mesh [x+1][y] 
 %channel: intra-mesh mesh [x][y] <-> mesh [x][y+1] 
 
-# add this to get a cylinder
-%channel: intra-mesh mesh [x][m-1] <-> mesh [x+1][0] # Replace m-1 as above 
+# cylinder
+%channel: intra-mesh {\textbackslash}
+    (mesh [x][y] -> mesh [x+1][y]) + (mesh [x][y] -> mesh [x -1][y]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x][y+1]) + (mesh [x][y] -> mesh [x][y -1]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x][m -1]) + (mesh [x][y] -> mesh [x+1][0]) 
+# Replace m-1 as above 
 
-# add this to get a torus
-%channel: intra-mesh mesh [n-1][y] <-> mesh [0][y] # Replace n-1 as above 
+# torus
+%channel: intra-mesh {\textbackslash}
+    (mesh [x][y] -> mesh [x+1][y]) + (mesh [x][y] -> mesh [x -1][y]) + {\textbackslash}
+    (mesh [x][y] -> mesh [x][y+1]) + (mesh [x][y] -> mesh [x][y -1]) + {\textbackslash}
+    (mesh [x][m -1] -> mesh [x][0]) + (mesh [x][0] -> mesh [x][m -1]) + {\textbackslash}
+    (mesh [n -1][y] -> mesh [0][y]) + (mesh [0][y] -> mesh [n -1][y])
+# Replace n-1 as above 
 \end{kappasource}
 
 \newpage
@@ -106,9 +125,11 @@ This model shows simple diffusion from a point for three distinct species.
 %compartment: cytosol [30][30]
 
 # 6-way diffusion
-%channel: 6way cytosol [x][y] <-> cytosol [x+1][y]
-%channel: 6way cytosol [x][y] <-> cytosol [x][y+1]
-%channel: 6way cytosol [x][y] <-> cytosol [x+1][(y+1)-(2*(x%2))]
+%channel: 6way {\textbackslash}
+    (cytosol [x][y] -> cytosol [x][y+1]) + (cytosol [x][y] -> cytosol [x][y -1]) + {\textbackslash}
+    (cytosol [x][y] -> cytosol [x+1][y]) + (cytosol [x][y] -> cytosol [x -1][y]) + {\textbackslash}
+    (cytosol [x][y] -> cytosol [x+1][(y+1)-(2*(x%2))]) + {\textbackslash}
+    (cytosol [x][y] -> cytosol [x -1][(y -1)+(2*((x -1)%2))])
 
 %transport: 'diffusion-A' 6way A() @ 0.4
 %transport: 'diffusion-B' 6way B() @ 0.4
@@ -138,9 +159,11 @@ A variant of bi-trivalent binding test model \citep{yang2008kinetic}. This spati
 %compartment: cytosol [20][20] 
 
 # 6-way diffusion
-%channel: 6way cytosol [x][y] <-> cytosol [x+1][y] 
-%channel: 6way cytosol [x][y] <-> cytosol [x][y+1] 
-%channel: 6way cytosol [x][y] <-> cytosol [x+1][(y+1)-(2*(x%2))] 
+%channel: 6way {\textbackslash}
+    (cytosol [x][y] -> cytosol [x][y+1]) + (cytosol [x][y] -> cytosol [x][y -1]) + {\textbackslash}
+    (cytosol [x][y] -> cytosol [x+1][y]) + (cytosol [x][y] -> cytosol [x -1][y]) + {\textbackslash}
+    (cytosol [x][y] -> cytosol [x+1][(y+1)-(2*(x%2))]) + {\textbackslash}
+    (cytosol [x][y] -> cytosol [x -1][(y -1)+(2*((x -1)%2))])
 
 %transport: 'diffusion-A' 6way A(bindings~0) @ 0.1 
 %transport: 'diffusion-B' 6way B(a,b,c) @ 1 

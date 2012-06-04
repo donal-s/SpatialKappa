@@ -7,6 +7,7 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y_PLUS_1;
+import static org.demonsoft.spatialkappa.model.TestUtils.getList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -94,22 +95,24 @@ public class LocationTest {
         compartments.add(new Compartment("nucleus"));
         compartments.add(new Compartment("cytosol", 3, 3));
         compartments.add(new Compartment("membrane", 3));
-        Channel channelCytosolX = new Channel("cCytosol", 
-                new Location("cytosol", INDEX_X, INDEX_Y), 
-                new Location("cytosol", INDEX_X_PLUS_1, INDEX_Y), Direction.FORWARD);
-        Channel channelCytosolY = new Channel("cCytosol", 
-                new Location("cytosol", INDEX_X, INDEX_Y), 
-                new Location("cytosol", INDEX_X, INDEX_Y_PLUS_1), Direction.FORWARD);
+        Channel channelCytosol = new Channel("cCytosol", getList(
+                new Location[] {
+                        new Location("cytosol", INDEX_X, INDEX_Y), 
+                        new Location("cytosol", INDEX_X_PLUS_1, INDEX_Y), 
+                },
+                new Location[] { 
+                        new Location("cytosol", INDEX_X, INDEX_Y),
+                        new Location("cytosol", INDEX_X, INDEX_Y_PLUS_1)
+                }));
         Channel channelMembraneX = new Channel("cMembrane", 
                 new Location("membrane", INDEX_X), 
-                new Location("membrane", INDEX_X_PLUS_1), Direction.FORWARD);
+                new Location("membrane", INDEX_X_PLUS_1));
         Channel channelMembraneTransport = new Channel("cMembraneTransport", 
                 new Location("cytosol", INDEX_X, INDEX_0), 
-                new Location("membrane", INDEX_X), 
-                Direction.FORWARD);
+                new Location("membrane", INDEX_X));
 
         try {
-            location.getLinkedLocations(null, channelCytosolX);
+            location.getLinkedLocations(null, channelCytosol);
             fail("Null should have failed");
         }
         catch (NullPointerException e) {
@@ -117,7 +120,7 @@ public class LocationTest {
         }
         
         try {
-            location.getLinkedLocations(compartments, channelCytosolX);
+            location.getLinkedLocations(compartments, channelCytosol);
             fail("Unknown location should have failed");
         }
         catch (IllegalArgumentException e) {
@@ -128,14 +131,14 @@ public class LocationTest {
 
         // No matching channels
         List<Location> expected = new ArrayList<Location>();
-        assertEquals(expected, location.getLinkedLocations(compartments, channelCytosolX, channelMembraneX));
+        assertEquals(expected, location.getLinkedLocations(compartments, channelCytosol, channelMembraneX));
         
         location = new Location("cytosol", INDEX_1, INDEX_1);
         
         expected.add(new Location("cytosol", INDEX_2, INDEX_1));
         expected.add(new Location("cytosol", INDEX_1, INDEX_2));
         
-        assertEquals(expected, location.getLinkedLocations(compartments, channelCytosolX, channelCytosolY));
+        assertEquals(expected, location.getLinkedLocations(compartments, channelCytosol));
         
         location = new Location("cytosol", INDEX_1, INDEX_0);
 
@@ -144,6 +147,6 @@ public class LocationTest {
         expected.add(new Location("cytosol", INDEX_1, INDEX_1));
         expected.add(new Location("membrane", INDEX_1));
         
-        assertEquals(expected, location.getLinkedLocations(compartments, channelCytosolX, channelCytosolY, channelMembraneTransport));
+        assertEquals(expected, location.getLinkedLocations(compartments, channelCytosol, channelMembraneTransport));
     }
 }

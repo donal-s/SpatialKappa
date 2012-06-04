@@ -4,12 +4,13 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_2;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_MINUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
+import static org.demonsoft.spatialkappa.model.TestUtils.getList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -27,62 +28,107 @@ public class ChannelTest {
         Location reference1 = new Location("a");
         Location reference2 = new Location("b");
         
+        List<Location[]> locations = new ArrayList<Location[]>();
+        
         try {
-            new Channel(null, reference1, reference2, Direction.FORWARD);
+            new Channel(null, reference1, reference2);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
         try {
-            new Channel("name", null, reference2, Direction.FORWARD);
+            new Channel("name", null, reference2);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
         try {
-            new Channel("name", reference1, null, Direction.FORWARD);
-            fail("null should have failed");
-        }
-        catch (NullPointerException ex) {
-            // Expected exception
-        }
-        try {
-            new Channel("name", reference1, reference2, null);
+            new Channel("name", reference1, null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
 
-        Channel channel = new Channel("label", reference1, reference2, Direction.FORWARD);
+        try {
+            new Channel("name", null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            new Channel("name", locations);
+            fail("empty locations list should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Channel channel = new Channel("label", reference1, reference2);
         assertEquals("label", channel.getName());
-        assertSame(reference1, channel.getSourceReference());
-        assertSame(reference2, channel.getTargetReference());
-        assertEquals(Direction.FORWARD, channel.getDirection());
         assertEquals("label: a -> b", channel.toString());
 
-        channel = new Channel("label", reference1, reference2, Direction.BACKWARD);
+        locations.add(new Location[] {reference1, reference2});
+        channel = new Channel("label", locations);
         assertEquals("label", channel.getName());
-        assertSame(reference1, channel.getSourceReference());
-        assertSame(reference2, channel.getTargetReference());
-        assertEquals(Direction.BACKWARD, channel.getDirection());
-        assertEquals("label: a <- b", channel.toString());
+        assertEquals("label: a -> b", channel.toString());
 
-        channel = new Channel("label", reference1, reference2, Direction.BIDIRECTIONAL);
+        locations.add(new Location[] {reference1, reference1});
+        channel = new Channel("label", locations);
         assertEquals("label", channel.getName());
-        assertSame(reference1, channel.getSourceReference());
-        assertSame(reference2, channel.getTargetReference());
-        assertEquals(Direction.BIDIRECTIONAL, channel.getDirection());
-        assertEquals("label: a <-> b", channel.toString());
+        assertEquals("label: (a -> b) + (a -> a)", channel.toString());
     }
     
+    @Test
+    public void testValidate() {
+        List<Compartment> compartments = getList(new Compartment("known"));
+        
+        Channel channel = new Channel("name", new Location("known"), new Location("unknown"));
+
+        try {
+            channel.validate(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        
+        // Missing compartment link reference
+        try {
+            channel.validate(compartments);
+            fail("validation should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+            assertEquals("Compartment 'unknown' not found", ex.getMessage());
+        }
+        
+        channel = new Channel("name", new Location("known"), new Location("unknown"));
+        try {
+            channel.validate(compartments);
+            fail("validation should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+            assertEquals("Compartment 'unknown' not found", ex.getMessage());
+        }
+        
+        channel = new Channel("name", new Location("known"), new Location("known"));
+        channel.validate(compartments);
+
+        // TODO compartment link range out of bounds ?
+    }
+
     @Test
     public void testGetCellReferencePairs() {
         Location reference1 = new Location("a");
         Location reference2 = new Location("b");
-        Channel channel = new Channel("label", reference1, reference2, Direction.FORWARD);
+        Channel channel = new Channel("label", reference1, reference2);
         List<Compartment> compartments = new ArrayList<Compartment>();
         
         try {
@@ -130,7 +176,7 @@ public class ChannelTest {
         compartments.clear();
         reference1 = new Location("a");
         reference2 = new Location("b");
-        channel = new Channel("label", reference1, reference2, Direction.FORWARD);
+        channel = new Channel("label", reference1, reference2);
         compartments.add(new Compartment("a"));
         compartments.add(new Compartment("b"));
         
@@ -142,7 +188,7 @@ public class ChannelTest {
         compartments.clear();
         reference1 = new Location("a", INDEX_1);
         reference2 = new Location("a", INDEX_2);
-        channel = new Channel("label", reference1, reference2, Direction.FORWARD);
+        channel = new Channel("label", reference1, reference2);
         compartments.add(new Compartment("a", 4));
         
         assertArrayEquals(new Location[][] {
@@ -155,7 +201,7 @@ public class ChannelTest {
         compartments.clear();
         reference1 = new Location("a", INDEX_X);
         reference2 = new Location("a", INDEX_X_PLUS_1);
-        channel = new Channel("label", reference1, reference2, Direction.FORWARD);
+        channel = new Channel("label", reference1, reference2);
         compartments.add(new Compartment("a", 4));
         
         assertArrayEquals(new Location[][] {
@@ -168,7 +214,7 @@ public class ChannelTest {
         compartments.clear();
         reference1 = new Location("a", new CellIndexExpression(refX));
         reference2 = new Location("a", new CellIndexExpression(INDEX_X, Operator.MINUS, INDEX_1));
-        channel = new Channel("label", reference1, reference2, Direction.FORWARD);
+        channel = new Channel("label", reference1, reference2);
         compartments.add(new Compartment("a", 4));
         
         assertArrayEquals(new Location[][] {
@@ -177,15 +223,26 @@ public class ChannelTest {
                 { new Location("a", new CellIndexExpression("3")), new Location("a", INDEX_2) },
                 }, channel.getCellReferencePairs(compartments));
         
+        // Multiple components
+        List<Location[]> locations = new ArrayList<Location[]>();
+        locations.add(new Location[] {new Location("a", INDEX_X), new Location("a", INDEX_X_PLUS_1)});
+        locations.add(new Location[] {new Location("a", new CellIndexExpression("3")), new Location("a", INDEX_0)});
+        channel = new Channel("label", locations);
+        
+        assertArrayEquals(new Location[][] {
+                { new Location("a", INDEX_0), new Location("a", INDEX_1) },
+                { new Location("a", INDEX_1), new Location("a", INDEX_2) },
+                { new Location("a", INDEX_2), new Location("a", new CellIndexExpression("3")) },
+                { new Location("a", new CellIndexExpression("3")), new Location("a", INDEX_0) },
+                }, channel.getCellReferencePairs(compartments));
     }
 
 
     
     @Test
     public void testCanUseChannel() {
-        // TODO add complex channels here
         Channel channel = new Channel("label", new Location("a", INDEX_X), 
-                new Location("a", INDEX_X_PLUS_1), Direction.FORWARD);
+                new Location("a", INDEX_X_PLUS_1));
         List<Compartment> compartments = new ArrayList<Compartment>();
         compartments.add(new Compartment("a", 4));
         compartments.add(new Compartment("b", 2));
@@ -210,7 +267,7 @@ public class ChannelTest {
         try {
             // Unknown compartment
             Channel channel2 = new Channel("label", new Location("c", INDEX_X), 
-                    new Location("c", INDEX_X_PLUS_1), Direction.FORWARD);
+                    new Location("c", INDEX_X_PLUS_1));
             channel2.canUseChannel(new Location("a", INDEX_1), compartments);
             fail("missing compartment should have failed");
         }
@@ -225,17 +282,27 @@ public class ChannelTest {
         assertTrue(channel.canUseChannel(new Location("a", new CellIndexExpression("3000")), compartments));
         assertTrue(channel.canUseChannel(new Location("a", INDEX_1), compartments));
         
-        channel = new Channel("label", new Location("a", INDEX_1), new Location("a", INDEX_0), Direction.FORWARD);
+        channel = new Channel("label", new Location("a", INDEX_1), new Location("a", INDEX_0));
         assertFalse(channel.canUseChannel(new Location("a", INDEX_0), compartments));
+        assertTrue(channel.canUseChannel(new Location("a", INDEX_1), compartments));
+        
+        List<Location[]> locations = new ArrayList<Location[]>();
+        locations.add(new Location[] {new Location("a", INDEX_X), new Location("a", INDEX_X_PLUS_1)});
+        locations.add(new Location[] {new Location("a", INDEX_X), new Location("a", INDEX_X_MINUS_1)});
+        channel = new Channel("name", locations);
+        
+        compartments.clear();
+        compartments.add(new Compartment("a", 4));
+
+        assertTrue(channel.canUseChannel(new Location("a", INDEX_0), compartments));
         assertTrue(channel.canUseChannel(new Location("a", INDEX_1), compartments));
     }
     
     @Test
     public void testApplyChannel() {
-        // TODO add complex channels here
         Location reference1 = new Location("a", INDEX_X);
         Location reference2 = new Location("a", INDEX_X_PLUS_1);
-        Channel channel = new Channel("label", reference1, reference2, Direction.FORWARD);
+        Channel channel = new Channel("label", reference1, reference2);
         List<Compartment> compartments = new ArrayList<Compartment>();
         compartments.add(new Compartment("a", 4));
         compartments.add(new Compartment("b", 2));
@@ -259,7 +326,7 @@ public class ChannelTest {
         try {
             // Unknown compartment
             Channel channel2 = new Channel("label", new Location("c", INDEX_X), 
-                    new Location("c", INDEX_X_PLUS_1), Direction.FORWARD);
+                    new Location("c", INDEX_X_PLUS_1));
             channel2.applyChannel(new Location("a", INDEX_1), compartments);
             fail("missing compartment should have failed");
         }
@@ -283,7 +350,7 @@ public class ChannelTest {
         
         reference1 = new Location("a", INDEX_X);
         reference2 = new Location("a", new CellIndexExpression(INDEX_X, Operator.MINUS, INDEX_1));
-        channel = new Channel("label", reference1, reference2, Direction.FORWARD);
+        channel = new Channel("label", reference1, reference2);
 
         expected.clear();
         assertEquals(expected, channel.applyChannel(new Location("a", INDEX_0), compartments));
@@ -296,13 +363,27 @@ public class ChannelTest {
         
         reference1 = new Location("a", INDEX_X, INDEX_Y, INDEX_0);
         reference2 = new Location("a", INDEX_X_PLUS_1, new CellIndexExpression(INDEX_Y, Operator.MULTIPLY, INDEX_2), INDEX_2);
-        channel = new Channel("label", reference1, reference2, Direction.FORWARD);
+        channel = new Channel("label", reference1, reference2);
 
         expected.clear();
         assertEquals(expected, channel.applyChannel(new Location("a", INDEX_2, INDEX_1, INDEX_1), compartments));
 
         expected.add(new Location("a", new CellIndexExpression("3"), new CellIndexExpression("4"), INDEX_2));
         assertEquals(expected, channel.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_0), compartments));
+        
+        List<Location[]> locations = new ArrayList<Location[]>();
+        locations.add(new Location[] {new Location("a", INDEX_X), new Location("a", INDEX_X_PLUS_1)});
+        locations.add(new Location[] {new Location("a", INDEX_X), new Location("a", INDEX_X_MINUS_1)});
+        channel = new Channel("name", locations);
+        
+        compartments.clear();
+        compartments.add(new Compartment("a", 4));
+
+        expected.clear();
+        expected.add(new Location("a", INDEX_2));
+        expected.add(new Location("a", INDEX_0));
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), compartments));
+
     }
     
 }

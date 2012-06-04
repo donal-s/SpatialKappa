@@ -494,7 +494,7 @@ public abstract class AbstractSpatialTest {
     private static final String SIMPLE_TRANSPORT_INPUT = 
         "%agent: A()\n" +
         "%compartment: cytosol [4]\n" + 
-        "%channel: intra-cytosol cytosol [x] <-> cytosol [x+1]\n" + 
+        "%channel: intra-cytosol (cytosol [x] -> cytosol [x+1]) + (cytosol [x] -> cytosol [x -1])\n" + 
         "%transport: 'diffusion-all' intra-cytosol @ 0.1\n" + 
         "%init: 2000 cytosol[0] A() \n" + 
         "%obs: 'val[0]' cytosol[0] A() \n" + 
@@ -508,7 +508,7 @@ public abstract class AbstractSpatialTest {
         "%agent: B()\n" +
         "%compartment: cytosol [3]\n" + 
         "%channel: forward cytosol [x] -> cytosol [x+1]\n" + 
-        "%channel: backward cytosol [x] <- cytosol [x+1]\n" + 
+        "%channel: backward cytosol [x] -> cytosol [x -1]\n" + 
         "%transport: 'forward'       forward       A() @ 0.1\n" + 
         "%transport: 'backward'      backward      B() @ 0.1\n" + 
         "%init: 1000 cytosol[0] A() \n" + 

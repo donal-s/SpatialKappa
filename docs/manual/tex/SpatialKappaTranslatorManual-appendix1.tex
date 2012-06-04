@@ -29,7 +29,7 @@ ruleExpr :
   | \newbnf{label? locationExpr transformExpr kineticExpr}
 
 transformExpr :
-  (a=agentGroup)? transformTransition (b=agentGroup)?
+  (a=agentGroup)? '->' (b=agentGroup)?
 
 agentGroup :
   agent (',' agent)*
@@ -66,7 +66,11 @@ agentIfaceExpr :
   \newbnf{'\%compartment:' id ('[' INT ']')*}
 
 \newbnf{channelDecl :}
-  \newbnf{'\%channel:' linkName=id sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr}
+  \newbnf{'\%channel:' linkName=id channelExpr}
+  \newbnf{| '\%channel:' linkName=id '(' + channelExpr + ')' ('+' '(' + channelExpr + ')')*}
+
+\newbnf{channelExpr :}
+  \newbnf{sourceCompartment=locationExpr '->' targetCompartment=locationExpr}
 
 \newbnf{transportExpr :}
   \newbnf{'\%transport:' (transportName=label)? linkName=id (agentGroup)? kineticExpr}
@@ -180,12 +184,6 @@ operator_mult :
 
 operator_add :
   '+' | '-'
-
-transformTransition :
-  ( '->' )
-
-\newbnf{transportTransition :}
-  \newbnf{( '->' | '<-' | '<->' )}
 
 
 INT :

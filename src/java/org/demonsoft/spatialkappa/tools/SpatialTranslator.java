@@ -28,7 +28,6 @@ import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.Channel;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.Complex;
-import org.demonsoft.spatialkappa.model.Direction;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.InitialValue;
 import org.demonsoft.spatialkappa.model.KappaModel;
@@ -396,32 +395,13 @@ public class SpatialTranslator {
                 }
                 builder.append("' ");
             }
-            String leftSuffix = (channel.getDirection() != Direction.BACKWARD) ? stateSuffixPairs[index][0]
-                    : stateSuffixPairs[index][1];
-            String rightSuffix = (channel.getDirection() != Direction.BACKWARD) ? stateSuffixPairs[index][1]
-                    : stateSuffixPairs[index][0];
+            String leftSuffix = stateSuffixPairs[index][0];
+            String rightSuffix = stateSuffixPairs[index][1];
             builder.append(getAgentKappaString(isolatedAgents, leftSuffix));
-            builder.append(" ").append(Direction.FORWARD).append(" ");
+            builder.append(" -> ");
             builder.append(getAgentKappaString(isolatedAgents, rightSuffix)).append(" @ ");
             builder.append(transport.getRate().toString());
             builder.append("\n");
-
-            if (channel.getDirection() == Direction.BIDIRECTIONAL) {
-                if (transport.label != null) {
-                    builder.append("'").append(transport.label);
-                    if (stateSuffixPairs.length > 1 || forceSuffix) {
-                        builder.append("-").append(labelSuffix++);
-                    }
-                    builder.append("' ");
-                }
-                leftSuffix = stateSuffixPairs[index][1];
-                rightSuffix = stateSuffixPairs[index][0];
-                builder.append(getAgentKappaString(isolatedAgents, leftSuffix));
-                builder.append(" ").append(Direction.FORWARD).append(" ");
-                builder.append(getAgentKappaString(isolatedAgents, rightSuffix)).append(" @ ");
-                builder.append(transport.getRate().toString());
-                builder.append("\n");
-            }
         }
         return labelSuffix;
     }

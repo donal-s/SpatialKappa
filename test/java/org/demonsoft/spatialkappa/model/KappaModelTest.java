@@ -1,6 +1,6 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.*;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.TestUtils.getList;
 import static org.junit.Assert.assertEquals;
@@ -405,22 +405,32 @@ public class KappaModelTest {
         assertEquals(0, actual.size());
         
         model.addCompartment(new Compartment("cytosol", 3));
-        model.addChannel(new Channel("intra", 
-                new Location("cytosol", new CellIndexExpression(new VariableReference("x"))), 
-                new Location("cytosol", new CellIndexExpression(new CellIndexExpression(new VariableReference("x")), Operator.PLUS, new CellIndexExpression("1"))),
-                Direction.BIDIRECTIONAL));
-        model.addChannel(new Channel("intra", 
-                new Location("cytosol", new CellIndexExpression("2")), 
-                new Location("cytosol", new CellIndexExpression("0")),
-                Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("intra", getList(
+                new Location[] {
+                        new Location("cytosol", INDEX_X),
+                        new Location("cytosol", INDEX_X_PLUS_1),
+                }, 
+                new Location[] {
+                        new Location("cytosol", INDEX_X),
+                        new Location("cytosol", INDEX_X_MINUS_1),
+                }, 
+                new Location[] {
+                        new Location("cytosol", INDEX_2), 
+                        new Location("cytosol", INDEX_0),
+                },
+                new Location[] {
+                        new Location("cytosol", INDEX_0), 
+                        new Location("cytosol", INDEX_2),
+                }
+                )));
         
         List<Agent> agents = getList(new Agent("agent1"));
         model.addTransport("label", "intra", agents, new VariableExpression(0.2f));
         Transport transport = new Transport("label",  "intra", agents, 0.2f);
 
-        Location cell0 = new Location("cytosol", new CellIndexExpression("0"));
-        Location cell1 = new Location("cytosol", new CellIndexExpression("1"));
-        Location cell2 = new Location("cytosol", new CellIndexExpression("2"));
+        Location cell0 = new Location("cytosol", INDEX_0);
+        Location cell1 = new Location("cytosol", INDEX_1);
+        Location cell2 = new Location("cytosol", INDEX_2);
         
         checkLocatedTransitions(new LocatedTransport[] { 
                 new LocatedTransport(transport, cell0, cell1),
@@ -438,20 +448,32 @@ public class KappaModelTest {
         assertEquals(0, actual.size());
         
         model.addCompartment(new Compartment("cytosol", 3));
-        model.addChannel(new Channel("intra", 
-                new Location("cytosol", new CellIndexExpression("0")), new Location("cytosol", new CellIndexExpression("1")),
-                Direction.BIDIRECTIONAL));
-        model.addChannel(new Channel("intra", 
-                new Location("cytosol", new CellIndexExpression("1")), new Location("cytosol", new CellIndexExpression("2")),
-                Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("intra", getList(
+                new Location[] {
+                        new Location("cytosol", INDEX_0), 
+                        new Location("cytosol", INDEX_1)
+                },
+                new Location[] {
+                        new Location("cytosol", INDEX_1), 
+                        new Location("cytosol", INDEX_2),
+                },
+                new Location[] {
+                        new Location("cytosol", INDEX_1), 
+                        new Location("cytosol", INDEX_0)
+                },
+                new Location[] {
+                        new Location("cytosol", INDEX_2), 
+                        new Location("cytosol", INDEX_1),
+                }
+                )));
         
         List<Agent> agents = getList(new Agent("agent1"));
         model.addTransport("label", "intra", agents, new VariableExpression(0.2f));
         Transport transport = new Transport("label",  "intra", agents, 0.2f);
 
-        Location cell0 = new Location("cytosol", new CellIndexExpression("0"));
-        Location cell1 = new Location("cytosol", new CellIndexExpression("1"));
-        Location cell2 = new Location("cytosol", new CellIndexExpression("2"));
+        Location cell0 = new Location("cytosol", INDEX_0);
+        Location cell1 = new Location("cytosol", INDEX_1);
+        Location cell2 = new Location("cytosol", INDEX_2);
         
         checkLocatedTransitions(new LocatedTransport[] { 
                 new LocatedTransport(transport, cell0, cell1),
@@ -675,8 +697,8 @@ public class KappaModelTest {
         assertNotNull(model.getChannels());
         assertEquals(0, model.getChannels().size());
 
-        Channel link1 = new Channel("name1", new Location("1"), new Location("2"), Direction.BACKWARD);
-        Channel link2 = new Channel("name2", new Location("1"), new Location("3"), Direction.BIDIRECTIONAL);
+        Channel link1 = new Channel("name1", new Location("1"), new Location("2"));
+        Channel link2 = new Channel("name2", new Location("1"), new Location("3"));
         model.addChannel(link1);
         model.addChannel(link2);
         assertEquals(2, model.getChannels().size());
@@ -818,7 +840,7 @@ public class KappaModelTest {
         // Plot reference to transport
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known")));
         model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(2f));
         model.addPlot("transportRef");
         model.validate();
@@ -883,7 +905,7 @@ public class KappaModelTest {
         // Missing transport reference
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known")));
         model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(new VariableReference("unknown")));
         checkValidate_failure("Reference 'unknown' not found");
         
@@ -895,26 +917,26 @@ public class KappaModelTest {
         // Non fixed transport reference
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known")));
         model.addVariable(new VariableExpression(SimulationToken.EVENTS), "variableRef");
         model.addTransport("other", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(new VariableReference("variableRef")));
         checkValidate_failure("Reference 'variableRef' not fixed");
         
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known")));
         model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(2));
         model.validate();
 
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known")));
         model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(Constant.INFINITY));
         model.validate();
         
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known")));
         model.addVariable(new VariableExpression(2), "variableRef");
         model.addTransport("other", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(new VariableReference("variableRef")));
         model.validate();
@@ -983,24 +1005,11 @@ public class KappaModelTest {
     
     @Test
     public void testValidate_channel() {
-        // Missing compartment link reference
+        // Test channel.validate() is called
         model = new KappaModel();
         model.addCompartment(new Compartment("known"));
-        model.addChannel(new Channel("name", new Location("known"), new Location("unknown"), Direction.BIDIRECTIONAL));
+        model.addChannel(new Channel("name", new Location("known"), new Location("unknown")));
         checkValidate_failure("Compartment 'unknown' not found");
-        
-        model = new KappaModel();
-        model.addCompartment(new Compartment("known"));
-        model.addChannel(new Channel("name", new Location("known"), new Location("unknown"), Direction.BIDIRECTIONAL));
-        checkValidate_failure("Compartment 'unknown' not found");
-        
-        model = new KappaModel();
-        model.addCompartment(new Compartment("known"));
-        model.addChannel(new Channel("name", new Location("known"), new Location("known"), Direction.BIDIRECTIONAL));
-        model.validate();
-
-        // TODO compartment link range out of bounds ?
-        
     }
     
     @Test
