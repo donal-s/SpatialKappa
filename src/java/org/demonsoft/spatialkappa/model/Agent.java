@@ -146,7 +146,7 @@ public class Agent implements Serializable {
     @Override
     public Agent clone() {
         // AgentSites are cloned in agent constructor
-        return new Agent(name, sites.values());
+        return new Agent(name, location, sites.values());
     }
 
     public String getStateHash() {

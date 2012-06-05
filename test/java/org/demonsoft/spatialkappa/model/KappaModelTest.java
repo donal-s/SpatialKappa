@@ -1010,6 +1010,13 @@ public class KappaModelTest {
         model.addCompartment(new Compartment("known"));
         model.addChannel(new Channel("name", new Location("known"), new Location("unknown")));
         checkValidate_failure("Compartment 'unknown' not found");
+        
+        // Test one one channel per name is used
+        model = new KappaModel();
+        model.addCompartment(new Compartment("known"));
+        model.addChannel(new Channel("name", new Location("known"), new Location("known")));
+        model.addChannel(new Channel("name", new Location("known"), new Location("known")));
+        checkValidate_failure("Duplicate channel 'name'");
     }
     
     @Test

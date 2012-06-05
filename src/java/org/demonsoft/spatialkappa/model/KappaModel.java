@@ -420,7 +420,12 @@ public class KappaModel implements IKappaModel {
             }
         }
         
+        Set<String> channelNames = new HashSet<String>();
         for (Channel channel : channels) {
+            if (channelNames.contains(channel.getName())) {
+                throw new IllegalStateException("Duplicate channel '" + channel.getName() + "'");
+            }
+            channelNames.add(channel.getName());
             channel.validate(compartments);
         }
        

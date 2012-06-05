@@ -104,6 +104,22 @@ public class AgentTest {
         assertEquals("name:location(site1~state1!link1,site2~state2!link2)", agent.toString());
     }
 
+    @Test
+    public void testClone() {
+        Set<AgentSite> sites = new HashSet<AgentSite>();
+        sites.add(new AgentSite("site1", "state1", "link1"));
+        sites.add(new AgentSite("site2", "state2", "link2"));
+       
+        Location location = new Location("location");
+        Agent agent = new Agent("name", location, sites);
+        
+        Agent clone = agent.clone();
+        assertEquals(agent.name, clone.name);
+        assertSame(agent.location, clone.location);
+        assertEquals(agent.toString(), clone.toString());
+    }
+    
+    
     @SuppressWarnings("unused")
     @Test
     public void testAgent_nameAndInterfaces_varArgs() {

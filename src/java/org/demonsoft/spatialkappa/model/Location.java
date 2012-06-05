@@ -132,9 +132,7 @@ public class Location implements Serializable {
         }
         List<Location> result = new ArrayList<Location>();
         for (Channel channel : channels) {
-            if (channel.canUseChannel(this, compartments)) {
-                result.addAll(channel.applyChannel(this, compartments));
-            }
+            result.addAll(channel.applyChannel(this, compartments));
         }
         return result;
     }

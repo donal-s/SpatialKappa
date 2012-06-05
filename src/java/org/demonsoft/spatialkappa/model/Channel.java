@@ -128,10 +128,13 @@ public class Channel {
         return source.isConcreteLocation() && target.isConcreteLocation();
     }
 
-    public boolean canUseChannel(Location location, List<Compartment> compartments) {
+    public List<Location> applyChannel(Location location, List<Compartment> compartments) {
         if (location == null || compartments == null) {
             throw new NullPointerException();
         }
+        List<Location> result = new ArrayList<Location>();
+        
+        boolean valid = false;
         for (Location[] locationPair : locations) {
             Location source = locationPair[0];
             Compartment compartment = source.getReferencedCompartment(compartments);
@@ -140,61 +143,90 @@ public class Channel {
             }
             if (location.getIndices().length != source.getIndices().length 
                     || !location.getName().equals(source.getName())) {
-                return false;
+                continue;
             }
+            boolean validIndices = true;
             for (int index = 0; index < source.getIndices().length; index++) {
                 CellIndexExpression sourceIndex = source.getIndices()[index];
                 CellIndexExpression inputIndex = location.getIndices()[index];
                 if (!inputIndex.isFixed()) {
-                    return false;
+                    validIndices = false;
+                    break;
                 }
                 if (sourceIndex.isFixed()) {
                     if (!sourceIndex.equals(inputIndex)) {
-                        return false;
+                        validIndices = false;
+                        break;
                     }
                 }
             }
+            valid = validIndices;
+            if (valid) {
+                break;
+            }
         }
-        return true;
-    }
 
-    public List<Location> applyChannel(Location location, List<Compartment> compartments) {
-        if (location == null || compartments == null) {
-            throw new NullPointerException();
-        }
-        List<Location> result = new ArrayList<Location>();
-        if (canUseChannel(location, compartments)) {
-            for (Location[] locationPair : locations) {
-                Location source = locationPair[0];
-                Location target = locationPair[1];
+        for (Location[] locationPair : locations) {
+            Location source = locationPair[0];
+            Location target = locationPair[1];
+        
+            Compartment sourceCompartment = source.getReferencedCompartment(compartments);
+            if (sourceCompartment == null) {
+                throw new IllegalArgumentException("Unknown compartment: " + source.getName());
+            }
+            Compartment targetCompartment = target.getReferencedCompartment(compartments);
+            if (targetCompartment == null) {
+                throw new IllegalArgumentException("Unknown compartment: " + target.getName());
+            }
 
-                Map<String, Integer> variables = new HashMap<String, Integer>();
-                for (int index = 0; index < source.getIndices().length; index++) {
-                    CellIndexExpression sourceIndex = source.getIndices()[index];
-                    if (sourceIndex.type == Type.VARIABLE_REFERENCE) {
-                        CellIndexExpression inputIndex = location.getIndices()[index];
-                        variables.put(sourceIndex.reference.variableName, (int) inputIndex.value);
-                    }
+            if (location.getIndices().length != source.getIndices().length 
+                    || !location.getName().equals(source.getName())) {
+                continue;
+            }
+            boolean validIndices = true;
+            for (int index = 0; index < source.getIndices().length; index++) {
+                CellIndexExpression sourceIndex = source.getIndices()[index];
+                CellIndexExpression inputIndex = location.getIndices()[index];
+                if (!inputIndex.isFixed()) {
+                    validIndices = false;
+                    break;
                 }
-    
-                boolean valid = true;
-                Compartment compartment = target.getReferencedCompartment(compartments);
-                
-                List<CellIndexExpression> targetIndices = new ArrayList<CellIndexExpression>();
-                for (int index = 0; index < target.getIndices().length; index++) {
-                    CellIndexExpression targetIndex = target.getIndices()[index];
-                    int targetIndexValue = targetIndex.evaluateIndex(variables);
-                    if (targetIndexValue < 0 || targetIndexValue >= compartment.getDimensions()[index]) {
-                        valid = false;
+                if (sourceIndex.isFixed()) {
+                    if (!sourceIndex.equals(inputIndex)) {
+                        validIndices = false;
                         break;
                     }
-                    targetIndices.add(new CellIndexExpression("" + targetIndexValue));
                 }
-                
-                if (valid) {
-                    Location targetLocation = new Location(target.getName(), targetIndices);
-                    result.add(targetLocation);
+            }
+            if (!validIndices) {
+                continue;
+            }
+
+            Map<String, Integer> variables = new HashMap<String, Integer>();
+            for (int index = 0; index < source.getIndices().length; index++) {
+                CellIndexExpression sourceIndex = source.getIndices()[index];
+                if (sourceIndex.type == Type.VARIABLE_REFERENCE) {
+                    CellIndexExpression inputIndex = location.getIndices()[index];
+                    variables.put(sourceIndex.reference.variableName, (int) inputIndex.value);
                 }
+            }
+
+            valid = true;
+            
+            List<CellIndexExpression> targetIndices = new ArrayList<CellIndexExpression>();
+            for (int index = 0; index < target.getIndices().length; index++) {
+                CellIndexExpression targetIndex = target.getIndices()[index];
+                int targetIndexValue = targetIndex.evaluateIndex(variables);
+                if (targetIndexValue < 0 || targetIndexValue >= targetCompartment.getDimensions()[index]) {
+                    valid = false;
+                    break;
+                }
+                targetIndices.add(new CellIndexExpression("" + targetIndexValue));
+            }
+            
+            if (valid) {
+                Location targetLocation = new Location(target.getName(), targetIndices);
+                result.add(targetLocation);
             }
         }
         return result;

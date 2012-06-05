@@ -10,8 +10,6 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
 import static org.demonsoft.spatialkappa.model.TestUtils.getList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
@@ -240,65 +238,6 @@ public class ChannelTest {
 
     
     @Test
-    public void testCanUseChannel() {
-        Channel channel = new Channel("label", new Location("a", INDEX_X), 
-                new Location("a", INDEX_X_PLUS_1));
-        List<Compartment> compartments = new ArrayList<Compartment>();
-        compartments.add(new Compartment("a", 4));
-        compartments.add(new Compartment("b", 2));
-        
-        
-        try {
-            channel.canUseChannel(null, compartments);
-            fail("null should have failed");
-        }
-        catch (NullPointerException ex) {
-            // Expected exception
-        }
-
-        try {
-            channel.canUseChannel(new Location("a", INDEX_1), null);
-            fail("null should have failed");
-        }
-        catch (NullPointerException ex) {
-            // Expected exception
-        }
-
-        try {
-            // Unknown compartment
-            Channel channel2 = new Channel("label", new Location("c", INDEX_X), 
-                    new Location("c", INDEX_X_PLUS_1));
-            channel2.canUseChannel(new Location("a", INDEX_1), compartments);
-            fail("missing compartment should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-
-        assertFalse(channel.canUseChannel(new Location("b", INDEX_1), compartments));
-        assertFalse(channel.canUseChannel(new Location("a"), compartments));
-        assertFalse(channel.canUseChannel(new Location("a", INDEX_1, INDEX_1), compartments));
-        assertFalse(channel.canUseChannel(new Location("a", INDEX_X), compartments));
-        assertTrue(channel.canUseChannel(new Location("a", new CellIndexExpression("3000")), compartments));
-        assertTrue(channel.canUseChannel(new Location("a", INDEX_1), compartments));
-        
-        channel = new Channel("label", new Location("a", INDEX_1), new Location("a", INDEX_0));
-        assertFalse(channel.canUseChannel(new Location("a", INDEX_0), compartments));
-        assertTrue(channel.canUseChannel(new Location("a", INDEX_1), compartments));
-        
-        List<Location[]> locations = new ArrayList<Location[]>();
-        locations.add(new Location[] {new Location("a", INDEX_X), new Location("a", INDEX_X_PLUS_1)});
-        locations.add(new Location[] {new Location("a", INDEX_X), new Location("a", INDEX_X_MINUS_1)});
-        channel = new Channel("name", locations);
-        
-        compartments.clear();
-        compartments.add(new Compartment("a", 4));
-
-        assertTrue(channel.canUseChannel(new Location("a", INDEX_0), compartments));
-        assertTrue(channel.canUseChannel(new Location("a", INDEX_1), compartments));
-    }
-    
-    @Test
     public void testApplyChannel() {
         Location reference1 = new Location("a", INDEX_X);
         Location reference2 = new Location("a", INDEX_X_PLUS_1);
@@ -325,7 +264,7 @@ public class ChannelTest {
 
         try {
             // Unknown compartment
-            Channel channel2 = new Channel("label", new Location("c", INDEX_X), 
+            Channel channel2 = new Channel("label", new Location("a", INDEX_X), 
                     new Location("c", INDEX_X_PLUS_1));
             channel2.applyChannel(new Location("a", INDEX_1), compartments);
             fail("missing compartment should have failed");
@@ -334,8 +273,19 @@ public class ChannelTest {
             // Expected exception
         }
 
+        try {
+            // Unknown compartment
+            Channel channel2 = new Channel("label", new Location("c", INDEX_X), 
+                    new Location("a", INDEX_X_PLUS_1));
+            channel2.applyChannel(new Location("a", INDEX_1), compartments);
+            fail("missing compartment should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
         List<Location> expected = new ArrayList<Location>();
-        
+
         assertEquals(expected, channel.applyChannel(new Location("b", INDEX_1), compartments));
         assertEquals(expected, channel.applyChannel(new Location("a"), compartments));
         assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1, INDEX_1), compartments));
@@ -372,18 +322,31 @@ public class ChannelTest {
         assertEquals(expected, channel.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_0), compartments));
         
         List<Location[]> locations = new ArrayList<Location[]>();
-        locations.add(new Location[] {new Location("a", INDEX_X), new Location("a", INDEX_X_PLUS_1)});
+        locations.add(new Location[] {new Location("a", new CellIndexExpression("100")), new Location("a", new CellIndexExpression("101"))});
         locations.add(new Location[] {new Location("a", INDEX_X), new Location("a", INDEX_X_MINUS_1)});
+        locations.add(new Location[] {new Location("a", INDEX_X), new Location("a", INDEX_X_PLUS_1)});
         channel = new Channel("name", locations);
         
         compartments.clear();
         compartments.add(new Compartment("a", 4));
 
         expected.clear();
-        expected.add(new Location("a", INDEX_2));
         expected.add(new Location("a", INDEX_0));
+        expected.add(new Location("a", INDEX_2));
         assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), compartments));
 
+        // Ensure each location pair are processed individually
+        locations.clear();
+        locations.add(new Location[] {new Location("a"), new Location("b")});
+        locations.add(new Location[] {new Location("b"), new Location("a")});
+        channel = new Channel("name", locations);
+        compartments.clear();
+        compartments.add(new Compartment("a"));
+        compartments.add(new Compartment("b"));
+
+        expected.clear();
+        expected.add(new Location("b"));
+        assertEquals(expected, channel.applyChannel(new Location("a"), compartments));
     }
     
 }

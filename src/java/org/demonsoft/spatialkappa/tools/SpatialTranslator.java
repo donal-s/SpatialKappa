@@ -208,14 +208,13 @@ public class SpatialTranslator {
         return result;
     }
 
-    private List<Channel> getChannels(List<Channel> channels, String channelName) {
-        List<Channel> result = new ArrayList<Channel>();
-        for (Channel link : channels) {
-            if (channelName.equals(link.getName())) {
-                result.add(link);
+    private Channel getChannel(List<Channel> channels, String channelName) {
+        for (Channel channel : channels) {
+            if (channelName.equals(channel.getName())) {
+                return channel;
             }
         }
-        return result;
+        return null;
     }
 
     String getAgentKappaString(List<Agent> agents, Location location) {
@@ -357,25 +356,22 @@ public class SpatialTranslator {
 
     String getKappaString(Transport transport) {
         StringBuilder builder = new StringBuilder();
-        List<Channel> channels = getChannels(kappaModel.getChannels(), transport.getCompartmentLinkName());
+        Channel channel = getChannel(kappaModel.getChannels(), transport.getCompartmentLinkName());
         int labelSuffix = 1;
-        boolean forceSuffix = channels.size() > 0;
-        for (Channel channel : channels) {
-            String[][] stateSuffixPairs = getLinkStateSuffixPairs(channel, kappaModel.getCompartments());
-            List<Agent> agents = transport.getAgents();
-            if (agents != null) {
-                labelSuffix = writeAgents(builder, stateSuffixPairs, transport, channel, agents, labelSuffix,
-                        kappaModel.getAgentDeclarationMap(), forceSuffix);
-            }
-            else {
-                agents = getAggregateAgents(kappaModel.getAgentDeclarationMap());
-                List<Agent> currentAgents = new ArrayList<Agent>();
-                for (Agent agent : agents) {
-                    currentAgents.clear();
-                    currentAgents.add(agent);
-                    labelSuffix = writeAgents(builder, stateSuffixPairs, transport, channel, currentAgents,
-                            labelSuffix, kappaModel.getAgentDeclarationMap(), forceSuffix);
-                }
+        String[][] stateSuffixPairs = getLinkStateSuffixPairs(channel, kappaModel.getCompartments());
+        List<Agent> agents = transport.getAgents();
+        if (agents != null) {
+            labelSuffix = writeAgents(builder, stateSuffixPairs, transport, channel, agents, labelSuffix,
+                    kappaModel.getAgentDeclarationMap(), true);
+        }
+        else {
+            agents = getAggregateAgents(kappaModel.getAgentDeclarationMap());
+            List<Agent> currentAgents = new ArrayList<Agent>();
+            for (Agent agent : agents) {
+                currentAgents.clear();
+                currentAgents.add(agent);
+                labelSuffix = writeAgents(builder, stateSuffixPairs, transport, channel, currentAgents,
+                        labelSuffix, kappaModel.getAgentDeclarationMap(), true);
             }
         }
         return builder.toString();
@@ -771,10 +767,7 @@ public class SpatialTranslator {
                         String channelName = (link.sourceSite.getChannel() != null) ? link.sourceSite.getChannel() : link.targetSite.getChannel();
                         Channel channel = null;
                         if (channelName != null) {
-                            List<Channel> linkChannels = getChannels(channels, channelName);
-                            if (linkChannels.size() > 0) {
-                                channel = linkChannels.get(0); // TODO just the first for now
-                            }
+                            channel = getChannel(channels, channelName);
                         }
                         List<Location> currentTargetLocations = getPossibleLocations(locatedSourceAgent.location, templateTargetAgent.location, channel, compartments);
                         
@@ -825,7 +818,7 @@ public class SpatialTranslator {
         List<Location> result = new ArrayList<Location>();
         
         if (channel == null) {
-            if (locationConstraint == null) {
+            if (locationConstraint == NOT_LOCATED) {
                 result.add(sourceLocation);
             }
             else {
@@ -837,7 +830,7 @@ public class SpatialTranslator {
         }
         else { // channel != null
             List<Location> targetLocations = sourceLocation.getLinkedLocations(compartments, channel);
-            if (locationConstraint == null) {
+            if (locationConstraint == NOT_LOCATED) {
                 result.addAll(targetLocations);
             }
             else {

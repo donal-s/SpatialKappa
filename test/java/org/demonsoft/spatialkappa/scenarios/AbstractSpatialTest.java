@@ -604,7 +604,7 @@ public abstract class AbstractSpatialTest {
     private static final String STEADY_STATE_CONCENTRATION_GRADIENT_INPUT = 
         "%agent: A()\n" +
         "%compartment: cytosol [4]\n" + 
-        "%channel: intra-cytosol cytosol [x] <-> cytosol [x+1]\n" + 
+        "%channel: intra-cytosol cytosol [x] -> cytosol [x+1]\n" + 
         "%transport: 'diffusion-all' intra-cytosol @ 0.1\n" + 
         "'source' cytosol[0] -> A() @ 5\n" + 
         "'sink' cytosol[3] A() -> @ [inf]\n" + 

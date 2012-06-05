@@ -52,7 +52,7 @@ public class AgentLink implements Serializable {
     
     @Override
     public String toString() {
-        return sourceSite + "<->" + targetSite;
+        return sourceSite + "->" + targetSite;
     }
 
     public static AgentLink getAnyLink(AgentSite site1) {

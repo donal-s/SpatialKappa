@@ -4,6 +4,7 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_2;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_MINUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y_PLUS_1;
@@ -148,5 +149,22 @@ public class LocationTest {
         expected.add(new Location("membrane", INDEX_1));
         
         assertEquals(expected, location.getLinkedLocations(compartments, channelCytosol, channelMembraneTransport));
+        
+        // Complex channels
+        
+        List<Location[]> locations = new ArrayList<Location[]>();
+        // Ensure more than the first pair get processed
+        locations.add(new Location[] {new Location("cytosol", new CellIndexExpression("100"), INDEX_0), new Location("cytosol", new CellIndexExpression("101"), INDEX_0)});
+        locations.add(new Location[] {new Location("cytosol", INDEX_X, INDEX_Y), new Location("cytosol", INDEX_X_MINUS_1, INDEX_Y)});
+        locations.add(new Location[] {new Location("cytosol", INDEX_X, INDEX_Y), new Location("cytosol", INDEX_X_PLUS_1, INDEX_Y)});
+        Channel complexChannel = new Channel("horiz", locations);
+        
+        location = new Location("cytosol", INDEX_0, INDEX_0);
+
+        expected.clear();
+        expected.add(new Location("cytosol", INDEX_1, INDEX_0));
+
+        assertEquals(expected, location.getLinkedLocations(compartments, complexChannel));
+
     }
 }

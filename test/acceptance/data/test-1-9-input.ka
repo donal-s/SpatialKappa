@@ -68,6 +68,8 @@
 %compartment: cytosol
 %compartment: extracellular
 
+%channel: cross (cytosol -> extracellular) + (extracellular -> cytosol)
+
 %agent: egf(r)
 %agent: Grb2(SH2,SH3)
 %agent: Shc(PTB,Y317~Y~pY)
@@ -79,18 +81,18 @@
 %init: 'Grb2_tot' Grb2:cytosol
 %init: 'Shc_tot' Shc:cytosol
 %init: 'Sos_tot' Sos:cytosol
-%init: 'egfr_tot' egfr-outside:extracellular(dl!1),egfr-inside:cytosol(dl!1)
+%init: 'egfr_tot' egfr-outside:extracellular(dl!1:cross),egfr-inside:cytosol(dl!1)
 %init: 'Grb2_Sos_tot' cytosol Grb2(SH3!1),Sos(dom!1)
 
 # Ligand-receptor binding
-egfr-outside(l,dl!1),egfr-inside(dl!1,r),egf(r) -> egfr-outside(l!2,dl!1),egfr-inside(dl!1,r),egf(r!2) @ 'kp1' #ligand-monomer
-egfr-outside(l!2,dl!1),egfr-inside(dl!1,r),egf(r!2) -> egfr-outside(l,dl!1),egfr-inside(dl!1,r),egf(r) @ 'km1' #ligand-monomer
+egfr-outside(l,dl!1:cross),egfr-inside:cytosol(dl!1,r),egf(r) -> egfr-outside(l!2,dl!1:cross),egfr-inside(dl!1,r),egf(r!2) @ 'kp1' #ligand-monomer
+egfr-outside(l!2,dl!1:cross),egfr-inside:cytosol(dl!1,r),egf(r!2) -> egfr-outside(l,dl!1:cross),egfr-inside(dl!1,r),egf(r) @ 'km1' #ligand-monomer
 
 # Receptor-aggregation
-egfr-outside(l!_,dl!1),egfr-inside(dl!1,r),egfr-outside(l!_,dl!2),egfr-inside(dl!2,r) -> \
-  egfr-outside(l!_,dl!1),egfr-inside(dl!1,r!3),egfr-outside(l!_,dl!2),egfr-inside(dl!2,r!3) @ 'kp2'
-egfr-outside(l!_,dl!1),egfr-inside(dl!1,r!3),egfr-outside(l!_,dl!2),egfr-inside(dl!2,r!3) -> \
-  egfr-outside(l!_,dl!1),egfr-inside(dl!1,r),egfr-outside(l!_,dl!2),egfr-inside(dl!2,r) @ 'km2'
+egfr-outside(l!_,dl!1:cross),egfr-inside:cytosol(dl!1,r),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r) -> \
+  egfr-outside(l!_,dl!1:cross),egfr-inside:cytosol(dl!1,r!3),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r!3) @ 'kp2'
+egfr-outside(l!_,dl!1:cross),egfr-inside:cytosol(dl!1,r!3),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r!3) -> \
+  egfr-outside(l!_,dl!1:cross),egfr-inside:cytosol(dl!1,r),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r) @ 'km2'
 
 # Transphosphorylation of egfr by RTK
  egfr-inside(r!_,Y1068~Y) -> egfr-inside(r!_,Y1068~pY) @ 'kp3'

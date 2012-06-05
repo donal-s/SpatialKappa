@@ -4,6 +4,7 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_2;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_MINUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
@@ -759,7 +760,7 @@ public class SpatialTranslatorTest {
         compartments.add(new Compartment("loc2", 5));
         
         try {
-            translator.getPossibleLocations(null, null, null, compartments);
+            translator.getPossibleLocations(null, NOT_LOCATED, null, compartments);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -767,7 +768,15 @@ public class SpatialTranslatorTest {
         }
 
         try {
-            translator.getPossibleLocations(new Location("loc2", INDEX_1), null, null, null);
+            translator.getPossibleLocations(NOT_LOCATED, null, null, compartments);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            translator.getPossibleLocations(new Location("loc2", INDEX_1), NOT_LOCATED, null, null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -777,16 +786,16 @@ public class SpatialTranslatorTest {
         // No location or channel - stay in same location
         List<Location> expected = new ArrayList<Location>();
         expected.add(NOT_LOCATED);
-        assertEquals(expected, translator.getPossibleLocations(NOT_LOCATED, null, null, compartments));
+        assertEquals(expected, translator.getPossibleLocations(NOT_LOCATED, NOT_LOCATED, null, compartments));
         
         // No channel - stay in same location
         expected = new ArrayList<Location>();
         expected.add(new Location("loc1"));
-        assertEquals(expected, translator.getPossibleLocations(new Location("loc1"), null, null, compartments));
+        assertEquals(expected, translator.getPossibleLocations(new Location("loc1"), NOT_LOCATED, null, compartments));
 
         expected.clear();
         expected.add(new Location("loc2", INDEX_1));
-        assertEquals(expected, translator.getPossibleLocations(new Location("loc2", INDEX_1), null, null, compartments));
+        assertEquals(expected, translator.getPossibleLocations(new Location("loc2", INDEX_1), NOT_LOCATED, null, compartments));
         
         // No channel, but now constraints
         assertEquals(expected, translator.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc2", INDEX_1), null, compartments));
@@ -800,15 +809,15 @@ public class SpatialTranslatorTest {
         Channel channel = new Channel("label", new Location("loc2", INDEX_1), new Location("loc2", INDEX_2));
         expected.clear();
         expected.add(new Location("loc2", INDEX_2));
-        assertEquals(expected, translator.getPossibleLocations(new Location("loc2", INDEX_1), null, channel, compartments));
+        assertEquals(expected, translator.getPossibleLocations(new Location("loc2", INDEX_1), NOT_LOCATED, channel, compartments));
         
         channel = new Channel("label", new Location("loc2", INDEX_X), new Location("loc2", INDEX_X_PLUS_1));
-        assertEquals(expected, translator.getPossibleLocations(new Location("loc2", INDEX_1), null, channel, compartments));
+        assertEquals(expected, translator.getPossibleLocations(new Location("loc2", INDEX_1), NOT_LOCATED, channel, compartments));
         
         channel = new Channel("label", new Location("loc2", INDEX_1), new Location("loc1"));
         expected.clear();
         expected.add(new Location("loc1"));
-        assertEquals(expected, translator.getPossibleLocations(new Location("loc2", INDEX_1), null, channel, compartments));
+        assertEquals(expected, translator.getPossibleLocations(new Location("loc2", INDEX_1), NOT_LOCATED, channel, compartments));
         
         // Matching channel - constraints
         channel = new Channel("label", new Location("loc2", INDEX_1), new Location("loc2", INDEX_2));
@@ -824,9 +833,9 @@ public class SpatialTranslatorTest {
         // Non matching channel
         channel = new Channel("label", new Location("loc2", INDEX_X), new Location("loc2", INDEX_X_PLUS_1));
         expected.clear();
-        assertEquals(expected, translator.getPossibleLocations(new Location("loc2", new CellIndexExpression("4")), null, channel, compartments));
+        assertEquals(expected, translator.getPossibleLocations(new Location("loc2", new CellIndexExpression("4")), NOT_LOCATED, channel, compartments));
 
-        assertEquals(expected, translator.getPossibleLocations(new Location("loc1"), null, channel, compartments));
+        assertEquals(expected, translator.getPossibleLocations(new Location("loc1"), NOT_LOCATED, channel, compartments));
     }
     
 
@@ -970,8 +979,6 @@ public class SpatialTranslatorTest {
                
         checkMappingStructure(complex, compartments, channels, expected);
 
-        //TODO complex channels giving multiple results
-        
         // Dimer - one agent fixed, other using channel
         agents = getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1", "inter")),
                 new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
@@ -1017,7 +1024,12 @@ public class SpatialTranslatorTest {
         // Dimer - one agent partial location, other using channel, 2 dimensions
 
         channels.clear();
-        channels.add(new Channel("horiz", new Location("loc2", INDEX_X, INDEX_Y), new Location("loc2", INDEX_X_PLUS_1, INDEX_Y)));
+        List<Location[]> locations = new ArrayList<Location[]>();
+        // Ensure more than the first pair get processed
+        locations.add(new Location[] {new Location("loc2", new CellIndexExpression("100"), INDEX_0), new Location("loc2", new CellIndexExpression("101"), INDEX_0)});
+        locations.add(new Location[] {new Location("loc2", INDEX_X, INDEX_Y), new Location("loc2", INDEX_X_MINUS_1, INDEX_Y)});
+        locations.add(new Location[] {new Location("loc2", INDEX_X, INDEX_Y), new Location("loc2", INDEX_X_PLUS_1, INDEX_Y)});
+        channels.add(new Channel("horiz", locations));
         
         compartments.clear();
         compartments.add(new Compartment("loc2", 2, 2));
@@ -1029,40 +1041,19 @@ public class SpatialTranslatorTest {
         expected.clear();
         expected.add(getList(new Agent("A", new Location("loc2", INDEX_0, INDEX_0), new AgentSite("s", null, "1", "horiz")), 
                 new Agent("B", new Location("loc2", INDEX_1, INDEX_0), new AgentSite("s", null, "1"))));
+        expected.add(getList(
+                new Agent("A", new Location("loc2", INDEX_1, INDEX_0), new AgentSite("s", null, "1", "horiz")),
+                new Agent("B", new Location("loc2", INDEX_0, INDEX_0), new AgentSite("s", null, "1"))
+                ));
         expected.add(getList(new Agent("A", new Location("loc2", INDEX_0, INDEX_1), new AgentSite("s", null, "1", "horiz")), 
                 new Agent("B", new Location("loc2", INDEX_1, INDEX_1), new AgentSite("s", null, "1"))));
+        expected.add(getList(
+                new Agent("A", new Location("loc2", INDEX_1, INDEX_1), new AgentSite("s", null, "1", "horiz")),
+                new Agent("B", new Location("loc2", INDEX_0, INDEX_1), new AgentSite("s", null, "1"))
+                ));
                
         checkMappingStructure(complex, compartments, channels, expected);
 
-        
-//        private static final String INIT_ONLY_INPUT = 
-//                "%agent: A(state~blue~red~green~purple~orange~yellow~brown~white~black~cyan)\n" +
-//                "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front)\n" +
-//                "%compartment: cytosol [4]\n" + 
-//                "%init: 800 A(state~green),B(s~right) \n" + 
-//                "%init: 800 A(state~purple),B:cytosol(s~centre) \n" + 
-//                "%init: 800 A(state~orange),B:cytosol[3](s~left) \n" + 
-//                "%init: 800 cytosol A(state~blue),B(s~outside) \n" + 
-//                "%init: 800 cytosol A(state~yellow),B:cytosol(s~bottom) \n" +
-//                "%init: 800 cytosol A(state~brown),B:cytosol[3](s~middle) \n" +
-//                "%init: 800 cytosol[0] A(state~white),B(s~top) \n" +
-//                "%init: 800 cytosol[0] A(state~black),B:cytosol(s~inside) \n" +
-//                "%init: 800 cytosol[0] A(state~red),B:cytosol[0](s~back) \n" +
-//                "%init: 800 cytosol[0] A(state~cyan),B:cytosol[3](s~front) \n" +
-//
-//    private static final String INIT_WITH_LINKS_INPUT = 
-//    "%agent: A(state~blue~red~green~purple~orange~yellow~brown~white~black~cyan)\n" +
-//    "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front)\n" +
-//    "%compartment: cytosol [2][2]\n" + 
-//    "%compartment: membrane [2]\n" +
-//    "%channel: horiz cytosol[x][y] <-> cytosol[x+1][y]\n" + 
-//    "%channel: vert cytosol[x][y] <-> cytosol[x][y+1]\n" + 
-//    "%channel: diag cytosol[x][y] <-> cytosol[x+1][y+1]\n" + 
-//    "%channel: diag cytosol[x][y] <-> cytosol[x+1][y-1]\n" + 
-//    "%init: 800 cytosol A(state~green!1:horiz),B(s~right!1) \n" + 
-//    "";
-//
-        
     }
     
     private void checkMappingStructure(Complex complex, List<Compartment> compartments, List<Channel> channels,
@@ -1697,9 +1688,9 @@ public class SpatialTranslatorTest {
     private static final String TRANSPORT_6WAY_INPUT = 
 		"%agent: RED\n" + 
         "%compartment: cytosol [3][3]\n" + 
-        "%channel: 6way (cytosol [x][y] -> cytosol [x+1][y]) + (cytosol [x][y] -> cytosol [x -1][y]) \n" + 
-        "%channel: 6way (cytosol [x][y] -> cytosol [x][y+1]) + (cytosol [x][y] -> cytosol [x][y -1]) \n" + 
-        "%channel: 6way (cytosol [x][y] -> cytosol [x+1][(y+1)-(2*(x%2))]) + (cytosol [x][y] -> cytosol [x -1][(y -1)+(2*((x -1)%2))]) \n" + 
+        "%channel: 6way (cytosol [x][y] -> cytosol [x+1][y]) + (cytosol [x][y] -> cytosol [x -1][y]) + " + 
+        "(cytosol [x][y] -> cytosol [x][y+1]) + (cytosol [x][y] -> cytosol [x][y -1]) + " + 
+        "(cytosol [x][y] -> cytosol [x+1][(y+1)-(2*(x%2))]) + (cytosol [x][y] -> cytosol [x -1][(y -1)+(2*((x -1)%2))]) \n" + 
         "\n" + 
         "%transport: 'diffusion RED' 6way RED() @ 0.05 \n" + 
         "%init: 40 RED()\n" + 
@@ -2015,10 +2006,9 @@ public class SpatialTranslatorTest {
         "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front~horiz~vert)\n" +
         "%compartment: cytosol [2][2]\n" + 
         "%compartment: membrane [2]\n" +
-        "%channel: horiz cytosol[x][y] <-> cytosol[x+1][y]\n" + 
-        "%channel: vert cytosol[x][y] <-> cytosol[x][y+1]\n" + 
-        "%channel: diag cytosol[x][y] <-> cytosol[x+1][y+1]\n" + 
-        "%channel: diag cytosol[x][y] <-> cytosol[x+1][y-1]\n" + 
+        "%channel: horiz cytosol[x][y] -> cytosol[x+1][y]\n" + 
+        "%channel: vert cytosol[x][y] -> cytosol[x][y+1]\n" + 
+        "%channel: diag (cytosol[x][y] -> cytosol[x+1][y+1]) + (cytosol[x][y] -> cytosol[x+1][y-1])\n" + 
         "%obs: 'obs1' cytosol A(state~green!1:horiz),B(s~horiz!1) \n" + 
         "%obs: 'obs2' cytosol A(state~purple!1:vert),B(s~vert!1) \n" + 
         "";
@@ -2046,10 +2036,9 @@ public class SpatialTranslatorTest {
         "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front~horiz~vert)\n" +
         "%compartment: cytosol [2][2]\n" + 
         "%compartment: membrane [2]\n" +
-        "%channel: horiz cytosol[x][y] <-> cytosol[x+1][y]\n" + 
-        "%channel: vert cytosol[x][y] <-> cytosol[x][y+1]\n" + 
-        "%channel: diag cytosol[x][y] <-> cytosol[x+1][y+1]\n" + 
-        "%channel: diag cytosol[x][y] <-> cytosol[x+1][y-1]\n" + 
+        "%channel: horiz cytosol[x][y] -> cytosol[x+1][y]\n" + 
+        "%channel: vert cytosol[x][y] -> cytosol[x][y+1]\n" + 
+        "%channel: diag (cytosol[x][y] -> cytosol[x+1][y+1]) + (cytosol[x][y] -> cytosol[x+1][y-1])\n" + 
         "%var: 'obs1' A:cytosol(state~green!1:horiz),B:cytosol(s~horiz!1) \n" + 
         "%var: 'obs2' A:cytosol(state~purple!1:vert),B:cytosol(s~vert!1) \n" + 
         "";

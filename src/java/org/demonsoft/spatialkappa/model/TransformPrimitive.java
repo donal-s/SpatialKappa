@@ -180,7 +180,7 @@ abstract class TransformPrimitive {
             
             @Override
             public String toString() {
-                return type + "(" + sourceSite.agent + " [" + sourceSite + "] <-> " + targetSite.agent + " [" + targetSite + "])";
+                return type + "(" + sourceSite.agent + " [" + sourceSite + "] -> " + targetSite.agent + " [" + targetSite + "])";
             }
         };
     }
