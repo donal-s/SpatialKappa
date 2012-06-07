@@ -1,6 +1,12 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.*;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_2;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_MINUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.TestUtils.getList;
 import static org.junit.Assert.assertEquals;
@@ -11,13 +17,14 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.demonsoft.spatialkappa.model.KappaModel.MappingInstance;
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
-import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.demonsoft.spatialkappa.model.VariableExpression.SimulationToken;
 import org.junit.Test;
 
@@ -1067,5 +1074,810 @@ public class KappaModelTest {
         }
 
     }
+
+    
+    @Test
+    public void testChooseNextAgent() throws Exception {
+        
+        Agent agent1 = new Agent("agent1", new AgentSite("s1", null, "1"), new AgentSite("s2", null, "_"));
+        Agent agent2 = new Agent("agent2", new AgentSite("s3", null, "1"), new AgentSite("s4", null, "2"));
+        Agent agent3 = new Agent("agent3", new AgentSite("s5", null, "2"), new AgentSite("s6", null, "?"));
+        Agent agent4 = new Agent("agent4");
+        
+        List<Agent> remainingAgents = new ArrayList<Agent>();
+        remainingAgents.add(agent1);
+        remainingAgents.add(agent2);
+        remainingAgents.add(agent3);
+        remainingAgents.add(agent4);
+        
+        Complex complex = new Complex(remainingAgents);
+        
+        List<Agent> fixedAgents = new ArrayList<Agent>();
+        fixedAgents.add(agent1);
+        remainingAgents.remove(agent1);
+        
+        List<AgentLink> remainingLinks = new ArrayList<AgentLink>(complex.agentLinks);
+        remainingLinks.removeAll(model.getInternalLinks(remainingLinks, fixedAgents));
+        
+        try {
+            model.chooseNextAgent(null, remainingAgents, remainingLinks);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.chooseNextAgent(fixedAgents, null, remainingLinks);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.chooseNextAgent(fixedAgents, remainingAgents, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.chooseNextAgent(new ArrayList<Agent>(), remainingAgents, remainingLinks);
+            fail("no linked agent to choose should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.chooseNextAgent(fixedAgents, new ArrayList<Agent>(), remainingLinks);
+            fail("no linked agent to choose should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.chooseNextAgent(fixedAgents, remainingAgents, new ArrayList<AgentLink>());
+            fail("no linked agent to choose should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        assertEquals(agent2, model.chooseNextAgent(fixedAgents, remainingAgents, remainingLinks));
+
+        fixedAgents.add(agent2);
+        remainingAgents.remove(agent2);
+        remainingLinks.removeAll(model.getInternalLinks(remainingLinks, fixedAgents));
+        
+        assertEquals(agent3, model.chooseNextAgent(fixedAgents, remainingAgents, remainingLinks));
+    }
+    
+    
+    @Test
+    public void testGetFixedAgents() throws Exception {
+        List<Compartment> compartments = new ArrayList<Compartment>();
+        compartments.add(new Compartment("loc1"));
+        compartments.add(new Compartment("loc2", 5));
+        
+        Agent agent1 = new Agent("agent1");
+        Agent agent2 = new Agent("agent2", new Location("loc1"));
+        Agent agent3 = new Agent("agent3", new Location("loc2"));
+        Agent agent4 = new Agent("agent4", new Location("loc2", INDEX_0));
+        Agent agent5 = new Agent("agent5", new Location("loc2", INDEX_X));
+        Agent agent6 = new Agent("agent6", new Location("loc2", INDEX_X_PLUS_1));
+        
+        List<Agent> agents = new ArrayList<Agent>();
+        agents.add(agent1);
+        agents.add(agent2);
+        agents.add(agent3);
+        agents.add(agent4);
+        agents.add(agent5);
+        agents.add(agent6);
+        Complex complex = new Complex(agents);
+        
+        try {
+            model.getFixedAgents(null, compartments);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.getFixedAgents(complex, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        List<Agent> expected = new ArrayList<Agent>();
+        expected.add(agent2);
+        expected.add(agent4);
+        assertEquals(expected, model.getFixedAgents(complex, compartments));
+    }
+    
+    @Test
+    public void testGetInternalLinks() throws Exception {
+        
+        Agent agent1 = new Agent("agent1", new AgentSite("s1", null, "1"), new AgentSite("s2", null, "_"));
+        Agent agent2 = new Agent("agent2", new AgentSite("s3", null, "1"), new AgentSite("s4", null, "2"));
+        Agent agent3 = new Agent("agent3", new AgentSite("s5", null, "2"), new AgentSite("s6", null, "?"));
+        Agent agent4 = new Agent("agent4");
+        
+        List<Agent> agents = new ArrayList<Agent>();
+        agents.add(agent1);
+        agents.add(agent2);
+        agents.add(agent3);
+        agents.add(agent4);
+        Complex complex = new Complex(agents);
+        
+        try {
+            model.getInternalLinks(null, agents);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.getInternalLinks(complex.agentLinks, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        List<Agent> input = new ArrayList<Agent>();
+        
+        List<AgentLink> expected = new ArrayList<AgentLink>();
+        assertEquals(expected, model.getInternalLinks(complex.agentLinks, input));
+        
+        input.add(agent1);
+        expected.add(complex.getAgentLink(agent1, "s2"));
+        assertEquals(expected, model.getInternalLinks(complex.agentLinks, input));
+        
+        input.add(agent2);
+        expected.add(complex.getAgentLink(agent1, "s1"));
+        assertEquals(expected, model.getInternalLinks(complex.agentLinks, input));
+    }
+    
+    
+    @Test
+    public void testGetPossibleLocations() throws Exception {
+        
+        List<Compartment> compartments = new ArrayList<Compartment>();
+        compartments.add(new Compartment("loc1"));
+        compartments.add(new Compartment("loc2", 5));
+        
+        try {
+            model.getPossibleLocations(null, NOT_LOCATED, null, compartments);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.getPossibleLocations(NOT_LOCATED, null, null, compartments);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.getPossibleLocations(new Location("loc2", INDEX_1), NOT_LOCATED, null, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        // No location or channel - stay in same location
+        List<Location> expected = new ArrayList<Location>();
+        expected.add(NOT_LOCATED);
+        assertEquals(expected, model.getPossibleLocations(NOT_LOCATED, NOT_LOCATED, null, compartments));
+        
+        // No channel - stay in same location
+        expected = new ArrayList<Location>();
+        expected.add(new Location("loc1"));
+        assertEquals(expected, model.getPossibleLocations(new Location("loc1"), NOT_LOCATED, null, compartments));
+
+        expected.clear();
+        expected.add(new Location("loc2", INDEX_1));
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), NOT_LOCATED, null, compartments));
+        
+        // No channel, but now constraints
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc2", INDEX_1), null, compartments));
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc2"), null, compartments));
+        
+        expected.clear();
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc2", INDEX_2), null, compartments));
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc1"), null, compartments));
+
+        // Matching channel - no constraints
+        Channel channel = new Channel("label", new Location("loc2", INDEX_1), new Location("loc2", INDEX_2));
+        expected.clear();
+        expected.add(new Location("loc2", INDEX_2));
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), NOT_LOCATED, channel, compartments));
+        
+        channel = new Channel("label", new Location("loc2", INDEX_X), new Location("loc2", INDEX_X_PLUS_1));
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), NOT_LOCATED, channel, compartments));
+        
+        channel = new Channel("label", new Location("loc2", INDEX_1), new Location("loc1"));
+        expected.clear();
+        expected.add(new Location("loc1"));
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), NOT_LOCATED, channel, compartments));
+        
+        // Matching channel - constraints
+        channel = new Channel("label", new Location("loc2", INDEX_1), new Location("loc2", INDEX_2));
+        expected.clear();
+        expected.add(new Location("loc2", INDEX_2));
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc2", INDEX_2), channel, compartments));
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc2"), channel, compartments));
+        
+        expected.clear();
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc2", INDEX_1), channel, compartments));
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc1"), channel, compartments));
+        
+        // Non matching channel
+        channel = new Channel("label", new Location("loc2", INDEX_X), new Location("loc2", INDEX_X_PLUS_1));
+        expected.clear();
+        assertEquals(expected, model.getPossibleLocations(new Location("loc2", new CellIndexExpression("4")), NOT_LOCATED, channel, compartments));
+
+        assertEquals(expected, model.getPossibleLocations(new Location("loc1"), NOT_LOCATED, channel, compartments));
+    }
+    
+    @Test
+    public void testGetMergedLocation() {
+        
+        try {
+            model.getMergedLocation(null, new Location("A"));
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.getMergedLocation(new Location("A"), null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.getMergedLocation(new Location("A"), new Location("B"));
+            fail("mismatch should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.getMergedLocation(new Location("A", INDEX_1), new Location("A", INDEX_2));
+            fail("mismatch should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        assertEquals(NOT_LOCATED, 
+                model.getMergedLocation(NOT_LOCATED, NOT_LOCATED));
+        assertEquals(new Location("A", INDEX_1), 
+                model.getMergedLocation(NOT_LOCATED, new Location("A", INDEX_1)));
+        assertEquals(new Location("A", INDEX_1), 
+                model.getMergedLocation(new Location("A", INDEX_1), NOT_LOCATED));
+        assertEquals(new Location("A", INDEX_1), 
+                model.getMergedLocation(new Location("A"), new Location("A", INDEX_1)));
+        assertEquals(new Location("A", INDEX_1), 
+                model.getMergedLocation(new Location("A"), new Location("A", INDEX_1)));
+        assertEquals(new Location("A"), 
+                model.getMergedLocation(new Location("A"), new Location("A")));
+    }
+
+    
+    @Test
+    public void testGetUnmergedAgents() {
+        
+        Agent templateAgent = new Agent("template", new Location("T"), new AgentSite("name", "state", "3", "channel"));
+        Agent mergedAgent = new Agent("merged", new Location("M"));
+        Agent locatedAgent = new Agent("located", new Location("L"));
+        
+        List<Agent> templateAgents = getList(templateAgent);
+        Map<Agent, Agent> mergedLocatedMap = new HashMap<Agent, Agent>();
+        Map<Agent, Agent> templateMergedMap = new HashMap<Agent, Agent>();
+        
+        mergedLocatedMap.put(mergedAgent, locatedAgent);
+        templateMergedMap.put(templateAgent, mergedAgent);
+        
+        try {
+            model.getUnmergedAgents(null, mergedLocatedMap, templateMergedMap);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.getUnmergedAgents(templateAgents, null, templateMergedMap);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.getUnmergedAgents(templateAgents, mergedLocatedMap, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        mergedLocatedMap.clear();
+        
+        try {
+            model.getUnmergedAgents(templateAgents, mergedLocatedMap, templateMergedMap);
+            fail("missing map entry should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        mergedLocatedMap.put(mergedAgent, locatedAgent);
+        templateMergedMap.clear();
+        
+        try {
+            model.getUnmergedAgents(templateAgents, mergedLocatedMap, templateMergedMap);
+            fail("missing map entry should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        mergedLocatedMap.put(mergedAgent, locatedAgent);
+        templateMergedMap.put(templateAgent, mergedAgent);
+        
+        List<Agent> expected = getList(new Agent("template", new Location("L"), new AgentSite("name", "state", "3", "channel")));
+        assertEquals(expected.toString(), 
+                model.getUnmergedAgents(templateAgents, mergedLocatedMap, templateMergedMap).toString());
+    }
+    
+    @Test
+    public void testGetValidLocatedTransforms() throws Exception {
+        
+        Transform transform = new Transform("label", 
+                getList(new Agent("A", new AgentSite("s", null, null))), 
+                getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1"))), 10f, false);
+        
+        List<Channel> channels = new ArrayList<Channel>();
+        channels.add(new Channel("intra", new Location("loc2", INDEX_X), new Location("loc2", INDEX_X_PLUS_1)));
+        channels.add(new Channel("inter", new Location("loc1"), new Location("loc2", INDEX_2)));
+        
+        List<Compartment> compartments = new ArrayList<Compartment>();
+        compartments.add(new Compartment("loc1"));
+        compartments.add(new Compartment("loc2", 3));
+        compartments.add(new Compartment("loc3", 3));
+        
+
+        try {
+            model.getValidLocatedTransforms(null, compartments, channels);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.getValidLocatedTransforms(transform, null, channels);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.getValidLocatedTransforms(transform, compartments, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        // No location
+        
+        List<Transform> expected = new ArrayList<Transform>();
+        expected.add(new Transform("label", getList(new Agent("A", new AgentSite("s", null, null))), 
+                getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1"))), 10f, false));
+        
+        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
+        
+        // Full location
+        transform = new Transform("label", 
+                getList(new Agent("A", new Location("loc1"))), 
+                getList(new Agent("A", new Location("loc1"))), 10f, false);
+
+        expected.clear();
+        expected.add(new Transform("label", 
+                getList(new Agent("A", new Location("loc1"))), 
+                getList(new Agent("A", new Location("loc1"))), 10f, false));
+        
+        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
+        
+        transform = new Transform("label", 
+                getList(new Agent("A", new Location("loc2", INDEX_1))), 
+                getList(new Agent("A", new Location("loc2", INDEX_1))), 10f, false);
+
+        expected.clear();
+        expected.add(new Transform("label", 
+                getList(new Agent("A", new Location("loc2", INDEX_1))), 
+                getList(new Agent("A", new Location("loc2", INDEX_1))), 10f, false));
+        
+        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
+        
+        // Single unlinked partial location
+        transform = new Transform("label", 
+                getList(new Agent("A", new Location("loc2"))), 
+                getList(new Agent("A", new Location("loc2"))), 10f, false);
+
+        expected.clear();
+        expected.add(new Transform("label-1", 
+                getList(new Agent("A", new Location("loc2", INDEX_0))), 
+                getList(new Agent("A", new Location("loc2", INDEX_0))), 10f, false));
+        expected.add(new Transform("label-2", 
+                getList(new Agent("A", new Location("loc2", INDEX_1))), 
+                getList(new Agent("A", new Location("loc2", INDEX_1))), 10f, false));
+        expected.add(new Transform("label-3", 
+                getList(new Agent("A", new Location("loc2", INDEX_2))), 
+                getList(new Agent("A", new Location("loc2", INDEX_2))), 10f, false));
+        
+        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
+        
+        // Multiple unlinked partial locations should fail
+        transform = new Transform("label", 
+                getList(new Agent("A", new Location("loc2"))), 
+                getList(new Agent("B", new Location("loc3"))), 10f, false);
+
+        try {
+            model.getValidLocatedTransforms(transform, compartments, channels);
+            fail("invalid transform should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        // Dimer unlinking same full location, no channel
+        transform = new Transform("label", 
+                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false);
+
+        expected.clear();
+        expected.add(new Transform("label", 
+                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false));
+        
+        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
+        
+        // Dimer linked, same partial location, no channel
+        transform = new Transform("label", 
+                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2"), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2"), new AgentSite("s", null, null))), 10f, false);
+
+        expected.clear();
+        expected.add(new Transform("label-1", 
+                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, null))), 10f, false));
+        expected.add(new Transform("label-2", 
+                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false));
+        expected.add(new Transform("label-3", 
+                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, null))), 10f, false));
+        
+        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
+        
+        // No label
+        transform = new Transform(null, 
+                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2"), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2"), new AgentSite("s", null, null))), 10f, false);
+
+        expected.clear();
+        expected.add(new Transform(null, 
+                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, null))), 10f, false));
+        expected.add(new Transform(null, 
+                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false));
+        expected.add(new Transform(null, 
+                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, null))), 10f, false));
+        
+        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
+        
+        transform = new Transform("label", 
+                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2"), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2"), new AgentSite("s", null, null))), 10f, false);
+
+        expected.clear();
+        expected.add(new Transform("label", 
+                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
+                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))),
+                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
+                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, null))), 10f, false));
+        
+        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
+        
+
+        
+    }
+    
+
+    // TODO remember to rename
+    @Test
+    public void testInitMappingStructure() throws Exception {
+        
+        List<Agent> agents = getList(new Agent("A", new Location("loc1")));
+        Complex complex = new Complex(agents);
+        
+        List<Channel> channels = new ArrayList<Channel>();
+        channels.add(new Channel("intra", new Location("loc2", INDEX_X), new Location("loc2", INDEX_X_PLUS_1)));
+        channels.add(new Channel("inter", new Location("loc1"), new Location("loc2", INDEX_2)));
+        
+        List<Compartment> compartments = new ArrayList<Compartment>();
+        compartments.add(new Compartment("loc1"));
+        compartments.add(new Compartment("loc2", 5));
+        
+        try {
+            model.initMappingStructure(null, compartments, channels);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.initMappingStructure(complex, null, channels);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.initMappingStructure(complex, compartments, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        // Simple agent - fixed location
+        agents = getList(new Agent("A", new Location("loc1")));
+        complex = new Complex(agents);
+        
+        List<List<Agent>> expected = new ArrayList<List<Agent>>();
+        List<Agent> instanceAgents = getList(new Agent("A", new Location("loc1")));
+        expected.add(instanceAgents);
+        
+        checkMappingStructure(complex, compartments, channels, expected);
+
+        agents = getList(new Agent("A", new Location("loc2", INDEX_1)));
+        complex = new Complex(agents);
+        
+        expected.clear();
+        instanceAgents = getList(new Agent("A", new Location("loc2", INDEX_1)));
+        expected.add(instanceAgents);
+        
+        checkMappingStructure(complex, compartments, channels, expected);
+        
+
+        // Simple agent - no location
+        agents = getList(new Agent("A"));
+        complex = new Complex(agents);
+        
+        expected.clear();
+        instanceAgents = getList(new Agent("A"));
+        expected.add(instanceAgents);
+        
+        checkMappingStructure(complex, compartments, channels, expected);
+        
+        
+        // Simple agent - partial location
+
+        agents = getList(new Agent("A", new Location("loc2")));
+        complex = new Complex(agents);
+        
+        expected.clear();
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_1))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_2))));
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("3")))));
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("4")))));
+               
+        checkMappingStructure(complex, compartments, channels, expected);
+
+        
+        // Dimer - one agent fixed, other same compartment
+        agents = getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1")),
+                new Agent("B", new Location("loc1"), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        expected.clear();
+        instanceAgents = getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1")),
+                new Agent("B", new Location("loc1"), new AgentSite("s", null, "1")));
+        expected.add(instanceAgents);
+        
+        checkMappingStructure(complex, compartments, channels, expected);
+
+        agents = getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")),
+                new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        expected.clear();
+        instanceAgents = getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")),
+                new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")));
+        expected.add(instanceAgents);
+        
+        checkMappingStructure(complex, compartments, channels, expected);
+        
+
+        // Dimer - one agent no location, other same compartment
+        agents = getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        expected.clear();
+        instanceAgents = getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1")));
+        expected.add(instanceAgents);
+        
+        checkMappingStructure(complex, compartments, channels, expected);
+        
+        
+        // Dimer - one agent partial location, other same compartment
+
+        agents = getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        expected.clear();
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("4")), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc2", new CellIndexExpression("4")), new AgentSite("s", null, "1"))));
+               
+        checkMappingStructure(complex, compartments, channels, expected);
+
+        // Dimer - one agent fixed, other using channel
+        agents = getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1", "inter")),
+                new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        expected.clear();
+        instanceAgents = getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1", "inter")),
+                new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")));
+        expected.add(instanceAgents);
+        
+        checkMappingStructure(complex, compartments, channels, expected);
+
+        agents = getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1", "intra")),
+                new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        expected.clear();
+        instanceAgents = getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1", "intra")),
+                new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")));
+        expected.add(instanceAgents);
+        
+        checkMappingStructure(complex, compartments, channels, expected);
+        
+
+        // Dimer - one agent partial location, other using channel
+
+        agents = getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1", "intra")), 
+                new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        expected.clear();
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1", "intra")), 
+                new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1", "intra")), 
+                new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1", "intra")), 
+                new Agent("B", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1", "intra")), 
+                new Agent("B", new Location("loc2", new CellIndexExpression("4")), new AgentSite("s", null, "1"))));
+               
+        checkMappingStructure(complex, compartments, channels, expected);
+
+        // Dimer - one agent partial location, other using channel, 2 dimensions
+
+        channels.clear();
+        List<Location[]> locations = new ArrayList<Location[]>();
+        // Ensure more than the first pair get processed
+        locations.add(new Location[] {new Location("loc2", new CellIndexExpression("100"), INDEX_0), new Location("loc2", new CellIndexExpression("101"), INDEX_0)});
+        locations.add(new Location[] {new Location("loc2", INDEX_X, INDEX_Y), new Location("loc2", INDEX_X_MINUS_1, INDEX_Y)});
+        locations.add(new Location[] {new Location("loc2", INDEX_X, INDEX_Y), new Location("loc2", INDEX_X_PLUS_1, INDEX_Y)});
+        channels.add(new Channel("horiz", locations));
+        
+        compartments.clear();
+        compartments.add(new Compartment("loc2", 2, 2));
+
+        agents = getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1", "horiz")), 
+                new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        expected.clear();
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0, INDEX_0), new AgentSite("s", null, "1", "horiz")), 
+                new Agent("B", new Location("loc2", INDEX_1, INDEX_0), new AgentSite("s", null, "1"))));
+        expected.add(getList(
+                new Agent("A", new Location("loc2", INDEX_1, INDEX_0), new AgentSite("s", null, "1", "horiz")),
+                new Agent("B", new Location("loc2", INDEX_0, INDEX_0), new AgentSite("s", null, "1"))
+                ));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0, INDEX_1), new AgentSite("s", null, "1", "horiz")), 
+                new Agent("B", new Location("loc2", INDEX_1, INDEX_1), new AgentSite("s", null, "1"))));
+        expected.add(getList(
+                new Agent("A", new Location("loc2", INDEX_1, INDEX_1), new AgentSite("s", null, "1", "horiz")),
+                new Agent("B", new Location("loc2", INDEX_0, INDEX_1), new AgentSite("s", null, "1"))
+                ));
+               
+        checkMappingStructure(complex, compartments, channels, expected);
+
+    }
+    
+    private void checkMappingStructure(Complex complex, List<Compartment> compartments, List<Channel> channels,
+            List<List<Agent>> expected) {
+        List<MappingInstance> result = model.initMappingStructure(complex, compartments, channels);
+        assertEquals(expected.size(), result.size());
+        
+        for (int index=0; index < expected.size(); index++) {
+            List<Agent> expectedAgents = expected.get(index);
+            List<Agent> actualAgents = result.get(index).locatedAgents;
+            
+            assertEquals(expectedAgents.toString(), actualAgents.toString());
+        }
+    }
+
+    private void checkTransforms(List<Transform> expectedTransforms, List<Transform> actualTransforms) {
+        assertEquals(expectedTransforms.size(), actualTransforms.size());
+        
+        for (int index = 0; index < expectedTransforms.size(); index++) {
+            assertEquals(expectedTransforms.get(index).toString(), actualTransforms.get(index).toString());
+        }
+    }
+    
 
 }
