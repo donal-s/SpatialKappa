@@ -4,6 +4,7 @@ import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,42 +12,539 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.demonsoft.spatialkappa.model.Agent;
+import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.ComplexMapping;
 import org.demonsoft.spatialkappa.model.ComplexMatcher;
 import org.demonsoft.spatialkappa.model.ComplexStore;
 import org.demonsoft.spatialkappa.model.IKappaModel;
+import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.LocatedComplex;
 import org.demonsoft.spatialkappa.model.LocatedComplexMap;
+import org.demonsoft.spatialkappa.model.LocatedTransform;
 import org.demonsoft.spatialkappa.model.LocatedTransition;
 import org.demonsoft.spatialkappa.model.Location;
+import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
+import org.demonsoft.spatialkappa.model.ObservationListener;
+import org.demonsoft.spatialkappa.model.Perturbation;
+import org.demonsoft.spatialkappa.model.SimulationState;
 import org.demonsoft.spatialkappa.model.Transform;
+import org.demonsoft.spatialkappa.model.Transition;
 import org.demonsoft.spatialkappa.model.Transport;
 import org.demonsoft.spatialkappa.model.Utils;
 import org.demonsoft.spatialkappa.model.Variable;
+import org.demonsoft.spatialkappa.model.Variable.Type;
+import org.demonsoft.spatialkappa.model.VariableExpression;
 
 
-public class TransitionMatchingSimulation extends AbstractSimulation {
+public class TransitionMatchingSimulation implements Simulation, SimulationState {
 
-    final ComplexMatcher matcher = new ComplexMatcher();
+    private final ComplexMatcher matcher = new ComplexMatcher();
 
-    final ComplexStore transitionComponentActivity = new ComplexStore();
-    final LocatedComplexMap<List<LocatedComplex>> complexComponentMap = new LocatedComplexMap<List<LocatedComplex>>();
-    final LocatedComplexMap<List<LocatedTransition>> complexTransitionMap = new LocatedComplexMap<List<LocatedTransition>>();
-    final Map<Location, List<LocatedTransition>> emptySubstrateTransitionMap = new HashMap<Location, List<LocatedTransition>>();
-    final LocatedComplexMap<List<ComplexMapping>> componentComplexMappingMap = new LocatedComplexMap<List<ComplexMapping>>();
-    final Map<Location, List<Complex>> locationComplexMap = new HashMap<Location, List<Complex>>();
+    private final ComplexStore transitionComponentActivity = new ComplexStore();
+    private final LocatedComplexMap<List<LocatedComplex>> complexComponentMap = new LocatedComplexMap<List<LocatedComplex>>();
+    private final LocatedComplexMap<List<LocatedTransition>> complexTransitionMap = new LocatedComplexMap<List<LocatedTransition>>();
+    private final Map<Location, List<LocatedTransition>> emptySubstrateTransitionMap = new HashMap<Location, List<LocatedTransition>>();
+    private final LocatedComplexMap<List<ComplexMapping>> componentComplexMappingMap = new LocatedComplexMap<List<ComplexMapping>>();
+    private final Map<Location, List<Complex>> locationComplexMap = new HashMap<Location, List<Complex>>();
+
+    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
+
+    private List<LocatedTransition> finiteRateTransitions = new ArrayList<LocatedTransition>();
+    private List<LocatedTransition> infiniteRateTransitions = new ArrayList<LocatedTransition>();
+    private final List<Perturbation> perturbations = new ArrayList<Perturbation>();
+
+    private final Map<LocatedTransition, Float> finiteRateTransitionActivityMap = new HashMap<LocatedTransition, Float>();
+    private final Map<LocatedTransition, Boolean> infiniteRateTransitionActivityMap = new HashMap<LocatedTransition, Boolean>();
+    private final Map<Variable, List<ObservableMapValue>> observableComplexMap = new HashMap<Variable, List<ObservableMapValue>>();
+    final Map<Variable, Integer> transitionsFiredMap = new HashMap<Variable, Integer>();
+    private final ComplexStore complexStore = new ComplexStore();
+
+    private boolean stop = false;
+    private boolean noTransitionsPossible = false;
+    private float time = 0;
+    private long startTime;
+    private int eventCount = 0;
+
+    private final IKappaModel kappaModel;
+    private final List<ObservationListener> observationListeners = new ArrayList<ObservationListener>();
 
     public TransitionMatchingSimulation() {
-        super();
-        initialiseActivityMaps();
+        this(new KappaModel());
     }
 
     public TransitionMatchingSimulation(IKappaModel kappaModel) {
-        super(kappaModel);
+        this.kappaModel = kappaModel;
+        
+        for (Map.Entry<LocatedComplex, Integer> entry : kappaModel.getFixedLocatedInitialValuesMap().entrySet()) {
+            complexStore.increaseComplexQuantity(entry.getKey().complex, entry.getKey().location, entry.getValue());
+        }
+
+        for (Variable variable : kappaModel.getVariables().values()) {
+            if (variable.type == Type.KAPPA_EXPRESSION) {
+                observableComplexMap.put(variable, new ArrayList<ObservableMapValue>());
+            }
+        }
+
+        for (LocatedTransition transition : kappaModel.getFixedLocatedTransitions()) {
+            if (transition.transition.getRate().isInfinite(kappaModel.getVariables())) {
+                infiniteRateTransitions.add(transition);
+            }
+            else {
+                finiteRateTransitions.add(transition);
+            }
+        }
+        
+        perturbations.addAll(kappaModel.getPerturbations());
+
+        updateTransitionsFiredMap();
         initialiseActivityMaps();
+    }
+
+
+    
+
+
+    @Override
+    public String toString() {
+        return kappaModel.toString();
+    }
+
+    public void stop() {
+        stop = true;
+    }
+
+    public void runByEvent(int steps, int eventsPerStep) {
+        startTime = Calendar.getInstance().getTimeInMillis();
+        stop = false;
+
+        for (int stepCount = 0; stepCount < steps && !noTransitionsPossible && !stop; stepCount++) {
+            resetTransformsFiredCount();
+            for (int count = 0; count < eventsPerStep && !noTransitionsPossible && !stop; count++) {
+                int clashes = 0;
+                while (!runSingleEvent() && clashes < 1000 && !noTransitionsPossible && !stop) {
+                    // repeat
+                    clashes++;
+                    Thread.yield();
+                }
+                if (clashes >= 1000) {
+                    System.out.println("Aborted timepoint");
+                }
+            }
+            notifyObservationListeners(false, (float) (stepCount + 1) / (float) steps);
+        }
+        notifyObservationListeners(true, 1);
+    }
+
+    public void runByTime(float totalTime, float timePerStep) {
+        startTime = Calendar.getInstance().getTimeInMillis();
+        stop = false;
+
+        do {
+            resetTransformsFiredCount();
+            float stepEndTime = getNextEndTime(time, timePerStep);
+            while (time < stepEndTime && !noTransitionsPossible && !stop) {
+                int clashes = 0;
+                while (!runSingleEvent() && clashes < 1000 && !noTransitionsPossible && !stop) {
+                    // repeat
+                    clashes++;
+                    Thread.yield();
+                }
+                if (clashes >= 1000) {
+                    System.out.println("Aborted timepoint");
+                }
+            }
+            notifyObservationListeners(false, time / totalTime);
+        }
+        while (!noTransitionsPossible && !stop && time < totalTime);
+        notifyObservationListeners(true, 1);
+    }
+
+    float getNextEndTime(float currentTime, float timePerStep) {
+        int eventsSoFar = Math.round(currentTime / timePerStep);
+        return timePerStep * (eventsSoFar + 1);
+    }
+
+    public void addObservationListener(ObservationListener listener) {
+        observationListeners.add(listener);
+    }
+
+    public void removeObservationListener(ObservationListener listener) {
+        observationListeners.remove(listener);
+    }
+
+
+    private void notifyObservationListeners(boolean finalEvent, float progress) {
+        Observation observation = getCurrentObservation(finalEvent, progress);
+        for (ObservationListener listener : observationListeners) {
+            listener.observation(observation);
+        }
+    }
+
+    public Observation getCurrentObservation() {
+        return getCurrentObservation(false, 1);
+    }
+
+    public int getEventCount() {
+        return eventCount;
+    }
+    
+    public float getTime() {
+        return time;
+    }
+
+    private void addCellValue(Object cellValues, float quantity, CellIndexExpression[] indices) {
+        Object slice = cellValues;
+        for (int index = 0; index < indices.length - 1; index++) {
+            slice = ((Object[]) slice)[indices[index].evaluateIndex(NO_VARIABLES)];
+        }
+        int index = indices[indices.length - 1].evaluateIndex(NO_VARIABLES);
+        ((float[]) slice)[index] = ((float[]) slice)[index] + quantity;
+    }
+
+    private void resetTransformsFiredCount() {
+        for (Map.Entry<Variable, Integer> entry : transitionsFiredMap.entrySet()) {
+            entry.setValue(0);
+        }
+    }
+
+    private Observation getCurrentObservation(boolean finalEvent, float progress) {
+        Map<String, ObservationElement> result = new HashMap<String, ObservationElement>();
+        for (String variableName : kappaModel.getPlottedVariables()) {
+            Variable variable = kappaModel.getVariables().get(variableName);
+            result.put(variableName, variable.evaluate(this));
+        }
+        long elapsedTime = Calendar.getInstance().getTimeInMillis() - startTime;
+        long estimatedRemainingTime = ((long) (elapsedTime / progress)) - elapsedTime;
+        return new Observation(time, eventCount, kappaModel.getPlottedVariables(), result, finalEvent, elapsedTime, estimatedRemainingTime);
+    }
+
+    private boolean runSingleEvent() {
+        applyPerturbations();
+
+        applyInfiniteRateTransitions();
+
+        return applyFiniteRateTransition();
+    }
+
+    private boolean applyFiniteRateTransition() {
+        LocatedTransition transition = pickFiniteRateTransition();
+        if (transition == null) {
+            noTransitionsPossible = true;
+            return false;
+        }
+
+        return applyTransition(transition, true);
+    }
+
+    private boolean applyTransition(LocatedTransition transition, boolean incrementTime) {
+        if (transition instanceof LocatedTransform) {
+            return applyTransform((Transform) transition.transition, transition.sourceLocation, incrementTime);
+        }
+        return applyTransport((Transport) transition.transition, transition.sourceLocation, transition.targetLocation, incrementTime);
+    }
+
+    private void applyInfiniteRateTransitions() {
+        int clashes = 0;
+        while (clashes < 1000 && !stop) {
+            LocatedTransition transform = pickInfiniteRateTransform();
+            if (transform == null) {
+                return;
+            }
+            if (applyTransition(transform, false)) {
+                clashes = 0;
+            }
+            else {
+                clashes++;
+            }
+        }
+    }
+
+    private void applyPerturbations() {
+        ListIterator<Perturbation> iter = perturbations.listIterator();
+        while (iter.hasNext()) {
+            Perturbation perturbation = iter.next();
+            if (perturbation.isConditionMet(this)) {
+                perturbation.apply(this);
+                iter.remove();
+            }
+        }
+    }
+
+    private float getTimeDelta() {
+        float totalQuantity = 0;
+        for (Float current : finiteRateTransitionActivityMap.values()) {
+            totalQuantity += current;
+        }
+        return (float) -Math.log(Math.random()) / totalQuantity;
+    }
+
+    private LocatedTransition pickFiniteRateTransition() {
+        float totalQuantity = 0;
+        if (finiteRateTransitionActivityMap.size() == 0) {
+            return null;
+        }
+        for (Map.Entry<LocatedTransition, Float> entry : finiteRateTransitionActivityMap.entrySet()) {
+            totalQuantity += entry.getValue();
+        }
+        LocatedTransition lastTransition = null;
+        float item = (float) (totalQuantity * Math.random());
+        for (Map.Entry<LocatedTransition, Float> entry : finiteRateTransitionActivityMap.entrySet()) {
+            if (entry.getValue() > 0) {
+                lastTransition = entry.getKey();
+                if (item <= entry.getValue()) {
+                    return entry.getKey();
+                }
+                item -= entry.getValue();
+            }
+        }
+        
+        // To handle rounding errors, the last non-zero rate transition, if any, is returned by default
+        return lastTransition;
+    }
+
+    private LocatedTransition pickInfiniteRateTransform() {
+        float totalCount = 0;
+        if (infiniteRateTransitionActivityMap.size() == 0) {
+            return null;
+        }
+        for (Map.Entry<LocatedTransition, Boolean> entry : infiniteRateTransitionActivityMap.entrySet()) {
+            if (entry.getValue()) {
+                totalCount++;
+            }
+        }
+        float item = (float) (totalCount * Math.random());
+        for (Map.Entry<LocatedTransition, Boolean> entry : infiniteRateTransitionActivityMap.entrySet()) {
+            if (entry.getValue() && item <= 1) {
+                return entry.getKey();
+            }
+            if (entry.getValue()) {
+                item--;
+            }
+        }
+        return null;
+    }
+
+    private Set<LocatedTransition> getLocatedTransforms(Transform transform) {
+        Set<LocatedTransition> result = new HashSet<LocatedTransition>();
+        for (LocatedTransition current : infiniteRateTransitions) {
+            if (current.transition.equals(transform)) {
+                result.add(current);
+            }
+        }
+        for (LocatedTransition current : finiteRateTransitions) {
+            if (current.transition.equals(transform)) {
+                result.add(current);
+            }
+        }
+        return result;
+    }
+
+    private void updateTransitionActivity(LocatedTransition transition, boolean rateChanged) {
+        if (rateChanged) {
+            if (transition.transition.isInfiniteRate(kappaModel.getVariables())) {
+                finiteRateTransitionActivityMap.remove(transition);
+                if (!infiniteRateTransitions.contains(transition)) {
+                    infiniteRateTransitions.add(transition);
+                    finiteRateTransitions.remove(transition);
+                }
+            }
+            else {
+                infiniteRateTransitionActivityMap.remove(transition);
+                if (!finiteRateTransitions.contains(transition)) {
+                    finiteRateTransitions.add(transition);
+                    infiniteRateTransitions.remove(transition);
+                }
+            }
+        }
+
+        int totalComponentActivity = (transition instanceof LocatedTransform) ? 1 : 0;
+        List<Complex> sourceComplexes = transition.transition.sourceComplexes;
+        if (sourceComplexes.size() > 0 || transition instanceof LocatedTransform) {
+            for (Complex transitionComplex : sourceComplexes) {
+                int componentActivity = getTransitionComponentActivity(transitionComplex, transition.sourceLocation);
+                if (transition instanceof LocatedTransform) {
+                    totalComponentActivity *= componentActivity;
+                    if (totalComponentActivity == 0) {
+                        break;
+                    }
+                }
+                else { // Transport
+                    totalComponentActivity += componentActivity;
+                }
+            }
+        }
+        else { // Match all
+            totalComponentActivity = getComponentFreeTransitionActivity(transition);
+        }
+        if (transition.transition.isInfiniteRate(kappaModel.getVariables())) {
+            infiniteRateTransitionActivityMap.put(transition, totalComponentActivity > 0);
+        }
+        else {
+            float transformActivity = transition.transition.getRate().evaluate(this).value;
+            transformActivity *= totalComponentActivity;
+            finiteRateTransitionActivityMap.put(transition, transformActivity);
+        }
+    }
+
+    private Set<Transition> getAllTransitions() {
+        Set<Transition> result = new HashSet<Transition>();
+        for (LocatedTransition transition : finiteRateTransitions) {
+            result.add(transition.transition);
+        }
+        for (LocatedTransition transition : infiniteRateTransitions) {
+            result.add(transition.transition);
+        }
+        return result;
+    }
+
+    private void updateTransitionsFiredMap() {
+        for (Transition transition : getAllTransitions()) {
+            if (transition.label != null) {
+                Variable variable = getVariable(transition.label);
+                if (variable != null && Variable.Type.TRANSITION_LABEL == variable.type) {
+                    transitionsFiredMap.put(variable, 0);
+                }
+            }
+        }
+    }
+
+    private void addComplexToObservables(Complex complex, Location location) {
+        for (Map.Entry<Variable, List<ObservableMapValue>> entry : observableComplexMap.entrySet()) {
+            Variable variable = entry.getKey();
+            boolean matchNameOnly = variable.location != null && variable.location.getIndices().length == 0;
+            if (Location.doLocationsMatch(variable.location, location, matchNameOnly)) {
+                boolean exists = false;
+                for (ObservableMapValue current : entry.getValue()) {
+                    if (complex == current.complex && Utils.equal(location, current.location)) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    int matchCount = matcher.getPartialMatches(entry.getKey().complex, complex).size();
+                    if (matchCount > 0) {
+                        entry.getValue().add(new ObservableMapValue(complex, location, matchCount));
+                    }
+                }
+            }
+        }
+    }
+
+    private void removeComplexFromObservables(Complex complex, Location location) {
+        for (Map.Entry<Variable, List<ObservableMapValue>> entry : observableComplexMap.entrySet()) {
+            Variable variable = entry.getKey();
+            boolean matchNameOnly = variable.location != null && variable.location.getIndices().length == 0;
+            if (Location.doLocationsMatch(variable.location, location, matchNameOnly)) {
+                ObservableMapValue found = null;
+                for (ObservableMapValue current : entry.getValue()) {
+                    if (complex == current.complex && Utils.equal(location, current.location)) {
+                        found = current;
+                        break;
+                    }
+                }
+                if (found != null) {
+                    entry.getValue().remove(found);
+                }
+            }
+        }
+    }
+    
+    public Variable getVariable(String name) {
+        return kappaModel.getVariables().get(name);
+    }
+
+    private Map<String, Integer> getCountsPerAgent() {
+        Map<String, Integer> result = new HashMap<String, Integer>();
+
+        for (String agentName : kappaModel.getAgentDeclarationMap().keySet()) {
+            int count = 0;
+            for (Complex complex : complexStore.getComplexes()) {
+                int instanceCount = 0;
+                for (Agent currentAgent : complex.agents) {
+                    if (agentName.equals(currentAgent.name)) {
+                        instanceCount++;
+                    }
+                }
+                count += complexStore.getComplexQuantity(complex) * instanceCount;
+            }
+
+            result.put(agentName, count);
+        }
+
+        return result;
+    }
+
+    private Transition getTransition(String label) {
+        for (Transition transition : getAllTransitions()) {
+            if (label.equals(transition.label)) {
+                return transition;
+            }
+        }
+        return null;
+    }
+    
+    private void incrementTransitionsFired(Transition transition) {
+        if (transition.label != null) {
+            Variable variable = getVariable(transition.label);
+            if (variable != null && Variable.Type.TRANSITION_LABEL == variable.type) {
+                transitionsFiredMap.put(variable, transitionsFiredMap.get(variable) + 1);
+            }
+        }
+        eventCount++;
+    }
+
+    public Map<String, Variable> getVariables() {
+        return kappaModel.getVariables();
+    }
+
+    public ObservationElement getTransitionFiredCount(Variable variable) {
+        if (variable == null) {
+            throw new NullPointerException();
+        }
+        if (variable.type != Variable.Type.TRANSITION_LABEL) {
+            throw new IllegalArgumentException();
+        }
+        if (transitionsFiredMap.containsKey(variable)) {
+            return new ObservationElement(transitionsFiredMap.get(variable));
+        }
+        return ObservationElement.ZERO;
+    }
+
+    public void addComplexInstances(List<Agent> agents, int amount) {
+        throw new IllegalStateException("Not implemented yet");
+    }
+
+    public void setTransitionRate(String transitionName, VariableExpression rateExpression) {
+        Transition transition = getTransition(transitionName);
+        if (transition != null) {
+            transition.setRate(rateExpression);
+            for (LocatedTransition locatedTransform : getLocatedTransforms((Transform) transition)) {
+                updateTransitionActivity(locatedTransform, true);
+            }
+        }
+    }
+
+    public static class ObservableMapValue {
+
+        public final Complex complex;
+        public final Location location;
+        public final int count;
+
+        public ObservableMapValue(Complex complex, Location location, int count) {
+            this.complex = complex;
+            this.location = location;
+            this.count = count;
+        }
+
+        @Override
+        public String toString() {
+            return location.toString() + "\t" + complex.toString();
+        }
+
     }
 
     private void initialiseActivityMaps() {
@@ -76,7 +574,6 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
     }
 
 
-    @Override
     public String getDebugOutput() {
         StringBuilder builder = new StringBuilder();
         builder.append("Runtime (s): " + (time / 1000) + "\n");
@@ -84,8 +581,8 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
         builder.append("Final counts: " + getCurrentObservation(true, 1f) + "\n");
 
         builder.append("Final all counts:" + "\n");
-        builder.append(getCanonicalStore().getDebugOutput());
-        
+        builder.append(complexStore.getDebugOutput());
+
         builder.append("\nFinal count per agent:" + "\n");
         for (Map.Entry<String, Integer> entry : getCountsPerAgent().entrySet()) {
             builder.append(entry.getValue() + "\t" + entry.getKey() + "\n");
@@ -94,25 +591,7 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
     }
 
 
-    private  ComplexStore getCanonicalStore() {
-        ComplexStore result = new ComplexStore();
-        
-        for (Map.Entry<Location, List<Complex>> entry : locationComplexMap.entrySet()) {
-            Location location = entry.getKey();
-            for (Complex complex : entry.getValue()) {
-                Complex storedComplex = result.getExistingComplex(complex);
-    
-                if (storedComplex != null) {
-                    complex = storedComplex;
-                }
-                result.increaseComplexQuantity(complex, location, 1);
-            }
-        }
-        return result;
-    }
-
-    @Override
-    protected boolean applyTransform(Transform transform, Location location, boolean incrementTime) {
+    private boolean applyTransform(Transform transform, Location location, boolean incrementTime) {
 
         List<ComplexMapping> concreteSourceComplexMappings = new ArrayList<ComplexMapping>();
         for (Complex leftComplex : transform.sourceComplexes) {
@@ -150,8 +629,7 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
         return true;
     }
 
-    @Override
-    protected boolean applyTransport(Transport transport, Location sourceLocation, Location targetLocation, boolean incrementTime) {
+    private boolean applyTransport(Transport transport, Location sourceLocation, Location targetLocation, boolean incrementTime) {
 
         Complex sourceComplex;
         if (transport.sourceComplexes.size() > 0) {
@@ -259,18 +737,11 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
         return result;
     }
 
-    @Override
-    protected void updateActivityMaps() {
-        // Do nothing
-    }
-
-    @Override
-    protected int getTransitionComponentActivity(Complex transitionComplex, Location location) {
+    private int getTransitionComponentActivity(Complex transitionComplex, Location location) {
         return transitionComponentActivity.getComplexQuantity(transitionComplex, location);
     }
 
-    @Override
-    protected int getComponentFreeTransitionActivity(LocatedTransition transition) {
+    private int getComponentFreeTransitionActivity(LocatedTransition transition) {
         List<Complex> complexes = locationComplexMap.get(transition.sourceLocation);
         return complexes == null ? 0 : complexes.size();
     }
@@ -307,7 +778,6 @@ public class TransitionMatchingSimulation extends AbstractSimulation {
         return complexes.get(item);
     }
 
-    @Override
     public ObservationElement getComplexQuantity(Variable variable) {
         if (variable == null) {
             throw new NullPointerException();
