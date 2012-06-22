@@ -1,6 +1,5 @@
 package org.demonsoft.spatialkappa.tools;
 
-import static org.demonsoft.spatialkappa.model.TestUtils.getList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -30,6 +29,7 @@ import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Location;
+import org.demonsoft.spatialkappa.model.Utils;
 import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.demonsoft.spatialkappa.model.VariableReference;
 import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
@@ -590,18 +590,18 @@ public class SpatialTranslatorTest {
         }
         
         // Simple agent - fixed location
-        List<Agent> agents = getList(new Agent("A", new Location("loc1")));
+        List<Agent> agents = Utils.getList(new Agent("A", new Location("loc1")));
         Complex complex = new Complex(agents);
         assertFalse(translator.hasLinksWithChannels(complex));
         assertFalse(translator.hasLinksWithChannels(agents));
         
-        agents = getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1")),
+        agents = Utils.getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1")),
                 new Agent("B", new Location("loc1"), new AgentSite("s", null, "1")));
         complex = new Complex(agents);
         assertFalse(translator.hasLinksWithChannels(complex));
         assertFalse(translator.hasLinksWithChannels(agents));
 
-        agents = getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1", "channel")),
+        agents = Utils.getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1", "channel")),
                 new Agent("B", new Location("loc1"), new AgentSite("s", null, "1")));
         complex = new Complex(agents);
         assertTrue(translator.hasLinksWithChannels(complex));
@@ -611,27 +611,27 @@ public class SpatialTranslatorTest {
     private static final String SIMPLE_TEST_INPUT = 
         "%agent: A(state~blue~red~green)\n" +
         "%compartment: cytosol [4]\n" + 
-        "%channel: intra-cytosol (cytosol [x] -> cytosol [x+1]) + (cytosol [x] -> cytosol [x -1])\n" + 
+        "%channel: intra-cytosol (:cytosol [x] -> :cytosol [x+1]) + (:cytosol [x] -> :cytosol [x -1])\n" + 
         "\n" + 
-        "%transport: 'diffusion-all' intra-cytosol @ 0.1\n" + 
-        "%transport: 'diffusion-red' intra-cytosol A(state~red) @ 0.1\n" + 
-        "'heating' cytosol[0] A(state~blue) -> A(state~red) @ 1.0\n" + 
-        "'cooling' cytosol A(state~red) -> A(state~blue) @ 0.05\n" + 
+        "'diffusion-all' ->:intra-cytosol @ 0.1\n" + 
+        "'diffusion-red' A(state~red) ->:intra-cytosol A(state~red) @ 0.1\n" + 
+        "'heating' :cytosol[0] A(state~blue) -> A(state~red) @ 1.0\n" + 
+        "'cooling' :cytosol A(state~red) -> A(state~blue) @ 0.05\n" + 
         "\n" + 
         "%var: 'green count' 800\n" + 
-        "%init: 800 cytosol A(state~blue) \n" + 
+        "%init: 800 :cytosol A(state~blue) \n" + 
         "%init: 'green count' A(state~green) \n" + 
-        "%init: 800 cytosol[0] A(state~red) \n" + 
+        "%init: 800 :cytosol[0] A(state~red) \n" + 
         "%var: 'constant' 12\n" + 
         "%var: 'all A not plotted' A()\n" + 
         "%var: 'all A plotted' A()\n" + 
         "%plot: 'all A plotted'\n" + 
         "%obs: 'all red' A(state~red)\n" + 
-        "%obs: 'cytosol blue' cytosol A(state~blue)\n" + 
-        "%obs: 'red[0]' cytosol[0] A(state~red) \n" + 
-        "%obs: 'red[1]' cytosol[1] A(state~red) \n" + 
-        "%obs: 'red[2]' cytosol[2] A(state~red) \n" + 
-        "%obs: 'red[3]' cytosol[3] A(state~red) \n";
+        "%obs: 'cytosol blue' :cytosol A(state~blue)\n" + 
+        "%obs: 'red[0]' :cytosol[0] A(state~red) \n" + 
+        "%obs: 'red[1]' :cytosol[1] A(state~red) \n" + 
+        "%obs: 'red[2]' :cytosol[2] A(state~red) \n" + 
+        "%obs: 'red[3]' :cytosol[3] A(state~red) \n";
     
     private static final String SIMPLE_TEST_OUTPUT = 
         "%agent: A(state~blue~red~green,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
@@ -648,7 +648,6 @@ public class SpatialTranslatorTest {
         "'diffusion-red-4' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~red,loc~cytosol,loc_index_1~0) @ 0.1\n" + 
         "'diffusion-red-5' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~red,loc~cytosol,loc_index_1~1) @ 0.1\n" + 
         "'diffusion-red-6' A(state~red,loc~cytosol,loc_index_1~3) -> A(state~red,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
-        "\n" + 
         "'heating' A(state~blue,loc~cytosol,loc_index_1~0) -> A(state~red,loc~cytosol,loc_index_1~0) @ 1.0\n" + 
         "'cooling-1' A(state~red,loc~cytosol,loc_index_1~0) -> A(state~blue,loc~cytosol,loc_index_1~0) @ 0.05\n" + 
         "'cooling-2' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~blue,loc~cytosol,loc_index_1~1) @ 0.05\n" + 
@@ -685,22 +684,22 @@ public class SpatialTranslatorTest {
     private static final String INFINITE_RATE_INPUT = 
         "%agent: A(state~blue~red~green)\n" +
         "%compartment: cytosol [4]\n" + 
-        "%channel: intra-cytosol (cytosol [x] -> cytosol [x+1]) + (cytosol [x] -> cytosol [x -1])\n" + 
+        "%channel: intra-cytosol (:cytosol [x] -> :cytosol [x+1]) + (:cytosol [x] -> :cytosol [x -1])\n" + 
         "\n" + 
-        "%transport: 'diffusion-all' intra-cytosol @ [inf]\n" + 
-        "%transport: 'diffusion-red' intra-cytosol A(state~red) @ [inf]\n" + 
-        "'heating' cytosol[0] A(state~blue) -> A(state~red) @ [inf]\n" + 
-        "'cooling' cytosol A(state~red) -> A(state~blue) @ [inf]\n" + 
+        "'diffusion-all' ->:intra-cytosol @ [inf]\n" + 
+        "'diffusion-red' A(state~red) ->:intra-cytosol A(state~red) @ [inf]\n" + 
+        "'heating' :cytosol[0] A(state~blue) -> A(state~red) @ [inf]\n" + 
+        "'cooling' :cytosol A(state~red) -> A(state~blue) @ [inf]\n" + 
         "\n" + 
-        "%init: 800 cytosol A(state~blue) \n" + 
+        "%init: 800 :cytosol A(state~blue) \n" + 
         "%init: 800 A(state~green) \n" + 
-        "%init: 800 cytosol[0] A(state~red) \n" + 
+        "%init: 800 :cytosol[0] A(state~red) \n" + 
         "%obs: 'all red' A(state~red)\n" + 
-        "%obs: 'cytosol blue' cytosol A(state~blue)\n" + 
-        "%obs: 'red[0]' cytosol[0] A(state~red) \n" + 
-        "%obs: 'red[1]' cytosol[1] A(state~red) \n" + 
-        "%obs: 'red[2]' cytosol[2] A(state~red) \n" + 
-        "%obs: 'red[3]' cytosol[3] A(state~red) \n";
+        "%obs: 'cytosol blue' :cytosol A(state~blue)\n" + 
+        "%obs: 'red[0]' :cytosol[0] A(state~red) \n" + 
+        "%obs: 'red[1]' :cytosol[1] A(state~red) \n" + 
+        "%obs: 'red[2]' :cytosol[2] A(state~red) \n" + 
+        "%obs: 'red[3]' :cytosol[3] A(state~red) \n";
     
     private static final String INFINITE_RATE_OUTPUT = 
         "%agent: A(state~blue~red~green,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
@@ -717,7 +716,6 @@ public class SpatialTranslatorTest {
         "'diffusion-red-4' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~red,loc~cytosol,loc_index_1~0) @ [inf]\n" + 
         "'diffusion-red-5' A(state~red,loc~cytosol,loc_index_1~2) -> A(state~red,loc~cytosol,loc_index_1~1) @ [inf]\n" + 
         "'diffusion-red-6' A(state~red,loc~cytosol,loc_index_1~3) -> A(state~red,loc~cytosol,loc_index_1~2) @ [inf]\n" + 
-        "\n" + 
         "'heating' A(state~blue,loc~cytosol,loc_index_1~0) -> A(state~red,loc~cytosol,loc_index_1~0) @ [inf]\n" + 
         "'cooling-1' A(state~red,loc~cytosol,loc_index_1~0) -> A(state~blue,loc~cytosol,loc_index_1~0) @ [inf]\n" + 
         "'cooling-2' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~blue,loc~cytosol,loc_index_1~1) @ [inf]\n" + 
@@ -751,15 +749,15 @@ public class SpatialTranslatorTest {
         "%agent: B\n" +
         "%compartment: cytosol [4]\n" + 
         "%compartment: membrane [4]\n" + 
-        "%channel: intra-cytosol (cytosol [x] -> cytosol [x+1]) + (cytosol [x] -> cytosol [x -1])\n" + 
-        "%channel: interface1 cytosol [x] -> membrane [x+2]\n" +
-        "%channel: interface2 cytosol [x] -> membrane [x -2]\n" +
+        "%channel: intra-cytosol (:cytosol [x] -> :cytosol [x+1]) + (:cytosol [x] -> :cytosol [x -1])\n" + 
+        "%channel: interface1 :cytosol [x] -> :membrane [x+2]\n" +
+        "%channel: interface2 :cytosol [x] -> :membrane [x -2]\n" +
         "\n" + 
-        "%transport: 'diffusion-all' intra-cytosol @ 0.1\n" + // TODO - remember only works for single agents
-        "%transport: 'diffusion-red' intra-cytosol A(state~red) @ 0.1\n" + 
-        "%transport: 'diffusion-other' intra-cytosol B() @ 0.1\n" + 
-        "%transport: 'cell exit1' interface1 B() @ 0.2\n" + 
-        "%transport: 'cell exit2' interface2 B() @ 0.3\n" + 
+        "'diffusion-all' ->:intra-cytosol @ 0.1\n" + // TODO - remember only works for single agents
+        "'diffusion-red' A(state~red) ->:intra-cytosol A(state~red) @ 0.1\n" + 
+        "'diffusion-other' B() ->:intra-cytosol B() @ 0.1\n" + 
+        "'cell exit1' B() ->:interface1 B() @ 0.2\n" + 
+        "'cell exit2' B() ->:interface2 B() @ 0.3\n" + 
         "%init: 800 A(state~red),B()\n" + 
         "\n" + 
         "";
@@ -797,7 +795,6 @@ public class SpatialTranslatorTest {
         "'cell exit2-1' B(loc~cytosol,loc_index_1~2) -> B(loc~membrane,loc_index_1~0) @ 0.3\n" + 
         "'cell exit2-2' B(loc~cytosol,loc_index_1~3) -> B(loc~membrane,loc_index_1~1) @ 0.3\n" + 
         "\n" +
-        "\n" + 
         "%init: 800 A(state~red)\n" + 
         "%init: 800 B\n" + 
         "\n" + 
@@ -813,17 +810,17 @@ public class SpatialTranslatorTest {
         "%compartment: cytosol [4][5]\n" + 
         "%compartment: membrane [3]\n" + 
         "%compartment: nucleus\n" + 
-        "%channel: interface1 (nucleus -> membrane [2]) + (membrane [2] -> nucleus)\n" +
-        "%channel: interface2 (nucleus -> cytosol [1][2]) + (cytosol [1][2] -> nucleus)\n" +
-        "%channel: interface3 (membrane [x] -> cytosol [x][x+2]) + (cytosol [x][y] -> membrane [x + ((x - (y - 2)) * 100)])\n" +
+        "%channel: interface1 (:nucleus -> :membrane [2]) + (:membrane [2] -> :nucleus)\n" +
+        "%channel: interface2 (:nucleus -> :cytosol [1][2]) + (:cytosol [1][2] -> :nucleus)\n" +
+        "%channel: interface3 (:membrane [x] -> :cytosol [x][x+2]) + (:cytosol [x][y] -> :membrane [x + ((x - (y - 2)) * 100)])\n" +
         "\n" + 
-        "%transport: 'diffusion-blue' interface1  A(state~blue) @ 0.1\n" + 
-        "%transport: 'diffusion-red' interface2 A(state~red) @ 0.2\n" + 
-        "%transport: 'diffusion-other' interface3 B() @ 0.3\n" + 
+        "'diffusion-blue' A(state~blue) ->:interface1  A(state~blue) @ 0.1\n" + 
+        "'diffusion-red' A(state~red) ->:interface2 A(state~red) @ 0.2\n" + 
+        "'diffusion-other' B() ->:interface3 B() @ 0.3\n" + 
         "\n" +
-        "%init: 800 cytosol A(state~blue) \n" + 
-        "%init: 900 membrane A(state~red) \n" + 
-        "%init: 800 nucleus B() \n" + 
+        "%init: 800 :cytosol A(state~blue) \n" + 
+        "%init: 900 :membrane A(state~red) \n" + 
+        "%init: 800 :nucleus B() \n" + 
         "";
     
     private static final String TRANSPORT_DIFFERENT_DIMENSIONS_OUTPUT = 
@@ -840,7 +837,6 @@ public class SpatialTranslatorTest {
         "'diffusion-other-4' B(loc~cytosol,loc_index_1~0,loc_index_2~2) -> B(loc~membrane,loc_index_1~0,loc_index_2~0) @ 0.3\n" + 
         "'diffusion-other-5' B(loc~cytosol,loc_index_1~1,loc_index_2~3) -> B(loc~membrane,loc_index_1~1,loc_index_2~0) @ 0.3\n" + 
         "'diffusion-other-6' B(loc~cytosol,loc_index_1~2,loc_index_2~4) -> B(loc~membrane,loc_index_1~2,loc_index_2~0) @ 0.3\n" + 
-        "\n" + 
         "\n" + 
         "%init: 40 A(state~blue,loc~cytosol,loc_index_1~0,loc_index_2~0)\n" + 
         "%init: 40 A(state~blue,loc~cytosol,loc_index_1~1,loc_index_2~0)\n" + 
@@ -873,11 +869,11 @@ public class SpatialTranslatorTest {
     private static final String TRANSPORT_6WAY_INPUT = 
 		"%agent: RED\n" + 
         "%compartment: cytosol [3][3]\n" + 
-        "%channel: 6way (cytosol [x][y] -> cytosol [x+1][y]) + (cytosol [x][y] -> cytosol [x -1][y]) + " + 
-        "(cytosol [x][y] -> cytosol [x][y+1]) + (cytosol [x][y] -> cytosol [x][y -1]) + " + 
-        "(cytosol [x][y] -> cytosol [x+1][(y+1)-(2*(x%2))]) + (cytosol [x][y] -> cytosol [x -1][(y -1)+(2*((x -1)%2))]) \n" + 
+        "%channel: 6way (:cytosol [x][y] -> :cytosol [x+1][y]) + (:cytosol [x][y] -> :cytosol [x -1][y]) + " + 
+        "(:cytosol [x][y] -> :cytosol [x][y+1]) + (:cytosol [x][y] -> :cytosol [x][y -1]) + " + 
+        "(:cytosol [x][y] -> :cytosol [x+1][(y+1)-(2*(x%2))]) + (:cytosol [x][y] -> :cytosol [x -1][(y -1)+(2*((x -1)%2))]) \n" + 
         "\n" + 
-        "%transport: 'diffusion RED' 6way RED() @ 0.05 \n" + 
+        "'diffusion RED' RED() ->:6way RED() @ 0.05 \n" + 
         "%init: 40 RED()\n" + 
         "";
     
@@ -917,7 +913,6 @@ public class SpatialTranslatorTest {
         "'diffusion RED-31' RED(loc~cytosol,loc_index_1~2,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~1) @ 0.05\n" + 
         "'diffusion RED-32' RED(loc~cytosol,loc_index_1~2,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.05\n" + 
         "\n" + 
-        "\n" + 
         "%init: 40 RED\n" + 
         "\n" + 
         "\n" + 
@@ -929,11 +924,11 @@ public class SpatialTranslatorTest {
         "%agent: C(l1,l2)\n" +
         "%agent: D(l1)\n" +
         "%compartment: cytosol [4]\n" + 
-        "%channel: intra-cytosol (cytosol [x] -> cytosol [x+1]) + (cytosol [x] -> cytosol [x -1])\n" + 
+        "%channel: intra-cytosol (:cytosol [x] -> :cytosol [x+1]) + (:cytosol [x] -> :cytosol [x -1])\n" + 
         "\n" + 
-        "%transport: 'diffusion-all' intra-cytosol @ 0.1\n" +
-        "%transport: 'diffusion-complex' intra-cytosol A(l1!1),B(l1!1) @ 0.1\n" + 
-        "%transport: 'diffusion-agent' intra-cytosol C() @ 0.1\n" + 
+        "'diffusion-all' ->:intra-cytosol @ 0.1\n" +
+        "'diffusion-complex' A(l1!1),B(l1!1) ->:intra-cytosol A(l1!1),B(l1!1) @ 0.1\n" + 
+        "'diffusion-agent' C() ->:intra-cytosol C() @ 0.1\n" + 
         "%obs: A(l1!1,l2!2),B(l1!1),C(l1!2,l2!3),D(l1!3)\n" + 
         "\n" + 
         "";
@@ -982,7 +977,6 @@ public class SpatialTranslatorTest {
         "'diffusion-agent-6' C(l1,l2,loc~cytosol,loc_index_1~3) -> C(l1,l2,loc~cytosol,loc_index_1~2) @ 0.1\n" + 
         "\n" + 
         "\n" + 
-        "\n" + 
         "%var: '[A(l1!1,l2!2), B(l1!1), C(l1!2,l2!3), D(l1!3)]' A(l1!1,l2!2),B(l1!1),C(l1!2,l2!3),D(l1!3)\n" + 
         "%plot: '[A(l1!1,l2!2), B(l1!1), C(l1!2,l2!3), D(l1!3)]'\n" + 
         "\n" + 
@@ -992,15 +986,14 @@ public class SpatialTranslatorTest {
         "%agent: A(state~blue~red)\n" + 
         "%agent: B\n" + 
         "%compartment: cytosol [4]\n" + 
-        "'heating' cytosol[0] A(state~blue) -> A(state~red) @ 1.0\n" + 
-        "'cooling' cytosol A(state~red) -> A(state~blue) @ 0.05\n" + 
-        "'dimerisation' cytosol A(state),A(state) -> A(state!1),A(state!1) @ 0.05\n" + 
+        "'heating' :cytosol[0] A(state~blue) -> A(state~red) @ 1.0\n" + 
+        "'cooling' :cytosol A(state~red) -> A(state~blue) @ 0.05\n" + 
+        "'dimerisation' :cytosol A(state),A(state) -> A(state!1),A(state!1) @ 0.05\n" + 
         "";
         
     private static final String REACTION_ONLY_OUTPUT = 
         "%agent: A(state~blue~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "%agent: B(loc~cytosol,loc_index_1~0~1~2~3)\n" + 
-        "\n" + 
         "\n" + 
         "'heating' A(state~blue,loc~cytosol,loc_index_1~0) -> A(state~red,loc~cytosol,loc_index_1~0) @ 1.0\n" + 
         "'cooling-1' A(state~red,loc~cytosol,loc_index_1~0) -> A(state~blue,loc~cytosol,loc_index_1~0) @ 0.05\n" + 
@@ -1029,7 +1022,6 @@ public class SpatialTranslatorTest {
         "\n" + 
         "\n" + 
         "\n" + 
-        "\n" + 
         "%var: 'RP-1' egfr-inside(Y1068~pY?)\n" + 
         "%var: 'C' 300.0\n" + 
         "%var: 'B' 200.0\n" + 
@@ -1048,7 +1040,6 @@ public class SpatialTranslatorTest {
         "%agent: RNA(downstream)\n" + 
         "%agent: RNAP(rna,dna)\n" + 
         "\n" + 
-        "\n" + 
         "DNA(binding!1,downstream!3),RNAP(dna!1,rna!2),RNA(downstream!2),DNA(binding!_,upstream!3) ->" +
         " DNA(binding,downstream!1),RNAP(dna,rna),RNA(downstream),DNA(binding!_,upstream!1) @ 1.0\n" +
         "\n" + 
@@ -1061,15 +1052,14 @@ public class SpatialTranslatorTest {
         "%compartment: cytosol [4]\n" + 
         "%obs: A(state~blue)\n" + 
         "%obs: 'all red' A(state~red)\n" + 
-        "%obs: 'cytosol blue' cytosol A(state~blue)\n" + 
-        "%obs: 'red[0]' cytosol[0] A(state~red) \n" + 
-        "%obs: 'red[1]' cytosol[1] A(state~red) \n" + 
-        "%obs: 'red[2]' cytosol[2] A(state~red) \n" + 
-        "%obs: 'red[3]' cytosol[3] A(state~red) \n";
+        "%obs: 'cytosol blue' :cytosol A(state~blue)\n" + 
+        "%obs: 'red[0]' :cytosol[0] A(state~red) \n" + 
+        "%obs: 'red[1]' :cytosol[1] A(state~red) \n" + 
+        "%obs: 'red[2]' :cytosol[2] A(state~red) \n" + 
+        "%obs: 'red[3]' :cytosol[3] A(state~red) \n";
     
     private static final String OBSERVATIONS_ONLY_OUTPUT = 
         "%agent: A(state~blue~red,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
-        "\n" + 
         "\n" + 
         "\n" + 
         "\n" + 
@@ -1099,19 +1089,18 @@ public class SpatialTranslatorTest {
 		"%init: 800 A(state~green),B(s~right) \n" + 
 		"%init: 800 A(state~purple),B:cytosol(s~centre) \n" + 
 		"%init: 800 A(state~orange),B:cytosol[3](s~left) \n" + 
-        "%init: 800 cytosol A(state~blue),B(s~outside) \n" + 
-        "%init: 800 cytosol A(state~yellow),B:cytosol(s~bottom) \n" +
-        "%init: 800 cytosol A(state~brown),B:cytosol[3](s~middle) \n" +
-        "%init: 800 cytosol[0] A(state~white),B(s~top) \n" +
-        "%init: 800 cytosol[0] A(state~black),B:cytosol(s~inside) \n" +
-        "%init: 800 cytosol[0] A(state~red),B:cytosol[0](s~back) \n" +
-        "%init: 800 cytosol[0] A(state~cyan),B:cytosol[3](s~front) \n" +
+        "%init: 800 :cytosol A(state~blue),B(s~outside) \n" + 
+        "%init: 800 :cytosol A(state~yellow),B:cytosol(s~bottom) \n" +
+        "%init: 800 :cytosol A(state~brown),B:cytosol[3](s~middle) \n" +
+        "%init: 800 :cytosol[0] A(state~white),B(s~top) \n" +
+        "%init: 800 :cytosol[0] A(state~black),B:cytosol(s~inside) \n" +
+        "%init: 800 :cytosol[0] A(state~red),B:cytosol[0](s~back) \n" +
+        "%init: 800 :cytosol[0] A(state~cyan),B:cytosol[3](s~front) \n" +
         "";
     
     private static final String INIT_ONLY_OUTPUT = 
         "%agent: A(state~blue~red~green~purple~orange~yellow~brown~white~black~cyan,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
-        "\n" + 
         "\n" + 
         "\n" + 
         "%init: 800 A(state~green)\n" + 
@@ -1165,17 +1154,16 @@ public class SpatialTranslatorTest {
         "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front~horiz~vert)\n" +
         "%compartment: cytosol [2][2]\n" + 
         "%compartment: membrane [2]\n" +
-        "%channel: horiz cytosol[x][y] -> cytosol[x+1][y]\n" + 
-        "%channel: vert cytosol[x][y] -> cytosol[x][y+1]\n" + 
-        "%channel: diag (cytosol[x][y] -> cytosol[x+1][y+1]) + (cytosol[x][y] -> cytosol[x+1][y-1])\n" + 
-        "%init: 800 cytosol A(state~green!1:horiz),B(s~horiz!1) \n" + 
-        "%init: 800 cytosol A(state~purple!1:vert),B(s~vert!1) \n" + 
+        "%channel: horiz :cytosol[x][y] -> :cytosol[x+1][y]\n" + 
+        "%channel: vert :cytosol[x][y] -> :cytosol[x][y+1]\n" + 
+        "%channel: diag (:cytosol[x][y] -> :cytosol[x+1][y+1]) + (:cytosol[x][y] -> :cytosol[x+1][y-1])\n" + 
+        "%init: 800 :cytosol A(state~green!1:horiz),B(s~horiz!1) \n" + 
+        "%init: 800 :cytosol A(state~purple!1:vert),B(s~vert!1) \n" + 
         "";
         
     private static final String INIT_WITH_LINKS_OUTPUT = 
         "%agent: A(state~blue~red~green~purple~orange~yellow~brown~white~black~cyan,loc~cytosol~membrane,loc_index_1~0~1,loc_index_2~0~1)\n" + 
         "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front~horiz~vert,loc~cytosol~membrane,loc_index_1~0~1,loc_index_2~0~1)\n" + 
-        "\n" + 
         "\n" + 
         "\n" + 
         "%init: 400 A(state~green!1,loc~cytosol,loc_index_1~0,loc_index_2~0),B(s~horiz!1,loc~cytosol,loc_index_1~1,loc_index_2~0)\n" + 
@@ -1191,17 +1179,16 @@ public class SpatialTranslatorTest {
         "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front~horiz~vert)\n" +
         "%compartment: cytosol [2][2]\n" + 
         "%compartment: membrane [2]\n" +
-        "%channel: horiz cytosol[x][y] -> cytosol[x+1][y]\n" + 
-        "%channel: vert cytosol[x][y] -> cytosol[x][y+1]\n" + 
-        "%channel: diag (cytosol[x][y] -> cytosol[x+1][y+1]) + (cytosol[x][y] -> cytosol[x+1][y-1])\n" + 
-        "%obs: 'obs1' cytosol A(state~green!1:horiz),B(s~horiz!1) \n" + 
-        "%obs: 'obs2' cytosol A(state~purple!1:vert),B(s~vert!1) \n" + 
+        "%channel: horiz :cytosol[x][y] -> :cytosol[x+1][y]\n" + 
+        "%channel: vert :cytosol[x][y] -> :cytosol[x][y+1]\n" + 
+        "%channel: diag (:cytosol[x][y] -> :cytosol[x+1][y+1]) + (:cytosol[x][y] -> :cytosol[x+1][y-1])\n" + 
+        "%obs: 'obs1' :cytosol A(state~green!1:horiz),B(s~horiz!1) \n" + 
+        "%obs: 'obs2' :cytosol A(state~purple!1:vert),B(s~vert!1) \n" + 
         "";
         
     private static final String OBSERVATIONS_WITH_LINKS_OUTPUT = 
         "%agent: A(state~blue~red~green~purple~orange~yellow~brown~white~black~cyan,loc~cytosol~membrane,loc_index_1~0~1,loc_index_2~0~1)\n" + 
         "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front~horiz~vert,loc~cytosol~membrane,loc_index_1~0~1,loc_index_2~0~1)\n" + 
-        "\n" + 
         "\n" + 
         "\n" + 
         "\n" + 
@@ -1221,9 +1208,9 @@ public class SpatialTranslatorTest {
         "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front~horiz~vert)\n" +
         "%compartment: cytosol [2][2]\n" + 
         "%compartment: membrane [2]\n" +
-        "%channel: horiz cytosol[x][y] -> cytosol[x+1][y]\n" + 
-        "%channel: vert cytosol[x][y] -> cytosol[x][y+1]\n" + 
-        "%channel: diag (cytosol[x][y] -> cytosol[x+1][y+1]) + (cytosol[x][y] -> cytosol[x+1][y-1])\n" + 
+        "%channel: horiz :cytosol[x][y] -> :cytosol[x+1][y]\n" + 
+        "%channel: vert :cytosol[x][y] -> :cytosol[x][y+1]\n" + 
+        "%channel: diag (:cytosol[x][y] -> :cytosol[x+1][y+1]) + (:cytosol[x][y] -> :cytosol[x+1][y-1])\n" + 
         "%var: 'obs1' A:cytosol(state~green!1:horiz),B:cytosol(s~horiz!1) \n" + 
         "%var: 'obs2' A:cytosol(state~purple!1:vert),B:cytosol(s~vert!1) \n" + 
         "";
@@ -1231,7 +1218,6 @@ public class SpatialTranslatorTest {
     private static final String VARIABLES_WITH_LINKS_OUTPUT = 
         "%agent: A(state~blue~red~green~purple~orange~yellow~brown~white~black~cyan,loc~cytosol~membrane,loc_index_1~0~1,loc_index_2~0~1)\n" + 
         "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front~horiz~vert,loc~cytosol~membrane,loc_index_1~0~1,loc_index_2~0~1)\n" + 
-        "\n" + 
         "\n" + 
         "\n" +
         "\n" + 

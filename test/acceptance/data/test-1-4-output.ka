@@ -2,7 +2,6 @@
 %agent: B(s,loc~cytosol,loc_index_1~0~1)
 
 
-
 %init: 1000 A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1)
 
 %var: 'all monomer A' A(s)

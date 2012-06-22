@@ -12,6 +12,6 @@
 %obs: 'dimer AB' A:cytosol[0](s!1),B:cytosol[1](s!1) 
 %obs: 'dimer BA' A:cytosol[1](s!1),B:cytosol[0](s!1) # Expect none
 
-%obs: 'same voxel dimer AB' cytosol A(s!1),B(s!1) # Expect none
-%obs: 'same voxel dimer BA' cytosol A(s!1),B(s!1) # Expect none
+%obs: 'same voxel dimer AB' :cytosol A(s!1),B(s!1) # Expect none
+%obs: 'same voxel dimer BA' :cytosol A(s!1),B(s!1) # Expect none
 

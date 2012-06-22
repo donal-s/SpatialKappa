@@ -20,6 +20,10 @@ public class AgentLink implements Serializable {
         if (sourceSite == OCCUPIED || sourceSite == ANY) {
             throw new IllegalArgumentException();
         }
+        if (sourceSite.getChannel() != null && targetSite.getChannel() != null && 
+                !sourceSite.getChannel().equals(targetSite.getChannel())) {
+            throw new IllegalArgumentException();
+        }
         this.sourceSite = sourceSite;
         this.targetSite = targetSite;
     }
@@ -65,5 +69,21 @@ public class AgentLink implements Serializable {
 
     public static AgentLink getOccupiedLink(AgentSite site1) {
         return new AgentLink(site1, OCCUPIED);
+    }
+
+    public boolean isAnyLink() {
+        return targetSite == ANY;
+    }
+
+    public boolean isNoneLink() {
+        return targetSite == NONE;
+    }
+
+    public boolean isOccupiedLink() {
+        return targetSite == OCCUPIED;
+    }
+
+    public String getChannel() {
+        return (sourceSite.getChannel() != null) ? sourceSite.getChannel() : targetSite.getChannel();
     }
 }

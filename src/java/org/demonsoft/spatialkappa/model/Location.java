@@ -132,9 +132,22 @@ public class Location implements Serializable {
         }
         List<Location> result = new ArrayList<Location>();
         for (Channel channel : channels) {
-            result.addAll(channel.applyChannel(this, compartments));
+            result.addAll(channel.applyChannel(this, NOT_LOCATED, compartments));
         }
         return result;
+    }
+
+    public boolean isRefinement(Location location) {
+        if (location == null) {
+            throw new NullPointerException();
+        }
+        if (this == NOT_LOCATED && location != NOT_LOCATED) {
+            return true;
+        }
+        if (this.name.equals(location.name)) {
+            return (this.indices.length < location.indices.length);
+        }
+        return false;
     }
     
 

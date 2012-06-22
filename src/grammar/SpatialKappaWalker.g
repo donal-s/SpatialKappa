@@ -52,7 +52,6 @@ line
   ruleExpr
   | compartmentExpr
   | channelDecl
-  | transportExpr
   | initExpr
   | plotExpr
   | obsExpr
@@ -64,45 +63,27 @@ line
 ruleExpr
 options {backtrack=true;}
   :
-  ^(TRANSFORM a=transformExpr b=kineticExpr label?)
+  ^(RULE a=transformExpr b=kineticExpr label?)
   {
-    kappaModel.addTransform($label.result, $a.lhs, $a.rhs, $b.rate, Location.NOT_LOCATED);
-  }
-  | ^(TRANSFORM a=transformExpr b=kineticExpr label? c=locationExpr)
-  {
-    kappaModel.addTransform($label.result, $a.lhs, $a.rhs, $b.rate, $c.result );
+    kappaModel.addTransition($label.result, $a.lhsLocation, $a.lhs, $a.channel, $a.rhsLocation, $a.rhs, $b.rate);
   }
   ;
 
-transformExpr returns [List<Agent> lhs, List<Agent> rhs]
+transformExpr returns [Location lhsLocation, List<Agent> lhs, Location rhsLocation, List<Agent> rhs, String channel]
 options {backtrack=true;}
   :
   ^(
-    FORWARD_TRANSITION
-    ^(LHS a=agentGroup?)
-    ^(RHS b=agentGroup?)
+    TRANSITION
+    ^(LHS source=locationExpr? a=agentGroup?)
+    ^(RHS target=locationExpr? b=agentGroup?)
+    (^(CHANNEL channelName=id))?
    )
   {
     $lhs = $a.result;
     $rhs = $b.result;
-  }
-  | ^(
-    FORWARD_TRANSITION
-    LHS
-    ^(RHS b=agentGroup?)
-   )
-  {
-    $lhs = null;
-    $rhs = $b.result;
-  }
-  | ^(
-    FORWARD_TRANSITION
-    ^(LHS a=agentGroup?)
-    RHS
-   )
-  {
-    $lhs = $a.result;
-    $rhs = null;
+    $lhsLocation = ($source.result != null) ? $source.result : Location.NOT_LOCATED;
+    $rhsLocation = ($target.result != null) ? $target.result : Location.NOT_LOCATED;
+    $channel = $channelName.text;
   }
   ;
 
@@ -259,23 +240,6 @@ channelExpr returns [Location source, Location target]
   ^(LOCATION_PAIR sourceCompartment=locationExpr targetCompartment=locationExpr)
   {
     $source = $sourceCompartment.result; $target = $targetCompartment.result;
-  }
-  ;
-
-
-transportExpr
-  :
-  ^(TRANSPORT linkName=id agentGroup? b=transportKineticExpr (transportName=label)?)
-  {
-    kappaModel.addTransport($transportName.result, $linkName.text, $agentGroup.result, $b.result);
-  }
-  ;
-  
-transportKineticExpr returns [VariableExpression result]
-  :
-  ^(RATE varAlgebraExpr)
-  {
-    $result = $varAlgebraExpr.result;
   }
   ;
 

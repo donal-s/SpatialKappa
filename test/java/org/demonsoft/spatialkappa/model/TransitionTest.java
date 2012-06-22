@@ -1,37 +1,890 @@
 package org.demonsoft.spatialkappa.model;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertSame;
-import static junit.framework.Assert.assertTrue;
 
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_2;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Transition.DELETED;
+import static org.demonsoft.spatialkappa.model.Transition.UNMAPPED;
+import static org.demonsoft.spatialkappa.model.Utils.getComplexes;
+import static org.demonsoft.spatialkappa.model.Utils.getList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
 import org.junit.Test;
 
-public abstract class TransitionTest {
+public class TransitionTest {
 
+
+    @SuppressWarnings("unused")
     @Test
-    public void testTransition() {
+    public void testTransition_full() {
         VariableExpression rate = new VariableExpression("0.01");
-        Transition transition = new TestTransition("label", rate);
+        List<Agent> leftAgents = Utils.getList(new Agent("agent1"));
+        List<Agent> rightAgents = Utils.getList(new Agent("agent2"));
+
+        try {
+            new Transition("label", leftAgents, "channelName", rightAgents, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            new Transition("label", (List<Agent>) null, null, null, rate);
+            fail("null agents and channel should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            new Transition("label", new ArrayList<Agent>(), null, new ArrayList<Agent>(), rate);
+            fail("lhs and rhs empty and null channel should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        leftAgents = Utils.getList(
+                new Agent("agent1", new AgentSite("interface1", "state1", "link1"), 
+                        new AgentSite("interface2", "state2", "link1")),
+                new Agent("agent3", new Location("left")));
+        rightAgents = Utils.getList(
+                new Agent("agent2"), new Agent("agent4", new Location("right")));
+        
+        // All parameters
+        
+        Transition transition = new Transition("label", leftAgents, "channel", rightAgents, rate);
+
+        List<Agent> expectedLeftAgents = Utils.getList(
+                new Agent("agent1", NOT_LOCATED, new AgentSite("interface1", "state1", "link1"), 
+                        new AgentSite("interface2", "state2", "link1")),
+                new Agent("agent3", new Location("left")));
+        List<Agent> expectedRightAgents = Utils.getList(
+                new Agent("agent2", NOT_LOCATED), 
+                new Agent("agent4", new Location("right")));
+        List<Complex> expectedLeftComplexes = Utils.getComplexes(expectedLeftAgents);
+        List<Complex> expectedRightComplexes = Utils.getComplexes(expectedRightAgents);
+
+        checkComplexes(expectedLeftComplexes, transition.sourceComplexes);
+        checkComplexes(expectedRightComplexes, transition.targetComplexes);
+        checkAgents(expectedLeftAgents, transition.leftAgents);
+        checkAgents(expectedRightAgents, transition.rightAgents);
         assertEquals("label", transition.label);
+        assertEquals("channel", transition.channelName);
         assertSame(rate, transition.getRate());
         assertFalse(transition.isInfiniteRate(new HashMap<String, Variable>()));
+        assertEquals("'label' : [[agent1(interface1~state1!link1,interface2~state2!link1)], [agent3:left]]" +
+                " ->:channel [[agent2], [agent4:right]] @ 0.01", transition.toString());
+        assertNull(transition.leftLocation);
+        assertNull(transition.rightLocation);
 
+        // No channel
+        
+        transition = new Transition("label", leftAgents, null, rightAgents, rate);
+
+        expectedLeftAgents = Utils.getList(
+                new Agent("agent1", NOT_LOCATED, new AgentSite("interface1", "state1", "link1"), 
+                        new AgentSite("interface2", "state2", "link1")),
+                new Agent("agent3", new Location("left")));
+        expectedRightAgents = Utils.getList(
+                new Agent("agent2", NOT_LOCATED), 
+                new Agent("agent4", new Location("right")));
+        expectedLeftComplexes = Utils.getComplexes(expectedLeftAgents);
+        expectedRightComplexes = Utils.getComplexes(expectedRightAgents);
+
+        checkComplexes(expectedLeftComplexes, transition.sourceComplexes);
+        checkComplexes(expectedRightComplexes, transition.targetComplexes);
+        checkAgents(expectedLeftAgents, transition.leftAgents);
+        checkAgents(expectedRightAgents, transition.rightAgents);
+        assertEquals("label", transition.label);
+        assertEquals(null, transition.channelName);
+        assertSame(rate, transition.getRate());
+        assertFalse(transition.isInfiniteRate(new HashMap<String, Variable>()));
+        assertEquals("'label' : [[agent1(interface1~state1!link1,interface2~state2!link1)], [agent3:left]]" +
+                " -> [[agent2], [agent4:right]] @ 0.01", transition.toString());
+        assertNull(transition.leftLocation);
+        assertNull(transition.rightLocation);
+
+        // No agents, infinite rate
         rate = new VariableExpression(Constant.INFINITY);
-        transition = new TestTransition(null, rate);
+        transition = new Transition(null, (List<Agent>) null, "channel", null, rate);
+
+        expectedLeftAgents.clear();
+        expectedRightAgents.clear();
+        expectedLeftComplexes.clear();
+        expectedRightComplexes.clear();
+
+        checkComplexes(expectedLeftComplexes, transition.sourceComplexes);
+        checkComplexes(expectedRightComplexes, transition.targetComplexes);
+        checkAgents(expectedLeftAgents, transition.leftAgents);
+        checkAgents(expectedRightAgents, transition.rightAgents);
         assertEquals(null, transition.label);
+        assertEquals("channel", transition.channelName);
         assertSame(rate, transition.getRate());
         assertTrue(transition.isInfiniteRate(new HashMap<String, Variable>()));
+        assertEquals("[] ->:channel [] @ [inf]", transition.toString());
+        assertNull(transition.leftLocation);
+        assertNull(transition.rightLocation);
+    }
+    
+    @SuppressWarnings("unused")
+    @Test
+    public void testTransition_noAgents_transportOnly() {
+        VariableExpression rate = new VariableExpression("0.01");
+        Location leftLocation = new Location("left");
+        Location rightLocation = new Location("right");
+
+        try {
+            new Transition("label", leftLocation, "channelName", rightLocation, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            new Transition("label", leftLocation, null, rightLocation, null);
+            fail("null channel should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        // All parameters
+        
+        Transition transition = new Transition("label", leftLocation, "channel", rightLocation, rate);
+
+        List<Agent> emptyAgents = new ArrayList<Agent>();
+        List<Complex> emptyComplexes = new ArrayList<Complex>();
+
+        checkComplexes(emptyComplexes, transition.sourceComplexes);
+        checkComplexes(emptyComplexes, transition.targetComplexes);
+        checkAgents(emptyAgents, transition.leftAgents);
+        checkAgents(emptyAgents, transition.rightAgents);
+        assertEquals("label", transition.label);
+        assertEquals("channel", transition.channelName);
+        assertSame(rate, transition.getRate());
+        assertFalse(transition.isInfiniteRate(new HashMap<String, Variable>()));
+        assertEquals("'label' : left ->:channel right @ 0.01", transition.toString());
+        assertEquals(leftLocation, transition.leftLocation);
+        assertEquals(rightLocation, transition.rightLocation);
+
+        // No right location
+        
+        transition = new Transition("label", leftLocation, "channel", null, rate);
+
+        checkComplexes(emptyComplexes, transition.sourceComplexes);
+        checkComplexes(emptyComplexes, transition.targetComplexes);
+        checkAgents(emptyAgents, transition.leftAgents);
+        checkAgents(emptyAgents, transition.rightAgents);
+        assertEquals("label", transition.label);
+        assertEquals("channel", transition.channelName);
+        assertSame(rate, transition.getRate());
+        assertFalse(transition.isInfiniteRate(new HashMap<String, Variable>()));
+        assertEquals("'label' : left ->:channel  @ 0.01", transition.toString());
+        assertEquals(leftLocation, transition.leftLocation);
+        assertNull(transition.rightLocation);
+
+        // No left location
+        
+        transition = new Transition("label", null, "channel", rightLocation, rate);
+
+        checkComplexes(emptyComplexes, transition.sourceComplexes);
+        checkComplexes(emptyComplexes, transition.targetComplexes);
+        checkAgents(emptyAgents, transition.leftAgents);
+        checkAgents(emptyAgents, transition.rightAgents);
+        assertEquals("label", transition.label);
+        assertEquals("channel", transition.channelName);
+        assertSame(rate, transition.getRate());
+        assertFalse(transition.isInfiniteRate(new HashMap<String, Variable>()));
+        assertEquals("'label' :  ->:channel right @ 0.01", transition.toString());
+        assertNull(transition.leftLocation);
+        assertEquals(rightLocation, transition.rightLocation);
+
+        // No left or right location
+        
+        transition = new Transition("label", (Location) null, "channel", (Location) null, rate);
+
+        checkComplexes(emptyComplexes, transition.sourceComplexes);
+        checkComplexes(emptyComplexes, transition.targetComplexes);
+        checkAgents(emptyAgents, transition.leftAgents);
+        checkAgents(emptyAgents, transition.rightAgents);
+        assertEquals("label", transition.label);
+        assertEquals("channel", transition.channelName);
+        assertSame(rate, transition.getRate());
+        assertFalse(transition.isInfiniteRate(new HashMap<String, Variable>()));
+        assertEquals("'label' : [] ->:channel [] @ 0.01", transition.toString());
+        assertNull(transition.leftLocation);
+        assertNull(transition.rightLocation);
     }
     
     
-    class TestTransition extends Transition {
+    private void checkAgents(List<Agent> expected, List<Agent> actual) {
+        assertEquals(expected.size(), actual.size());
 
-        public TestTransition(String label, VariableExpression rate) {
-            super(label, rate);
+        Set<String> actualStrings = new HashSet<String>();
+        for (Agent agent : actual) {
+            actualStrings.add(agent.toString());
+        }
+        for (Agent agent : expected) {
+            String agentString = agent.toString();
+            if (!actualStrings.contains(agentString)) {
+                fail("agent not found: " + agentString + "\nin:" + actualStrings);
+            }
         }
     }
+
     
+    private void checkComplexes(List<Complex> expected, List<Complex> actual) {
+        assertEquals(expected.size(), actual.size());
+
+        Set<String> actualStrings = new HashSet<String>();
+        for (Complex complex : actual) {
+            actualStrings.add(complex.toString());
+        }
+        for (Complex complex : expected) {
+            String complexString = complex.toString();
+            if (!actualStrings.contains(complexString)) {
+                fail("Complex not found: " + complexString + "\nin:" + actualStrings);
+            }
+        }
+    }
+
+    @Test
+    public void testTransition_checkPrimitives_noChannel() {
+        Agent leftAgent1 = new Agent("DNA", new AgentSite("downstream", null, "2"), new AgentSite("type~BBaB0000", null, null), new AgentSite("binding", null, "1")); 
+        Agent leftAgent2 = new Agent("DNA", new AgentSite("upstream", null, "2"), new AgentSite("binding", null, null));
+        Agent leftAgent3 = new Agent("RNA", new AgentSite("downstream", null, "3"));
+        Agent leftAgent4 = new Agent("RNAP", new AgentSite("dna", null, "1"), new AgentSite("rna", null, "3"));
+        
+        List<Agent> leftAgents = Utils.getList(leftAgent1, leftAgent2, leftAgent3, leftAgent4);
+        
+        Agent rightAgent1 = new Agent("DNA", new AgentSite("downstream", null, "2"), new AgentSite("type~BBaB0000", null, null), new AgentSite("binding", null, null));
+        Agent rightAgent2 = new Agent("DNA", new AgentSite("upstream", null, "2"), new AgentSite("binding", null, "1"));
+        Agent rightAgent3 = new Agent("RNA", new AgentSite("downstream", null, "3"), new AgentSite("type~BBaB0000", null, null), new AgentSite("upstream", null, "4"), new AgentSite("binding", null, null));
+        Agent rightAgent4 = new Agent("RNA", new AgentSite("downstream", null, "4"));
+        Agent rightAgent5 = new Agent("RNAP", new AgentSite("dna", null, "1"), new AgentSite("rna", null, "3"));
+        
+        List<Agent> rightAgents = Utils.getList(rightAgent1, rightAgent2, rightAgent3, rightAgent4, rightAgent5);
+                
+        Transition transition = new Transition("test", leftAgents, null, rightAgents, 10.0f);
+                
+        TransformPrimitive[] expected = new TransformPrimitive[] {
+                TransformPrimitive.getDeleteLink(getAgentLink(leftAgents, "1")),
+                TransformPrimitive.getDeleteLink(leftAgent2.getComplex().getAgentLink(leftAgent2, "binding")),
+                TransformPrimitive.getDeleteLink(getAgentLink(rightAgents, "3")),
+                TransformPrimitive.getCreateAgent(rightAgent3, leftAgent2),
+                TransformPrimitive.getCreateLink(leftAgent2.getSite("binding"), leftAgent4.getSite("dna"), null),
+                TransformPrimitive.getCreateLink(leftAgent3.getSite("downstream"), rightAgent3.getSite("upstream"), null),
+                TransformPrimitive.getCreateLink(leftAgent4.getSite("rna"), rightAgent3.getSite("downstream"), null),
+        };
+        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        
+        Map<Agent, Agent> expectedAgentMap = new HashMap<Agent, Agent>();
+        expectedAgentMap.put(leftAgent1, rightAgent1);
+        expectedAgentMap.put(leftAgent2, rightAgent2);
+        expectedAgentMap.put(leftAgent3, rightAgent4);
+        expectedAgentMap.put(leftAgent4, rightAgent5);
+        
+        assertEquals(expectedAgentMap, transition.getLeftRightAgentMap());
+    }
+
+    @Test
+    public void testTransition_checkPrimitives_channel_singleAgentRule() {
+        Agent leftAgent = new Agent("DNA"); 
+        Agent rightAgent = new Agent("DNA");
+        Transition transition = new Transition("test", Utils.getList(leftAgent), "channel", Utils.getList(rightAgent), 10.0f);
+                
+        TransformPrimitive[] expected = new TransformPrimitive[] {
+                TransformPrimitive.getMoveAgent(leftAgent, NOT_LOCATED, "channel"),
+        };
+        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        
+        Map<Agent, Agent> expectedAgentMap = new HashMap<Agent, Agent>();
+        expectedAgentMap.put(leftAgent, rightAgent);
+        assertEquals(expectedAgentMap, transition.getLeftRightAgentMap());
+
+        // Located agents
+        
+        leftAgent = new Agent("DNA", new Location("source")); 
+        rightAgent = new Agent("DNA", new Location("target"));
+        transition = new Transition("test", Utils.getList(leftAgent), "channel", Utils.getList(rightAgent), 10.0f);
+                
+        expected = new TransformPrimitive[] {
+                TransformPrimitive.getMoveAgent(leftAgent, new Location("target"), "channel"),
+        };
+        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        
+        expectedAgentMap.clear();
+        expectedAgentMap.put(leftAgent, rightAgent);
+        assertEquals(expectedAgentMap, transition.getLeftRightAgentMap());
+    }
+
+    @Test
+    public void testApply_channel_singleAgentRule() {
+        List<Compartment> compartments = getList(new Compartment("A"), new Compartment("B"));
+        List<Channel> channels = getList(new Channel("channel", new Location("A"), new Location("B")));
+
+        Agent leftTemplateAgent = new Agent("DNA"); 
+        Agent rightTemplateAgent = new Agent("DNA");
+        Transition transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
+        Complex leftTemplateComplex = transition.sourceComplexes.get(0);        
+        
+        TransformPrimitive[] expected = new TransformPrimitive[] {
+                TransformPrimitive.getMoveAgent(leftTemplateAgent, NOT_LOCATED, "channel"),
+        };
+        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        
+        Map<Agent, Agent> expectedAgentMap = new HashMap<Agent, Agent>();
+        expectedAgentMap.put(leftTemplateAgent, rightTemplateAgent);
+        assertEquals(expectedAgentMap, transition.getLeftRightAgentMap());
+
+
+        Agent leftRealAgent = new Agent("DNA", new Location("A"));
+        Complex leftRealComplex = new Complex(leftRealAgent);
+        Map<Agent, Agent> mapping = new HashMap<Agent, Agent>();
+        mapping.put(leftTemplateAgent, leftRealAgent);
+        List<ComplexMapping> sourceComplexMappings = getList(new ComplexMapping(leftTemplateComplex, leftRealComplex, mapping));
+        
+        List<Complex> result = transition.apply(sourceComplexMappings, channels, compartments);
+        assertEquals("[[DNA:B]]", result.toString());
+    }
+
+    @Test
+    public void testApply_singleAgentOfComplexMovement() {
+        List<Compartment> compartments = getList(new Compartment("A"), new Compartment("B"));
+        List<Channel> channels = getList(new Channel("channel", new Location("A"), new Location("B")));
+
+        Agent leftTemplateAgent1 = new Agent("agent1", new Location("A"), new AgentSite("s", null, "1")); 
+        Agent leftTemplateAgent2 = new Agent("agent2", new Location("A"), new AgentSite("s", null, "1")); 
+        Agent rightTemplateAgent1 = new Agent("agent1", new Location("B"), new AgentSite("s", null, "1", "channel")); 
+        Agent rightTemplateAgent2 = new Agent("agent2", new Location("A"), new AgentSite("s", null, "1")); 
+        Transition transition = new Transition("test", Utils.getList(leftTemplateAgent1, leftTemplateAgent2), 
+                "channel", Utils.getList(rightTemplateAgent1, rightTemplateAgent2), 10.0f);
+        Complex leftTemplateComplex = transition.sourceComplexes.get(0);        
+        
+        TransformPrimitive[] expected = new TransformPrimitive[] {
+                TransformPrimitive.getDeleteLink(leftTemplateComplex.agentLinks.get(0)),
+                TransformPrimitive.getMoveAgent(leftTemplateAgent1, new Location("B"), "channel"),
+                TransformPrimitive.getCreateLink(leftTemplateAgent1.getSite("s"), leftTemplateAgent2.getSite("s"), "channel")
+        };
+        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        
+        Map<Agent, Agent> expectedAgentMap = new HashMap<Agent, Agent>();
+        expectedAgentMap.put(leftTemplateAgent1, rightTemplateAgent1);
+        expectedAgentMap.put(leftTemplateAgent2, rightTemplateAgent2);
+        assertEquals(expectedAgentMap, transition.getLeftRightAgentMap());
+
+
+        Agent leftRealAgent1 = new Agent("agent1", new Location("A"), new AgentSite("s", null, "1")); 
+        Agent leftRealAgent2 = new Agent("agent2", new Location("A"), new AgentSite("s", null, "1")); 
+        Complex leftRealComplex = new Complex(leftRealAgent1, leftRealAgent2);
+        Map<Agent, Agent> mapping = new HashMap<Agent, Agent>();
+        mapping.put(leftTemplateAgent1, leftRealAgent1);
+        mapping.put(leftTemplateAgent2, leftRealAgent2);
+        List<ComplexMapping> sourceComplexMappings = getList(new ComplexMapping(leftTemplateComplex, leftRealComplex, mapping));
+        
+        List<Complex> result = transition.apply(sourceComplexMappings, channels, compartments);
+        assertEquals("[[agent1:B(s!1:channel), agent2:A(s!1:channel)]]", result.toString());
+    }
+
+    @Test
+    public void testTransition_checkPrimitives_locationsOnly() {
+        Transition transition = new Transition("test", (Location) null, "channel", null, 10.0f);
+        TransformPrimitive[] expected = new TransformPrimitive[] {
+                TransformPrimitive.getMoveComplex(null, null, "channel"),
+        };
+        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        assertEquals(0, transition.getLeftRightAgentMap().size());
+        
+        transition = new Transition("test", null, "channel", new Location("B"), 10.0f);
+        expected = new TransformPrimitive[] {
+                TransformPrimitive.getMoveComplex(null, new Location("B"), "channel"),
+        };
+        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        assertEquals(0, transition.getLeftRightAgentMap().size());
+        
+        transition = new Transition("test", new Location("A"), "channel", null, 10.0f);
+        expected = new TransformPrimitive[] {
+                TransformPrimitive.getMoveComplex(new Location("A"), null, "channel"),
+        };
+        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        assertEquals(0, transition.getLeftRightAgentMap().size());
+        
+        transition = new Transition("test", new Location("A"), "channel", new Location("B"), 10.0f);
+        expected = new TransformPrimitive[] {
+                TransformPrimitive.getMoveComplex(new Location("A"), new Location("B"), "channel"),
+        };
+        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        assertEquals(0, transition.getLeftRightAgentMap().size());
+    }
+
+    private void checkPrimitives(List<TransformPrimitive> expected, List<TransformPrimitive> actual) {
+        assertEquals(expected.size(), actual.size());
+
+        Set<String> actualStrings = new HashSet<String>();
+        for (TransformPrimitive primitive : actual) {
+            actualStrings.add(primitive.toString());
+        }
+        for (TransformPrimitive primitive : expected) {
+            String primitiveString = primitive.toString();
+            if (!actualStrings.contains(primitiveString)) {
+                fail("Primitive not found: " + primitiveString + "\nin:" + actualStrings);
+            }
+        }
+    }
+
+    private AgentLink getAgentLink(List<Agent> agents, String linkName) {
+        List<Complex> complexes = Utils.getComplexes(agents);
+        for (Complex complex : complexes) {
+            for (AgentLink agentLink : complex.agentLinks) {
+                if (linkName.equals(agentLink.sourceSite.getLinkName())) {
+                    return agentLink;
+                }
+            }
+        }
+        fail("link not found: " + linkName);
+        return null;
+    }
+
+    @Test
+    public void testCreateTransitionMap() {
+        List<Agent> leftAgents = new ArrayList<Agent>();
+        List<Agent> rightAgents = new ArrayList<Agent>();
+        leftAgents.add(new Agent("agent1", new AgentSite("x", "s", null)));
+        rightAgents.add(new Agent("agent1", new AgentSite("x", "t", null)));
+        Transition transition = new Transition(null, leftAgents, null, rightAgents, 0.1f);
+
+        transition.bestPrimitives = null;
+        leftAgents.clear();
+        rightAgents.clear();
+        leftAgents.add(new Agent("agent1", new AgentSite("x", "s", null)));
+        leftAgents.add(new Agent("agent2"));
+        rightAgents.add(new Agent("agent1", new AgentSite("x", "t", null)));
+        rightAgents.add(new Agent("agent3", new AgentSite("x", "t", null)));
+        Utils.getComplexes(leftAgents);
+        Utils.getComplexes(rightAgents);
+        transition.createTransitionMap(leftAgents, rightAgents);
+
+        transition.bestPrimitives = null;
+        leftAgents.clear();
+        rightAgents.clear();
+        leftAgents.add(new Agent("agent1", new AgentSite("x", "s", "1")));
+        leftAgents.add(new Agent("agent2", new AgentSite("y", "t", "1")));
+        rightAgents.add(new Agent("agent1", new AgentSite("x", "s", null)));
+        rightAgents.add(new Agent("agent2", new AgentSite("y", "t", null)));
+        Utils.getComplexes(leftAgents);
+        Utils.getComplexes(rightAgents);
+        transition.createTransitionMap(leftAgents, rightAgents);
+
+        transition.bestPrimitives = null;
+        leftAgents.clear();
+        rightAgents.clear();
+        leftAgents.add(new Agent("agent1", new AgentSite("x", "s", "1"), new AgentSite("y", "t", "1")));
+        rightAgents.add(new Agent("agent1", new AgentSite("x", "s", null), new AgentSite("y", "t", null)));
+        Utils.getComplexes(leftAgents);
+        Utils.getComplexes(rightAgents);
+        transition.createTransitionMap(leftAgents, rightAgents);
+
+        transition.bestPrimitives = null;
+        leftAgents.clear();
+        rightAgents.clear();
+        leftAgents.add(new Agent("agent1", new AgentSite("x", "s", null)));
+        leftAgents.add(new Agent("agent2", new AgentSite("y", "t", null)));
+        rightAgents.add(new Agent("agent1", new AgentSite("x", "s", "1")));
+        rightAgents.add(new Agent("agent2", new AgentSite("y", "t", "1")));
+        Utils.getComplexes(leftAgents);
+        Utils.getComplexes(rightAgents);
+        transition.createTransitionMap(leftAgents, rightAgents);
+
+        transition.bestPrimitives = null;
+        leftAgents.clear();
+        rightAgents.clear();
+        leftAgents.add(new Agent("agent1", new AgentSite("x", "s", null)));
+        rightAgents.add(new Agent("agent1", new AgentSite("x", "s", "1")));
+        rightAgents.add(new Agent("agent2", new AgentSite("y", "t", "1")));
+        Utils.getComplexes(leftAgents);
+        Utils.getComplexes(rightAgents);
+        transition.createTransitionMap(leftAgents, rightAgents);
+    }
+
+    @Test
+    public void testCreateTransitionMap_largerCase() {
+        List<Agent> leftAgents = Arrays.asList(new Agent[] {
+                new Agent("DNA", new AgentSite("downstream", null, "2"), new AgentSite("type", "BBaR0051p3", null), new AgentSite("upstream", null,
+                        "3"), new AgentSite("binding", null, null)),
+                new Agent("DNA", new AgentSite("downstream", null, "3"), new AgentSite("type", "BBaR0051p2", null),
+                        new AgentSite("upstream", null, "4"), new AgentSite("binding", null, null)),
+                new Agent("DNA", new AgentSite("downstream", null, "4"), new AgentSite("type", "BBaR0051p1", null), new AgentSite("binding", null, "1")),
+                new Agent("DNA", new AgentSite("downstream", null, "6"), new AgentSite("type", "BBaR0051p4", null),
+                        new AgentSite("upstream", null, "2"), new AgentSite("binding", null, null)),
+                new Agent("DNA", new AgentSite("upstream", null, "6"), new AgentSite("binding", null, null)),
+
+                new Agent("RNA", new AgentSite("downstream", null, "5")),
+                new Agent("RNAP", new AgentSite("dna", null, "1"), new AgentSite("rna", null, "5")) 
+                });
+
+        List<Agent> rightAgents = Arrays.asList(new Agent[] {
+                new Agent("DNA", new AgentSite("downstream", null, "3"), new AgentSite("type", "BBaR0051p3", null), new AgentSite("upstream", null, "5"),
+                        new AgentSite("binding", null, null)),
+                new Agent("DNA", new AgentSite("downstream", null, "4"), new AgentSite("type", "BBaR0051p1", null), new AgentSite("binding", null, null)),
+                new Agent("DNA", new AgentSite("downstream", null, "5"), new AgentSite("type", "BBaR0051p2", null), new AgentSite("upstream", null, "4"),
+                        new AgentSite("binding", null, null)),
+                new Agent("DNA", new AgentSite("downstream", null, "7"), new AgentSite("type", "BBaR0051p4", null), new AgentSite("upstream", null, "3"),
+                        new AgentSite("binding", null, null)),
+                new Agent("DNA", new AgentSite("upstream", null, "7"), new AgentSite("binding", null, "1")),
+
+                new Agent("RNA", new AgentSite("downstream", null, "2")),
+                new Agent("RNA", new AgentSite("downstream", null, "6"), new AgentSite("type~BBaR0051", null, null), new AgentSite("upstream", null, "2"),
+                        new AgentSite("binding", null, null)), 
+                new Agent("RNAP", new AgentSite("dna", null, "1"), new AgentSite("rna", null, "6")) 
+                });
+
+        Transition transition = new Transition(null, leftAgents, null, rightAgents, 0.1f);
+        
+        transition.bestPrimitives = null;
+        transition.createTransitionMap(leftAgents, rightAgents);
+    }
+
+    @SuppressWarnings("unused")
+    @Test
+    public void testCreateCloneMap() {
+        List<Agent> leftAgents = new ArrayList<Agent>();
+        List<Agent> rightAgents = new ArrayList<Agent>();
+        leftAgents.add(new Agent("agent1", new AgentSite("x", "s", null)));
+        rightAgents.add(new Agent("agent1", new AgentSite("x", "t", null)));
+        Transition transition = new Transition(null, leftAgents, null, rightAgents, 0.1f);
+
+        // Test empty case
+        Map<Agent, Agent> originalMap = new HashMap<Agent, Agent>();
+        Map<Agent, Agent> resultMap = transition.createCloneMap(originalMap);
+        assertEquals(0, resultMap.size());
+
+        // Test different template complexes, original complexes
+        Agent templateSourceAgent = new Agent("source");
+        Agent templateTargetAgent = new Agent("target");
+        new Complex(templateSourceAgent);
+        new Complex(templateTargetAgent);
+
+        Agent realSourceAgent = new Agent("source");
+        Agent realTargetAgent = new Agent("target");
+        new Complex(realSourceAgent);
+        new Complex(realTargetAgent);
+
+        originalMap.clear();
+        originalMap.put(templateSourceAgent, realSourceAgent);
+        originalMap.put(templateTargetAgent, realTargetAgent);
+
+        resultMap = transition.createCloneMap(originalMap);
+        checkCloneMap(originalMap, resultMap);
+
+        // Test same template complexes, original complexes
+        new Complex(templateSourceAgent, templateTargetAgent);
+        realSourceAgent = new Agent("source");
+        realTargetAgent = new Agent("target");
+        new Complex(realSourceAgent, realTargetAgent);
+
+        originalMap.clear();
+        originalMap.put(templateSourceAgent, realSourceAgent);
+        originalMap.put(templateTargetAgent, realTargetAgent);
+
+        resultMap = transition.createCloneMap(originalMap);
+        checkCloneMap(originalMap, resultMap);
+
+        // Test same template complexes, original complexes, linked agents
+        realSourceAgent = new Agent("source", new AgentSite("x", null, "1"));
+        realTargetAgent = new Agent("target", new AgentSite("y", null, "1"));
+        new Complex(realSourceAgent, realTargetAgent);
+
+        originalMap.clear();
+        originalMap.put(templateSourceAgent, realSourceAgent);
+        originalMap.put(templateTargetAgent, realTargetAgent);
+
+        resultMap = transition.createCloneMap(originalMap);
+        checkCloneMap(originalMap, resultMap);
+    }
+
+    private void checkCloneMap(Map<Agent, Agent> originalMap, Map<Agent, Agent> resultMap) {
+        assertEquals(originalMap.size(), resultMap.size());
+
+        for (Map.Entry<Agent, Agent> originalEntry : originalMap.entrySet()) {
+            Agent templateAgent = originalEntry.getKey();
+            Agent originalAgent = originalEntry.getValue();
+
+            assertTrue(resultMap.containsKey(templateAgent));
+            Agent cloneAgent = resultMap.get(templateAgent);
+            assertEquals(originalAgent.getComplex().toString(), cloneAgent.getComplex().toString());
+            assertNotSame(cloneAgent, originalAgent);
+            assertNotSame(cloneAgent.getComplex(), originalAgent.getComplex());
+        }
+
+        // Unlinked template agents should each have unique cloned complex
+        for (Map.Entry<Agent, Agent> originalEntry : originalMap.entrySet()) {
+            Agent templateAgent = originalEntry.getKey();
+            for (Map.Entry<Agent, Agent> originalOtherEntry : originalMap.entrySet()) {
+                Agent templateOtherAgent = originalOtherEntry.getKey();
+                if (templateAgent != templateOtherAgent) {
+                    if (templateAgent.getComplex() == templateOtherAgent.getComplex()) {
+                        assertSame(resultMap.get(templateAgent).getComplex(), resultMap.get(templateOtherAgent).getComplex());
+                    }
+                    else {
+                        assertNotSame(resultMap.get(templateAgent).getComplex(), resultMap.get(templateOtherAgent).getComplex());
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testCanApply() {
+        List<Compartment> compartments = getList(new Compartment("A"), new Compartment("B"), new Compartment("C"));
+        List<Channel> channels = getList(new Channel("channel", getList(
+                new Location[] {new Location("A"), new Location("B")},
+                new Location[] {new Location("A"), new Location("C")},
+                new Location[] {new Location("B"), new Location("C")})));
+
+        // Test compartments - no source constraint - no target constraint
+        Agent leftTemplateAgent = new Agent("DNA"); 
+        Agent rightTemplateAgent = new Agent("DNA");
+        Transition transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
+        
+        List<ComplexMapping> complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A")), leftTemplateAgent);
+        assertTrue(transition.canApply(complexMappings, channels, compartments));
+        
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("B")), leftTemplateAgent);
+        assertTrue(transition.canApply(complexMappings, channels, compartments));
+       
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("C")), leftTemplateAgent);
+        assertFalse(transition.canApply(complexMappings, channels, compartments));
+
+        // Test compartments - no source constraint - target constraint
+        leftTemplateAgent = new Agent("DNA"); 
+        rightTemplateAgent = new Agent("DNA", new Location("B"));
+        transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
+        
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A")), leftTemplateAgent);
+        assertTrue(transition.canApply(complexMappings, channels, compartments));
+        
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("B")), leftTemplateAgent);
+        assertFalse(transition.canApply(complexMappings, channels, compartments));
+       
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("C")), leftTemplateAgent);
+        assertFalse(transition.canApply(complexMappings, channels, compartments));
+
+        // Test compartments - source constraint - no target constraint
+        leftTemplateAgent = new Agent("DNA", new Location("B")); 
+        rightTemplateAgent = new Agent("DNA");
+        transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
+        
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A")), leftTemplateAgent);
+        assertFalse(transition.canApply(complexMappings, channels, compartments));
+        
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("B")), leftTemplateAgent);
+        assertTrue(transition.canApply(complexMappings, channels, compartments));
+       
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("C")), leftTemplateAgent);
+        assertFalse(transition.canApply(complexMappings, channels, compartments));
+
+        // Test compartments - source constraint - target constraint
+        leftTemplateAgent = new Agent("DNA", new Location("C")); 
+        rightTemplateAgent = new Agent("DNA", new Location("B"));
+        transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
+        
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A")), leftTemplateAgent);
+        assertFalse(transition.canApply(complexMappings, channels, compartments));
+        
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("B")), leftTemplateAgent);
+        assertFalse(transition.canApply(complexMappings, channels, compartments));
+       
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("C")), leftTemplateAgent);
+        assertFalse(transition.canApply(complexMappings, channels, compartments));
+
+        
+        // Test voxels
+        compartments = getList(new Compartment("A", 3));
+        channels = getList(new Channel("channel", new Location("A", INDEX_X), new Location("A", INDEX_X_PLUS_1)));
+
+        leftTemplateAgent = new Agent("DNA"); 
+        rightTemplateAgent = new Agent("DNA");
+        transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
+        
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A", INDEX_0)), leftTemplateAgent);
+        assertTrue(transition.canApply(complexMappings, channels, compartments));
+        
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A", INDEX_1)), leftTemplateAgent);
+        assertTrue(transition.canApply(complexMappings, channels, compartments));
+       
+        complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A", INDEX_2)), leftTemplateAgent);
+        assertFalse(transition.canApply(complexMappings, channels, compartments));
+    }
+    
+    private List<ComplexMapping> getTestComplexMappings(Agent realAgent, Agent templateAgent) {
+        Complex realComplex = new Complex(realAgent);
+        Map<Agent, Agent> mapping = new HashMap<Agent, Agent>();
+        mapping.put(templateAgent, realAgent);
+        return getList(new ComplexMapping(templateAgent.getComplex(), realComplex, mapping));
+    }
+    
+    @Test
+    public void testcreatePrimitivesDeleteAgents() {
+        List<Agent> leftAgents = getList(
+                new Agent("A", new AgentSite("s1", null, "_")), 
+                new Agent("B", new AgentSite("s5", null, "_")), 
+                new Agent("C", new AgentSite("s2", null, "?"), new AgentSite("s3", null, "1")),
+                new Agent("D", new AgentSite("s4", null, "1")));
+        getComplexes(leftAgents);
+        int[] indexMapLeftRight = new int[] { DELETED, 1, DELETED, 3  };
+        List<TransformPrimitive> primitives = new ArrayList<TransformPrimitive>();
+        Set<AgentLink> deletedLinks = new HashSet<AgentLink>();
+        Set<Agent> deletedAgents = new HashSet<Agent>();
+
+        Transition transition = new Transition(null, getList(new Agent("a1")), null, getList(new Agent("b1")), 0.1f);
+
+        transition.createPrimitivesDeleteAgents(leftAgents, indexMapLeftRight, primitives, deletedLinks, deletedAgents);
+        
+        checkSetByString("[DELETE_AGENT(A(s1!_)), DELETE_AGENT(C(s2?,s3!1))]", primitives);
+        checkSetByString("[A(s1!_), C(s2?,s3!1)]", deletedAgents);
+        checkSetByString("[s1!_->occupied, s2?->any, s3!1->s4!1]", deletedLinks);
+    }
+    
+    private <T> void checkSetByString(String expected, Collection<T> actual) {
+        List<T> actualList = new ArrayList<T>(actual);
+        Collections.sort(actualList, new Comparator<T>() {
+            public int compare(T o1, T o2) {
+                return o1.toString().compareTo(o2.toString());
+            }
+        });
+        assertEquals(expected, actualList.toString());
+    }
+
+    @Test
+    public void testcreatePrimitivesDeleteLinks() {
+        List<Agent> leftAgents = getList(
+                new Agent("A", new AgentSite("s1", null, "_"), new AgentSite("s2", null, "2")), 
+                new Agent("B", new AgentSite("s3", null, "_"), new AgentSite("s4", null, "2")), 
+                new Agent("C", new AgentSite("s5", null, "?"), new AgentSite("s6", null, "1")),
+                new Agent("D", new AgentSite("s7", null, "1")),
+                new Agent("E", new AgentSite("s8", null, "?"))
+                );
+        List<Agent> rightAgents = getList(
+                new Agent("A", new AgentSite("s2", null, "2")), 
+                new Agent("B", new AgentSite("s3", null, "_")), 
+                new Agent("C", new AgentSite("s5", null, "?"), new AgentSite("s6", null, "2")),
+                new Agent("D"));
+        getComplexes(leftAgents);
+        getComplexes(rightAgents);
+        int[] indexMapLeftRight = new int[] { 0, 1, 2, 3, DELETED };
+        List<TransformPrimitive> primitives = new ArrayList<TransformPrimitive>();
+        Set<AgentLink> deletedLinks = new HashSet<AgentLink>();
+
+        Transition transition = new Transition(null, getList(new Agent("a1")), null, getList(new Agent("b1")), 0.1f);
+        transition.createPrimitivesDeleteLinks(leftAgents, rightAgents, indexMapLeftRight, primitives, deletedLinks);
+        
+        checkSetByString("[DELETE_LINK(s1!_->occupied), DELETE_LINK(s2!2->s4!2), DELETE_LINK(s6!1->s7!1)]", primitives);
+        checkSetByString("[s1!_->occupied, s2!2->s4!2, s6!1->s7!1]", deletedLinks);
+        
+        // Check channels
+        leftAgents = getList(
+                new Agent("A", new AgentSite("s1", null, "_"), new AgentSite("s2", null, "2", "ch1")), 
+                new Agent("B", new AgentSite("s3", null, "_", "ch2"), new AgentSite("s4", null, "2")), 
+                new Agent("C", new AgentSite("s5", null, "?"), new AgentSite("s6", null, "1")),
+                new Agent("D", new AgentSite("s7", null, "1")),
+                new Agent("E", new AgentSite("s8", null, "?"))
+                );
+        rightAgents = getList(
+                new Agent("A", new AgentSite("s1", null, "_", "ch3"), new AgentSite("s2", null, "2", "ch4")), 
+                new Agent("B", new AgentSite("s3", null, "_", "ch2"), new AgentSite("s4", null, "2")), 
+                new Agent("C", new AgentSite("s5", null, "?"), new AgentSite("s6", null, "1")),
+                new Agent("D", new AgentSite("s7", null, "1"))
+                );
+
+        getComplexes(leftAgents);
+        getComplexes(rightAgents);
+        indexMapLeftRight = new int[] { 0, 1, 2, 3, DELETED };
+        primitives.clear();
+        deletedLinks.clear();
+
+        transition = new Transition(null, getList(new Agent("a1")), null, getList(new Agent("b1")), 0.1f);
+        transition.createPrimitivesDeleteLinks(leftAgents, rightAgents, indexMapLeftRight, primitives, deletedLinks);
+        
+        checkSetByString("[DELETE_LINK(s1!_->occupied), DELETE_LINK(s2!2:ch1->s4!2)]", primitives);
+        checkSetByString("[s1!_->occupied, s2!2:ch1->s4!2]", deletedLinks);
+        
+    }
+
+    @Test
+    public void testcreatePrimitivesAddLinks() {
+        List<Agent> leftAgents = getList(
+                new Agent("A", new AgentSite("s1", null, null), new AgentSite("s2", null, "2")), 
+                new Agent("B", new AgentSite("s3", null, "_"), new AgentSite("s4", null, null)), 
+                new Agent("C", new AgentSite("s5", null, "?"), new AgentSite("s6", null, "2")),
+                new Agent("D", new AgentSite("s7", null, null), new AgentSite("s8", null, null)));
+        List<Agent> rightAgents = getList(
+                new Agent("A", new AgentSite("s1", null, null), new AgentSite("s2", null, "2")), 
+                new Agent("B", new AgentSite("s3", null, "_"), new AgentSite("s4", null, "2")), 
+                new Agent("C", new AgentSite("s5", null, "?"), new AgentSite("s6", null, "1")),
+                new Agent("D", new AgentSite("s7", null, "1"), new AgentSite("s8", null, "4")),
+                new Agent("E", new AgentSite("s9", null, "?"), new AgentSite("s10", null, "3"), new AgentSite("s11", null, "4")),
+                new Agent("F", new AgentSite("s12", null, null), new AgentSite("s13", null, "3"))
+                );
+        getComplexes(leftAgents);
+        getComplexes(rightAgents);
+        int[] indexMapRightLeft = new int[] { 0, 1, 2, 3, UNMAPPED, UNMAPPED };
+        List<TransformPrimitive> primitives = new ArrayList<TransformPrimitive>();
+
+        Transition transition = new Transition(null, getList(new Agent("a1")), null, getList(new Agent("b1")), 0.1f);
+        transition.createPrimitivesAddLinks(leftAgents, rightAgents, indexMapRightLeft, primitives);
+        
+        checkSetByString("[CREATE_LINK(A(s1,s2!2) [s2!2] -> B(s3!_,s4) [s4]), " +
+        		"CREATE_LINK(C(s5?,s6!2) [s6!2] -> D(s7,s8) [s7]), " +
+        		"CREATE_LINK(D(s7,s8) [s8] -> E(s10!3,s11!4,s9?) [s11!4])]", primitives); //TODO UNMAPPED - UNMAPPED links
+        
+        // Check channels
+        leftAgents = getList(
+                new Agent("A", new AgentSite("s1", null, "_"), new AgentSite("s2", null, "2", "ch1")), 
+                new Agent("B", new AgentSite("s3", null, "_", "ch2"), new AgentSite("s4", null, "2")), 
+                new Agent("C", new AgentSite("s5", null, "?"), new AgentSite("s6", null, "1")),
+                new Agent("D", new AgentSite("s7", null, "1")),
+                new Agent("E", new AgentSite("s8", null, "?"))
+                );
+        rightAgents = getList(
+                new Agent("A", new AgentSite("s1", null, "_"), new AgentSite("s2", null, "2", "ch4")), 
+                new Agent("B", new AgentSite("s3", null, "_", "ch2"), new AgentSite("s4", null, "2")), 
+                new Agent("C", new AgentSite("s5", null, "?"), new AgentSite("s6", null, "1")),
+                new Agent("D", new AgentSite("s7", null, "1", "ch3"))
+                );
+
+        getComplexes(leftAgents);
+        getComplexes(rightAgents);
+        indexMapRightLeft = new int[] { 0, 1, 2, 3 };
+        primitives.clear();
+
+        transition = new Transition(null, getList(new Agent("a1")), null, getList(new Agent("b1")), 0.1f);
+        transition.createPrimitivesAddLinks(leftAgents, rightAgents, indexMapRightLeft, primitives);
+        
+        checkSetByString("[CREATE_LINK(A(s1!_,s2!2:ch1) [s2!2:ch1] -> B(s3!_:ch2,s4!2) [s4!2] ch4), " +
+        		"CREATE_LINK(C(s5?,s6!1) [s6!1] -> D(s7!1) [s7!1] ch3)]", primitives);
+    }
 }

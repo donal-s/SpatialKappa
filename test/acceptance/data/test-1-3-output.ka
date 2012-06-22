@@ -1,7 +1,6 @@
 %agent: A(s,loc~cytosol~membrane,loc_index_1~0~1)
 %agent: B(s,loc~cytosol~membrane,loc_index_1~0~1)
 
-
 'dimerise AB-1' A(s,loc~cytosol,loc_index_1~0),B(s,loc~membrane,loc_index_1~0) -> A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~membrane,loc_index_1~0) @ 1.0
 'dimerise AB-2' A(s,loc~cytosol,loc_index_1~1),B(s,loc~membrane,loc_index_1~1) -> A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~membrane,loc_index_1~1) @ 1.0
 'dimerise BA-1' A(s,loc~membrane,loc_index_1~0),B(s,loc~cytosol,loc_index_1~0) -> A(s!1,loc~membrane,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0) @ 1.0

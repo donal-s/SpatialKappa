@@ -5,7 +5,6 @@
 %agent: egfr-inside(dl,r,Y1068~Y~pY,Y1148~Y~pY,loc~cytosol~extracellular)
 %agent: egfr-outside(l,dl,loc~cytosol~extracellular)
 
-
 egfr-outside(dl!1,l,loc~extracellular),egfr-inside(dl!1,r,loc~cytosol),egf(r,loc~extracellular) -> egfr-outside(dl!1,l!2,loc~extracellular),egfr-inside(dl!1,r,loc~cytosol),egf(r!2,loc~extracellular) @ 'kp1'
 egfr-outside(dl!1,l!2,loc~extracellular),egfr-inside(dl!1,r,loc~cytosol),egf(r!2,loc~extracellular) -> egfr-outside(dl!1,l,loc~extracellular),egfr-inside(dl!1,r,loc~cytosol),egf(r,loc~extracellular) @ 'km1'
 egfr-outside(dl!1,l!_,loc~extracellular),egfr-inside(dl!1,r,loc~cytosol),egfr-outside(dl!2,l!_,loc~extracellular),egfr-inside(dl!2,r,loc~cytosol) -> egfr-outside(dl!1,l!_,loc~extracellular),egfr-inside(dl!1,r!3,loc~cytosol),egfr-outside(dl!2,l!_,loc~extracellular),egfr-inside(dl!2,r!3,loc~cytosol) @ 'kp2'

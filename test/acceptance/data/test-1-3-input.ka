@@ -4,7 +4,7 @@
 %compartment: cytosol [2]
 %compartment: membrane [2]
 
-%channel: cross (cytosol [x] -> membrane [x]) + (membrane [x] -> cytosol [x])
+%channel: cross (:cytosol [x] -> :membrane [x]) + (:membrane [x] -> :cytosol [x])
 
 # TODO force use of transport links between compartments
 
@@ -24,14 +24,14 @@
 %obs: 'all monomer A' A(s)
 %obs: 'all monomer B' B(s)
 %obs: 'cytosol monomer A' A:cytosol(s)
-%obs: 'membrane monomer A' membrane A(s)
+%obs: 'membrane monomer A' :membrane A(s)
 %obs: 'cytosol voxel monomer B' B:cytosol[0](s)
-%obs: 'membrane voxel monomer B' membrane[0] B(s)
+%obs: 'membrane voxel monomer B' :membrane[0] B(s)
 
 %obs: 'all dimer' A(s!_)
 %obs: 'dimer AB' A:cytosol(s!1:cross),B:membrane(s!1)
 %obs: 'dimer BA' B:cytosol(s!1:cross),A:membrane(s!1)
 
-%obs: 'same voxel dimer AB' cytosol A(s!1),B(s!1) # Expect none
-%obs: 'same voxel dimer BA' cytosol A(s!1),B(s!1) # Expect none
+%obs: 'same voxel dimer AB' :cytosol A(s!1),B(s!1) # Expect none
+%obs: 'same voxel dimer BA' :cytosol A(s!1),B(s!1) # Expect none
 

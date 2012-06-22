@@ -51,7 +51,6 @@ public class PlotViewer implements ActionListener, ObservationListener {
         START, DATAFILE_SELECTED, PROCESSING
     }
     
-    private static final String STATUS_ERROR_LOADING = "Error loading file";
     private static final String STATUS_LOADING = "Loading Kappa output data file...";
     private static final String STATUS_STARTING_SIMULATION = "Starting file reading, please wait...";
     

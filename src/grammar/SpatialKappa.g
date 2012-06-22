@@ -28,8 +28,8 @@ tokens {
   LOCATION_PAIR;
   CELL_INDEX_EXPR;
   INDEX;
-  TRANSPORT;
-  TRANSFORM;
+  TRANSITION;
+  RULE;
   ID;
   LABEL;
   VAR_EXPR;
@@ -77,7 +77,6 @@ line
   | COMMENT!
   | compartmentExpr NEWLINE!
   | channelDecl NEWLINE!
-  | transportExpr NEWLINE!
   | initExpr NEWLINE!
   | plotExpr NEWLINE!
   | obsExpr NEWLINE!
@@ -88,43 +87,33 @@ line
   ;
 
 ruleExpr
-options {backtrack=true;}
   :
   label? transformExpr kineticExpr 
     -> 
-      ^(TRANSFORM transformExpr kineticExpr label?)
-  | label? locationExpr transformExpr kineticExpr 
-    -> 
-      ^(TRANSFORM transformExpr kineticExpr label? locationExpr)
+      ^(RULE transformExpr kineticExpr label?)
   ;
 
 transformExpr
 options {backtrack=true;}
   :
-  a=agentGroup FORWARD_TRANSITION b=agentGroup
+  (source=locationExpr)? (a=agentGroup)? CHANNEL_TRANSITION channelName=id (target=locationExpr)? (b=agentGroup)?
     ->
       ^(
-        FORWARD_TRANSITION
-        ^(LHS $a)
-        ^(RHS $b)
+        TRANSITION
+        ^(LHS $source? $a?)
+        ^(RHS $target? $b?)
+        ^(CHANNEL $channelName)?
        )
-  | agentGroup FORWARD_TRANSITION
+  |
+  (source=locationExpr)? (a=agentGroup)? FORWARD_TRANSITION (target=locationExpr)? (b=agentGroup)?
     ->
       ^(
-        FORWARD_TRANSITION
-        ^(LHS agentGroup)
-        ^(RHS)
+        TRANSITION
+        ^(LHS $source? $a?)
+        ^(RHS $target? $b?)
        )
-  | FORWARD_TRANSITION agentGroup
-    ->
-      ^(
-        FORWARD_TRANSITION
-        ^(LHS)
-        ^(RHS agentGroup)
-       )
-  | FORWARD_TRANSITION
-    ->
   ;
+  
 
 agentGroup
   :
@@ -135,7 +124,7 @@ agentGroup
 
 agent
   :
-  id (':' locationExpr)? ('(' (iface (',' iface)*)? ')')?
+  id (locationExpr)? ('(' (iface (',' iface)*)? ')')?
     ->
       ^(AGENT id locationExpr? iface*)
   ;
@@ -225,16 +214,9 @@ channelExpr
       ^(LOCATION_PAIR $sourceCompartment $targetCompartment)
   ;
 
-transportExpr
-  :
-  '%transport:' (transportName=label)? linkName=id (agentGroup)? kineticExpr
-    ->
-      ^(TRANSPORT $linkName agentGroup? kineticExpr $transportName?)
-  ;
-
 locationExpr
   :
-  sourceCompartment=id compartmentIndexExpr*
+  ':' sourceCompartment=id compartmentIndexExpr*
     ->
       ^(LOCATION $sourceCompartment compartmentIndexExpr*)
   ;
@@ -492,11 +474,10 @@ operator_add
   | '-'
   ;
 
-transformTransition
+
+CHANNEL_TRANSITION
   :
-  ( 
-    FORWARD_TRANSITION
-  )
+  '->:'
   ;
 
 FORWARD_TRANSITION

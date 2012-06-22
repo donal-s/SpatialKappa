@@ -68,7 +68,7 @@
 %compartment: cytosol
 %compartment: extracellular
 
-%channel: cross (cytosol -> extracellular) + (extracellular -> cytosol)
+%channel: cross (:cytosol -> :extracellular) + (:extracellular -> :cytosol)
 
 %agent: egf(r)
 %agent: Grb2(SH2,SH3)
@@ -82,7 +82,7 @@
 %init: 'Shc_tot' Shc:cytosol
 %init: 'Sos_tot' Sos:cytosol
 %init: 'egfr_tot' egfr-outside:extracellular(dl!1:cross),egfr-inside:cytosol(dl!1)
-%init: 'Grb2_Sos_tot' cytosol Grb2(SH3!1),Sos(dom!1)
+%init: 'Grb2_Sos_tot' :cytosol Grb2(SH3!1),Sos(dom!1)
 
 # Ligand-receptor binding
 egfr-outside(l,dl!1:cross),egfr-inside:cytosol(dl!1,r),egf(r) -> egfr-outside(l!2,dl!1:cross),egfr-inside(dl!1,r),egf(r!2) @ 'kp1' #ligand-monomer

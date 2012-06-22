@@ -36,7 +36,6 @@
 'diffusion-red-16' A(state~red,loc~cytosol,loc_index_1~7) -> A(state~red,loc~cytosol,loc_index_1~6) @ 0.1
 'diffusion-red-17' A(state~red,loc~cytosol,loc_index_1~8) -> A(state~red,loc~cytosol,loc_index_1~7) @ 0.1
 'diffusion-red-18' A(state~red,loc~cytosol,loc_index_1~9) -> A(state~red,loc~cytosol,loc_index_1~8) @ 0.1
-
 'heating' A(state~blue,loc~cytosol,loc_index_1~0) -> A(state~red,loc~cytosol,loc_index_1~0) @ 1.0
 'cooling-1' A(state~red,loc~cytosol,loc_index_1~0) -> A(state~blue,loc~cytosol,loc_index_1~0) @ 0.05
 'cooling-2' A(state~red,loc~cytosol,loc_index_1~1) -> A(state~blue,loc~cytosol,loc_index_1~1) @ 0.05

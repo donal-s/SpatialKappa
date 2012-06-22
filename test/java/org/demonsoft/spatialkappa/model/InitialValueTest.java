@@ -1,6 +1,5 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.TestUtils.getList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -17,7 +16,7 @@ public class InitialValueTest {
     @SuppressWarnings("unused")
     @Test
     public void testInitialValue_value() {
-        List<Complex> complexes = Utils.getComplexes(getList(new Agent("A"), 
+        List<Complex> complexes = Utils.getComplexes(Utils.getList(new Agent("A"), 
                 new Agent("B", new AgentSite("x", null, "1")), 
                 new Agent("C", new AgentSite("y", null, "1"))));
         Location location = new Location("cytosol", new CellIndexExpression("2"));
@@ -60,7 +59,7 @@ public class InitialValueTest {
     @SuppressWarnings("unused")
     @Test
     public void testInitialValue_reference() {
-        List<Complex> complexes = Utils.getComplexes(getList(new Agent("A"), 
+        List<Complex> complexes = Utils.getComplexes(Utils.getList(new Agent("A"), 
                 new Agent("B", new AgentSite("x", null, "1")), 
                 new Agent("C", new AgentSite("y", null, "1"))));
         Location location = new Location("cytosol", new CellIndexExpression("2"));

@@ -7,7 +7,7 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_MINUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
-import static org.demonsoft.spatialkappa.model.TestUtils.getList;
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -83,7 +83,7 @@ public class ChannelTest {
     
     @Test
     public void testValidate() {
-        List<Compartment> compartments = getList(new Compartment("known"));
+        List<Compartment> compartments = Utils.getList(new Compartment("known"));
         
         Channel channel = new Channel("name", new Location("known"), new Location("unknown"));
 
@@ -247,7 +247,7 @@ public class ChannelTest {
         compartments.add(new Compartment("b", 2));
         
         try {
-            channel.applyChannel(null, compartments);
+            channel.applyChannel(null, new Location("a"), compartments);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -255,7 +255,7 @@ public class ChannelTest {
         }
 
         try {
-            channel.applyChannel(new Location("a", INDEX_1), null);
+            channel.applyChannel(new Location("a", INDEX_1), new Location("a"), null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -266,7 +266,7 @@ public class ChannelTest {
             // Unknown compartment
             Channel channel2 = new Channel("label", new Location("a", INDEX_X), 
                     new Location("c", INDEX_X_PLUS_1));
-            channel2.applyChannel(new Location("a", INDEX_1), compartments);
+            channel2.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments);
             fail("missing compartment should have failed");
         }
         catch (IllegalArgumentException ex) {
@@ -277,7 +277,7 @@ public class ChannelTest {
             // Unknown compartment
             Channel channel2 = new Channel("label", new Location("c", INDEX_X), 
                     new Location("a", INDEX_X_PLUS_1));
-            channel2.applyChannel(new Location("a", INDEX_1), compartments);
+            channel2.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments);
             fail("missing compartment should have failed");
         }
         catch (IllegalArgumentException ex) {
@@ -286,14 +286,21 @@ public class ChannelTest {
 
         List<Location> expected = new ArrayList<Location>();
 
-        assertEquals(expected, channel.applyChannel(new Location("b", INDEX_1), compartments));
-        assertEquals(expected, channel.applyChannel(new Location("a"), compartments));
-        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1, INDEX_1), compartments));
-        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_X), compartments));
-        assertEquals(expected, channel.applyChannel(new Location("a", new CellIndexExpression("3")), compartments));
+        assertEquals(expected, channel.applyChannel(new Location("b", INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a"), NOT_LOCATED, compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_X), NOT_LOCATED, compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a", new CellIndexExpression("3")), NOT_LOCATED, compartments));
         
         expected.add(new Location("a", INDEX_2));
-        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), new Location("a"), compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), new Location("a", INDEX_2), compartments));
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), new Location("b"), compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), new Location("a", INDEX_0), compartments));
         
         compartments.clear();
         compartments.add(new Compartment("a", 3));
@@ -303,10 +310,10 @@ public class ChannelTest {
         channel = new Channel("label", reference1, reference2);
 
         expected.clear();
-        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_0), compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_0), NOT_LOCATED, compartments));
 
         expected.add(new Location("a", INDEX_0));
-        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
         
         compartments.clear();
         compartments.add(new Compartment("a", 5, 5, 5));
@@ -316,10 +323,10 @@ public class ChannelTest {
         channel = new Channel("label", reference1, reference2);
 
         expected.clear();
-        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_2, INDEX_1, INDEX_1), compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_2, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
 
         expected.add(new Location("a", new CellIndexExpression("3"), new CellIndexExpression("4"), INDEX_2));
-        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_0), compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_0), NOT_LOCATED, compartments));
         
         List<Location[]> locations = new ArrayList<Location[]>();
         locations.add(new Location[] {new Location("a", new CellIndexExpression("100")), new Location("a", new CellIndexExpression("101"))});
@@ -333,7 +340,7 @@ public class ChannelTest {
         expected.clear();
         expected.add(new Location("a", INDEX_0));
         expected.add(new Location("a", INDEX_2));
-        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
 
         // Ensure each location pair are processed individually
         locations.clear();
@@ -346,7 +353,6 @@ public class ChannelTest {
 
         expected.clear();
         expected.add(new Location("b"));
-        assertEquals(expected, channel.applyChannel(new Location("a"), compartments));
+        assertEquals(expected, channel.applyChannel(new Location("a"), NOT_LOCATED, compartments));
     }
-    
 }

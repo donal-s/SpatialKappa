@@ -9,9 +9,9 @@
 (cytosol [29][y] -> cytosol [0][y -1]) +\
 (cytosol [29][0] -> cytosol [0][29])
 
-%transport: 'diffusion' 6way A() @ 0.4 
-%transport: 'diffusion' 6way B() @ 0.4 
-%transport: 'diffusion' 6way C() @ 0.4 
+'diffusion' A() ->:6way A() @ 0.4 
+'diffusion' B() ->:6way B() @ 0.4 
+'diffusion' C() ->:6way C() @ 0.4 
 
 %init: cytosol[2][28] 100 (A()) 
 %init: cytosol[10][14] 100 (B()) 

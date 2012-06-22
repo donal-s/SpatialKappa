@@ -9,7 +9,7 @@ import java.util.Set;
 
 abstract class TransformPrimitive {
     enum Type {
-        DELETE_LINK, DELETE_AGENT, CREATE_COMPLEX, MERGE_COMPLEXES, CREATE_AGENT, CREATE_LINK, CHANGE_STATE
+        DELETE_LINK, DELETE_AGENT, CREATE_COMPLEX, MERGE_COMPLEXES, CREATE_AGENT, CREATE_LINK, CHANGE_STATE, MOVE_COMPLEX, MOVE_AGENT
     }
 
     public final TransformPrimitive.Type type;
@@ -20,9 +20,12 @@ abstract class TransformPrimitive {
     public final AgentSite sourceSite;
     public final AgentSite targetSite;
     public final String state;
+    public final Location sourceLocation;
+    public final Location targetLocation;
+    public final String channelName;
 
     TransformPrimitive(TransformPrimitive.Type type, AgentLink agentLink, Agent sourceAgent, Agent targetAgent, Complex complex, AgentSite sourceSite,
-            AgentSite targetSite, String state) {
+            AgentSite targetSite, String state, Location sourceLocation, Location targetLocation, String channelName) {
         this.type = type;
         this.sourceAgent = sourceAgent;
         this.targetAgent = targetAgent;
@@ -31,23 +34,30 @@ abstract class TransformPrimitive {
         this.targetSite = targetSite;
         this.complex = complex;
         this.state = state;
+        this.sourceLocation = sourceLocation;
+        this.targetLocation = targetLocation;
+        this.channelName = channelName;
     }
 
     @Override
     public String toString() {
-        return type + "(" + getFlatString(", ", true, sourceAgent, targetAgent, agentLink, complex, sourceSite, targetSite, state) + ")";
+        return type + "(" + getFlatString(", ", true, sourceAgent, targetAgent, agentLink, complex, sourceSite, targetSite, state, sourceLocation, targetLocation, channelName) + ")";
     }
     
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((agentLink == null) ? 0 : agentLink.hashCode());
+        result = prime * result + ((channelName == null) ? 0 : channelName.hashCode());
         result = prime * result + ((complex == null) ? 0 : complex.hashCode());
         result = prime * result + ((sourceAgent == null) ? 0 : sourceAgent.hashCode());
+        result = prime * result + ((sourceLocation == null) ? 0 : sourceLocation.hashCode());
         result = prime * result + ((sourceSite == null) ? 0 : sourceSite.hashCode());
         result = prime * result + ((state == null) ? 0 : state.hashCode());
         result = prime * result + ((targetAgent == null) ? 0 : targetAgent.hashCode());
+        result = prime * result + ((targetLocation == null) ? 0 : targetLocation.hashCode());
         result = prime * result + ((targetSite == null) ? 0 : targetSite.hashCode());
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         return result;
@@ -68,6 +78,12 @@ abstract class TransformPrimitive {
         }
         else if (!agentLink.equals(other.agentLink))
             return false;
+        if (channelName == null) {
+            if (other.channelName != null)
+                return false;
+        }
+        else if (!channelName.equals(other.channelName))
+            return false;
         if (complex == null) {
             if (other.complex != null)
                 return false;
@@ -79,6 +95,12 @@ abstract class TransformPrimitive {
                 return false;
         }
         else if (!sourceAgent.equals(other.sourceAgent))
+            return false;
+        if (sourceLocation == null) {
+            if (other.sourceLocation != null)
+                return false;
+        }
+        else if (!sourceLocation.equals(other.sourceLocation))
             return false;
         if (sourceSite == null) {
             if (other.sourceSite != null)
@@ -98,22 +120,24 @@ abstract class TransformPrimitive {
         }
         else if (!targetAgent.equals(other.targetAgent))
             return false;
+        if (targetLocation == null) {
+            if (other.targetLocation != null)
+                return false;
+        }
+        else if (!targetLocation.equals(other.targetLocation))
+            return false;
         if (targetSite == null) {
             if (other.targetSite != null)
                 return false;
         }
         else if (!targetSite.equals(other.targetSite))
             return false;
-        if (type == null) {
-            if (other.type != null)
-                return false;
-        }
-        else if (!type.equals(other.type))
+        if (type != other.type)
             return false;
         return true;
     }
 
-    public abstract void apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes);
+    public abstract boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments);
 
     protected String getNewLinkId(List<Complex> targetComplexes) {
         Set<Integer> foundLinks = new HashSet<Integer>();
@@ -143,52 +167,61 @@ abstract class TransformPrimitive {
     }
 
     public static TransformPrimitive getDeleteLink(AgentLink agentLink) {
-        return new TransformPrimitive(Type.DELETE_LINK, agentLink, null, null, null, null, null, null) {
+        return new TransformPrimitive(Type.DELETE_LINK, agentLink, null, null, null, null, null, null, null, null, null) {
             @Override
-            public void apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes) {
+            public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Agent mappedSourceAgent = transformMap.get(agentLink.sourceSite.agent);
                 mappedSourceAgent.getComplex().deleteLink(mappedSourceAgent, agentLink.sourceSite.name);
+                return true;
             }
         };
     }
 
-    public static TransformPrimitive getCreateLink(AgentSite sourceSite, AgentSite targetSite) {
+    public static TransformPrimitive getCreateLink(AgentSite sourceSite, AgentSite targetSite, String channelName) {
         if (sourceSite == null || targetSite == null) {
             throw new NullPointerException();
         }
-        return new TransformPrimitive(Type.CREATE_LINK, null, null, null, null, sourceSite, targetSite, null) {
+        return new TransformPrimitive(Type.CREATE_LINK, null, null, null, null, sourceSite, targetSite, null, null, null, channelName) {
             @Override
-            public void apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes) {
+            public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
 
                 Agent mappedSourceAgent = transformMap.get(sourceSite.agent);
                 AgentSite mappedSourceSite = mappedSourceAgent.getSite(sourceSite.name);
 
                 if (targetSite == AgentLink.ANY || targetSite == AgentLink.NONE || targetSite == AgentLink.OCCUPIED) {
-                    mappedSourceAgent.getComplex().createAgentLink(mappedSourceSite, targetSite, null);
+                    mappedSourceAgent.getComplex().createAgentLink(mappedSourceSite, targetSite, null, channelName);
                 }
                 else {
                     Agent mappedTargetAgent = transformMap.get(targetSite.agent);
                     AgentSite mappedTargetSite = mappedTargetAgent.getSite(targetSite.name);
                     String linkID = getNewLinkId(targetComplexes);
-                    mappedSourceAgent.getComplex().createAgentLink(mappedSourceSite, mappedTargetSite, linkID);
+                    mappedSourceAgent.getComplex().createAgentLink(mappedSourceSite, mappedTargetSite, linkID, channelName);
 
                     if (mappedTargetAgent.getComplex() != mappedSourceAgent.getComplex()) {
                         throw new IllegalArgumentException("Link sites not in same complex");
                     }
                 }
+                return true;
             }
             
             @Override
             public String toString() {
-                return type + "(" + sourceSite.agent + " [" + sourceSite + "] -> " + targetSite.agent + " [" + targetSite + "])";
+                StringBuilder builder = new StringBuilder();
+                builder.append(type).append("(").append(sourceSite.agent).append(" [").append(sourceSite).append("] -> ");
+                builder.append(targetSite.agent).append(" [").append(targetSite).append("]");
+                if (channelName != null) {
+                    builder.append(" ").append(channelName);
+                }
+                builder.append(")");
+                return builder.toString();
             }
         };
     }
 
     public static TransformPrimitive getDeleteAgent(Agent agent) {
-        return new TransformPrimitive(Type.DELETE_AGENT, null, agent, null, null, null, null, null) {
+        return new TransformPrimitive(Type.DELETE_AGENT, null, agent, null, null, null, null, null, null, null, null) {
             @Override
-            public void apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes) {
+            public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Agent mappedSourceAgent = transformMap.get(sourceAgent);
                 @SuppressWarnings("hiding")
                 Complex complex = mappedSourceAgent.getComplex();
@@ -196,24 +229,26 @@ abstract class TransformPrimitive {
                 if (complex.agents.size() == 0) {
                     targetComplexes.remove(complex);
                 }
+                return true;
             }
         };
     }
 
     public static TransformPrimitive getCreateComplex(Complex complex) {
-        return new TransformPrimitive(Type.CREATE_COMPLEX, null, null, null, complex, null, null, null) {
+        return new TransformPrimitive(Type.CREATE_COMPLEX, null, null, null, complex, null, null, null, null, null, null) {
             @Override
-            public void apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes) {
+            public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Complex cloneComplex = complex.clone();
                 targetComplexes.add(cloneComplex);
+                return true;
             }
         };
     }
 
     public static TransformPrimitive getCreateAgent(Agent sourceAgent, Agent targetAgent) {
-        return new TransformPrimitive(Type.CREATE_AGENT, null, sourceAgent, targetAgent, null, null, null, null) {
+        return new TransformPrimitive(Type.CREATE_AGENT, null, sourceAgent, targetAgent, null, null, null, null, null, null, null) {
             @Override
-            public void apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes) {
+            public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Agent cloneAgent = sourceAgent.clone();
                 for (AgentSite site1 : cloneAgent.getSites()) {
                     site1.setLinkName(null);
@@ -221,30 +256,32 @@ abstract class TransformPrimitive {
                 Agent mappedTargetAgent = transformMap.get(targetAgent);
                 mappedTargetAgent.getComplex().addAgent(cloneAgent);
                 transformMap.put(sourceAgent, cloneAgent);
+                return true;
             }
         };
     }
 
     public static TransformPrimitive getChangeState(Agent agent, AgentSite agentSite, String state) {
-        return new TransformPrimitive(Type.CHANGE_STATE, null, agent, null, null, agentSite, null, state) {
+        return new TransformPrimitive(Type.CHANGE_STATE, null, agent, null, null, agentSite, null, state, null, null, null) {
             @Override
-            public void apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes) {
+            public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Agent target = transformMap.get(sourceAgent);
                 AgentSite site = target.getSite(sourceSite.name);
                 site.setState(state);
+                return true;
             }
         };
     }
 
     public static TransformPrimitive getMergeComplexes(Agent sourceAgent, Agent targetAgent) {
-        return new TransformPrimitive(Type.MERGE_COMPLEXES, null, sourceAgent, targetAgent, null, null, null, null) {
+        return new TransformPrimitive(Type.MERGE_COMPLEXES, null, sourceAgent, targetAgent, null, null, null, null, null, null, null) {
             @Override
-            public void apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes) {
+            public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Agent mappedSourceAgent = transformMap.get(sourceAgent);
                 Agent mappedTargetAgent = transformMap.get(targetAgent);
 
                 if (mappedSourceAgent.getComplex() == mappedTargetAgent.getComplex()) {
-                    return;
+                    return true;
                 }
 
                 Complex sourceComplex = mappedSourceAgent.getComplex();
@@ -252,6 +289,7 @@ abstract class TransformPrimitive {
                 int maxLinkIdNumber = mappedTargetAgent.getComplex().renumberLinkNames(1);
                 sourceComplex.renumberLinkNames(maxLinkIdNumber + 1);
                 mappedTargetAgent.getComplex().mergeComplex(sourceComplex);
+                return true;
             }
         };
     }
@@ -279,6 +317,89 @@ abstract class TransformPrimitive {
         }
 
         return maxFound;
+    }
+
+    public static TransformPrimitive getMoveComplex(Location sourceLocation, Location targetLocation, String channelName) {
+        return new TransformPrimitive(Type.MOVE_COMPLEX, null, null, null, null, null, null, null, sourceLocation, targetLocation, channelName) {
+
+            @Override
+            public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
+                Complex targetComplex = targetComplexes.get(0);
+                Location oldLocation = targetComplex.agents.get(0).location;
+                
+                Channel channel = null;
+                for (Channel current : channels) {
+                    if (channelName.equals(current.getName())) {
+                        channel = current;
+                    }
+                }
+
+                if (channel == null) {
+                    throw new IllegalStateException("Unknown channel: " + channelName);
+                }
+                
+                List<Location> newLocations = channel.applyChannel(oldLocation, targetLocation, compartments);
+                Location newLocation;
+                if (newLocations.size() == 1) {
+                    newLocation = newLocations.get(0);
+                }
+                else {
+                    int item = (int) (newLocations.size() * Math.random());
+                    newLocation =  newLocations.get(item);
+                }
+                
+                for (Agent agent : targetComplex.agents) {
+                    agent.setLocation(newLocation);
+                }
+                return true;
+            }
+        };
+    }
+
+    public static TransformPrimitive getMoveAgent(Agent leftAgent, Location targetLocation, String channelName) {
+        return new TransformPrimitive(Type.MOVE_AGENT, null, leftAgent, null, null, null, null, null, null, targetLocation, channelName) {
+
+            @Override
+            public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels,
+                    List<Compartment> compartments) {
+
+                Agent realAgent = transformMap.get(sourceAgent);
+                Location oldLocation = realAgent.location;
+                
+                if (!oldLocation.equals(sourceAgent.location) && !sourceAgent.location.isRefinement(oldLocation)) {
+                    return false;
+                }
+                
+                Channel channel = null;
+                for (Channel current : channels) {
+                    if (channelName.equals(current.getName())) {
+                        channel = current;
+                    }
+                }
+
+                if (channel == null) {
+                    throw new IllegalStateException("Unknown channel: " + channelName);
+                }
+                
+                List<Location> newLocations = channel.applyChannel(oldLocation, targetLocation, compartments);
+                Location newLocation;
+                if (newLocations.size() == 0) {
+                    return false;
+                }
+                else if (newLocations.size() == 1) {
+                    newLocation = newLocations.get(0);
+                }
+                else {
+                    int item = (int) (newLocations.size() * Math.random());
+                    newLocation =  newLocations.get(item);
+                }
+                
+                for (Agent agent : Utils.getLinkedAgents(realAgent)) {
+                    agent.setLocation(newLocation);
+                }
+                return true;
+            }
+        };
     }
 
 }

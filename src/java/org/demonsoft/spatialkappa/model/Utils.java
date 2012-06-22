@@ -1,6 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
@@ -27,6 +28,14 @@ public class Utils {
             }
         }
         return builder.toString();
+    }
+
+    public static List<Agent> getAgents(List<Complex> complexes) {
+        List<Agent> result = new ArrayList<Agent>();
+        for (Complex complex : complexes) {
+            result.addAll(complex.agents);
+        }
+        return result;
     }
 
     public static List<Complex> getComplexes(List<Agent> agents) {
@@ -77,6 +86,38 @@ public class Utils {
 
     public static boolean equal(Object o1, Object o2) {
         return (o1 == null && o2 == null) || (o1 != null && o1.equals(o2));
+    }
+
+    public static <T> List<T> getList(T... elements) {
+        List<T> result = new ArrayList<T>();
+        result.addAll(Arrays.asList(elements));
+        return result;
+    }
+
+    public static List<Agent> getLinkedAgents(Agent agent) {
+        if (agent == null) {
+            throw new NullPointerException();
+        }
+        List<Agent> result = new ArrayList<Agent>();
+        result.add(agent);
+        
+        Stack<AgentLink> links = new Stack<AgentLink>();
+        links.addAll(agent.getLinks());
+        
+        while (!links.isEmpty()) {
+            AgentLink link = links.pop();
+            Agent sourceAgent = link.sourceSite.agent;
+            if (sourceAgent != null && !result.contains(sourceAgent)) {
+                result.add(sourceAgent);
+                links.addAll(sourceAgent.getLinks());
+            }
+            Agent targetAgent = link.targetSite.agent;
+            if (targetAgent != null && !result.contains(targetAgent)) {
+                result.add(targetAgent);
+                links.addAll(targetAgent.getLinks());
+            }
+        }
+        return result;
     }
 
 

@@ -128,7 +128,7 @@ public class Channel {
         return source.isConcreteLocation() && target.isConcreteLocation();
     }
 
-    public List<Location> applyChannel(Location location, List<Compartment> compartments) {
+    public List<Location> applyChannel(Location location, Location targetConstraint, List<Compartment> compartments) {
         if (location == null || compartments == null) {
             throw new NullPointerException();
         }
@@ -226,7 +226,9 @@ public class Channel {
             
             if (valid) {
                 Location targetLocation = new Location(target.getName(), targetIndices);
-                result.add(targetLocation);
+                if (targetConstraint == null || targetConstraint.equals(targetLocation) || targetConstraint.isRefinement(targetLocation)) {
+                    result.add(targetLocation);
+                }
             }
         }
         return result;

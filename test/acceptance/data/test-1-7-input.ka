@@ -4,7 +4,7 @@
 %compartment: cytosol [2]
 %compartment: membrane [2]
 
-%channel: cross (cytosol [x] -> membrane [x]) + (membrane [x] -> cytosol [x])
+%channel: cross (:cytosol [x] -> :membrane [x]) + (:membrane [x] -> :cytosol [x])
 
 %init: 1000 Receptor-cytosol:cytosol(dl!1:cross),Receptor-membrane:membrane(dl!1)
 

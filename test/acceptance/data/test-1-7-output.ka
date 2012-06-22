@@ -1,7 +1,6 @@
 %agent: Receptor-cytosol(dl,l,r,loc~cytosol~membrane,loc_index_1~0~1)
 %agent: Receptor-membrane(dl,loc~cytosol~membrane,loc_index_1~0~1)
 
-
 Receptor-cytosol(l,r),Receptor-cytosol(l,r) -> Receptor-cytosol(l!1,r),Receptor-cytosol(l,r!1) @ 'link rate'
 Receptor-cytosol(l,r),Receptor-cytosol(l!1,r),Receptor-cytosol(l,r!1) -> Receptor-cytosol(l!2,r),Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1) @ 'link rate'
 Receptor-cytosol(l,r),Receptor-cytosol(l!2,r),Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1) -> Receptor-cytosol(l!3,r),Receptor-cytosol(l!2,r!3),Receptor-cytosol(l!1,r!2),Receptor-cytosol(l,r!1) @ 'link rate'

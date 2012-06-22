@@ -31,10 +31,8 @@ import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.InitialValue;
 import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.KappaModel.MappingInstance;
-import org.demonsoft.spatialkappa.model.LocatedTransform;
 import org.demonsoft.spatialkappa.model.Location;
-import org.demonsoft.spatialkappa.model.Transform;
-import org.demonsoft.spatialkappa.model.Transport;
+import org.demonsoft.spatialkappa.model.Transition;
 import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.Variable.Type;
 import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
@@ -99,13 +97,8 @@ public class SpatialTranslator {
 
         // TODO - allow multiple diffusions same name
         // TODO - restrict diffusion agents to unlinked complexes
-        for (Transport transport : kappaModel.getTransports()) {
-            builder.append(getKappaString(transport));
-        }
-        builder.append("\n");
-
-        for (LocatedTransform transform : kappaModel.getLocatedTransforms()) {
-            builder.append(getKappaString(transform));
+        for (Transition transition : kappaModel.getTransitions()) {
+            builder.append(getKappaString(transition));
         }
         builder.append("\n");
 
@@ -344,38 +337,60 @@ public class SpatialTranslator {
         return false;
     }
 
-    String getKappaString(Transport transport) {
+    String getKappaString(Transition transition) {
         StringBuilder builder = new StringBuilder();
-        Channel channel = ((KappaModel) kappaModel).getChannel(kappaModel.getChannels(), transport.getCompartmentLinkName());
-        int labelSuffix = 1;
-        String[][] stateSuffixPairs = getLinkStateSuffixPairs(channel, kappaModel.getCompartments());
-        List<Agent> agents = transport.getAgents();
-        if (agents != null) {
-            labelSuffix = writeAgents(builder, stateSuffixPairs, transport, channel, agents, labelSuffix,
-                    kappaModel.getAgentDeclarationMap(), true);
+        if (transition.channelName != null) {
+            Channel channel = ((KappaModel) kappaModel).getChannel(kappaModel.getChannels(), transition.channelName);
+            int labelSuffix = 1;
+            String[][] stateSuffixPairs = getLinkStateSuffixPairs(channel, kappaModel.getCompartments());
+            List<Agent> agents = transition.leftAgents;
+            if (agents.size() > 0) {
+                labelSuffix = writeAgents(builder, stateSuffixPairs, transition, agents, labelSuffix,
+                        kappaModel.getAgentDeclarationMap(), true);
+            }
+            else {
+                agents = getAggregateAgents(kappaModel.getAgentDeclarationMap());
+                List<Agent> currentAgents = new ArrayList<Agent>();
+                for (Agent agent : agents) {
+                    currentAgents.clear();
+                    currentAgents.add(agent);
+                    labelSuffix = writeAgents(builder, stateSuffixPairs, transition, currentAgents,
+                            labelSuffix, kappaModel.getAgentDeclarationMap(), true);
+                }
+            }
         }
         else {
-            agents = getAggregateAgents(kappaModel.getAgentDeclarationMap());
-            List<Agent> currentAgents = new ArrayList<Agent>();
-            for (Agent agent : agents) {
-                currentAgents.clear();
-                currentAgents.add(agent);
-                labelSuffix = writeAgents(builder, stateSuffixPairs, transport, channel, currentAgents,
-                        labelSuffix, kappaModel.getAgentDeclarationMap(), true);
+            List<Transition> locatedTransitions = 
+                    ((KappaModel) kappaModel).getValidLocatedTransitions(transition, kappaModel.getCompartments(), kappaModel.getChannels());
+    
+            for (Transition locatedTransition : locatedTransitions) {
+                if (locatedTransition.label != null) {
+                    builder.append("'").append(locatedTransition.label).append("' ");
+                }
+                if (locatedTransition.leftAgents.size() > 0) {
+                    builder.append(getAgentKappaString(locatedTransition.leftAgents, "")).append(" ");
+                }
+                builder.append("-> ");
+                if (locatedTransition.rightAgents.size() > 0) {
+                    builder.append(getAgentKappaString(locatedTransition.rightAgents, "")).append(" ");
+                }
+                builder.append("@ ").append(locatedTransition.getRate().toString()).append("\n");
             }
+            
         }
         return builder.toString();
     }
 
-    private int writeAgents(StringBuilder builder, String[][] stateSuffixPairs, Transport transport, Channel channel,
+    
+    private int writeAgents(StringBuilder builder, String[][] stateSuffixPairs, Transition transition,
             List<Agent> agents, int startLabelSuffix, Map<String, AggregateAgent> aggregateAgentMap, boolean forceSuffix) {
 
         int labelSuffix = startLabelSuffix;
         List<Agent> isolatedAgents = getIsolatedAgents(agents, aggregateAgentMap);
 
         for (int index = 0; index < stateSuffixPairs.length; index++) {
-            if (transport.label != null) {
-                builder.append("'").append(transport.label);
+            if (transition.label != null) {
+                builder.append("'").append(transition.label);
                 if (stateSuffixPairs.length > 1 || forceSuffix) {
                     builder.append("-").append(labelSuffix++);
                 }
@@ -386,7 +401,7 @@ public class SpatialTranslator {
             builder.append(getAgentKappaString(isolatedAgents, leftSuffix));
             builder.append(" -> ");
             builder.append(getAgentKappaString(isolatedAgents, rightSuffix)).append(" @ ");
-            builder.append(transport.getRate().toString());
+            builder.append(transition.getRate().toString());
             builder.append("\n");
         }
         return labelSuffix;
@@ -410,31 +425,6 @@ public class SpatialTranslator {
         return result;
     }
 
-    // Transforms
-    String getKappaString(LocatedTransform transition) {
-        StringBuilder builder = new StringBuilder();
-        Transform templateTransform = (Transform) transition.transition;
-        
-        
-        List<Transform> locatedTransforms = 
-                ((KappaModel) kappaModel).getValidLocatedTransforms(templateTransform, kappaModel.getCompartments(), kappaModel.getChannels());
-
-        for (Transform transform : locatedTransforms) {
-            if (transform.label != null) {
-                builder.append("'").append(transform.label).append("' ");
-            }
-            if (transform.leftAgents.size() > 0) {
-                builder.append(getAgentKappaString(transform.leftAgents, "")).append(" ");
-            }
-            builder.append("-> ");
-            if (transform.rightAgents.size() > 0) {
-                builder.append(getAgentKappaString(transform.rightAgents, "")).append(" ");
-            }
-            builder.append("@ ").append(transform.getRate().toString()).append("\n");
-        }
-        
-        return builder.toString();
-    }
 
     List<Map<Location, String>> createPartitionMaps(List<Location> partitionLocations) {
         List<Map<Location, String>> result = new ArrayList<Map<Location, String>>();

@@ -1,7 +1,6 @@
 %agent: A(s,loc~cytosol,loc_index_1~0~1)
 %agent: B(s,loc~cytosol,loc_index_1~0~1)
 
-
 'dimerise AB' A(s,loc~cytosol,loc_index_1~0),B(s,loc~cytosol,loc_index_1~1) -> A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1) @ 1.0
 'dimerise BA' A(s,loc~cytosol,loc_index_1~1),B(s,loc~cytosol,loc_index_1~0) -> A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~0) @ 1.0
 'break AB' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1) -> A(s,loc~cytosol,loc_index_1~0),B(s,loc~cytosol,loc_index_1~1) @ 'break-rate'

@@ -124,9 +124,13 @@ public class AgentSite implements Serializable {
         return true;
     }
 
-	public String getChannel() {
-		return channel;
-	}
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
 
     public String toString(boolean basicKappaOnly) {
         StringBuilder output = new StringBuilder(name);

@@ -1,23 +1,23 @@
 %agent: A(state~blue~red)
 %compartment: cytosol [10]
-%channel: intra-cytosol (cytosol [x] -> cytosol [x+1]) + (cytosol [x] -> cytosol [x -1])
+%channel: intra-cytosol (:cytosol [x] -> :cytosol [x+1]) + (:cytosol [x] -> :cytosol [x -1])
 
-%transport: 'diffusion-all' intra-cytosol @ 0.1
-%transport: 'diffusion-red' intra-cytosol A(state~red) @ 0.1
-'heating' cytosol[0] A(state~blue) -> A(state~red) @ 1.0
-'cooling' cytosol A(state~red) -> A(state~blue) @ 0.05
+'diffusion-all' ->:intra-cytosol @ 0.1
+'diffusion-red' A(state~red) ->:intra-cytosol A(state~red) @ 0.1
+'heating' :cytosol[0] A(state~blue) -> A(state~red) @ 1.0
+'cooling' :cytosol A(state~red) -> A(state~blue) @ 0.05
 
-%init: 2000 cytosol A(state~blue)
+%init: 2000 :cytosol A(state~blue)
 
 %obs: 'all red' A(state~red)
-%obs: 'cytosol blue' cytosol A(state~blue)
-%obs: 'red[0]' cytosol[0] A(state~red) 
-%obs: 'red[1]' cytosol[1] A(state~red) 
-%obs: 'red[2]' cytosol[2] A(state~red) 
-%obs: 'red[3]' cytosol[3] A(state~red) 
-%obs: 'red[4]' cytosol[4] A(state~red) 
-%obs: 'red[5]' cytosol[5] A(state~red) 
-%obs: 'red[6]' cytosol[6] A(state~red) 
-%obs: 'red[7]' cytosol[7] A(state~red) 
-%obs: 'red[8]' cytosol[8] A(state~red) 
-%obs: 'red[9]' cytosol[9] A(state~red) 
+%obs: 'cytosol blue' :cytosol A(state~blue)
+%obs: 'red[0]' :cytosol[0] A(state~red) 
+%obs: 'red[1]' :cytosol[1] A(state~red) 
+%obs: 'red[2]' :cytosol[2] A(state~red) 
+%obs: 'red[3]' :cytosol[3] A(state~red) 
+%obs: 'red[4]' :cytosol[4] A(state~red) 
+%obs: 'red[5]' :cytosol[5] A(state~red) 
+%obs: 'red[6]' :cytosol[6] A(state~red) 
+%obs: 'red[7]' :cytosol[7] A(state~red) 
+%obs: 'red[8]' :cytosol[8] A(state~red) 
+%obs: 'red[9]' :cytosol[9] A(state~red) 

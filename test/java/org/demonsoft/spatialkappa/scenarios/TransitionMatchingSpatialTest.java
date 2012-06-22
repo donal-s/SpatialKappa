@@ -189,9 +189,10 @@ public class TransitionMatchingSpatialTest {
 
     private final void checkObservations(int observation, String[] observableNames, float accuracy, float... values) {
         for (int index = 0; index < observableNames.length; index++) {
-            assertNotNull("Observable not found: " + observableNames[index], currentObservation.observables.get(observableNames[index]));
+            assertNotNull("Observable not found: " + observableNames[index] + " in " + currentObservation.observables.keySet(),
+                    currentObservation.observables.get(observableNames[index]));
 
-            assertEquals("Observation " + observation + ": " + observableNames[index], 
+            assertEquals("Observation " + observation + ": " + observableNames[index] + " in " + currentObservation, 
                     values[index], currentObservation.observables.get(observableNames[index]).value, accuracy);
         }
     }
@@ -407,8 +408,8 @@ public class TransitionMatchingSpatialTest {
 
     @Test
     public void testSimpleTransport() throws Exception {
-        checkEventSimulation(SIMPLE_TRANSPORT_INPUT, new String[] {"val[0]", "val[1]", "val[2]", "val[3]"}, 400, 60, new float[][] {
-                {2000, 0, 0, 0}, {1680, 300, 20, 0}, {1500, 450, 50, 0}, {1350, 500, 100, 0},
+        checkEventSimulation(SIMPLE_TRANSPORT_INPUT, new String[] {"val[0]", "val[1]", "val[2]", "val[3]"}, 400, 80, new float[][] {
+                {2000, 0, 0, 0}, {1680, 300, 20, 0}, {1445, 500, 50, 5}, {1235, 650, 100, 15},
         });
     }
     
@@ -417,14 +418,6 @@ public class TransitionMatchingSpatialTest {
         checkEventSimulation(DIRECTIONAL_TRANSPORT_INPUT, 
                 new String[] {"val[0]A", "val[1]A", "val[2]A", "val[0]B", "val[1]B", "val[2]B", }, 2000, 100, new float[][] {
                 {1000, 0, 0, 0, 0, 1000}, {330, 330, 330, 330, 330, 330}, {0, 0, 1000, 1000, 0, 0}, 
-        });
-    }
-    
-    @Test
-    public void testMultipleNamesDiscreteComplexTransport() throws Exception {
-        checkEventSimulation(MULTIPLE_NAMES_DISCRETE_COMPLEX_TRANSPORT_INPUT, 
-                new String[] {"val[0]A", "val[1]A", "val[0]B", "val[1]B", }, 1000, 0, new float[][] {
-                {1000, 0, 0, 1000}, {0, 1000, 0, 1000}, 
         });
     }
     
@@ -486,55 +479,41 @@ public class TransitionMatchingSpatialTest {
     private static final String VERY_SIMPLE_TRANSPORT_INPUT = 
         "%agent: A()\n" +
         "%compartment: cytosol [2]\n" + 
-        "%channel: intra-cytosol cytosol [x] -> cytosol [x+1]\n" + 
-        "%transport: 'diffusion-all' intra-cytosol @ 0.1\n" + 
-        "%init: 10 cytosol[0] A() \n" + 
-        "%obs: 'val[0]' cytosol[0] A() \n" + 
-        "%obs: 'val[1]' cytosol[1] A() \n" + 
+        "%channel: intra-cytosol :cytosol [x] -> :cytosol [x+1]\n" + 
+        "'diffusion-all' ->:intra-cytosol @ 0.1\n" + 
+        "%init: 10 :cytosol[0] A() \n" + 
+        "%obs: 'val[0]' :cytosol[0] A() \n" + 
+        "%obs: 'val[1]' :cytosol[1] A() \n" + 
         "";
     
     private static final String SIMPLE_TRANSPORT_INPUT = 
         "%agent: A()\n" +
         "%compartment: cytosol [4]\n" + 
-        "%channel: intra-cytosol (cytosol [x] -> cytosol [x+1]) + (cytosol [x] -> cytosol [x -1])\n" + 
-        "%transport: 'diffusion-all' intra-cytosol @ 0.1\n" + 
-        "%init: 2000 cytosol[0] A() \n" + 
-        "%obs: 'val[0]' cytosol[0] A() \n" + 
-        "%obs: 'val[1]' cytosol[1] A() \n" + 
-        "%obs: 'val[2]' cytosol[2] A() \n" + 
-        "%obs: 'val[3]' cytosol[3] A() \n" + 
+        "%channel: intra-cytosol (:cytosol [x] -> :cytosol [x+1]) + (:cytosol [x] -> :cytosol [x -1])\n" + 
+        "'diffusion-all' ->:intra-cytosol @ 0.1\n" + 
+        "%init: 2000 :cytosol[0] A() \n" + 
+        "%obs: 'val[0]' :cytosol[0] A() \n" + 
+        "%obs: 'val[1]' :cytosol[1] A() \n" + 
+        "%obs: 'val[2]' :cytosol[2] A() \n" + 
+        "%obs: 'val[3]' :cytosol[3] A() \n" + 
         "";
     
     private static final String DIRECTIONAL_TRANSPORT_INPUT = 
         "%agent: A()\n" +
         "%agent: B()\n" +
         "%compartment: cytosol [3]\n" + 
-        "%channel: forward cytosol [x] -> cytosol [x+1]\n" + 
-        "%channel: backward cytosol [x] -> cytosol [x -1]\n" + 
-        "%transport: 'forward'       forward       A() @ 0.1\n" + 
-        "%transport: 'backward'      backward      B() @ 0.1\n" + 
-        "%init: 1000 cytosol[0] A() \n" + 
-        "%init: 1000 cytosol[2] B() \n" + 
-        "%obs: 'val[0]A' cytosol[0] A() \n" + 
-        "%obs: 'val[1]A' cytosol[1] A() \n" + 
-        "%obs: 'val[2]A' cytosol[2] A() \n" + 
-        "%obs: 'val[0]B' cytosol[0] B() \n" + 
-        "%obs: 'val[1]B' cytosol[1] B() \n" + 
-        "%obs: 'val[2]B' cytosol[2] B() \n" + 
-        "";
-    
-    private static final String MULTIPLE_NAMES_DISCRETE_COMPLEX_TRANSPORT_INPUT = 
-        "%agent: A()\n" +
-        "%agent: B()\n" +
-        "%compartment: cytosol [2]\n" + 
-        "%channel: forward cytosol [x] -> cytosol [x+1]\n" + 
-        "%transport: 'forward'       forward       B(),A() @ 0.1\n" + 
-        "%init: 1000 cytosol[0] A() \n" + 
-        "%init: 1000 cytosol[1] B() \n" + 
-        "%obs: 'val[0]A' cytosol[0] A() \n" + 
-        "%obs: 'val[1]A' cytosol[1] A() \n" + 
-        "%obs: 'val[0]B' cytosol[0] B() \n" + 
-        "%obs: 'val[1]B' cytosol[1] B() \n" + 
+        "%channel: forward :cytosol [x] -> :cytosol [x+1]\n" + 
+        "%channel: backward :cytosol [x] -> :cytosol [x -1]\n" + 
+        "'forward'  A() ->:forward  A() @ 0.1\n" + 
+        "'backward' B() ->:backward B() @ 0.1\n" + 
+        "%init: 1000 :cytosol[0] A() \n" + 
+        "%init: 1000 :cytosol[2] B() \n" + 
+        "%obs: 'val[0]A' :cytosol[0] A() \n" + 
+        "%obs: 'val[1]A' :cytosol[1] A() \n" + 
+        "%obs: 'val[2]A' :cytosol[2] A() \n" + 
+        "%obs: 'val[0]B' :cytosol[0] B() \n" + 
+        "%obs: 'val[1]B' :cytosol[1] B() \n" + 
+        "%obs: 'val[2]B' :cytosol[2] B() \n" + 
         "";
     
     private static final String INITIAL_DISTRIBUTION_INPUT = 
@@ -542,38 +521,38 @@ public class TransitionMatchingSpatialTest {
         "%compartment: cytosol [5]\n" + 
         "%compartment: nucleus \n" + 
         "%init: 120 A() \n" + 
-        "%init: 2000 cytosol    A() \n" + 
-        "%init: 600 cytosol[2] A() \n" + 
-        "%obs: 'nucleus' nucleus   A() \n" + 
-        "%obs: 'val[0]' cytosol[0] A() \n" + 
-        "%obs: 'val[1]' cytosol[1] A() \n" + 
-        "%obs: 'val[2]' cytosol[2] A() \n" + 
-        "%obs: 'val[3]' cytosol[3] A() \n" + 
-        "%obs: 'val[4]' cytosol[4] A() \n" + 
+        "%init: 2000 :cytosol    A() \n" + 
+        "%init: 600 :cytosol[2] A() \n" + 
+        "%obs: 'nucleus' :nucleus   A() \n" + 
+        "%obs: 'val[0]' :cytosol[0] A() \n" + 
+        "%obs: 'val[1]' :cytosol[1] A() \n" + 
+        "%obs: 'val[2]' :cytosol[2] A() \n" + 
+        "%obs: 'val[3]' :cytosol[3] A() \n" + 
+        "%obs: 'val[4]' :cytosol[4] A() \n" + 
         "";
     
     private static final String CELL_LIMITED_TRANSFORM_INPUT = 
         "%agent: A(S~x~y)\n" +
         "%compartment: cytosol [2]\n" + 
         "%compartment: membrane\n" + 
-        "'react' cytosol[1] A(S~x) -> A(S~y) @ 0.1\n" + 
-        "%init: 2000 cytosol A(S~x) \n" + 
-        "%init: 500 membrane A(S~x) \n" + 
-        "%obs: 'cytosol[0]' cytosol[0] A(S~x) \n" + 
-        "%obs: 'cytosol[1]' cytosol[1] A(S~x) \n" + 
-        "%obs: 'membrane[1]' membrane A(S~x) \n" + 
+        "'react' :cytosol[1] A(S~x) -> A(S~y) @ 0.1\n" + 
+        "%init: 2000 :cytosol A(S~x) \n" + 
+        "%init: 500 :membrane A(S~x) \n" + 
+        "%obs: 'cytosol[0]' :cytosol[0] A(S~x) \n" + 
+        "%obs: 'cytosol[1]' :cytosol[1] A(S~x) \n" + 
+        "%obs: 'membrane[1]' :membrane A(S~x) \n" + 
         "";
     
     private static final String COMPARTMENT_LIMITED_TRANSFORM_INPUT = 
         "%agent: A(S~x~y)\n" +
         "%compartment: cytosol [2]\n" + 
         "%compartment: membrane\n" + 
-        "'react' cytosol A(S~x) -> A(S~y) @ 0.1\n" + 
-        "%init: 2000 cytosol A(S~x) \n" + 
-        "%init: 500 membrane A(S~x) \n" + 
-        "%obs: 'cytosol[0]' cytosol[0] A(S~x) \n" + 
-        "%obs: 'cytosol[1]' cytosol[1] A(S~x) \n" + 
-        "%obs: 'membrane[1]' membrane A(S~x) \n" + 
+        "'react' :cytosol A(S~x) -> A(S~y) @ 0.1\n" + 
+        "%init: 2000 :cytosol A(S~x) \n" + 
+        "%init: 500 :membrane A(S~x) \n" + 
+        "%obs: 'cytosol[0]' :cytosol[0] A(S~x) \n" + 
+        "%obs: 'cytosol[1]' :cytosol[1] A(S~x) \n" + 
+        "%obs: 'membrane[1]' :membrane A(S~x) \n" + 
         "";
     
     private static final String UNLIMITED_TRANSFORM_INPUT = 
@@ -581,11 +560,11 @@ public class TransitionMatchingSpatialTest {
         "%compartment: cytosol [2]\n" + 
         "%compartment: membrane\n" + 
         "'react' A(S~x) -> A(S~y) @ 0.1\n" + 
-        "%init: 2000 cytosol A(S~x) \n" + 
-        "%init: 1000 membrane A(S~x) \n" + 
-        "%obs: 'cytosol[0]' cytosol[0] A(S~x) \n" + 
-        "%obs: 'cytosol[1]' cytosol[1] A(S~x) \n" + 
-        "%obs: 'membrane[1]' membrane A(S~x) \n" + 
+        "%init: 2000 :cytosol A(S~x) \n" + 
+        "%init: 1000 :membrane A(S~x) \n" + 
+        "%obs: 'cytosol[0]' :cytosol[0] A(S~x) \n" + 
+        "%obs: 'cytosol[1]' :cytosol[1] A(S~x) \n" + 
+        "%obs: 'membrane[1]' :membrane A(S~x) \n" + 
         "";
     
     private static final String TRANSITION_ACTIVATION_INPUT = 
@@ -593,27 +572,27 @@ public class TransitionMatchingSpatialTest {
         "%agent: B(x)\n" +
         "%agent: C(x)\n" +
         "%compartment: cytosol [3] \n" + 
-        "%channel: intra-cytosola cytosol [0] -> cytosol [1] \n" + 
-        "%channel: intra-cytosolb cytosol [2] -> cytosol [1] \n" + 
-        "'react' cytosol A(x),B(x) -> A(x!1),B(x!1) @ 0.1\n" + 
-        "%transport: 'diffusion-a' intra-cytosola A(x) @ 0.1 \n" + 
-        "%transport: 'diffusion-b' intra-cytosolb B(x) @ 0.1 \n" + 
-        "%init: 1000 cytosol[0] A(x) \n" + 
-        "%init: 1000 cytosol[2] B(x) \n" + 
-        "%obs: 'C' cytosol A(x!1),B(x!1)\n" + 
+        "%channel: intra-cytosola :cytosol [0] -> :cytosol [1] \n" + 
+        "%channel: intra-cytosolb :cytosol [2] -> :cytosol [1] \n" + 
+        "'react' :cytosol A(x),B(x) -> A(x!1),B(x!1) @ 0.1\n" + 
+        "'diffusion-a' A(x) ->:intra-cytosola A(x) @ 0.1 \n" + 
+        "'diffusion-b' B(x) ->:intra-cytosolb B(x) @ 0.1 \n" + 
+        "%init: 1000 :cytosol[0] A(x) \n" + 
+        "%init: 1000 :cytosol[2] B(x) \n" + 
+        "%obs: 'C' :cytosol A(x!1),B(x!1)\n" + 
         "";
     
     private static final String STEADY_STATE_CONCENTRATION_GRADIENT_INPUT = 
         "%agent: A()\n" +
         "%compartment: cytosol [4]\n" + 
-        "%channel: intra-cytosol cytosol [x] -> cytosol [x+1]\n" + 
-        "%transport: 'diffusion-all' intra-cytosol @ 0.1\n" + 
-        "'source' cytosol[0] -> A() @ 5\n" + 
-        "'sink' cytosol[3] A() -> @ [inf]\n" + 
-        "%obs: 'val[0]' cytosol[0] A() \n" + 
-        "%obs: 'val[1]' cytosol[1] A() \n" + 
-        "%obs: 'val[2]' cytosol[2] A() \n" + 
-        "%obs: 'val[3]' cytosol[3] A() \n" + 
+        "%channel: intra-cytosol :cytosol [x] -> :cytosol [x+1]\n" + 
+        "'diffusion-all' ->:intra-cytosol @ 0.1\n" + 
+        "'source' :cytosol[0] -> A() @ 5\n" + 
+        "'sink' :cytosol[3] A() -> @ [inf]\n" + 
+        "%obs: 'val[0]' :cytosol[0] A() \n" + 
+        "%obs: 'val[1]' :cytosol[1] A() \n" + 
+        "%obs: 'val[2]' :cytosol[2] A() \n" + 
+        "%obs: 'val[3]' :cytosol[3] A() \n" + 
         "";
 
 }

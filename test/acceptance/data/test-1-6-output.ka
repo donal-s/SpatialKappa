@@ -1,6 +1,5 @@
 %agent: A(l1,l2,l3,l4,l5,l6,loc~cytosol,loc_index_1~0~1~2~3,loc_index_2~0~1~2~3)
 
-
 A(l1,loc~cytosol,loc_index_1~0,loc_index_2~0),A(l4,loc~cytosol,loc_index_1~0,loc_index_2~1) -> A(l1!1,loc~cytosol,loc_index_1~0,loc_index_2~0),A(l4!1,loc~cytosol,loc_index_1~0,loc_index_2~1) @ 'link rate'
 A(l1,loc~cytosol,loc_index_1~1,loc_index_2~0),A(l4,loc~cytosol,loc_index_1~1,loc_index_2~1) -> A(l1!1,loc~cytosol,loc_index_1~1,loc_index_2~0),A(l4!1,loc~cytosol,loc_index_1~1,loc_index_2~1) @ 'link rate'
 A(l1,loc~cytosol,loc_index_1~2,loc_index_2~0),A(l4,loc~cytosol,loc_index_1~2,loc_index_2~1) -> A(l1!1,loc~cytosol,loc_index_1~2,loc_index_2~0),A(l4!1,loc~cytosol,loc_index_1~2,loc_index_2~1) @ 'link rate'

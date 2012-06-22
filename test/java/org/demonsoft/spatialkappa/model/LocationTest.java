@@ -8,9 +8,11 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_M
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y_PLUS_1;
-import static org.demonsoft.spatialkappa.model.TestUtils.getList;
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
@@ -96,7 +98,7 @@ public class LocationTest {
         compartments.add(new Compartment("nucleus"));
         compartments.add(new Compartment("cytosol", 3, 3));
         compartments.add(new Compartment("membrane", 3));
-        Channel channelCytosol = new Channel("cCytosol", getList(
+        Channel channelCytosol = new Channel("cCytosol", Utils.getList(
                 new Location[] {
                         new Location("cytosol", INDEX_X, INDEX_Y), 
                         new Location("cytosol", INDEX_X_PLUS_1, INDEX_Y), 
@@ -167,4 +169,36 @@ public class LocationTest {
         assertEquals(expected, location.getLinkedLocations(compartments, complexChannel));
 
     }
+	
+	@Test
+	public void testIsRefinement() {
+        Location compartment1 = new Location("cytosol");
+        Location compartment2 = new Location("nucleus");
+        Location voxel1 = new Location("cytosol", INDEX_0);
+        Location voxel2 = new Location("nucleus", INDEX_1);
+        
+        try {
+            compartment1.isRefinement(null);
+            fail("Null should have failed");
+        }
+        catch (NullPointerException e) {
+            // Expected exception
+        }
+        
+        assertTrue(NOT_LOCATED.isRefinement(compartment1));
+        assertTrue(NOT_LOCATED.isRefinement(voxel1));
+        assertFalse(NOT_LOCATED.isRefinement(NOT_LOCATED));
+        
+        assertFalse(compartment1.isRefinement(compartment1));
+        assertFalse(compartment1.isRefinement(compartment2));
+        assertTrue(compartment1.isRefinement(voxel1));
+        assertFalse(compartment1.isRefinement(voxel2));
+        assertFalse(compartment1.isRefinement(NOT_LOCATED));
+        
+        assertFalse(voxel1.isRefinement(compartment1));
+        assertFalse(voxel1.isRefinement(voxel1));
+        assertFalse(voxel1.isRefinement(voxel2));
+        assertFalse(voxel1.isRefinement(NOT_LOCATED));
+	}
+	
 }

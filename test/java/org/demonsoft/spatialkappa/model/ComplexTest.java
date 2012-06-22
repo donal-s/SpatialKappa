@@ -1,6 +1,10 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
@@ -8,10 +12,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.demonsoft.spatialkappa.model.Agent;
-import org.demonsoft.spatialkappa.model.AgentLink;
-import org.demonsoft.spatialkappa.model.AgentSite;
-import org.demonsoft.spatialkappa.model.Complex;
 import org.junit.Test;
 
 public class ComplexTest {
@@ -206,4 +206,49 @@ public class ComplexTest {
             }
         }
     }
+    
+    
+    @Test
+    public void testGetSingleLocation() {
+        Complex complex = new Complex(
+                new Agent("agent1", new AgentSite("x", null, "1")), 
+                new Agent("agent2", new AgentSite("z", null, "1")));
+        assertEquals(NOT_LOCATED, complex.getSingleLocation());
+        
+        complex = new Complex(
+                new Agent("agent1", new Location("A"), new AgentSite("x", null, "1")), 
+                new Agent("agent2", new Location("A"), new AgentSite("z", null, "1")));
+        assertEquals(new Location("A"), complex.getSingleLocation());
+        
+        complex = new Complex(
+                new Agent("agent1", new Location("A", INDEX_0), new AgentSite("x", null, "1")), 
+                new Agent("agent2", new Location("A", INDEX_0), new AgentSite("z", null, "1")));
+        assertEquals(new Location("A", INDEX_0), complex.getSingleLocation());
+        
+        complex = new Complex(
+                new Agent("agent1", new Location("A"), new AgentSite("x", null, "1")), 
+                new Agent("agent2", new Location("B"), new AgentSite("z", null, "1")));
+        assertNull(complex.getSingleLocation());
+        
+        complex = new Complex(
+                new Agent("agent1", new Location("A"), new AgentSite("x", null, "1")), 
+                new Agent("agent2", new AgentSite("z", null, "1")));
+        assertNull(complex.getSingleLocation());
+        
+        complex = new Complex(
+                new Agent("agent1", new Location("A", INDEX_0), new AgentSite("x", null, "1")), 
+                new Agent("agent2", new Location("A", INDEX_1), new AgentSite("z", null, "1")));
+        assertNull(complex.getSingleLocation());
+        
+        complex = new Complex(
+                new Agent("agent1", new Location("A", INDEX_0), new AgentSite("x", null, "1")), 
+                new Agent("agent2", new Location("A"), new AgentSite("z", null, "1")));
+        assertNull(complex.getSingleLocation());
+        
+        complex = new Complex(
+                new Agent("agent1", new Location("A", INDEX_0), new AgentSite("x", null, "1")), 
+                new Agent("agent2", new AgentSite("z", null, "1")));
+        assertNull(complex.getSingleLocation());
+    }
+    
 }

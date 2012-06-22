@@ -2,7 +2,6 @@
 %agent: B(s,loc~cytosol~membrane,loc_index_1~0~1)
 
 
-
 %init: 500 A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~membrane,loc_index_1~0)
 %init: 500 A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~membrane,loc_index_1~1)
 

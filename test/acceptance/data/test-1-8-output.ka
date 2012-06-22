@@ -2,7 +2,6 @@
 %agent: Receptor-cytosol(dl,state~inactive~active,loc~cytosol~membrane,loc_index_1~0~1)
 %agent: Receptor-membrane(dl,ligand,loc~cytosol~membrane,loc_index_1~0~1)
 
-
 Ligand(r,loc~membrane,loc_index_1~0),Receptor-membrane(dl!1,ligand,loc~membrane,loc_index_1~0),Receptor-cytosol(dl!1,state~inactive,loc~cytosol,loc_index_1~0) -> Ligand(r!2,loc~membrane,loc_index_1~0),Receptor-membrane(dl!1,ligand!2,loc~membrane,loc_index_1~0),Receptor-cytosol(dl!1,state~active,loc~cytosol,loc_index_1~0) @ 'link rate'
 Ligand(r,loc~membrane,loc_index_1~1),Receptor-membrane(dl!1,ligand,loc~membrane,loc_index_1~1),Receptor-cytosol(dl!1,state~inactive,loc~cytosol,loc_index_1~1) -> Ligand(r!2,loc~membrane,loc_index_1~1),Receptor-membrane(dl!1,ligand!2,loc~membrane,loc_index_1~1),Receptor-cytosol(dl!1,state~active,loc~cytosol,loc_index_1~1) @ 'link rate'
 Ligand(r!2,loc~membrane,loc_index_1~0),Receptor-membrane(dl!1,ligand!2,loc~membrane,loc_index_1~0),Receptor-cytosol(dl!1,state~active,loc~cytosol,loc_index_1~0) -> Ligand(r,loc~membrane,loc_index_1~0),Receptor-membrane(dl!1,ligand,loc~membrane,loc_index_1~0),Receptor-cytosol(dl!1,state~inactive,loc~cytosol,loc_index_1~0) @ 'unlink rate'

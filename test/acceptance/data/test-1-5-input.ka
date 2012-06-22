@@ -4,7 +4,7 @@
 %compartment: cytosol [2]
 %compartment: membrane [2]
 
-%channel: cross (cytosol [x] -> membrane [x]) + (membrane [x] -> cytosol [x])
+%channel: cross (:cytosol [x] -> :membrane [x]) + (:membrane [x] -> :cytosol [x])
 
 
 %init: 1000 A:cytosol(s!1:cross),B:membrane(s!1)
@@ -16,6 +16,6 @@
 %obs: 'dimer AB' A:cytosol(s!1:cross),B:membrane(s!1) 
 %obs: 'dimer BA' A:membrane(s!1:cross),B:cytosol(s!1) # Expect none
 
-%obs: 'same voxel dimer AB' cytosol A(s!1),B(s!1) # Expect none
-%obs: 'same voxel dimer BA' membrane A(s!1),B(s!1) # Expect none
+%obs: 'same voxel dimer AB' :cytosol A(s!1),B(s!1) # Expect none
+%obs: 'same voxel dimer BA' :membrane A(s!1),B(s!1) # Expect none
 

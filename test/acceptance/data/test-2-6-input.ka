@@ -1,0 +1,27 @@
+%agent: A(s)
+%agent: B(s)
+%agent: S(s)
+
+%var: 'constitutiveRate' 0.1
+%var: 'catalysedRate' 10
+
+%compartment: membrane [3][3]
+%compartment: cytosol [3][3][3]
+
+%channel: diffusion       (:cytosol [x][y][z] -> :cytosol [x+1][y][z]) + (:cytosol [x][y][z] -> :cytosol [x - 1][y][z]) + \
+		(:cytosol [x][y][z] -> :cytosol [x][y+1][z]) + (:cytosol [x][y][z] -> :cytosol [x][y - 1][z]) + \
+		(:cytosol [x][y][z] -> :cytosol [x][y][z+1]) + (:cytosol [x][y][z] -> :cytosol [x][y][z - 1])
+%channel: membraneBinding (:cytosol [0][1][1] -> :membrane[1][1]) + (:membrane[1][1] -> :cytosol [0][1][1])
+
+'diffusion' ->:diffusion @ 1.0
+#'AB bind' A(s), B(s) -> A(s!1), B(s!1) @ 'constitutiveRate'
+'AS bind' A:cytosol(s), S:membrane(s) -> A:cytosol(s!1:membraneBinding), S:membrane(s!1) @ 'catalysedRate'
+'ASB bind' A:cytosol(s!1:membraneBinding), S:membrane(s!1), B:cytosol(s) -> A:cytosol(s!1), S:membrane(s), B:cytosol(s!1) @ 'catalysedRate'
+'BS bind' B:cytosol(s), S:membrane(s) -> B:cytosol(s!1:membraneBinding), S:membrane(s!1) @ 'catalysedRate'
+'BSA bind' B:cytosol(s!1:membraneBinding), S:membrane(s!1), A:cytosol(s) -> B:cytosol(s!1), S:membrane(s), A:cytosol(s!1) @ 'catalysedRate'
+
+
+%init: 1000 :cytosol A,B
+%init: 1 :membrane[1][1] S
+
+%obs: 'AB' A(s!1),B(s!1)

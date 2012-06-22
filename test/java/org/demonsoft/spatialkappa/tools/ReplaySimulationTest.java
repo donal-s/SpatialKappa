@@ -1,6 +1,5 @@
 package org.demonsoft.spatialkappa.tools;
 
-import static org.demonsoft.spatialkappa.model.TestUtils.getList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -15,6 +14,7 @@ import java.util.Map;
 
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
+import org.demonsoft.spatialkappa.model.Utils;
 import org.demonsoft.spatialkappa.tools.ReplaySimulation.CompartmentElementDefinition;
 import org.junit.Test;
 
@@ -94,31 +94,31 @@ public class ReplaySimulationTest {
         "";
     
     private static final Observation[] NO_COMPARTMENT_OUTPUT = {
-        new Observation(0, 0, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(0, 0, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(0)},
                         {"Green_cytosol", new ObservationElement(0)}
                 }), 
                 false, 0, 0),
-        new Observation(2.335532E+00f, 1000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(2.335532E+00f, 1000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(10)},
                         {"Green_cytosol", new ObservationElement(15)}
                 }), 
                 false, 0, 0),
-        new Observation(4.426644E+00f, 2000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(4.426644E+00f, 2000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(50)},
                         {"Green_cytosol", new ObservationElement(25)}
                 }), 
                 false, 0, 0),
-        new Observation(6.025634E+00f, 3000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(6.025634E+00f, 3000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(90)},
                         {"Green_cytosol", new ObservationElement(35)}
                 }), 
                 false, 0, 0),
-        new Observation(7.619085E+00f, 4000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(7.619085E+00f, 4000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(130)},
                         {"Green_cytosol", new ObservationElement(45)}
@@ -140,31 +140,31 @@ public class ReplaySimulationTest {
         "";
     
     private static final Observation[] COMPARTMENT_OUTPUT = {
-        new Observation(0, 0, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(0, 0, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(0, new int[]{2,2}, "cytosol", new float[][] {{0,0}, {0,0}})},
                         {"Green_cytosol", new ObservationElement(0)}
                 }), 
                 false, 0, 0),
-        new Observation(2.335532E+00f, 1000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(2.335532E+00f, 1000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(10, new int[]{2, 2}, "cytosol", new float[][] {{1, 2}, {3, 4}})},
                         {"Green_cytosol", new ObservationElement(15)}
                 }), 
                 false, 0, 0),
-        new Observation(4.426644E+00f, 2000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(4.426644E+00f, 2000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(50, new int[]{2, 2}, "cytosol", new float[][] {{11, 12}, {13, 14}})},
                         {"Green_cytosol", new ObservationElement(25)}
                 }), 
                 false, 0, 0),
-        new Observation(6.025634E+00f, 3000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(6.025634E+00f, 3000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(90, new int[]{2, 2}, "cytosol", new float[][] {{21, 22}, {23, 24}})},
                         {"Green_cytosol", new ObservationElement(35)}
                 }), 
                 false, 0, 0),
-        new Observation(7.619085E+00f, 4000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(7.619085E+00f, 4000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(130, new int[]{2, 2}, "cytosol", new float[][] {{31, 32}, {33, 34}})},
                         {"Green_cytosol", new ObservationElement(45)}
@@ -172,7 +172,7 @@ public class ReplaySimulationTest {
                 true, 0, 0),
     };
 
-    private static final List<CompartmentElementDefinition> COMPARTMENT_DEFINITIONS = getList(
+    private static final List<CompartmentElementDefinition> COMPARTMENT_DEFINITIONS = Utils.getList(
             new CompartmentElementDefinition("Red_cytosol", new int[]{2,2}, new Object[] {
                     new String[] { "Red_cytosol_:loc~cytosol,loc_index_1~0,loc_index_2~0",
                     "Red_cytosol_:loc~cytosol,loc_index_1~0,loc_index_2~1",},
@@ -198,7 +198,7 @@ public class ReplaySimulationTest {
             "    2.400000E+02 153 2.000000E+00 2.000000E+00 2.000000E+00 0.000000E+00 INF\n";
         
     private static final Observation[] BAD_NUMBER_OUTPUT = {
-        new Observation(0, 0, getList("AB", "BC", "ABC", "B", "ABC_fraction"),
+        new Observation(0, 0, Utils.getList("AB", "BC", "ABC", "B", "ABC_fraction"),
                 getObservationElementMap(new Object[][] {
                         {"AB", new ObservationElement(0)},
                         {"BC", new ObservationElement(0)},
@@ -207,7 +207,7 @@ public class ReplaySimulationTest {
                         {"ABC_fraction", new ObservationElement(Float.NaN)}
                 }), 
                 false, 0, 0),
-        new Observation(60f, 0, getList("AB", "BC", "ABC", "B", "ABC_fraction"),
+        new Observation(60f, 0, Utils.getList("AB", "BC", "ABC", "B", "ABC_fraction"),
                 getObservationElementMap(new Object[][] {
                         {"AB", new ObservationElement(0)},
                         {"BC", new ObservationElement(0)},
@@ -216,7 +216,7 @@ public class ReplaySimulationTest {
                         {"ABC_fraction", new ObservationElement(Float.NaN)}
                 }), 
                 false, 0, 0),
-        new Observation(180f, 83, getList("AB", "BC", "ABC", "B", "ABC_fraction"),
+        new Observation(180f, 83, Utils.getList("AB", "BC", "ABC", "B", "ABC_fraction"),
                 getObservationElementMap(new Object[][] {
                         {"AB", new ObservationElement(1)},
                         {"BC", new ObservationElement(2)},
@@ -225,7 +225,7 @@ public class ReplaySimulationTest {
                         {"ABC_fraction", new ObservationElement(Float.NEGATIVE_INFINITY)}
                 }), 
                 false, 0, 0),
-        new Observation(240f, 153, getList("AB", "BC", "ABC", "B", "ABC_fraction"),
+        new Observation(240f, 153, Utils.getList("AB", "BC", "ABC", "B", "ABC_fraction"),
                 getObservationElementMap(new Object[][] {
                         {"AB", new ObservationElement(2)},
                         {"BC", new ObservationElement(2)},

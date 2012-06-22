@@ -1,6 +1,5 @@
 package org.demonsoft.spatialkappa.tools;
 
-import static org.demonsoft.spatialkappa.model.TestUtils.getList;
 import static org.junit.Assert.assertEquals;
 
 import java.io.StringWriter;
@@ -12,6 +11,7 @@ import java.util.Map;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.ObservationListener;
+import org.demonsoft.spatialkappa.model.Utils;
 import org.junit.Test;
 
 public class RecordSimulationTest {
@@ -42,31 +42,31 @@ public class RecordSimulationTest {
         " 7.619085E00 4000 1.300000E02 4.500000E01\n";
     
     private static final Observation[] NO_COMPARTMENT_INPUT = {
-        new Observation(0, 0, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(0, 0, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(0)},
                         {"Green_cytosol", new ObservationElement(0)}
                 }), 
                 false, 0, 0),
-        new Observation(2.335532E+00f, 1000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(2.335532E+00f, 1000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(10)},
                         {"Green_cytosol", new ObservationElement(15)}
                 }), 
                 false, 0, 0),
-        new Observation(4.426644E+00f, 2000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(4.426644E+00f, 2000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(50)},
                         {"Green_cytosol", new ObservationElement(25)}
                 }), 
                 false, 0, 0),
-        new Observation(6.025634E+00f, 3000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(6.025634E+00f, 3000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(90)},
                         {"Green_cytosol", new ObservationElement(35)}
                 }), 
                 false, 0, 0),
-        new Observation(7.619085E+00f, 4000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(7.619085E+00f, 4000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(130)},
                         {"Green_cytosol", new ObservationElement(45)}
@@ -87,31 +87,31 @@ public class RecordSimulationTest {
         " 7.619085E00 4000 3.100000E01 3.200000E01 3.300000E01 3.400000E01 1.300000E02 4.500000E01\n";
     
     private static final Observation[] COMPARTMENT_INPUT = {
-        new Observation(0, 0, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(0, 0, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(0, new int[]{2,2}, "cytosol", new float[][] {{0,0}, {0,0}})},
                         {"Green_cytosol", new ObservationElement(0)}
                 }), 
                 false, 0, 0),
-        new Observation(2.335532E+00f, 1000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(2.335532E+00f, 1000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(10, new int[]{2, 2}, "cytosol", new float[][] {{1, 2}, {3, 4}})},
                         {"Green_cytosol", new ObservationElement(15)}
                 }), 
                 false, 0, 0),
-        new Observation(4.426644E+00f, 2000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(4.426644E+00f, 2000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(50, new int[]{2, 2}, "cytosol", new float[][] {{11, 12}, {13, 14}})},
                         {"Green_cytosol", new ObservationElement(25)}
                 }), 
                 false, 0, 0),
-        new Observation(6.025634E+00f, 3000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(6.025634E+00f, 3000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(90, new int[]{2, 2}, "cytosol", new float[][] {{21, 22}, {23, 24}})},
                         {"Green_cytosol", new ObservationElement(35)}
                 }), 
                 false, 0, 0),
-        new Observation(7.619085E+00f, 4000, getList("Red_cytosol", "Green_cytosol"),
+        new Observation(7.619085E+00f, 4000, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
                         {"Red_cytosol", new ObservationElement(130, new int[]{2, 2}, "cytosol", new float[][] {{31, 32}, {33, 34}})},
                         {"Green_cytosol", new ObservationElement(45)}

@@ -25,46 +25,17 @@ public class KappaModel implements IKappaModel {
 
     private static final ComplexMatcher matcher = new ComplexMatcher();
     
-    private final List<LocatedTransform> locatedTransforms = new ArrayList<LocatedTransform>();
     private final Map<String, AggregateAgent> agentDeclarationMap = new HashMap<String, AggregateAgent>();
     private final Map<String, AggregateAgent> aggregateAgentMap = new HashMap<String, AggregateAgent>();
     private final List<InitialValue> initialValues = new ArrayList<InitialValue>();
     private final List<Perturbation> perturbations = new ArrayList<Perturbation>();
     private final List<Compartment> compartments = new ArrayList<Compartment>();
     private final List<Channel> channels = new ArrayList<Channel>();
-    private final List<Transport> transports = new ArrayList<Transport>();
+    private final List<Transition> transitions = new ArrayList<Transition>();
     private final Set<Complex> canonicalComplexes = new HashSet<Complex>();
     private final List<String> plottedVariables = new ArrayList<String>();
     private final Map<String, Variable> variables = new HashMap<String, Variable>();
 	private final List<String> orderedVariableNames = new ArrayList<String>();
-
-
-    public void addTransform(String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, VariableExpression rate, Location location) {
-        addTransform(new LocatedTransform(new Transform(label, leftSideAgents, rightSideAgents, rate, false), location));
-        if (label != null) {
-            variables.put(label, new Variable(label));
-        }
-    }
-
-
-    private void addTransform(LocatedTransform transform) {
-        if (transform == null) {
-            throw new NullPointerException();
-        }
-        locatedTransforms.add(transform);
-        for (Complex complex : transform.transition.sourceComplexes) {
-        	propogateLocation(complex.agents, transform.sourceLocation);
-            for (Agent agent : complex.agents) {
-                aggregateAgent(agent);
-            }
-        }
-        for (Complex complex : transform.transition.targetComplexes) {
-        	propogateLocation(complex.agents, transform.sourceLocation);
-            for (Agent agent : complex.agents) {
-                aggregateAgent(agent);
-            }
-        }
-    }
 
     private void aggregateAgent(Agent agent) {
         if (aggregateAgentMap.get(agent.name) == null) {
@@ -91,12 +62,20 @@ public class KappaModel implements IKappaModel {
     }
 
     private void propogateLocation(List<Agent> agents, Location location) {
-		for (Agent agent : agents) {
-			if (agent.location == NOT_LOCATED) {
-				agent.setLocation(location);
-			}
-		}
-	}
+        for (Agent agent : agents) {
+            if (agent.location == NOT_LOCATED) {
+                agent.setLocation(location);
+            }
+        }
+    }
+
+    private void setLocation(List<Agent> agents, Location location) {
+        for (Agent agent : agents) {
+            if (agent.location.isRefinement(location)) {
+                agent.setLocation(location);
+            }
+        }
+    }
 
 
 	public void addInitialValue(List<Agent> agents, VariableReference reference, Location location) {
@@ -119,7 +98,7 @@ public class KappaModel implements IKappaModel {
         for (int index = 0; index < complexes.size(); index++) {
             boolean found = false;
             for (Complex current : canonicalComplexes) {
-                if (matcher.isExactMatch(current, complexes.get(index), true)) {
+                if (matcher.isExactMatch(current, complexes.get(index))) {
                     complexes.set(index, current);
                     break;
                 }
@@ -195,17 +174,13 @@ public class KappaModel implements IKappaModel {
         for (Channel link : channels) {
             result.append(link).append("\n");
         }
-        result.append("\nTRANSPORT RULES\n");
-        for (Transport transport : transports) {
-            result.append(transport).append("\n");
+        result.append("\nTRANSITION RULES\n");
+        for (Transition transition : transitions) {
+            result.append(transition).append("\n");
         }
         result.append("\nAGENTS\n");
         for (AggregateAgent agent : aggregateAgentMap.values()) {
             result.append(agent).append("\n");
-        }
-        result.append("\nTRANSFORM RULES\n");
-        for (LocatedTransition transform : locatedTransforms) {
-            result.append(transform).append("\n");
         }
         result.append("\nINITIAL VALUES\n");
         for (InitialValue initialValue : initialValues) {
@@ -222,8 +197,8 @@ public class KappaModel implements IKappaModel {
         return result.toString();
     }
 
-    public Map<LocatedComplex, Integer> getFixedLocatedInitialValuesMap() {
-        Map<LocatedComplex, Integer> result = new HashMap<LocatedComplex, Integer>();
+    public Map<Complex, Integer> getFixedLocatedInitialValuesMap() {
+        Map<Complex, Integer> result = new HashMap<Complex, Integer>();
         
         for (InitialValue initialValue : initialValues) {
             boolean partition = false;
@@ -282,9 +257,15 @@ public class KappaModel implements IKappaModel {
         return result;
     }
 
-    private void addInitialLocatedValue(Map<LocatedComplex, Integer> result, Complex complex, Location location, int quantity) {
-        LocatedComplex locatedComplex = new LocatedComplex(complex, location);
-        for (Map.Entry<LocatedComplex, Integer> entry : result.entrySet()) {
+    private void addInitialLocatedValue(Map<Complex, Integer> result, Complex complex, Location location, int quantity) {
+        Complex locatedComplex = complex.clone();
+        for (Agent agent : locatedComplex.agents) {
+            addDefaultAgentSites(agent);
+        }
+        locatedComplex = locatedComplex.clone();
+        setLocation(locatedComplex.agents, location);
+        
+        for (Map.Entry<Complex, Integer> entry : result.entrySet()) {
             if (locatedComplex.isExactMatch(entry.getKey())) {
                 entry.setValue(entry.getValue() + quantity);
                 return;
@@ -293,26 +274,31 @@ public class KappaModel implements IKappaModel {
         result.put(locatedComplex, quantity);
     }
 
-    public void addTransport(String label, String compartmentLinkName, List<Agent> agents, VariableExpression rate) {
-        addTransport(new Transport(label, compartmentLinkName, agents, rate));
-        if (label != null) {
-            variables.put(label, new Variable(label));
+    private void addDefaultAgentSites(Agent agent) {
+        AggregateAgent aggregateAgent = agentDeclarationMap.get(agent.name);
+
+        for (AggregateSite aggregateSite : aggregateAgent.getSites()) {
+            String siteName = aggregateSite.getName();
+            if (agent.getSite(siteName) == null) {
+                String state = null;
+                if (aggregateSite.states.size() > 0) {
+                    state = aggregateSite.states.get(0);
+                }
+                agent.addSite(new AgentSite(siteName, state, null));
+            }
         }
     }
 
-    private void addTransport(Transport transport) {
-        transports.add(transport);
-    }
-
-    public List<Transform> getValidLocatedTransforms(Transform templateTransform, List<Compartment> compartments, List<Channel> channels) {
-        if (templateTransform == null || compartments == null || channels == null) {
+    @SuppressWarnings("hiding")
+    public List<Transition> getValidLocatedTransitions(Transition templateTransition, List<Compartment> compartments, List<Channel> channels) {
+        if (templateTransition == null || compartments == null || channels == null) {
             throw new NullPointerException();
         }
-        List<Transform> result = new ArrayList<Transform>();
+        List<Transition> result = new ArrayList<Transition>();
         
-        List<Agent> leftAgents = new ArrayList<Agent>(templateTransform.leftAgents);
-        List<Agent> rightAgents = new ArrayList<Agent>(templateTransform.rightAgents);
-        Map<Agent,Agent> leftRightTemplateMap = templateTransform.getLeftRightAgentMap();
+        List<Agent> leftAgents = new ArrayList<Agent>(templateTransition.leftAgents);
+        List<Agent> rightAgents = new ArrayList<Agent>(templateTransition.rightAgents);
+        Map<Agent,Agent> leftRightTemplateMap = templateTransition.getLeftRightAgentMap();
         Map<Agent,Agent> templateMergedMap = new HashMap<Agent, Agent>();
         List<Agent> mergedAgents = new ArrayList<Agent>();
         
@@ -358,27 +344,30 @@ public class KappaModel implements IKappaModel {
         List<MappingInstance> mergedMappings = initMappingStructure(mergedComplex, compartments, channels);
         if (mergedMappings.size() == 1) {
             MappingInstance mapping = mergedMappings.get(0);
-            result.add(new Transform(templateTransform.label, 
-                    getUnmergedAgents(templateTransform.leftAgents, mapping.mapping, templateMergedMap), 
-                    getUnmergedAgents(templateTransform.rightAgents, mapping.mapping, templateMergedMap), 
-                    templateTransform.getRate(), false));
+            result.add(new Transition(templateTransition.label, 
+                    getUnmergedAgents(templateTransition.leftAgents, mapping.mapping, templateMergedMap), 
+                    null,
+                    getUnmergedAgents(templateTransition.rightAgents, mapping.mapping, templateMergedMap), 
+                    templateTransition.getRate()));
 
         }
         else if (mergedMappings.size() > 1) {
             int labelSuffix = 1;
             for (MappingInstance mapping : mergedMappings) {
-                String label = (templateTransform.label == null) ? 
-                        null : templateTransform.label + "-" + (labelSuffix++);
-                result.add(new Transform(label, 
-                        getUnmergedAgents(templateTransform.leftAgents, mapping.mapping, templateMergedMap), 
-                        getUnmergedAgents(templateTransform.rightAgents, mapping.mapping, templateMergedMap), 
-                        templateTransform.getRate(), false));
+                String label = (templateTransition.label == null) ? 
+                        null : templateTransition.label + "-" + (labelSuffix++);
+                result.add(new Transition(label, 
+                        getUnmergedAgents(templateTransition.leftAgents, mapping.mapping, templateMergedMap), 
+                        null,
+                        getUnmergedAgents(templateTransition.rightAgents, mapping.mapping, templateMergedMap), 
+                        templateTransition.getRate()));
             }
         }
 
         return result;
     }
 
+    @SuppressWarnings("hiding")
     public List<MappingInstance> initMappingStructure(Complex complex, List<Compartment> compartments, List<Channel> channels) {
         if (complex == null || compartments == null || channels == null) {
             throw new NullPointerException();
@@ -552,6 +541,7 @@ public class KappaModel implements IKappaModel {
         return result;
     }
     
+    @SuppressWarnings("hiding")
     List<Location> getPossibleLocations(Location sourceLocation, Location locationConstraint, Channel channel, List<Compartment> compartments) {
         if (sourceLocation == null || compartments == null) {
             throw new NullPointerException();
@@ -604,6 +594,7 @@ public class KappaModel implements IKappaModel {
         throw new IllegalArgumentException("No next agent available");
     }
 
+    @SuppressWarnings("hiding")
     List<Agent> getFixedAgents(Complex complex, List<Compartment> compartments) {
         if (complex == null || compartments == null) {
             throw new NullPointerException();
@@ -624,6 +615,7 @@ public class KappaModel implements IKappaModel {
         return result;
     }
     
+    @SuppressWarnings("hiding")
     public Channel getChannel(List<Channel> channels, String channelName) {
         for (Channel channel : channels) {
             if (channelName.equals(channel.getName())) {
@@ -633,71 +625,10 @@ public class KappaModel implements IKappaModel {
         return null;
     }
 
-
-    public List<LocatedTransition> getFixedLocatedTransitions() {
-        List<LocatedTransition> result = new ArrayList<LocatedTransition>();
-        for (LocatedTransform transition : locatedTransforms) {
-            Location location = transition.sourceLocation;
-            if (location != NOT_LOCATED) {
-                Compartment compartment = location.getReferencedCompartment(compartments);
-                if (compartment.getDimensions().length != location.getIndices().length) {
-                    Location[] cellLocations = compartment.getDistributedCellReferences();
-                    Transform cloneTransform = ((Transform) transition.transition).clone();
-                    for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
-                        result.add(new LocatedTransform(cloneTransform, cellLocations[cellIndex]));
-                    }
-                }
-                else {
-                    result.add(transition.clone());
-                }
-            }
-            else { // location == NOT_LOCATED
-                if (compartments.size() > 0) {
-                    Transform cloneTransform = ((Transform) transition.transition).clone();
-                    for (Compartment compartment : compartments) {
-                        Location[] cellLocations = compartment.getDistributedCellReferences();
-                        for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
-                            result.add(new LocatedTransform(cloneTransform, cellLocations[cellIndex]));
-                        }
-                    }
-                }
-                else { // No compartments
-                    result.add(transition.clone());
-                }
-            }
-        }
-
-        for (Transport transport : transports) {
-            List<Channel> links = getChannels(transport.getCompartmentLinkName());
-            if (links.size() > 0) {
-                Transport cloneTransport = transport.clone();
-                for (Channel link : links) {
-                    Location[][] cellLocations = link.getCellReferencePairs(compartments);
-                    for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
-                        Location sourceReference = cellLocations[cellIndex][0];
-                        Location targetReference = cellLocations[cellIndex][1];
-    
-                        result.add(new LocatedTransport(cloneTransport, sourceReference, targetReference));
-                    }
-                }
-            }
-        }
-        return result;
+    public Channel getChannel(String channelName) {
+        return getChannel(channels, channelName);
     }
 
-    private List<Channel> getChannels(String channelName) {
-        List<Channel> result = new ArrayList<Channel>();
-        for (Channel current : channels) {
-            if (current.getName().equals(channelName)) {
-                result.add(current);
-            }
-        }
-        return result;
-    }
-
-    public List<LocatedTransform> getLocatedTransforms() {
-        return locatedTransforms;
-    }
 
     public List<Compartment> getCompartments() {
         return compartments;
@@ -705,10 +636,6 @@ public class KappaModel implements IKappaModel {
     
     public List<Channel> getChannels() {
         return channels;
-    }
-    
-    public List<Transport> getTransports() {
-        return transports;
     }
     
     Map<String, AggregateAgent> getAggregateAgentMap() {
@@ -777,21 +704,8 @@ public class KappaModel implements IKappaModel {
             }
         }
         
-        for (LocatedTransform transform : locatedTransforms) {
-            VariableReference reference = transform.transition.rate.reference;
-            if (reference != null) {
-                Variable variable = variables.get(reference.variableName);
-                if (variable == null) {
-                    throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
-                }
-                if (!variable.expression.isFixed(variables)) {
-                    throw new IllegalStateException("Reference '" + reference.variableName + "' not fixed");
-                }
-            }
-        }
-        
-        for (Transport transport : transports) {
-            VariableReference reference = transport.rate.reference;
+        for (Transition transition : transitions) {
+            VariableReference reference = transition.rate.reference;
             if (reference != null) {
                 Variable variable = variables.get(reference.variableName);
                 if (variable == null) {
@@ -802,31 +716,24 @@ public class KappaModel implements IKappaModel {
                 }
             }
             
-            boolean found = false;
-            for (Channel link : channels) {
-                if (transport.getCompartmentLinkName().equals(link.getName())) {
-                    found = true;
-                    break;
+            if (transition.channelName != null) {
+                boolean found = false;
+                for (Channel link : channels) {
+                    if (transition.channelName.equals(link.getName())) {
+                        found = true;
+                        break;
+                    }
                 }
-            }
-            if (!found) {
-                throw new IllegalStateException("Compartment link '" + transport.getCompartmentLinkName() + "' not found");
+                if (!found) {
+                    throw new IllegalStateException("Channel '" + transition.channelName + "' not found");
+                }
             }
         }
         
         for (String reference : plottedVariables) {
             boolean found = false;
-            for (Transport transport : transports) {
-                if (reference.equals(transport.label)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (found) {
-                continue;
-            }
-            for (LocatedTransform transform : locatedTransforms) {
-                if (reference.equals(transform.transition.label)) {
+            for (Transition transition : transitions) {
+                if (reference.equals(transition.label)) {
                     found = true;
                     break;
                 }
@@ -936,5 +843,41 @@ public class KappaModel implements IKappaModel {
 	public Map<String, AggregateAgent> getAgentDeclarationMap() {
 		return agentDeclarationMap;
 	}
+
+
+    public void addTransition(String label, Location leftLocation, List<Agent> leftSideAgents, String channelName,
+            Location rightLocation, List<Agent> rightSideAgents, VariableExpression rate) {
+        if (leftSideAgents != null && leftLocation != null) {
+            propogateLocation(leftSideAgents, leftLocation);
+        }
+        if (rightSideAgents != null && rightLocation != null) {
+            propogateLocation(rightSideAgents, rightLocation);
+        }
+        if (leftSideAgents == null && rightSideAgents == null) {
+            transitions.add(new Transition(label, leftLocation, channelName, rightLocation, rate));
+        }
+        else {
+            transitions.add(new Transition(label, leftSideAgents, channelName, rightSideAgents, rate));
+        }
+        if (label != null) {
+            variables.put(label, new Variable(label));
+        }
+        if (leftSideAgents != null) {
+            for (Agent agent : leftSideAgents) {
+                aggregateAgent(agent);
+            }
+        }
+        if (rightSideAgents != null) {
+            for (Agent agent : rightSideAgents) {
+                aggregateAgent(agent);
+            }
+        }
+
+    }
+
+
+    public List<Transition> getTransitions() {
+        return transitions;
+    }
     
 }

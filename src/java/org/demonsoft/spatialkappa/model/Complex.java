@@ -236,9 +236,11 @@ public class Complex implements Serializable {
     private void deleteLink(AgentLink link, boolean tidy) {
         linksPerAgent.get(link.sourceSite.agent).remove(link);
         link.sourceSite.setLinkName(null);
+        link.sourceSite.setChannel(null);
         if (link.targetSite.agent != null) {
             linksPerAgent.get(link.targetSite.agent).remove(link);
             link.targetSite.setLinkName(null);
+            link.targetSite.setChannel(null);
         }//TODO test here
         agentLinks.remove(link);
 
@@ -360,7 +362,7 @@ public class Complex implements Serializable {
         }
     }
     
-    public void createAgentLink(AgentSite sourceSite, AgentSite targetSite, String linkID) {
+    public void createAgentLink(AgentSite sourceSite, AgentSite targetSite, String linkID, String channelName) {
         AgentLink currentLink = getAgentLink(sourceSite.agent, sourceSite.name);
         if (currentLink != null) {
             deleteLink(currentLink, false);
@@ -373,6 +375,7 @@ public class Complex implements Serializable {
             
         }
         addAgentLink(new AgentLink(sourceSite, targetSite));
+        sourceSite.setChannel(channelName);
         
         if (targetSite == AgentLink.ANY) {
             sourceSite.setLinkName("?");
@@ -386,6 +389,7 @@ public class Complex implements Serializable {
         else {
             sourceSite.setLinkName(linkID);
             targetSite.setLinkName(linkID);
+            targetSite.setChannel(channelName);
         }
 
         updateMatchHash();
@@ -406,6 +410,21 @@ public class Complex implements Serializable {
     
     public boolean isExactMatch(Complex other) {
         return matcher.isExactMatch(this, other);
+    }
+
+    public Location getSingleLocation() {
+        Location result = null;
+        for (Agent agent : agents) {
+            if (result == null) {
+                result = agent.location;
+            }
+            else {
+                if (!result.equals(agent.location)) {
+                    return null;
+                }
+            }
+        }
+        return result;
     }
 
 

@@ -5,9 +5,8 @@ import java.util.Map;
 
 public interface IKappaModel {
 
-    public void addTransform(String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, VariableExpression rate, Location location);
-
-    public void addTransport(String label, String compartmentLinkName, List<Agent> agents, VariableExpression rate);
+    public void addTransition(String label, Location leftLocation, List<Agent> leftSideAgents, 
+            String channelName, Location rightLocation, List<Agent> rightSideAgents, VariableExpression rate);
 
     public void addInitialValue(List<Agent> agents, String valueText, Location compartment);
     public void addInitialValue(List<Agent> agents, VariableReference reference, Location compartment);
@@ -32,24 +31,27 @@ public interface IKappaModel {
 
     public List<InitialValue> getInitialValues();
 
-    public Map<LocatedComplex, Integer> getFixedLocatedInitialValuesMap();
+    public Map<Complex, Integer> getFixedLocatedInitialValuesMap();
 
     public List<String> getPlottedVariables();
 
-    public List<LocatedTransition> getFixedLocatedTransitions();
 
-    public List<LocatedTransform> getLocatedTransforms();
 
     public List<Compartment> getCompartments();
     
     public List<Channel> getChannels();
-    
-    public List<Transport> getTransports();
+    public Channel getChannel(String channelName);
+
     
     public Map<String, AggregateAgent> getAgentDeclarationMap();
     
     public List<Perturbation> getPerturbations();
+    
+    public List<String> getOrderedVariableNames();
 
-	public List<String> getOrderedVariableNames();
+    
+    public List<Transition> getTransitions();
 
+//    public List<LocatedTransition> getFixedLocatedTransitions();
+    
 }

@@ -17,9 +17,9 @@
 %obs: 'all monomer A' A(s)
 %obs: 'all monomer B' B(s)
 %obs: 'compartment monomer A - agent' A:cytosol(s)
-%obs: 'compartment monomer A - complex' cytosol A(s)
+%obs: 'compartment monomer A - complex' :cytosol A(s)
 %obs: 'voxel monomer - agent' A:cytosol[0](s)
-%obs: 'voxel monomer - complex' cytosol[0] A(s)
+%obs: 'voxel monomer - complex' :cytosol[0] A(s)
 
 %obs: 'all dimer' A(s!_)
 %obs: 'dimer AB' A:cytosol[0](s!1),B:cytosol[1](s!1)
