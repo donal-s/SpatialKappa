@@ -10,10 +10,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -423,63 +421,6 @@ public class SpatialTranslator {
             result.add(new Agent(agent.name, isolatedSites));
         }
         return result;
-    }
-
-
-    List<Map<Location, String>> createPartitionMaps(List<Location> partitionLocations) {
-        List<Map<Location, String>> result = new ArrayList<Map<Location, String>>();
-        if (partitionLocations.size() == 1) {
-            Location location = partitionLocations.get(0);
-            Compartment compartment = location.getReferencedCompartment(kappaModel.getCompartments());
-
-            String[] suffixes = compartment.getCellStateSuffixes();
-            for (String suffix : suffixes) {
-                Map<Location, String> map = new HashMap<Location, String>();
-                result.add(map);
-                map.put(location, suffix);
-            }
-        }
-        else if (partitionLocations.size() > 1) {
-            Location location = partitionLocations.get(0);
-            Compartment compartment = location.getReferencedCompartment(kappaModel.getCompartments());
-
-            List<Location> remainingLocations = new ArrayList<Location>(partitionLocations);
-            remainingLocations.remove(location);
-            List<Map<Location, String>> otherLocations = createPartitionMaps(remainingLocations);
-
-            String[] suffixes = compartment.getCellStateSuffixes();
-            for (String suffix : suffixes) {
-                for (Map<Location, String> otherPartition : otherLocations) {
-                    Map<Location, String> map = new HashMap<Location, String>(otherPartition);
-                    result.add(map);
-                    map.put(location, suffix);
-                }
-            }
-        }
-        return result;
-    }
-
-    Set<Location> getPartitionedLocations(List<Agent> agents, List<Compartment> compartments) {
-        if (compartments == null) {
-            throw new NullPointerException();
-        }
-        
-        Set<Location> result = new HashSet<Location>();
-
-        if (agents != null) {
-            for (Agent agent : agents) {
-                Location location = agent.location;
-                if (location != NOT_LOCATED && isPartitionable(location, compartments)) {
-                    result.add(location);
-                }
-            }
-        }
-        return result;
-    }
-
-    boolean isPartitionable(Location location, List<Compartment> compartments) {
-        Compartment compartment = location.getReferencedCompartment(compartments);
-        return compartment.getDimensions().length != location.getIndices().length;
     }
 
     String getKappaString(InitialValue initialValue) {

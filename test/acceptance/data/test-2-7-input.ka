@@ -15,7 +15,7 @@
 
 'AC bind' A(s,t), C(s) -> A(s!1,t), C(s!1) @ 'catalysedRate'
 'ACB bind' A(s!1,t), C(s!1), B(s,t) -> A(s!1,t), C(s), B(s!1,t) @ 'catalysedRate'
-'BC bind' A(s,t), C(s) -> A(s!1,t), C(s!1) @ 'catalysedRate'
+'BC bind' B(s,t), C(s) -> B(s!1,t), C(s!1) @ 'catalysedRate'
 'BCA bind' B(s!1,t), C(s!1), A(s,t) -> B(s!1,t), C(s), A(s!1,t) @ 'catalysedRate'
 
 'ABAB bind' A(s!1,t), B(s!1,t), A(s!2,t), B(s!2,t) -> A(s!1,t), B(s!1,t!3), A(s!2,t!3), B(s!2,t) @ 0.1

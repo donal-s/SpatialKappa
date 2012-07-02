@@ -429,6 +429,13 @@ public class TransitionMatchingSpatialTest {
     }
     
     @Test
+    public void testMulticompartmentDiffusion() throws Exception {
+        checkEventSimulation(MULTI_COMPARTMENT_DIFFUSION_INPUT, new String[] {"val[0]", "val[1]"}, 1, 0, new float[][] {
+                {10, 0}, {9, 1}, {8, 2}
+        });
+    }
+    
+    @Test
     public void testInitialDistribution() throws Exception {
         checkEventSimulation(INITIAL_DISTRIBUTION_INPUT, new String[] {"nucleus", "val[0]", "val[1]", "val[2]", "val[3]", "val[4]"}, 1, 0, new float[][] {
                 {20, 420, 420, 1020, 420, 420}
@@ -476,15 +483,30 @@ public class TransitionMatchingSpatialTest {
         });
     }
     
+    private static final String MULTI_COMPARTMENT_DIFFUSION_INPUT = 
+            "%agent: A(d)\n" +
+            "%agent: B(d)\n" +
+            "%compartment: cytosol [2]\n" + 
+            "%compartment: membrane [2]\n" + 
+            "%channel: diffusion :cytosol [x], :membrane [u] -> :cytosol [x+1], :membrane [u+1]\n" + 
+            "%channel: domainLink :cytosol [x] -> :membrane [x]\n" + 
+            "'diffusion-all' A(d!1:domainLink),B(d!1) ->:diffusion A(d!1:domainLink),B(d!1) @ 0.1\n" + 
+            "%init: 10 :cytosol[0] A:cytosol[0](d!1:domainLink),B:membrane[0](d!1) \n" + 
+            "%obs: 'val[0]' :cytosol[0] A() \n" + 
+            "%obs: 'val[1]' :cytosol[1] A() \n" + 
+            "";
+        
     private static final String VERY_SIMPLE_TRANSPORT_INPUT = 
-        "%agent: A()\n" +
-        "%compartment: cytosol [2]\n" + 
-        "%channel: intra-cytosol :cytosol [x] -> :cytosol [x+1]\n" + 
-        "'diffusion-all' ->:intra-cytosol @ 0.1\n" + 
-        "%init: 10 :cytosol[0] A() \n" + 
-        "%obs: 'val[0]' :cytosol[0] A() \n" + 
-        "%obs: 'val[1]' :cytosol[1] A() \n" + 
-        "";
+            "%agent: A()\n" +
+            "%compartment: cytosol [2]\n" + 
+            "%channel: intra-cytosol :cytosol [x] -> :cytosol [x+1]\n" + 
+            "'diffusion-all' ->:intra-cytosol @ 0.1\n" + 
+            "%init: 10 :cytosol[0] A() \n" + 
+            "%obs: 'val[0]' :cytosol[0] A() \n" + 
+            "%obs: 'val[1]' :cytosol[1] A() \n" + 
+            "";
+        
+    
     
     private static final String SIMPLE_TRANSPORT_INPUT = 
         "%agent: A()\n" +

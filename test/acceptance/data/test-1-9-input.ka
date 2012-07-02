@@ -95,57 +95,57 @@ egfr-outside(l!_,dl!1:cross),egfr-inside:cytosol(dl!1,r!3),egfr-outside(l!_,dl!2
   egfr-outside(l!_,dl!1:cross),egfr-inside:cytosol(dl!1,r),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r) @ 'km2'
 
 # Transphosphorylation of egfr by RTK
- egfr-inside(r!_,Y1068~Y) -> egfr-inside(r!_,Y1068~pY) @ 'kp3'
- egfr-inside(r!_,Y1148~Y) -> egfr-inside(r!_,Y1148~pY) @ 'kp3'
+:cytosol egfr-inside(r!_,Y1068~Y) -> egfr-inside(r!_,Y1068~pY) @ 'kp3'
+:cytosol egfr-inside(r!_,Y1148~Y) -> egfr-inside(r!_,Y1148~pY) @ 'kp3'
 
 # Dephosphorylation
- egfr-inside(Y1068~pY) -> egfr-inside(Y1068~Y) @ 'km3'
- egfr-inside(Y1148~pY) -> egfr-inside(Y1148~Y) @ 'km3'
+:cytosol egfr-inside(Y1068~pY) -> egfr-inside(Y1068~Y) @ 'km3'
+:cytosol egfr-inside(Y1148~pY) -> egfr-inside(Y1148~Y) @ 'km3'
 
 # Shc transphosph
 
- egfr-inside(r!_,Y1148~pY!1),Shc(PTB!1,Y317~Y) -> egfr-inside(r!_,Y1148~pY!1),Shc(PTB!1,Y317~pY) @ 'kp14'
- Shc(PTB!_,Y317~pY) -> Shc(PTB!_,Y317~Y) @ 'km14'
+:cytosol egfr-inside(r!_,Y1148~pY!1),Shc(PTB!1,Y317~Y) -> egfr-inside(r!_,Y1148~pY!1),Shc(PTB!1,Y317~pY) @ 'kp14'
+:cytosol Shc(PTB!_,Y317~pY) -> Shc(PTB!_,Y317~Y) @ 'km14'
 
 # Y1068 activity
- egfr-inside(Y1068~pY),Grb2(SH2,SH3) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3) @ 'kp9'
- egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1068~pY),Grb2(SH2,SH3) @ 'km9'
- egfr-inside(Y1068~pY),Grb2(SH2,SH3!_) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!_) @ 'kp11'
- egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!_) -> egfr-inside(Y1068~pY),Grb2(SH2,SH3!_) @ 'km11'
- egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) @ 'kp10'
- egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) @ 'km10'
+:cytosol egfr-inside(Y1068~pY),Grb2(SH2,SH3) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3) @ 'kp9'
+:cytosol egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1068~pY),Grb2(SH2,SH3) @ 'km9'
+:cytosol egfr-inside(Y1068~pY),Grb2(SH2,SH3!_) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!_) @ 'kp11'
+:cytosol egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!_) -> egfr-inside(Y1068~pY),Grb2(SH2,SH3!_) @ 'km11'
+:cytosol egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) @ 'kp10'
+:cytosol egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) @ 'km10'
 
 # Y1148 activity
 
- egfr-inside(Y1148~pY),Shc(PTB,Y317~Y) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~Y) @ 'kp13'
- egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~Y) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~Y) @ 'km13'
- egfr-inside(Y1148~pY),Shc(PTB,Y317~pY) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY) @ 'kp15'
- egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY) @ 'km15'
- egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp18'
- egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'km18'
- egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'kp20'
- egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'km20'
+:cytosol egfr-inside(Y1148~pY),Shc(PTB,Y317~Y) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~Y) @ 'kp13'
+:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~Y) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~Y) @ 'km13'
+:cytosol egfr-inside(Y1148~pY),Shc(PTB,Y317~pY) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY) @ 'kp15'
+:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY) @ 'km15'
+:cytosol egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp18'
+:cytosol egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'km18'
+:cytosol egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'kp20'
+:cytosol egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'km20'
 
- egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) @ 'kp17'
- egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) @ 'km17'
+:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) @ 'kp17'
+:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) @ 'km17'
 
- egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp24'
- egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) @ 'km24'
+:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp24'
+:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) @ 'km24'
 
- Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp19'
- Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km19'
+:cytosol Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp19'
+:cytosol Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km19'
 
 # Cytosolic
 
- Shc(PTB,Y317~pY),Grb2(SH2,SH3) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp21'
- Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3) @ 'km21'
- Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) @ 'kp23'
- Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) @ 'km23'
- Shc(PTB,Y317~pY) -> Shc(PTB,Y317~Y) @ 'km16'
- Grb2(SH2,SH3),Sos(dom) -> Grb2(SH2,SH3!1),Sos(dom!1) @ 'kp12'
- Grb2(SH2,SH3!1),Sos(dom!1) -> Grb2(SH2,SH3),Sos(dom) @ 'km12'
- Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp22'
- Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km22'
+:cytosol Shc(PTB,Y317~pY),Grb2(SH2,SH3) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp21'
+:cytosol Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3) @ 'km21'
+:cytosol Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) @ 'kp23'
+:cytosol Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) @ 'km23'
+:cytosol Shc(PTB,Y317~pY) -> Shc(PTB,Y317~Y) @ 'km16'
+:cytosol Grb2(SH2,SH3),Sos(dom) -> Grb2(SH2,SH3!1),Sos(dom!1) @ 'kp12'
+:cytosol Grb2(SH2,SH3!1),Sos(dom!1) -> Grb2(SH2,SH3),Sos(dom) @ 'km12'
+:cytosol Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp22'
+:cytosol Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km22'
 
 
 %obs: 'Dimers' egfr-inside(r!1),egfr-inside(r!1)

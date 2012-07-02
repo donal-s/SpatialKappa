@@ -321,25 +321,24 @@ public class Transition {
         if (channelName == null) {
             return;
         }
-        List<Complex> movedComplexes = new ArrayList<Complex>();
+        List<Agent> movedAgents = new ArrayList<Agent>();
+        List<Location> targetLocations = new ArrayList<Location>();
+        
         for (int index = 0; index < indexMapLeftRight.length; index++) {
             if (indexMapLeftRight[index] != DELETED) {
                 Agent leftAgent = leftSideAgents.get(index);
-                
-                if (movedComplexes.contains(leftAgent.getComplex())) {
-                    continue;
-                }
                 
                 Agent rightAgent = rightSideAgents.get(indexMapLeftRight[index]);
                 Location sourceLocation = leftAgent.location;
                 Location targetLocation = rightAgent.location;
                 
                 if (NOT_LOCATED == sourceLocation || NOT_LOCATED == targetLocation || !targetLocation.equals(sourceLocation)) {
-                    primitives.add(TransformPrimitive.getMoveAgent(leftAgent, targetLocation, channelName));
-                    movedComplexes.add(leftAgent.getComplex());
+                    movedAgents.add(leftAgent);
+                    targetLocations.add(targetLocation);
                 }
             }
         }
+        primitives.add(TransformPrimitive.getMoveAgents(movedAgents, targetLocations, channelName));
     }
 
     void createPrimitivesMoveComplexes(List<TransformPrimitive> primitives) {

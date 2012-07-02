@@ -226,21 +226,32 @@ compartmentExpr
   
 channelDecl
   @init {
-  List<Location[]> locations = new ArrayList<Location[]>();
+  Channel channel = null;
   }
   :
-  ^(CHANNEL linkName=id (channelExpr {locations.add(new Location[] {$channelExpr.source, $channelExpr.target});})+)
+  ^(CHANNEL (linkName=id { channel = new Channel($linkName.text); }) (channelExpr {channel.addLocationPair($channelExpr.source, $channelExpr.target);})+)
   {
-    kappaModel.addChannel(new Channel($linkName.text, locations));
+    kappaModel.addChannel(channel);
   }
   ;
 
-channelExpr returns [Location source, Location target]
+channelExpr returns [List<Location> source, List<Location> target]
   :
-  ^(LOCATION_PAIR sourceCompartment=locationExpr targetCompartment=locationExpr)
+  ^(LOCATION_PAIR sourceCompartments=locationsExpr targetCompartments=locationsExpr)
   {
-    $source = $sourceCompartment.result; $target = $targetCompartment.result;
+    $source = $sourceCompartments.locations; $target = $targetCompartments.locations;
   }
+  ;
+
+locationsExpr returns [List<Location> locations]
+  @init {
+  locations = new ArrayList<Location>();
+  }
+  :
+  ^(LOCATIONS (
+      locationExpr {locations.add($locationExpr.result);}
+    )+
+  )
   ;
 
 locationExpr returns [Location result]

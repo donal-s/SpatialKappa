@@ -201,13 +201,19 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testChannelDecl() throws Exception {
-        // Forward
-        checkChannelDecl("%channel: label :compartment1 -> :compartment2", "label: compartment1 -> compartment2");
-        checkChannelDecl("%channel: label :compartment1[x] -> :compartment2[2][x+1]", "label: compartment1[x] -> compartment2[2][(x + 1)]");
+        checkChannelDecl("%channel: label :compartment1 -> :compartment2", "label: [compartment1] -> [compartment2]");
+        checkChannelDecl("%channel: label :compartment1[x] -> :compartment2[2][x+1]", "label: [compartment1[x]] -> [compartment2[2][(x + 1)]]");
         checkChannelDecl("%channel: label (:compartment1[x] -> :compartment2[x+1]) + " +
                 "(:compartment1[x] -> :compartment2[x - 1])", 
-                "label: (compartment1[x] -> compartment2[(x + 1)]) + (compartment1[x] -> compartment2[(x - 1)])");
-    }
+                "label: ([compartment1[x]] -> [compartment2[(x + 1)]]) + ([compartment1[x]] -> [compartment2[(x - 1)]])");
+
+        // Multi agent channels
+        checkChannelDecl("%channel: diffusion" +
+                "        (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x+1][y], :cytosol [u+1][v][0]) + \\\n" + 
+                "        (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x -1][y], :cytosol [u -1][v][0])", 
+                "diffusion: ([membrane[x][y], cytosol[u][v][0]] -> [membrane[(x + 1)][y], cytosol[(u + 1)][v][0]]) + " + 
+                "([membrane[x][y], cytosol[u][v][0]] -> [membrane[(x - 1)][y], cytosol[(u - 1)][v][0]])");
+     }
     
     private void checkChannelDecl(String inputText, String linkText) throws Exception {
         Capture<Channel> channel = new Capture<Channel>();

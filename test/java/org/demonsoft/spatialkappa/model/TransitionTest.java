@@ -318,7 +318,7 @@ public class TransitionTest {
         Transition transition = new Transition("test", Utils.getList(leftAgent), "channel", Utils.getList(rightAgent), 10.0f);
                 
         TransformPrimitive[] expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveAgent(leftAgent, NOT_LOCATED, "channel"),
+                TransformPrimitive.getMoveAgents(getList(leftAgent), getList(NOT_LOCATED), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
@@ -333,12 +333,30 @@ public class TransitionTest {
         transition = new Transition("test", Utils.getList(leftAgent), "channel", Utils.getList(rightAgent), 10.0f);
                 
         expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveAgent(leftAgent, new Location("target"), "channel"),
+                TransformPrimitive.getMoveAgents(getList(leftAgent), getList(new Location("target")), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
         expectedAgentMap.clear();
         expectedAgentMap.put(leftAgent, rightAgent);
+        assertEquals(expectedAgentMap, transition.getLeftRightAgentMap());
+    }
+
+    @Test
+    public void testTransition_checkPrimitives_channel_multipleAgentRule() {
+        List<Agent> leftAgents = getList(new Agent("A", new Location("locA")), new Agent("B", new Location("locA")), new Agent("C", new Location("locA"))); 
+        List<Agent> rightAgents = getList(new Agent("A", new Location("locB")), new Agent("B", new Location("locB")), new Agent("C", new Location("locA"))); 
+        Transition transition = new Transition("test", leftAgents, "channel", rightAgents, 10.0f);
+                
+        TransformPrimitive[] expected = new TransformPrimitive[] {
+                TransformPrimitive.getMoveAgents(getList(leftAgents.get(0), leftAgents.get(1)), getList(new Location("locB"), new Location("locB")), "channel"),
+        };
+        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        
+        Map<Agent, Agent> expectedAgentMap = new HashMap<Agent, Agent>();
+        expectedAgentMap.put(leftAgents.get(0), rightAgents.get(0));
+        expectedAgentMap.put(leftAgents.get(1), rightAgents.get(1));
+        expectedAgentMap.put(leftAgents.get(2), rightAgents.get(2));
         assertEquals(expectedAgentMap, transition.getLeftRightAgentMap());
     }
 
@@ -353,7 +371,7 @@ public class TransitionTest {
         Complex leftTemplateComplex = transition.sourceComplexes.get(0);        
         
         TransformPrimitive[] expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveAgent(leftTemplateAgent, NOT_LOCATED, "channel"),
+                TransformPrimitive.getMoveAgents(getList(leftTemplateAgent), getList(NOT_LOCATED), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
@@ -373,6 +391,53 @@ public class TransitionTest {
     }
 
     @Test
+    public void testApply_channel_multipleAgentRule() {
+        List<Compartment> compartments = getList(new Compartment("locA"), new Compartment("locB"), new Compartment("locC"), new Compartment("locD"), new Compartment("locE"));
+        Channel channel = new Channel("channel");
+        channel.addLocationPair(getList(new Location("locA"), new Location("locB")), 
+                getList(new Location("locD"), new Location("locE")));
+        
+        List<Channel> channels = getList(channel);
+
+        List<Agent> leftTemplateAgents = getList(new Agent("A", new Location("locA")), new Agent("B", new Location("locB")), new Agent("C", new Location("locC"))); 
+        List<Agent> rightTemplateAgents = getList(new Agent("A", new Location("locD")), new Agent("B", new Location("locE")), new Agent("C", new Location("locC"))); 
+        Transition transition = new Transition("test", leftTemplateAgents, "channel", rightTemplateAgents, 10.0f);
+
+        TransformPrimitive[] expected = new TransformPrimitive[] {
+                TransformPrimitive.getMoveAgents(getList(leftTemplateAgents.get(0), leftTemplateAgents.get(1)), getList(new Location("locD"), new Location("locE")), "channel"),
+        };
+        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        
+        Map<Agent, Agent> expectedAgentMap = new HashMap<Agent, Agent>();
+        expectedAgentMap.put(leftTemplateAgents.get(0), rightTemplateAgents.get(0));
+        expectedAgentMap.put(leftTemplateAgents.get(1), rightTemplateAgents.get(1));
+        expectedAgentMap.put(leftTemplateAgents.get(2), rightTemplateAgents.get(2));
+        assertEquals(expectedAgentMap, transition.getLeftRightAgentMap());
+
+
+        List<Agent> leftRealAgents = getList(new Agent("A", new Location("locA")), new Agent("B", new Location("locB")), new Agent("C", new Location("locC"))); 
+        getComplexes(leftRealAgents);
+        Map<Agent, Agent> mapping1 = new HashMap<Agent, Agent>();
+        Map<Agent, Agent> mapping2 = new HashMap<Agent, Agent>();
+        Map<Agent, Agent> mapping3 = new HashMap<Agent, Agent>();
+        mapping1.put(leftTemplateAgents.get(0), leftRealAgents.get(0));
+        mapping2.put(leftTemplateAgents.get(1), leftRealAgents.get(1));
+        mapping3.put(leftTemplateAgents.get(2), leftRealAgents.get(2));
+        List<ComplexMapping> sourceComplexMappings = getList(
+                new ComplexMapping(leftTemplateAgents.get(0).getComplex(), leftRealAgents.get(0).getComplex(), mapping1),
+                new ComplexMapping(leftTemplateAgents.get(1).getComplex(), leftRealAgents.get(1).getComplex(), mapping2),
+                new ComplexMapping(leftTemplateAgents.get(2).getComplex(), leftRealAgents.get(2).getComplex(), mapping3));
+        
+        List<Complex> result = transition.apply(sourceComplexMappings, channels, compartments);
+        Collections.sort(result, new Comparator<Complex>() {
+            public int compare(Complex o1, Complex o2) {
+                return o1.toString().compareTo(o2.toString());
+            }
+        });
+        assertEquals("[[A:locD], [B:locE], [C:locC]]", result.toString());
+    }
+
+    @Test
     public void testApply_singleAgentOfComplexMovement() {
         List<Compartment> compartments = getList(new Compartment("A"), new Compartment("B"));
         List<Channel> channels = getList(new Channel("channel", new Location("A"), new Location("B")));
@@ -387,7 +452,7 @@ public class TransitionTest {
         
         TransformPrimitive[] expected = new TransformPrimitive[] {
                 TransformPrimitive.getDeleteLink(leftTemplateComplex.agentLinks.get(0)),
-                TransformPrimitive.getMoveAgent(leftTemplateAgent1, new Location("B"), "channel"),
+                TransformPrimitive.getMoveAgents(getList(leftTemplateAgent1), getList(new Location("B")), "channel"),
                 TransformPrimitive.getCreateLink(leftTemplateAgent1.getSite("s"), leftTemplateAgent2.getSite("s"), "channel")
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
@@ -660,10 +725,11 @@ public class TransitionTest {
     @Test
     public void testCanApply() {
         List<Compartment> compartments = getList(new Compartment("A"), new Compartment("B"), new Compartment("C"));
-        List<Channel> channels = getList(new Channel("channel", getList(
-                new Location[] {new Location("A"), new Location("B")},
-                new Location[] {new Location("A"), new Location("C")},
-                new Location[] {new Location("B"), new Location("C")})));
+        Channel channel = new Channel("channel");
+        channel.addLocationPair(getList(new Location("A")), getList(new Location("B")));
+        channel.addLocationPair(getList(new Location("A")), getList(new Location("C")));
+        channel.addLocationPair(getList(new Location("B")), getList(new Location("C")));
+        List<Channel> channels = getList(channel);
 
         // Test compartments - no source constraint - no target constraint
         Agent leftTemplateAgent = new Agent("DNA"); 

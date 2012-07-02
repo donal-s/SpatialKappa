@@ -1,5 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -118,6 +120,22 @@ public class Utils {
             }
         }
         return result;
+    }
+    
+    public static void propogateLocation(List<Agent> agents, Location location) {
+        for (Agent agent : agents) {
+            if (agent.location == NOT_LOCATED) {
+                agent.setLocation(location);
+            }
+        }
+    }
+
+    public static void refineLocation(List<Agent> agents, Location location) {
+        for (Agent agent : agents) {
+            if (agent.location.isRefinement(location)) {
+                agent.setLocation(location);
+            }
+        }
     }
 
 

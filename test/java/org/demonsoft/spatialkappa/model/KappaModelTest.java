@@ -41,9 +41,11 @@ public class KappaModelTest {
     @Test
     public void testAddInitialValue_concreteValue() {
         List<Agent> agents = Utils.getList(new Agent("agent1"));
-        Location location = new Location("cytosol", new CellIndexExpression("2"));
-        Location otherLocation = new Location("nucleus", new CellIndexExpression("2"));
-
+        Location location = new Location("cytosol", INDEX_2);
+        Location otherLocation = new Location("nucleus", INDEX_2);
+        model.addCompartment(new Compartment("cytosol", 3));
+        model.addCompartment(new Compartment("nucleus", 3));
+        
         try {
             model.addInitialValue(null, "0.1", location);
             fail("null should have failed");
@@ -109,16 +111,16 @@ public class KappaModelTest {
                 new Agent("agent4", new AgentSite("x", null, "7")));
         model.addInitialValue(agents, "7", otherLocation);
 
-        Complex expectedComplex1 = new Complex(new Agent("agent1"));
-        Complex expectedComplex2 = new Complex(new Agent("agent1", location, new AgentSite("x", null, "1")), new Agent("agent2", location, new AgentSite("x", null, "1")));
-        Complex expectedComplex3 = new Complex(new Agent("agent3", location, new AgentSite("x", null, "2")), new Agent("agent4", location, new AgentSite("x", null, "2")));
-        Complex expectedComplex4 = new Complex(new Agent("agent3", otherLocation, new AgentSite("x", null, "7")), new Agent("agent4", otherLocation, new AgentSite("x", null, "7")));
-
         checkFixedLocatedInitialValues(new Object[][] { 
-                { expectedComplex1, 3 }, 
-                { expectedComplex2, 5 }, 
-                { expectedComplex3, 5 }, 
-                { expectedComplex4, 7 } });
+                { "[agent1:cytosol[0]]", 1 }, 
+                { "[agent1:cytosol[1]]", 1 }, 
+                { "[agent1:cytosol[2]]", 1 }, 
+                { "[agent1:nucleus[0]]", 0 }, 
+                { "[agent1:nucleus[1]]", 0 }, 
+                { "[agent1:nucleus[2]]", 0 }, 
+                { "[agent1:cytosol[2](x!1), agent2:cytosol[2](x!1)]", 5 }, 
+                { "[agent3:cytosol[2](x!2), agent4:cytosol[2](x!2)]", 5 }, 
+                { "[agent3:nucleus[2](x!7), agent4:nucleus[2](x!7)]", 7 } });
         checkAggregateAgents(new AggregateAgent("agent1", new AggregateSite("x", null, "1")), 
                 new AggregateAgent("agent2", new AggregateSite("x", null, "1")),
                 new AggregateAgent("agent3", new AggregateSite("x", null, new String[] {"2", "7"})), 
@@ -128,8 +130,10 @@ public class KappaModelTest {
     @Test
     public void testAddInitialValue_propogateLocationsToAgents() {
         List<Agent> agents = Utils.getList(new Agent("agent1"));
-        Location location = new Location("cytosol", new CellIndexExpression("2"));
-        Location otherLocation = new Location("nucleus", new CellIndexExpression("2"));
+        Location location = new Location("cytosol", INDEX_2);
+        Location otherLocation = new Location("nucleus", INDEX_2);
+        model.addCompartment(new Compartment("cytosol", 3));
+        model.addCompartment(new Compartment("nucleus", 3));
 
         model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addAgentDeclaration(new AggregateAgent("agent2"));
@@ -143,14 +147,10 @@ public class KappaModelTest {
                 new Agent("agent4", location, new AgentSite("x", null, "2")));
         model.addInitialValue(agents, "5", location);
         
-        Complex expectedComplex1 = new Complex(new Agent("agent1", location));
-        Complex expectedComplex2 = new Complex(new Agent("agent1", location, new AgentSite("x", null, "1")), new Agent("agent2", otherLocation, new AgentSite("x", null, "1")));
-        Complex expectedComplex3 = new Complex(new Agent("agent3", location, new AgentSite("x", null, "2")), new Agent("agent4", location, new AgentSite("x", null, "2")));
-
         checkFixedLocatedInitialValues(new Object[][] { 
-                { expectedComplex1, 3 }, 
-                { expectedComplex2, 5 }, 
-                { expectedComplex3, 5 } });
+                { "[agent1:cytosol[2]]", 3 }, 
+                { "[agent1:cytosol[2](x!1), agent2:nucleus[2](x!1)]", 5 }, 
+                { "[agent3:cytosol[2](x!2), agent4:cytosol[2](x!2)]", 5 } });
         checkAggregateAgents(new AggregateAgent("agent1", new AggregateSite("x", null, "1")), 
                 new AggregateAgent("agent2", new AggregateSite("x", null, "1")),
                 new AggregateAgent("agent3", new AggregateSite("x", null, new String[] {"2"})), 
@@ -160,11 +160,13 @@ public class KappaModelTest {
     @Test
     public void testAddInitialValue_reference() {
         List<Agent> agents = Utils.getList(new Agent("agent1"));
-        Location location = new Location("cytosol", new CellIndexExpression("2"));
-        Location otherLocation = new Location("nucleus", new CellIndexExpression("2"));
+        Location location = new Location("cytosol", INDEX_2);
+        Location otherLocation = new Location("nucleus", INDEX_2);
         model.addVariable(new VariableExpression(3), "variable 3");
         model.addVariable(new VariableExpression(5), "variable 5");
         VariableReference reference = new VariableReference("variable 3");
+        model.addCompartment(new Compartment("cytosol", 3));
+        model.addCompartment(new Compartment("nucleus", 3));
 
         try {
             model.addInitialValue(null, reference, location);
@@ -207,16 +209,11 @@ public class KappaModelTest {
                 new Agent("agent4", new AgentSite("x", null, "7")));
         model.addInitialValue(agents, "7", otherLocation);
 
-        Complex expectedComplex1 = new Complex(new Agent("agent1", location));
-        Complex expectedComplex2 = new Complex(new Agent("agent1", location, new AgentSite("x", null, "1")), new Agent("agent2", location, new AgentSite("x", null, "1")));
-        Complex expectedComplex3 = new Complex(new Agent("agent3", location, new AgentSite("x", null, "2")), new Agent("agent4", location, new AgentSite("x", null, "2")));
-        Complex expectedComplex4 = new Complex(new Agent("agent3", otherLocation, new AgentSite("x", null, "7")), new Agent("agent4", otherLocation, new AgentSite("x", null, "7")));
-
         checkFixedLocatedInitialValues(new Object[][] { 
-                { expectedComplex1, 3 }, 
-                { expectedComplex2, 5 }, 
-                { expectedComplex3, 5 }, 
-                { expectedComplex4, 7 } });
+                { "[agent1:cytosol[2]]", 3 }, 
+                { "[agent1:cytosol[2](x!1), agent2:cytosol[2](x!1)]", 5 }, 
+                { "[agent3:cytosol[2](x!2), agent4:cytosol[2](x!2)]", 5 }, 
+                { "[agent3:nucleus[2](x!7), agent4:nucleus[2](x!7)]", 7 } });
         checkAggregateAgents(new AggregateAgent("agent1", new AggregateSite("x", null, "1")), 
                 new AggregateAgent("agent2", new AggregateSite("x", null, "1")),
                 new AggregateAgent("agent3", new AggregateSite("x", null, new String[] {"2", "7"})), 
@@ -233,7 +230,7 @@ public class KappaModelTest {
         model.addAgentDeclaration(new AggregateAgent("agent2"));
         model.addInitialValue(Utils.getList(new Agent("agent1")), "3", NOT_LOCATED);
 
-        checkFixedLocatedInitialValues(new Object[][] { { new Complex(new Agent("agent1")), 3 } });
+        checkFixedLocatedInitialValues(new Object[][] { { "[agent1]", 3 } });
         
         // add compartment
         model.addCompartment(new Compartment("cytosol", 3));
@@ -243,12 +240,42 @@ public class KappaModelTest {
         model.addInitialValue(Utils.getList(new Agent("agent2")), "10", new Location("cytosol", INDEX_1));
 
         checkFixedLocatedInitialValues(new Object[][] { 
-                { new Complex(new Agent("agent1", new Location("cytosol", INDEX_0))), 1 }, 
-                { new Complex(new Agent("agent1", new Location("cytosol", INDEX_1))), 1 }, 
-                { new Complex(new Agent("agent1", new Location("cytosol", INDEX_2))), 1 }, 
-                { new Complex(new Agent("agent2", new Location("cytosol", INDEX_0))), 2 }, 
-                { new Complex(new Agent("agent2", new Location("cytosol", INDEX_1))), 12 }, 
-                { new Complex(new Agent("agent2", new Location("cytosol", INDEX_2))), 1 }, 
+                { "[agent1:cytosol[0]]", 1 }, 
+                { "[agent1:cytosol[1]]", 1 }, 
+                { "[agent1:cytosol[2]]", 1 }, 
+                { "[agent2:cytosol[0]]", 2 }, 
+                { "[agent2:cytosol[1]]", 12 }, 
+                { "[agent2:cytosol[2]]", 1 }, 
+                });
+    }
+    
+    @Test
+    public void testGetFixedLocatedInitialValuesMap_multiCompartmentAgents() {
+        Map<Complex, Integer> actual = model.getFixedLocatedInitialValuesMap();
+        assertEquals(0, actual.size());
+        
+        model.addCompartment(new Compartment("cytosol", 3, 3, 3));
+        model.addCompartment(new Compartment("membrane", 3, 3));
+
+        model.addChannel(new Channel("domainLink", 
+                new Location("cytosol", INDEX_X, INDEX_Y, INDEX_0), new Location("membrane", INDEX_X, INDEX_Y)));
+        
+        model.addAgentDeclaration(new AggregateAgent("A", new AggregateSite("d", (String) null, null)));
+        model.addAgentDeclaration(new AggregateAgent("B", new AggregateSite("d", (String) null, null)));
+        
+        model.addInitialValue(Utils.getList(new Agent("A", new Location("cytosol"), new AgentSite("d", null, "1", "domainLink")), 
+                new Agent("B", new AgentSite("d", null, "1"))), "900", NOT_LOCATED);
+
+        checkFixedLocatedInitialValues(new Object[][] { 
+                { "[A:cytosol[0][0][0](d!1:domainLink), B:membrane[0][0](d!1)]", 100 }, 
+                { "[A:cytosol[0][1][0](d!1:domainLink), B:membrane[0][1](d!1)]", 100 }, 
+                { "[A:cytosol[0][2][0](d!1:domainLink), B:membrane[0][2](d!1)]", 100 }, 
+                { "[A:cytosol[1][0][0](d!1:domainLink), B:membrane[1][0](d!1)]", 100 }, 
+                { "[A:cytosol[1][1][0](d!1:domainLink), B:membrane[1][1](d!1)]", 100 }, 
+                { "[A:cytosol[1][2][0](d!1:domainLink), B:membrane[1][2](d!1)]", 100 }, 
+                { "[A:cytosol[2][0][0](d!1:domainLink), B:membrane[2][0](d!1)]", 100 }, 
+                { "[A:cytosol[2][1][0](d!1:domainLink), B:membrane[2][1](d!1)]", 100 }, 
+                { "[A:cytosol[2][2][0](d!1:domainLink), B:membrane[2][2](d!1)]", 100 }, 
                 });
     }
     
@@ -264,8 +291,7 @@ public class KappaModelTest {
         // No compartments
         model.addInitialValue(Utils.getList(new Agent("agent1")), "3", NOT_LOCATED);
 
-        checkFixedLocatedInitialValues(new Object[][] { { new Complex(new Agent("agent1", 
-                new AgentSite("s", null, null), new AgentSite("t", "x", null), new AgentSite("u", "y", null))), 3 } });
+        checkFixedLocatedInitialValues(new Object[][] { { "[agent1(s,t~x,u~y)]", 3 } });
         
         // add compartment
         model.addCompartment(new Compartment("cytosol", 3));
@@ -275,183 +301,108 @@ public class KappaModelTest {
         model.addInitialValue(Utils.getList(new Agent("agent2", new AgentSite("v", "b", null))), "10", new Location("cytosol", INDEX_1));
 
         checkFixedLocatedInitialValues(new Object[][] { 
-                { new Complex(new Agent("agent1", new Location("cytosol", INDEX_0), 
-                        new AgentSite("s", null, null), new AgentSite("t", "x", null), new AgentSite("u", "y", null))), 1 }, 
-                { new Complex(new Agent("agent1", new Location("cytosol", INDEX_1),
-                        new AgentSite("s", null, null), new AgentSite("t", "x", null), new AgentSite("u", "y", null))), 1 }, 
-                { new Complex(new Agent("agent1", new Location("cytosol", INDEX_2),
-                        new AgentSite("s", null, null), new AgentSite("t", "x", null), new AgentSite("u", "y", null))), 1 }, 
-                { new Complex(new Agent("agent2", new Location("cytosol", INDEX_0), new AgentSite("v", "a", null))), 2 }, 
-                { new Complex(new Agent("agent2", new Location("cytosol", INDEX_1), new AgentSite("v", "b", null))), 10 }, 
-                { new Complex(new Agent("agent2", new Location("cytosol", INDEX_1), new AgentSite("v", "a", null))), 2 }, 
-                { new Complex(new Agent("agent2", new Location("cytosol", INDEX_2), new AgentSite("v", "a", null))), 1 }, 
+                { "[agent1:cytosol[0](s,t~x,u~y)]", 1 }, 
+                { "[agent1:cytosol[1](s,t~x,u~y)]", 1 }, 
+                { "[agent1:cytosol[2](s,t~x,u~y)]", 1 }, 
+                { "[agent2:cytosol[0](v~a)]", 2 }, 
+                { "[agent2:cytosol[1](v~b)]", 10 }, 
+                { "[agent2:cytosol[1](v~a)]", 2 }, 
+                { "[agent2:cytosol[2](v~a)]", 1 }, 
                 });
     }
 
-//    @Test
-//    public void testGetFixedLocatedTransitions_transforms() {
-//        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
-//        assertEquals(0, actual.size());
-//        
-//        // No compartments
-//        List<Agent> leftAgents = getList(new Agent("agent1"));
-//        List<Agent> rightAgents = getList(new Agent("agent2"));
-//        model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), NOT_LOCATED);
-//        Transform transform1 = new Transform("label", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.1f);
-//
-//        checkLocatedTransitions(new LocatedTransform[] { 
-//                new LocatedTransform(transform1, NOT_LOCATED)
-//                });
-//        
-//        // add compartment
-//        model = new KappaModel();
-//        model.addCompartment(new Compartment("cytosol", 3));
-//        
-//        leftAgents = getList(new Agent("agent3"));
-//        rightAgents = getList(new Agent("agent4"));
-//        model.addTransform("label2", leftAgents, rightAgents, new VariableExpression(0.2f), new Location("cytosol"));
-//        Transform transform2 = new Transform("label2", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.2f);
-//
-//        leftAgents = getList(new Agent("agent5"));
-//        rightAgents = getList(new Agent("agent6"));
-//        model.addTransform("label3", leftAgents, rightAgents, new VariableExpression(0.3f), new Location("cytosol", new CellIndexExpression("1")));
-//        Transform transform3 = new Transform("label3", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.3f);
-//
-//        checkLocatedTransitions(new LocatedTransform[] { 
-//                new LocatedTransform(transform2, new Location("cytosol", new CellIndexExpression("0"))),
-//                new LocatedTransform(transform2, new Location("cytosol", new CellIndexExpression("1"))),
-//                new LocatedTransform(transform2, new Location("cytosol", new CellIndexExpression("2"))),
-//                new LocatedTransform(transform3, new Location("cytosol", new CellIndexExpression("1"))),
-//        });
-//    }
-//
-//    @Test
-//    public void testGetFixedLocatedTransitions_transforms_noCompartmentSpecified() {
-//        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
-//        assertEquals(0, actual.size());
-//        
-//        // No compartments
-//        List<Agent> leftAgents = getList(new Agent("agent1"));
-//        List<Agent> rightAgents = getList(new Agent("agent2"));
-//        model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), NOT_LOCATED);
-//        Transform transform = new Transform("label", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.1f);
-//
-//        checkLocatedTransitions(new LocatedTransform[] { 
-//                new LocatedTransform(transform, NOT_LOCATED)
-//                });
-//        
-//        // add compartment
-//        model.addCompartment(new Compartment("cytosol", 3));
-//        model.addCompartment(new Compartment("membrane", 2));
-//        
-//        checkLocatedTransitions(new LocatedTransform[] { 
-//                new LocatedTransform(transform, new Location("cytosol", new CellIndexExpression("0"))),
-//                new LocatedTransform(transform, new Location("cytosol", new CellIndexExpression("1"))),
-//                new LocatedTransform(transform, new Location("cytosol", new CellIndexExpression("2"))),
-//                new LocatedTransform(transform, new Location("membrane", new CellIndexExpression("0"))),
-//                new LocatedTransform(transform, new Location("membrane", new CellIndexExpression("1"))),
-//        });
-//    }
+    @Test
+    public void testGetValidLocatedTransitions_invalid() {
+        Transition templateTransition = new Transition("label", new Location("leftLocation"), 
+                "channel", new Location("rightLocation"), 2f);
+        List<Compartment> compartments = getList(new Compartment("leftLocation"), new Compartment("rightLocation"));
+        List<Channel> channels = getList(new Channel("channel", new Location("leftLocation"), new Location("rightLocation")));
+        
+        try {
+            model.getValidLocatedTransitions(null, compartments, channels);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        try {
+            model.getValidLocatedTransitions(templateTransition, null, channels);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        try {
+            model.getValidLocatedTransitions(templateTransition, compartments, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            model.getValidLocatedTransitions(templateTransition, new ArrayList<Compartment>(), channels);
+            fail("unknown compartment should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        try {
+            model.getValidLocatedTransitions(templateTransition, compartments, new ArrayList<Channel>());
+            fail("unknown channel should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+    }
 
-//    @Test
-//    public void testGetConcreteLocatedTransitions_transports() {
-//        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
-//        assertEquals(0, actual.size());
-//        
-//        model.addCompartment(new Compartment("cytosol", 3));
-//        model.addChannel(new Channel("intra", getList(
-//                new Location[] {
-//                        new Location("cytosol", INDEX_X),
-//                        new Location("cytosol", INDEX_X_PLUS_1),
-//                }, 
-//                new Location[] {
-//                        new Location("cytosol", INDEX_X),
-//                        new Location("cytosol", INDEX_X_MINUS_1),
-//                }, 
-//                new Location[] {
-//                        new Location("cytosol", INDEX_2), 
-//                        new Location("cytosol", INDEX_0),
-//                },
-//                new Location[] {
-//                        new Location("cytosol", INDEX_0), 
-//                        new Location("cytosol", INDEX_2),
-//                }
-//                )));
-//        
-//        List<Agent> agents = getList(new Agent("agent1"));
-//        model.addTransport("label", "intra", agents, new VariableExpression(0.2f));
-//        Transport transport = new Transport("label",  "intra", agents, 0.2f);
-//
-//        Location cell0 = new Location("cytosol", INDEX_0);
-//        Location cell1 = new Location("cytosol", INDEX_1);
-//        Location cell2 = new Location("cytosol", INDEX_2);
-//        
-//        checkLocatedTransitions(new LocatedTransport[] { 
-//                new LocatedTransport(transport, cell0, cell1),
-//                new LocatedTransport(transport, cell1, cell0),
-//                new LocatedTransport(transport, cell1, cell2),
-//                new LocatedTransport(transport, cell2, cell1),
-//                new LocatedTransport(transport, cell0, cell2),
-//                new LocatedTransport(transport, cell2, cell0),
-//        });
-//    }
+    @Test
+    public void testGetValidLocatedTransitions_noDiffusion() {
+        List<Compartment> compartments = new ArrayList<Compartment>();
+        List<Channel> channels = new ArrayList<Channel>();
 
-//    @Test
-//    public void testGetConcreteLocatedTransitions_transports_multipleLinksSameLabel() {
-//        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
-//        assertEquals(0, actual.size());
-//        
-//        model.addCompartment(new Compartment("cytosol", 3));
-//        model.addChannel(new Channel("intra", getList(
-//                new Location[] {
-//                        new Location("cytosol", INDEX_0), 
-//                        new Location("cytosol", INDEX_1)
-//                },
-//                new Location[] {
-//                        new Location("cytosol", INDEX_1), 
-//                        new Location("cytosol", INDEX_2),
-//                },
-//                new Location[] {
-//                        new Location("cytosol", INDEX_1), 
-//                        new Location("cytosol", INDEX_0)
-//                },
-//                new Location[] {
-//                        new Location("cytosol", INDEX_2), 
-//                        new Location("cytosol", INDEX_1),
-//                }
-//                )));
-//        
-//        List<Agent> agents = getList(new Agent("agent1"));
-//        model.addTransport("label", "intra", agents, new VariableExpression(0.2f));
-//        Transport transport = new Transport("label",  "intra", agents, 0.2f);
-//
-//        Location cell0 = new Location("cytosol", INDEX_0);
-//        Location cell1 = new Location("cytosol", INDEX_1);
-//        Location cell2 = new Location("cytosol", INDEX_2);
-//        
-//        checkLocatedTransitions(new LocatedTransport[] { 
-//                new LocatedTransport(transport, cell0, cell1),
-//                new LocatedTransport(transport, cell1, cell0),
-//                new LocatedTransport(transport, cell1, cell2),
-//                new LocatedTransport(transport, cell2, cell1),
-//        });
-//    }
+        // No compartments
+        Transition templateTransition = new Transition("label", 
+                getList(new Agent("agent1")), null, 
+                getList(new Agent("agent1")), 0.1f);
 
-//    private void checkLocatedTransitions(Transition[] expecteds) {
-//        List<String> actuals = new ArrayList<String>();
-//        for (Transition transition : model.getFixedLocatedTransitions()) {
-//            actuals.add(transition.toString());
-//        }
-//        assertEquals(expecteds.length, actuals.size());
-//        
-//        for (Transition expected : expecteds) {
-//            String expectedString = expected.toString();
-//            if (!actuals.contains(expectedString)) {
-//                fail("Not found: " + expected);
-//            }
-//            actuals.remove(expectedString);
-//        }
-//    }
+        checkLocatedTransitions(templateTransition, new Transition[] { 
+                templateTransition
+                }, compartments, channels);
+        
+        // add compartment
+        compartments.add(new Compartment("cytosol", 3));
+        checkLocatedTransitions(templateTransition, new Transition[] { 
+                new Transition("label-1", 
+                        getList(new Agent("agent1", new Location("cytosol", INDEX_0))), null, 
+                        getList(new Agent("agent1", new Location("cytosol", INDEX_0))), 0.1f),
+                new Transition("label-2", 
+                        getList(new Agent("agent1", new Location("cytosol", INDEX_1))), null, 
+                        getList(new Agent("agent1", new Location("cytosol", INDEX_1))), 0.1f),
+                new Transition("label-3", 
+                        getList(new Agent("agent1", new Location("cytosol", INDEX_2))), null, 
+                        getList(new Agent("agent1", new Location("cytosol", INDEX_2))), 0.1f),
+                }, compartments, channels);
+    }
+
+    private void checkLocatedTransitions(Transition template, Transition[] expecteds, 
+            List<Compartment> compartments, List<Channel> channels) {
+        
+        List<String> actuals = new ArrayList<String>();
+        for (Transition transition : model.getValidLocatedTransitions(template, compartments, channels)) {
+            actuals.add(transition.toString());
+        }
+
+        assertEquals(expecteds.length, actuals.size());
+        
+        for (Transition expected : expecteds) {
+            String expectedString = expected.toString();
+            if (!actuals.contains(expectedString)) {
+                fail("Not found: " + expected + " in " + actuals);
+            }
+            actuals.remove(expectedString);
+        }
+    }
 
     @Test
     public void testAddVariable_withAgents() {
@@ -512,7 +463,7 @@ public class KappaModelTest {
     public void testAddVariable_withAgentsAndCompartments() {
         List<Agent> agents1 = new ArrayList<Agent>();
         agents1.add(new Agent("agent1"));
-        Location location = new Location("cytosol", new CellIndexExpression("2"));
+        Location location = new Location("cytosol", INDEX_2);
 
         try {
             model.addVariable(null, "label", location);
@@ -678,7 +629,7 @@ public class KappaModelTest {
         assertEquals(expectedQuantities.length, quantityMap.size());
         
         for (Object[] expected : expectedQuantities) {
-            String complexString = expected[0].toString();
+            String complexString = (String) expected[0];
             boolean found = false;
             for (Map.Entry<Complex, Integer> entry : quantityMap.entrySet()) {
                 if (complexString.equals(entry.getKey().toString())) {
@@ -687,7 +638,7 @@ public class KappaModelTest {
                     break;
                 }
             }
-            assertTrue("Complex not found: " + complexString, found);
+            assertTrue("Complex not found: " + complexString + " in " + quantityMap, found);
         }
         
         // Check canonicalisation
@@ -942,17 +893,6 @@ public class KappaModelTest {
         model.addChannel(new Channel("name", new Location("known"), new Location("known")));
         model.addChannel(new Channel("name", new Location("known"), new Location("known")));
         checkValidate_failure("Duplicate channel 'name'");
-    }
-    
-    @Test
-    public void testValidate_perturbation() {
-        
-        /*
-         *     
-    public void addPerturbation(Perturbation perturbation); // TODO
-
-         * 
-         */
     }
     
     @Test
@@ -1368,197 +1308,6 @@ public class KappaModelTest {
                 model.getUnmergedAgents(templateAgents, mergedLocatedMap, templateMergedMap).toString());
     }
     
-//    @Test
-//    public void testGetValidLocatedTransforms() throws Exception {
-//        
-//        Transform transform = new Transform("label", 
-//                getList(new Agent("A", new AgentSite("s", null, null))), 
-//                getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1"))), 10f, false);
-//        
-//        List<Channel> channels = new ArrayList<Channel>();
-//        channels.add(new Channel("intra", new Location("loc2", INDEX_X), new Location("loc2", INDEX_X_PLUS_1)));
-//        channels.add(new Channel("inter", new Location("loc1"), new Location("loc2", INDEX_2)));
-//        
-//        List<Compartment> compartments = new ArrayList<Compartment>();
-//        compartments.add(new Compartment("loc1"));
-//        compartments.add(new Compartment("loc2", 3));
-//        compartments.add(new Compartment("loc3", 3));
-//        
-//
-//        try {
-//            model.getValidLocatedTransforms(null, compartments, channels);
-//            fail("null should have failed");
-//        }
-//        catch (NullPointerException ex) {
-//            // Expected exception
-//        }
-//        
-//        try {
-//            model.getValidLocatedTransforms(transform, null, channels);
-//            fail("null should have failed");
-//        }
-//        catch (NullPointerException ex) {
-//            // Expected exception
-//        }
-//        
-//        try {
-//            model.getValidLocatedTransforms(transform, compartments, null);
-//            fail("null should have failed");
-//        }
-//        catch (NullPointerException ex) {
-//            // Expected exception
-//        }
-//        
-//        // No location
-//        
-//        List<Transform> expected = new ArrayList<Transform>();
-//        expected.add(new Transform("label", getList(new Agent("A", new AgentSite("s", null, null))), 
-//                getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1"))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        // Full location
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc1"))), 
-//                getList(new Agent("A", new Location("loc1"))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label", 
-//                getList(new Agent("A", new Location("loc1"))), 
-//                getList(new Agent("A", new Location("loc1"))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        // Single unlinked partial location
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2"))), 
-//                getList(new Agent("A", new Location("loc2"))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label-1", 
-//                getList(new Agent("A", new Location("loc2", INDEX_0))), 
-//                getList(new Agent("A", new Location("loc2", INDEX_0))), 10f, false));
-//        expected.add(new Transform("label-2", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 10f, false));
-//        expected.add(new Transform("label-3", 
-//                getList(new Agent("A", new Location("loc2", INDEX_2))), 
-//                getList(new Agent("A", new Location("loc2", INDEX_2))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        // Multiple unlinked partial locations should fail
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2"))), 
-//                getList(new Agent("B", new Location("loc3"))), 10f, false);
-//
-//        try {
-//            model.getValidLocatedTransforms(transform, compartments, channels);
-//            fail("invalid transform should have failed");
-//        }
-//        catch (IllegalArgumentException ex) {
-//            // Expected exception
-//        }
-//        
-//        // Dimer unlinking same full location, no channel
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        // Dimer linked, same partial location, no channel
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, null))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label-1", 
-//                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, null))), 10f, false));
-//        expected.add(new Transform("label-2", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false));
-//        expected.add(new Transform("label-3", 
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, null))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        // No label
-//        transform = new Transform(null, 
-//                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, null))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform(null, 
-//                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, null))), 10f, false));
-//        expected.add(new Transform(null, 
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false));
-//        expected.add(new Transform(null, 
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, null))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, null))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, null))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//
-//        
-//    }
-    
-
     // TODO remember to rename
     @Test
     public void testInitMappingStructure() throws Exception {
@@ -1599,144 +1348,152 @@ public class KappaModelTest {
         }
         
         // Simple agent - fixed location
-        agents = Utils.getList(new Agent("A", new Location("loc1")));
+        agents = getList(new Agent("A", new Location("loc1")));
         complex = new Complex(agents);
         
         List<List<Agent>> expected = new ArrayList<List<Agent>>();
-        List<Agent> instanceAgents = Utils.getList(new Agent("A", new Location("loc1")));
-        expected.add(instanceAgents);
+        expected.add(getList(new Agent("A", new Location("loc1"))));
         
         checkMappingStructure(complex, compartments, channels, expected);
 
-        agents = Utils.getList(new Agent("A", new Location("loc2", INDEX_1)));
+        agents = getList(new Agent("A", new Location("loc2", INDEX_1)));
         complex = new Complex(agents);
         
         expected.clear();
-        instanceAgents = Utils.getList(new Agent("A", new Location("loc2", INDEX_1)));
-        expected.add(instanceAgents);
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_1))));
         
         checkMappingStructure(complex, compartments, channels, expected);
         
 
         // Simple agent - no location
-        agents = Utils.getList(new Agent("A"));
+        agents = getList(new Agent("A"));
         complex = new Complex(agents);
         
         expected.clear();
-        instanceAgents = Utils.getList(new Agent("A"));
-        expected.add(instanceAgents);
+        expected.add(getList(new Agent("A", new Location("loc1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_1))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_2))));
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("3")))));
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("4")))));
         
         checkMappingStructure(complex, compartments, channels, expected);
         
         
         // Simple agent - partial location
 
-        agents = Utils.getList(new Agent("A", new Location("loc2")));
+        agents = getList(new Agent("A", new Location("loc2")));
         complex = new Complex(agents);
         
         expected.clear();
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", INDEX_0))));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", INDEX_1))));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", INDEX_2))));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", new CellIndexExpression("3")))));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", new CellIndexExpression("4")))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_1))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_2))));
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("3")))));
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("4")))));
                
         checkMappingStructure(complex, compartments, channels, expected);
 
         
         // Dimer - one agent fixed, other same compartment
-        agents = Utils.getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1")),
+        agents = getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1")),
                 new Agent("B", new Location("loc1"), new AgentSite("s", null, "1")));
         complex = new Complex(agents);
         
         expected.clear();
-        instanceAgents = Utils.getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1")),
-                new Agent("B", new Location("loc1"), new AgentSite("s", null, "1")));
-        expected.add(instanceAgents);
+        expected.add(getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1")),
+                new Agent("B", new Location("loc1"), new AgentSite("s", null, "1"))));
         
         checkMappingStructure(complex, compartments, channels, expected);
 
-        agents = Utils.getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")),
+        agents = getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")),
                 new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
         complex = new Complex(agents);
         
         expected.clear();
-        instanceAgents = Utils.getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")),
-                new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")));
-        expected.add(instanceAgents);
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")),
+                new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))));
         
         checkMappingStructure(complex, compartments, channels, expected);
         
 
         // Dimer - one agent no location, other same compartment
-        agents = Utils.getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1")));
+        agents = getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1")));
         complex = new Complex(agents);
         
         expected.clear();
-        instanceAgents = Utils.getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1")));
-        expected.add(instanceAgents);
+        expected.add(getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc1"), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1"))));
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("4")), new AgentSite("s", null, "1")), 
+                new Agent("B", new Location("loc2", new CellIndexExpression("4")), new AgentSite("s", null, "1"))));
         
         checkMappingStructure(complex, compartments, channels, expected);
         
         
         // Dimer - one agent partial location, other same compartment
 
-        agents = Utils.getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1")), 
+        agents = getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1")), 
                 new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
         complex = new Complex(agents);
         
         expected.clear();
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1")), 
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1")), 
                 new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, "1"))));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
                 new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
                 new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1")), 
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1")), 
                 new Agent("B", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1"))));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", new CellIndexExpression("4")), new AgentSite("s", null, "1")), 
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("4")), new AgentSite("s", null, "1")), 
                 new Agent("B", new Location("loc2", new CellIndexExpression("4")), new AgentSite("s", null, "1"))));
                
         checkMappingStructure(complex, compartments, channels, expected);
 
         // Dimer - one agent fixed, other using channel
-        agents = Utils.getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1", "inter")),
+        agents = getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1", "inter")),
                 new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
         complex = new Complex(agents);
         
         expected.clear();
-        instanceAgents = Utils.getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1", "inter")),
-                new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")));
-        expected.add(instanceAgents);
+        expected.add(getList(new Agent("A", new Location("loc1"), new AgentSite("s", null, "1", "inter")),
+                new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))));
         
         checkMappingStructure(complex, compartments, channels, expected);
 
-        agents = Utils.getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1", "intra")),
+        agents = getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1", "intra")),
                 new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
         complex = new Complex(agents);
         
         expected.clear();
-        instanceAgents = Utils.getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1", "intra")),
-                new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")));
-        expected.add(instanceAgents);
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1", "intra")),
+                new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))));
         
         checkMappingStructure(complex, compartments, channels, expected);
         
 
         // Dimer - one agent partial location, other using channel
 
-        agents = Utils.getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1", "intra")), 
+        agents = getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1", "intra")), 
                 new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
         complex = new Complex(agents);
         
         expected.clear();
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1", "intra")), 
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1", "intra")), 
                 new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1", "intra")), 
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1", "intra")), 
                 new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1", "intra")), 
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1", "intra")), 
                 new Agent("B", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1"))));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1", "intra")), 
+        expected.add(getList(new Agent("A", new Location("loc2", new CellIndexExpression("3")), new AgentSite("s", null, "1", "intra")), 
                 new Agent("B", new Location("loc2", new CellIndexExpression("4")), new AgentSite("s", null, "1"))));
                
         checkMappingStructure(complex, compartments, channels, expected);
@@ -1744,30 +1501,33 @@ public class KappaModelTest {
         // Dimer - one agent partial location, other using channel, 2 dimensions
 
         channels.clear();
-        List<Location[]> locations = new ArrayList<Location[]>();
         // Ensure more than the first pair get processed
-        locations.add(new Location[] {new Location("loc2", new CellIndexExpression("100"), INDEX_0), new Location("loc2", new CellIndexExpression("101"), INDEX_0)});
-        locations.add(new Location[] {new Location("loc2", INDEX_X, INDEX_Y), new Location("loc2", INDEX_X_MINUS_1, INDEX_Y)});
-        locations.add(new Location[] {new Location("loc2", INDEX_X, INDEX_Y), new Location("loc2", INDEX_X_PLUS_1, INDEX_Y)});
-        channels.add(new Channel("horiz", locations));
+        Channel channel = new Channel("horiz");
+        channel.addLocationPair(getList(new Location("loc2", new CellIndexExpression("100"), INDEX_0)), 
+                getList(new Location("loc2", new CellIndexExpression("101"), INDEX_0)));
+        channel.addLocationPair(getList(new Location("loc2", INDEX_X, INDEX_Y)), 
+                getList(new Location("loc2", INDEX_X_MINUS_1, INDEX_Y)));
+        channel.addLocationPair(getList(new Location("loc2", INDEX_X, INDEX_Y)), 
+                getList(new Location("loc2", INDEX_X_PLUS_1, INDEX_Y)));
+        channels.add(channel);
         
         compartments.clear();
         compartments.add(new Compartment("loc2", 2, 2));
 
-        agents = Utils.getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1", "horiz")), 
+        agents = getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1", "horiz")), 
                 new Agent("B", new Location("loc2"), new AgentSite("s", null, "1")));
         complex = new Complex(agents);
         
         expected.clear();
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", INDEX_0, INDEX_0), new AgentSite("s", null, "1", "horiz")), 
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0, INDEX_0), new AgentSite("s", null, "1", "horiz")), 
                 new Agent("B", new Location("loc2", INDEX_1, INDEX_0), new AgentSite("s", null, "1"))));
-        expected.add(Utils.getList(
+        expected.add(getList(
                 new Agent("A", new Location("loc2", INDEX_1, INDEX_0), new AgentSite("s", null, "1", "horiz")),
                 new Agent("B", new Location("loc2", INDEX_0, INDEX_0), new AgentSite("s", null, "1"))
                 ));
-        expected.add(Utils.getList(new Agent("A", new Location("loc2", INDEX_0, INDEX_1), new AgentSite("s", null, "1", "horiz")), 
+        expected.add(getList(new Agent("A", new Location("loc2", INDEX_0, INDEX_1), new AgentSite("s", null, "1", "horiz")), 
                 new Agent("B", new Location("loc2", INDEX_1, INDEX_1), new AgentSite("s", null, "1"))));
-        expected.add(Utils.getList(
+        expected.add(getList(
                 new Agent("A", new Location("loc2", INDEX_1, INDEX_1), new AgentSite("s", null, "1", "horiz")),
                 new Agent("B", new Location("loc2", INDEX_0, INDEX_1), new AgentSite("s", null, "1"))
                 ));
@@ -1788,44 +1548,6 @@ public class KappaModelTest {
             assertEquals(expectedAgents.toString(), actualAgents.toString());
         }
     }
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // TODO ADDITIONS START HERE
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     @Test
     public void testAddTransition_invalid() {
@@ -1865,7 +1587,7 @@ public class KappaModelTest {
 
     @Test
     public void testAddTransition_noChannel() {
-        Location leftLocation = new Location("left", new CellIndexExpression("2"));
+        Location leftLocation = new Location("left", INDEX_2);
         Location rightLocation = new Location("right");
         List<Agent> leftAgents = Utils.getList(
                 new Agent("agent1", new AgentSite("interface1", "state1", "link1"), 
@@ -1968,7 +1690,7 @@ public class KappaModelTest {
 
     @Test
     public void testAddTransition_withChannel() {
-        Location leftLocation = new Location("left", new CellIndexExpression("2"));
+        Location leftLocation = new Location("left", INDEX_2);
         Location rightLocation = new Location("right");
         List<Agent> leftAgents = Utils.getList(
                 new Agent("agent1", new AgentSite("interface1", "state1", "link1"), 
@@ -2093,438 +1815,5 @@ public class KappaModelTest {
         expected = new Transition("label", null, "channel", rightLocation, 0.1f);
         checkTransitions(model, new Transition[] { expected });
     }
-
-//    @Test
-//    public void testGetFixedLocatedTransitions_transforms() {
-//        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
-//        assertEquals(0, actual.size());
-//        
-//        // No compartments
-//        List<Agent> leftAgents = getList(new Agent("agent1"));
-//        List<Agent> rightAgents = getList(new Agent("agent2"));
-//        model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), NOT_LOCATED);
-//        Transform transform1 = new Transform("label", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.1f);
-//
-//        checkLocatedTransitions(new LocatedTransform[] { 
-//                new LocatedTransform(transform1, NOT_LOCATED)
-//                });
-//        
-//        // add compartment
-//        model = new KappaModel();
-//        model.addCompartment(new Compartment("cytosol", 3));
-//        
-//        leftAgents = getList(new Agent("agent3"));
-//        rightAgents = getList(new Agent("agent4"));
-//        model.addTransform("label2", leftAgents, rightAgents, new VariableExpression(0.2f), new Location("cytosol"));
-//        Transform transform2 = new Transform("label2", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.2f);
-//
-//        leftAgents = getList(new Agent("agent5"));
-//        rightAgents = getList(new Agent("agent6"));
-//        model.addTransform("label3", leftAgents, rightAgents, new VariableExpression(0.3f), new Location("cytosol", new CellIndexExpression("1")));
-//        Transform transform3 = new Transform("label3", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.3f);
-//
-//        checkLocatedTransitions(new LocatedTransform[] { 
-//                new LocatedTransform(transform2, new Location("cytosol", new CellIndexExpression("0"))),
-//                new LocatedTransform(transform2, new Location("cytosol", new CellIndexExpression("1"))),
-//                new LocatedTransform(transform2, new Location("cytosol", new CellIndexExpression("2"))),
-//                new LocatedTransform(transform3, new Location("cytosol", new CellIndexExpression("1"))),
-//        });
-//    }
-//
-//    @Test
-//    public void testGetFixedLocatedTransitions_transforms_noCompartmentSpecified() {
-//        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
-//        assertEquals(0, actual.size());
-//        
-//        // No compartments
-//        List<Agent> leftAgents = getList(new Agent("agent1"));
-//        List<Agent> rightAgents = getList(new Agent("agent2"));
-//        model.addTransform("label", leftAgents, rightAgents, new VariableExpression(0.1f), NOT_LOCATED);
-//        Transform transform = new Transform("label", Utils.getComplexes(leftAgents), Utils.getComplexes(rightAgents), 0.1f);
-//
-//        checkLocatedTransitions(new LocatedTransform[] { 
-//                new LocatedTransform(transform, NOT_LOCATED)
-//                });
-//        
-//        // add compartment
-//        model.addCompartment(new Compartment("cytosol", 3));
-//        model.addCompartment(new Compartment("membrane", 2));
-//        
-//        checkLocatedTransitions(new LocatedTransform[] { 
-//                new LocatedTransform(transform, new Location("cytosol", new CellIndexExpression("0"))),
-//                new LocatedTransform(transform, new Location("cytosol", new CellIndexExpression("1"))),
-//                new LocatedTransform(transform, new Location("cytosol", new CellIndexExpression("2"))),
-//                new LocatedTransform(transform, new Location("membrane", new CellIndexExpression("0"))),
-//                new LocatedTransform(transform, new Location("membrane", new CellIndexExpression("1"))),
-//        });
-//    }
-//
-//    @Test
-//    public void testGetConcreteLocatedTransitions_transports() {
-//        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
-//        assertEquals(0, actual.size());
-//        
-//        model.addCompartment(new Compartment("cytosol", 3));
-//        model.addChannel(new Channel("intra", getList(
-//                new Location[] {
-//                        new Location("cytosol", INDEX_X),
-//                        new Location("cytosol", INDEX_X_PLUS_1),
-//                }, 
-//                new Location[] {
-//                        new Location("cytosol", INDEX_X),
-//                        new Location("cytosol", INDEX_X_MINUS_1),
-//                }, 
-//                new Location[] {
-//                        new Location("cytosol", INDEX_2), 
-//                        new Location("cytosol", INDEX_0),
-//                },
-//                new Location[] {
-//                        new Location("cytosol", INDEX_0), 
-//                        new Location("cytosol", INDEX_2),
-//                }
-//                )));
-//        
-//        List<Agent> agents = getList(new Agent("agent1"));
-//        model.addTransport("label", "intra", agents, new VariableExpression(0.2f));
-//        Transport transport = new Transport("label",  "intra", agents, 0.2f);
-//
-//        Location cell0 = new Location("cytosol", INDEX_0);
-//        Location cell1 = new Location("cytosol", INDEX_1);
-//        Location cell2 = new Location("cytosol", INDEX_2);
-//        
-//        checkLocatedTransitions(new LocatedTransport[] { 
-//                new LocatedTransport(transport, cell0, cell1),
-//                new LocatedTransport(transport, cell1, cell0),
-//                new LocatedTransport(transport, cell1, cell2),
-//                new LocatedTransport(transport, cell2, cell1),
-//                new LocatedTransport(transport, cell0, cell2),
-//                new LocatedTransport(transport, cell2, cell0),
-//        });
-//    }
-//
-//    @Test
-//    public void testGetConcreteLocatedTransitions_transports_multipleLinksSameLabel() {
-//        List<LocatedTransition> actual = model.getFixedLocatedTransitions();
-//        assertEquals(0, actual.size());
-//        
-//        model.addCompartment(new Compartment("cytosol", 3));
-//        model.addChannel(new Channel("intra", getList(
-//                new Location[] {
-//                        new Location("cytosol", INDEX_0), 
-//                        new Location("cytosol", INDEX_1)
-//                },
-//                new Location[] {
-//                        new Location("cytosol", INDEX_1), 
-//                        new Location("cytosol", INDEX_2),
-//                },
-//                new Location[] {
-//                        new Location("cytosol", INDEX_1), 
-//                        new Location("cytosol", INDEX_0)
-//                },
-//                new Location[] {
-//                        new Location("cytosol", INDEX_2), 
-//                        new Location("cytosol", INDEX_1),
-//                }
-//                )));
-//        
-//        List<Agent> agents = getList(new Agent("agent1"));
-//        model.addTransport("label", "intra", agents, new VariableExpression(0.2f));
-//        Transport transport = new Transport("label",  "intra", agents, 0.2f);
-//
-//        Location cell0 = new Location("cytosol", INDEX_0);
-//        Location cell1 = new Location("cytosol", INDEX_1);
-//        Location cell2 = new Location("cytosol", INDEX_2);
-//        
-//        checkLocatedTransitions(new LocatedTransport[] { 
-//                new LocatedTransport(transport, cell0, cell1),
-//                new LocatedTransport(transport, cell1, cell0),
-//                new LocatedTransport(transport, cell1, cell2),
-//                new LocatedTransport(transport, cell2, cell1),
-//        });
-//    }
-//
-//    private void checkLocatedTransitions(LocatedTransition[] expecteds) {
-//        List<String> actuals = new ArrayList<String>();
-//        for (LocatedTransition transition : model.getFixedLocatedTransitions()) {
-//            actuals.add(transition.toString());
-//        }
-//        assertEquals(expecteds.length, actuals.size());
-//        
-//        for (LocatedTransition expected : expecteds) {
-//            String expectedString = expected.toString();
-//            if (!actuals.contains(expectedString)) {
-//                fail("Not found: " + expected);
-//            }
-//            actuals.remove(expectedString);
-//        }
-//    }
-//
-//
-//
-//    
-//    @Test
-//    public void testValidate_transport() {
-//        // Missing transport reference
-//        model = new KappaModel();
-//        model.addCompartment(new Compartment("known"));
-//        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known")));
-//        model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(new VariableReference("unknown")));
-//        checkValidate_failure("Reference 'unknown' not found");
-//        
-//        model = new KappaModel();
-//        model.addVariable(new VariableExpression(2), "variableRef");
-//        model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(new VariableReference("variableRef")));
-//        checkValidate_failure("Compartment link 'compartmentLink' not found");
-//        
-//        // Non fixed transport reference
-//        model = new KappaModel();
-//        model.addCompartment(new Compartment("known"));
-//        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known")));
-//        model.addVariable(new VariableExpression(SimulationToken.EVENTS), "variableRef");
-//        model.addTransport("other", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(new VariableReference("variableRef")));
-//        checkValidate_failure("Reference 'variableRef' not fixed");
-//        
-//        model = new KappaModel();
-//        model.addCompartment(new Compartment("known"));
-//        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known")));
-//        model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(2));
-//        model.validate();
-//
-//        model = new KappaModel();
-//        model.addCompartment(new Compartment("known"));
-//        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known")));
-//        model.addTransport("transportRef", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(Constant.INFINITY));
-//        model.validate();
-//        
-//        model = new KappaModel();
-//        model.addCompartment(new Compartment("known"));
-//        model.addChannel(new Channel("compartmentLink", new Location("known"), new Location("known")));
-//        model.addVariable(new VariableExpression(2), "variableRef");
-//        model.addTransport("other", "compartmentLink", getList(new Agent("agent1")), new VariableExpression(new VariableReference("variableRef")));
-//        model.validate();
-//        
-//    }
-//    
-//    @Test
-//    public void testValidate_transform() {
-//        // Missing transform reference
-//        model = new KappaModel();
-//        model.addAgentDeclaration(new AggregateAgent("agent1"));
-//        model.addTransform(null, getList(new Agent("agent1")), null, 
-//                new VariableExpression(new VariableReference("unknown")), 
-//                NOT_LOCATED);
-//        checkValidate_failure("Reference 'unknown' not found");
-//        
-//        // Non fixed transform reference
-//        model = new KappaModel();
-//        model.addAgentDeclaration(new AggregateAgent("agent1"));
-//        model.addVariable(new VariableExpression(SimulationToken.EVENTS), "variableRef");
-//        model.addTransform(null, getList(new Agent("agent1")), null, 
-//                new VariableExpression(new VariableReference("variableRef")), 
-//                NOT_LOCATED);
-//        checkValidate_failure("Reference 'variableRef' not fixed");
-//        
-//        model = new KappaModel();
-//        model.addAgentDeclaration(new AggregateAgent("agent1"));
-//        model.addTransform(null, getList(new Agent("agent1")), null, 
-//                new VariableExpression(Constant.INFINITY), 
-//                NOT_LOCATED);
-//        model.validate();
-//    }
-//    
-//    
-//     
-//    @Test
-//    public void testGetValidLocatedTransforms() throws Exception {
-//        
-//        Transform transform = new Transform("label", 
-//                getList(new Agent("A", new AgentSite("s", null, null))), 
-//                getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1"))), 10f, false);
-//        
-//        List<Channel> channels = new ArrayList<Channel>();
-//        channels.add(new Channel("intra", new Location("loc2", INDEX_X), new Location("loc2", INDEX_X_PLUS_1)));
-//        channels.add(new Channel("inter", new Location("loc1"), new Location("loc2", INDEX_2)));
-//        
-//        List<Compartment> compartments = new ArrayList<Compartment>();
-//        compartments.add(new Compartment("loc1"));
-//        compartments.add(new Compartment("loc2", 3));
-//        compartments.add(new Compartment("loc3", 3));
-//        
-//
-//        try {
-//            model.getValidLocatedTransforms(null, compartments, channels);
-//            fail("null should have failed");
-//        }
-//        catch (NullPointerException ex) {
-//            // Expected exception
-//        }
-//        
-//        try {
-//            model.getValidLocatedTransforms(transform, null, channels);
-//            fail("null should have failed");
-//        }
-//        catch (NullPointerException ex) {
-//            // Expected exception
-//        }
-//        
-//        try {
-//            model.getValidLocatedTransforms(transform, compartments, null);
-//            fail("null should have failed");
-//        }
-//        catch (NullPointerException ex) {
-//            // Expected exception
-//        }
-//        
-//        // No location
-//        
-//        List<Transform> expected = new ArrayList<Transform>();
-//        expected.add(new Transform("label", getList(new Agent("A", new AgentSite("s", null, null))), 
-//                getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1"))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        // Full location
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc1"))), 
-//                getList(new Agent("A", new Location("loc1"))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label", 
-//                getList(new Agent("A", new Location("loc1"))), 
-//                getList(new Agent("A", new Location("loc1"))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        // Single unlinked partial location
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2"))), 
-//                getList(new Agent("A", new Location("loc2"))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label-1", 
-//                getList(new Agent("A", new Location("loc2", INDEX_0))), 
-//                getList(new Agent("A", new Location("loc2", INDEX_0))), 10f, false));
-//        expected.add(new Transform("label-2", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 
-//                getList(new Agent("A", new Location("loc2", INDEX_1))), 10f, false));
-//        expected.add(new Transform("label-3", 
-//                getList(new Agent("A", new Location("loc2", INDEX_2))), 
-//                getList(new Agent("A", new Location("loc2", INDEX_2))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        // Multiple unlinked partial locations should fail
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2"))), 
-//                getList(new Agent("B", new Location("loc3"))), 10f, false);
-//
-//        try {
-//            model.getValidLocatedTransforms(transform, compartments, channels);
-//            fail("invalid transform should have failed");
-//        }
-//        catch (IllegalArgumentException ex) {
-//            // Expected exception
-//        }
-//        
-//        // Dimer unlinking same full location, no channel
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        // Dimer linked, same partial location, no channel
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, null))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label-1", 
-//                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, null))), 10f, false));
-//        expected.add(new Transform("label-2", 
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false));
-//        expected.add(new Transform("label-3", 
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, null))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        // No label
-//        transform = new Transform(null, 
-//                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2"), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, null))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform(null, 
-//                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_0), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_0), new AgentSite("s", null, null))), 10f, false));
-//        expected.add(new Transform(null, 
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_1), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_1), new AgentSite("s", null, null))), 10f, false));
-//        expected.add(new Transform(null, 
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, null))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//        transform = new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2"), new AgentSite("s", null, null))), 10f, false);
-//
-//        expected.clear();
-//        expected.add(new Transform("label", 
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, "1")), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, "1"))),
-//                getList(new Agent("A", new Location("loc2", INDEX_2), new AgentSite("s", null, null)), 
-//                        new Agent("B", new Location("loc2", INDEX_2), new AgentSite("s", null, null))), 10f, false));
-//        
-//        checkTransforms(expected, model.getValidLocatedTransforms(transform, compartments, channels));
-//        
-//
-//        
-//    }
-//    
-    
-
 
 }

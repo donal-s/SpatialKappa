@@ -1,7 +1,7 @@
-%agent: A_Membrane(s,t)
-%agent: B_Membrane(s,t)
-%agent: A_Cytosol(s,t)
-%agent: B_Cytosol(s,t)
+%agent: A_Membrane(s,t,d)
+%agent: B_Membrane(s,t,d)
+%agent: A_Cytosol(d)
+%agent: B_Cytosol(d)
 %agent: C(s)
 
 %var: 'catalysedRate' 10
@@ -14,22 +14,27 @@
 		(:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y+1], :cytosol [u][v+1][0]) + \
 		(:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y -1], :cytosol [u][v -1][0])
 
-# WORK IN PROGRESS
+%channel: domainLink       :membrane [x][y] -> :cytosol [x][y][0]
 
-'diffusion A' A ->:diffusion A @ 1.0
-'diffusion B' B ->:diffusion B @ 1.0
-'diffusion AB' A(s!1,t),B(s!1,t) ->:diffusion A(s!1,t),B(s!1,t) @ 0.5
+'diffusion A' A_Membrane(s,t,d!1:domainLink),A_Cytosol(d!1) ->:diffusion A_Membrane(s,t,d!1:domainLink),A_Cytosol(d!1) @ 1.0
+'diffusion B' B_Membrane(s,t,d!1:domainLink),B_Cytosol(d!1) ->:diffusion B_Membrane(s,t,d!1:domainLink),B_Cytosol(d!1) @ 1.0
+'diffusion AB' A_Membrane(s!2,t,d!1:domainLink),A_Cytosol(d!1),B_Membrane(s!2,t,d!3:domainLink),B_Cytosol(d!3) ->:diffusion \
+               A_Membrane(s!2,t,d!1:domainLink),A_Cytosol(d!1),B_Membrane(s!2,t,d!3:domainLink),B_Cytosol(d!3) @ 0.5
 
-'AC bind' A(s,t), C(s) -> A(s!1,t), C(s!1) @ 'catalysedRate'
-'ACB bind' A(s!1,t), C(s!1), B(s,t) -> A(s!1,t), C(s), B(s!1,t) @ 'catalysedRate'
-'BC bind' A(s,t), C(s) -> A(s!1,t), C(s!1) @ 'catalysedRate'
-'BCA bind' B(s!1,t), C(s!1), A(s,t) -> B(s!1,t), C(s), A(s!1,t) @ 'catalysedRate'
+'AC bind' A_Membrane(s,t), C(s) -> A_Membrane(s!1,t), C(s!1) @ 'catalysedRate'
+'ACB bind' A_Membrane(s!1,t), C(s!1), B_Membrane(s,t) -> A_Membrane(s!1,t), C(s), B_Membrane(s!1,t) @ 'catalysedRate'
+'BC bind' B_Membrane(s,t), C(s) -> B_Membrane(s!1,t), C(s!1) @ 'catalysedRate'
+'BCA bind' B_Membrane(s!1,t), C(s!1), A_Membrane(s,t) -> B_Membrane(s!1,t), C(s), A_Membrane(s!1,t) @ 'catalysedRate'
 
-'ABAB bind' A(s!1,t), B(s!1,t), A(s!2,t), B(s!2,t) -> A(s!1,t), B(s!1,t!3), A(s!2,t!3), B(s!2,t) @ 0.1
-'ABAB close loop' A(s!1,t), B(s!1,t!3), A(s!2,t!3), B(s!2,t) -> A(s!1,t!4), B(s!1,t!3), A(s!2,t!3), B(s!2,t!4) @ 0.1
+'ABAB bind' A_Membrane(s!1,t), B_Membrane(s!1,t), A_Membrane(s!2,t), B_Membrane(s!2,t) -> \
+            A_Membrane(s!1,t), B_Membrane(s!1,t!3), A_Membrane(s!2,t!3), B_Membrane(s!2,t) @ 0.1
+'ABAB close loop' A_Membrane(s!1,t), B_Membrane(s!1,t!3), A_Membrane(s!2,t!3), B_Membrane(s!2,t) -> \
+            A_Membrane(s!1,t!4), B_Membrane(s!1,t!3), A_Membrane(s!2,t!3), B_Membrane(s!2,t!4) @ 0.1
 
 
-%init: 1000 :cytosol A,B
+%init: 1000 A_Membrane(s,t,d!1:domainLink),A_Cytosol(d!1)
+%init: 1000 B_Membrane(s,t,d!1:domainLink),B_Cytosol(d!1)
 %init: 1 :membrane[2][2] C
 
-%obs: 'A2B2' A(s!1,t!3),B(s!1,t!4),A(s!2,t!4),B(s!2,t!3)
+%obs: 'AB' A_Membrane(s!1,t),B_Membrane(s!1,t)
+%obs: 'A2B2' A_Membrane(s!1,t!3),B_Membrane(s!1,t!4),A_Membrane(s!2,t!4),B_Membrane(s!2,t!3)

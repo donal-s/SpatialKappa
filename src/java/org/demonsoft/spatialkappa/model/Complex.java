@@ -41,12 +41,16 @@ public class Complex implements Serializable {
         for (Agent agent : agents) {
             agent.setComplex(this);
         }
+        update();
+    }
+
+    public void update() {
         canonicalSortAgents();
         createAgentLinks();
         updateMatchHash();
         verify();
     }
-
+    
     void updateMatchHash() {
         StringBuilder builder = new StringBuilder();
         Agent previous = null;

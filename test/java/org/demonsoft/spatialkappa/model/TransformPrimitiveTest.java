@@ -1,6 +1,9 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.getComplexes;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -35,6 +38,7 @@ public class TransformPrimitiveTest {
         assertEquals("DELETE_LINK(sourceSite~s!1->targetSite~t!1)", TransformPrimitive.getDeleteLink(agentLink).toString());
         assertEquals("MERGE_COMPLEXES(source, target)", TransformPrimitive.getMergeComplexes(sourceAgent, targetAgent).toString());
         assertEquals("MOVE_COMPLEX(source, target, channel)", TransformPrimitive.getMoveComplex(new Location("source"), new Location("target"), "channel").toString());
+        assertEquals("MOVE_AGENTS([source], [target], channel)", TransformPrimitive.getMoveAgents(getList(sourceAgent), getList(new Location("target")), "channel").toString());
     }
 
     @SuppressWarnings("unused")
@@ -91,7 +95,7 @@ public class TransformPrimitiveTest {
     }
 
     @Test
-    public void testApply_MoveAgent() {
+    public void testApply_MoveAgents_singleAgentChannel() {
         List<Compartment> compartments = getList(new Compartment("source"), new Compartment("target"));
         List<Channel> channels = getList(new Channel("channel", new Location("source"), new Location("target")));
 
@@ -101,26 +105,26 @@ public class TransformPrimitiveTest {
         Complex realSourceComplex = new Complex(realSourceAgent);
 
         Agent leftAgent = new Agent("agent", new Location("source"));
-        checkApplyMoveAgent(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
+        checkApplyMoveAgents(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
                 new String[] { "[agent:target]" });
 
         // Single agent - source location specified - target constraint
         realSourceAgent = new Agent("agent", new Location("source"));
         realSourceComplex = new Complex(realSourceAgent);
-        checkApplyMoveAgent(leftAgent, new Location("target"), "channel",  realSourceAgent, channels, compartments,
+        checkApplyMoveAgents(leftAgent, new Location("target"), "channel",  realSourceAgent, channels, compartments,
                 new String[] { "[agent:target]" });
         
         // Single agent - source location inferred from channel - no target constraint
         realSourceAgent = new Agent("agent", new Location("source"));
         realSourceComplex = new Complex(realSourceAgent);
         leftAgent = new Agent("agent");
-        checkApplyMoveAgent(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
+        checkApplyMoveAgents(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
                 new String[] { "[agent:target]" });
 
         // Single agent - source location inferred from channel - target constraint
         realSourceAgent = new Agent("agent", new Location("source"));
         realSourceComplex = new Complex(realSourceAgent);
-        checkApplyMoveAgent(leftAgent, new Location("target"), "channel",  realSourceAgent, channels, compartments,
+        checkApplyMoveAgents(leftAgent, new Location("target"), "channel",  realSourceAgent, channels, compartments,
                 new String[] { "[agent:target]" });
 
         
@@ -130,18 +134,55 @@ public class TransformPrimitiveTest {
                 realSourceAgent,
                 new Agent("other", new Location("source"), new AgentSite("b", null, "1")));
 
-        checkApplyMoveAgent(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
+        checkApplyMoveAgents(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
                 new String[] { "[agent:target(a!1), other:target(b!1)]" });
 
         
-        // Mixed location complex - should do nothing
+//        // Mixed location complex - should do nothing // TODO 
 //        realSourceAgent = new Agent("agent", new Location("source"), new AgentSite("a", null, "1"));
 //        realSourceComplex = new Complex(
 //                new Agent("agent", new Location("source"), new AgentSite("a", null, "1")),
 //                new Agent("other", new Location("source"), new AgentSite("b", null, "1")));
 //
-//        checkApplyMoveAgent(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
+//        checkApplyMoveAgents(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
 //                new String[] { "[agent:target(a!1), other:target(b!1)]" });
+
+        compartments = getList(new Compartment("cytosol", 2));
+        channels = getList(new Channel("intra", new Location("cytosol", INDEX_0), new Location("cytosol", INDEX_1)));
+
+        // Multiple unlinked agents - source location specified - no target constraint
+        List<Agent> realSourceAgents = getList(new Agent("A", new Location("cytosol", INDEX_0), new AgentSite("s", null, "1")),
+                new Agent("B", new Location("cytosol", INDEX_0), new AgentSite("s", null, "1")));
+        getComplexes(realSourceAgents);
+
+        List<Agent> leftAgents = getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1")));
+        getComplexes(leftAgents);
+        checkApplyMoveAgents(leftAgents, getList(NOT_LOCATED, NOT_LOCATED), "intra",  realSourceAgents, channels, compartments,
+                new String[] { "[A:cytosol[1](s!1), B:cytosol[1](s!1)]" });
+
+    }
+
+
+    @Test
+    public void testApply_MoveAgents_multipleAgentChannel() {
+        List<Compartment> compartments = getList(new Compartment("source1"), new Compartment("source2"), new Compartment("target1"), new Compartment("target2"));
+        Channel channel = new Channel("channel");
+        channel.addLocationPair(
+                getList(new Location("source1"), new Location("source2")),
+                getList(new Location("target1"), new Location("target2"))               
+        );
+        List<Channel> channels = getList(channel);
+
+        // Unconnected agents - source location specified - no target constraints
+        List<Agent> realSourceAgents = getList(new Agent("agent1", new Location("source1")), new Agent("agent2", new Location("source2")));
+        getComplexes(realSourceAgents);
+
+        List<Agent> leftAgents = getList(new Agent("agent1", new Location("source1")), new Agent("agent2", new Location("source2")));
+        List<Location> targetConstraints = getList(NOT_LOCATED, NOT_LOCATED);
+        getComplexes(leftAgents);
+        checkApplyMoveAgents(leftAgents, targetConstraints, "channel",  realSourceAgents, channels, compartments,
+                new String[] { "[agent1:target1]", "[agent2:target2]" });
+
 
     }
 
@@ -211,12 +252,25 @@ public class TransformPrimitiveTest {
                 null, realComplex, channels, compartments, expectedComplexes);
     }
 
-    private void checkApplyMoveAgent(Agent templateSourceAgent, Location templateTargetLocation, String channelName, Agent realAgent, List<Channel> channels, List<Compartment> compartments, String[] expectedComplexes) {
+    private void checkApplyMoveAgents(Agent templateSourceAgent, Location templateTargetLocation, String channelName, Agent realAgent, List<Channel> channels, List<Compartment> compartments, String[] expectedComplexes) {
         Map<Agent, Agent> transformMap = new HashMap<Agent, Agent>();
         transformMap.put(templateSourceAgent, realAgent);
-        checkApplyPrimitive(TransformPrimitive.getMoveAgent(templateSourceAgent, templateTargetLocation, channelName), 
-                transformMap, realAgent.getComplex(), channels, compartments, expectedComplexes);
+        checkApplyPrimitive(TransformPrimitive.getMoveAgents(getList(templateSourceAgent), getList(templateTargetLocation), channelName), 
+                transformMap, null, channels, compartments, expectedComplexes);
     }
+    
+    private void checkApplyMoveAgents(List<Agent> templateSourceAgents, List<Location> targetConstraints, String channelName,
+            List<Agent> realSourceAgents, List<Channel> channels, List<Compartment> compartments,
+            String[] expectedComplexes) {
+        Map<Agent, Agent> transformMap = new HashMap<Agent, Agent>();
+        for (int index=0; index<templateSourceAgents.size(); index++) {
+            transformMap.put(templateSourceAgents.get(index), realSourceAgents.get(index));
+        }
+        checkApplyPrimitive(TransformPrimitive.getMoveAgents(templateSourceAgents, targetConstraints, channelName), 
+                transformMap, null, channels, compartments, expectedComplexes);
+    }
+
+
 
     private void checkApplyDeleteAgent(Agent templateAgent, Map<Agent, Agent> transformMap, String[] expectedComplexes) {
         checkApplyPrimitive(TransformPrimitive.getDeleteAgent(templateAgent), transformMap, expectedComplexes);

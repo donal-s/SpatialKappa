@@ -16,8 +16,8 @@
 %obs: 'dimer in [0]' :cytosol[0] A(s!1),B(s!1)
 %obs: 'dimer in [1]' :cytosol[1] A(s!1),B(s!1)
 %obs: 'dimer embedded' A:cytosol[1](s!1),B:cytosol[0](s!1)
-%obs: 'A in [0]' :cytosol[0] A(s)
-%obs: 'A in [1]' :cytosol[1] A(s)
-%obs: 'B in [0]' :cytosol[0] B(s)
-%obs: 'B in [1]' :cytosol[1] B(s)
+%obs: 'A in [0]' :cytosol[0] A
+%obs: 'A in [1]' :cytosol[1] A
+%obs: 'B in [0]' :cytosol[0] B
+%obs: 'B in [1]' :cytosol[1] B
 

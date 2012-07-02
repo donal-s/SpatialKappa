@@ -9,6 +9,7 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_P
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y_PLUS_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -59,37 +60,7 @@ public class LocationTest {
         assertEquals("name[2][3]", location.toString());
 	}
 
-	//TODO @Test
-	public void testGetReferencedCompartment() {
-		fail("Not yet implemented");
-	}
-
-	//TODO @Test
-	public void testIsConcreteLocation() {
-		fail("Not yet implemented");
-	}
-
-	//TODO @Test
-	public void testEqualsHashCode() {
-		fail("Not yet implemented");
-	}
-	
-	//TODO @Test
-	public void testGetConcreteLocation() {
-		fail("Not yet implemented");
-	}
-
-	//TODO @Test
-	public void testMatches() {
-		fail("Not yet implemented");
-	}
-
-	//TODO @Test
-	public void testDoLocationsMatch() {
-		fail("Not yet implemented");
-	}
-
-	@Test
+    @Test
     public void testGetLinkedLocations() {
 
         Location location = new Location("unknown", new CellIndexExpression("2"), new CellIndexExpression("3"));
@@ -98,15 +69,15 @@ public class LocationTest {
         compartments.add(new Compartment("nucleus"));
         compartments.add(new Compartment("cytosol", 3, 3));
         compartments.add(new Compartment("membrane", 3));
-        Channel channelCytosol = new Channel("cCytosol", Utils.getList(
-                new Location[] {
-                        new Location("cytosol", INDEX_X, INDEX_Y), 
-                        new Location("cytosol", INDEX_X_PLUS_1, INDEX_Y), 
-                },
-                new Location[] { 
-                        new Location("cytosol", INDEX_X, INDEX_Y),
-                        new Location("cytosol", INDEX_X, INDEX_Y_PLUS_1)
-                }));
+        Channel channelCytosol = new Channel("cCytosol");
+        channelCytosol.addLocationPair(
+                getList(new Location("cytosol", INDEX_X, INDEX_Y)), 
+                getList(new Location("cytosol", INDEX_X_PLUS_1, INDEX_Y))
+        );
+        channelCytosol.addLocationPair(
+                getList(new Location("cytosol", INDEX_X, INDEX_Y)),
+                getList(new Location("cytosol", INDEX_X, INDEX_Y_PLUS_1))
+        );
         Channel channelMembraneX = new Channel("cMembrane", 
                 new Location("membrane", INDEX_X), 
                 new Location("membrane", INDEX_X_PLUS_1));
@@ -154,12 +125,14 @@ public class LocationTest {
         
         // Complex channels
         
-        List<Location[]> locations = new ArrayList<Location[]>();
+        Channel complexChannel = new Channel("horiz");
         // Ensure more than the first pair get processed
-        locations.add(new Location[] {new Location("cytosol", new CellIndexExpression("100"), INDEX_0), new Location("cytosol", new CellIndexExpression("101"), INDEX_0)});
-        locations.add(new Location[] {new Location("cytosol", INDEX_X, INDEX_Y), new Location("cytosol", INDEX_X_MINUS_1, INDEX_Y)});
-        locations.add(new Location[] {new Location("cytosol", INDEX_X, INDEX_Y), new Location("cytosol", INDEX_X_PLUS_1, INDEX_Y)});
-        Channel complexChannel = new Channel("horiz", locations);
+        complexChannel.addLocationPair(getList(new Location("cytosol", new CellIndexExpression("100"), INDEX_0)), 
+                getList(new Location("cytosol", new CellIndexExpression("101"), INDEX_0)));
+        complexChannel.addLocationPair(getList(new Location("cytosol", INDEX_X, INDEX_Y)), 
+                getList(new Location("cytosol", INDEX_X_MINUS_1, INDEX_Y)));
+        complexChannel.addLocationPair(getList(new Location("cytosol", INDEX_X, INDEX_Y)), 
+                getList(new Location("cytosol", INDEX_X_PLUS_1, INDEX_Y)));
         
         location = new Location("cytosol", INDEX_0, INDEX_0);
 

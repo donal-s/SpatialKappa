@@ -297,29 +297,29 @@ public class TransitionMatchingSimulationTest {
         checkGetQuantity(simulation.getVariable("observable2"), new ObservationElement(5));
     }
 
-//    @Test
-//    public void testGetTransitionFiredCount() {
-//        try {
-//            simulation.getTransitionFiredCount(null);
-//            fail("null should have failed");
-//        }
-//        catch (NullPointerException ex) {
-//            // Expected exception
-//        }
-//        
-//        try {
-//            simulation.getTransitionFiredCount(new Variable(new VariableExpression(2), "not a transition"));
-//            fail("invalid type should have failed");
-//        }
-//        catch (IllegalArgumentException ex) {
-//            // Expected exception
-//        }
-//        
-//        simulation.transitionsFiredMap.put(new Variable("label"), 55);
-//        
-//        assertEquals(new ObservationElement(55), simulation.getTransitionFiredCount(new Variable("label")));
-//        assertEquals(new ObservationElement(0), simulation.getTransitionFiredCount(new Variable("other")));
-//    }
+    @Test
+    public void testGetTransitionFiredCount() {
+        try {
+            simulation.getTransitionFiredCount(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            simulation.getTransitionFiredCount(new Variable(new VariableExpression(2), "not a transition"));
+            fail("invalid type should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        simulation.transitionsFiredMap.put(new Variable("label"), 55);
+        
+        assertEquals(new ObservationElement(55), simulation.getTransitionFiredCount(new Variable("label")));
+        assertEquals(new ObservationElement(0), simulation.getTransitionFiredCount(new Variable("other")));
+    }
 
     @SuppressWarnings("unchecked")
     @Test

@@ -2,6 +2,7 @@ package org.demonsoft.spatialkappa.model;
 
 import static org.demonsoft.spatialkappa.model.Utils.getFlatString;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,7 @@ import java.util.Set;
 
 abstract class TransformPrimitive {
     enum Type {
-        DELETE_LINK, DELETE_AGENT, CREATE_COMPLEX, MERGE_COMPLEXES, CREATE_AGENT, CREATE_LINK, CHANGE_STATE, MOVE_COMPLEX, MOVE_AGENT
+        DELETE_LINK, DELETE_AGENT, CREATE_COMPLEX, MERGE_COMPLEXES, CREATE_AGENT, CREATE_LINK, CHANGE_STATE, MOVE_COMPLEX, MOVE_AGENTS
     }
 
     public final TransformPrimitive.Type type;
@@ -23,8 +24,10 @@ abstract class TransformPrimitive {
     public final Location sourceLocation;
     public final Location targetLocation;
     public final String channelName;
+    public final List<Agent> sourceAgents;
+    public final List<Location> targetLocations;
 
-    TransformPrimitive(TransformPrimitive.Type type, AgentLink agentLink, Agent sourceAgent, Agent targetAgent, Complex complex, AgentSite sourceSite,
+    TransformPrimitive(Type type, AgentLink agentLink, Agent sourceAgent, Agent targetAgent, Complex complex, AgentSite sourceSite,
             AgentSite targetSite, String state, Location sourceLocation, Location targetLocation, String channelName) {
         this.type = type;
         this.sourceAgent = sourceAgent;
@@ -37,11 +40,30 @@ abstract class TransformPrimitive {
         this.sourceLocation = sourceLocation;
         this.targetLocation = targetLocation;
         this.channelName = channelName;
+        this.sourceAgents = null;
+        this.targetLocations = null;
+    }
+
+    public TransformPrimitive(Type type, List<Agent> sourceAgents, List<Location> targetLocations,
+            String channelName) {
+        this.type = type;
+        this.sourceAgent = null;
+        this.targetAgent = null;
+        this.agentLink = null;
+        this.sourceSite = null;
+        this.targetSite = null;
+        this.complex = null;
+        this.state = null;
+        this.sourceLocation = null;
+        this.targetLocation = null;
+        this.channelName = channelName;
+        this.sourceAgents = sourceAgents;
+        this.targetLocations = targetLocations;
     }
 
     @Override
     public String toString() {
-        return type + "(" + getFlatString(", ", true, sourceAgent, targetAgent, agentLink, complex, sourceSite, targetSite, state, sourceLocation, targetLocation, channelName) + ")";
+        return type + "(" + getFlatString(", ", true, sourceAgent, sourceAgents, targetAgent, agentLink, complex, sourceSite, targetSite, state, sourceLocation, targetLocation, targetLocations, channelName) + ")";
     }
     
 
@@ -356,18 +378,77 @@ abstract class TransformPrimitive {
         };
     }
 
-    public static TransformPrimitive getMoveAgent(Agent leftAgent, Location targetLocation, String channelName) {
-        return new TransformPrimitive(Type.MOVE_AGENT, null, leftAgent, null, null, null, null, null, null, targetLocation, channelName) {
+    public static TransformPrimitive getMoveAgents(List<Agent> leftAgents, List<Location> targetLocations, String channelName) {
+        return new TransformPrimitive(Type.MOVE_AGENTS, leftAgents, targetLocations, channelName) {
 
+            class ChannelConstraint {
+                public final Location sourceLocation;
+                public final Location targetConstraint;
+                
+                public ChannelConstraint(Location sourceLocation, Location targetConstraint) {
+                    this.sourceLocation = sourceLocation;
+                    this.targetConstraint = targetConstraint;
+                }
+
+                @Override
+                public int hashCode() {
+                    final int prime = 31;
+                    int result = 1;
+                    result = prime * result + ((sourceLocation == null) ? 0 : sourceLocation.hashCode());
+                    result = prime * result + ((targetConstraint == null) ? 0 : targetConstraint.hashCode());
+                    return result;
+                }
+
+                @Override
+                public boolean equals(Object obj) {
+                    if (this == obj)
+                        return true;
+                    if (obj == null)
+                        return false;
+                    if (getClass() != obj.getClass())
+                        return false;
+                    ChannelConstraint other = (ChannelConstraint) obj;
+                    if (sourceLocation == null) {
+                        if (other.sourceLocation != null)
+                            return false;
+                    }
+                    else if (!sourceLocation.equals(other.sourceLocation))
+                        return false;
+                    if (targetConstraint == null) {
+                        if (other.targetConstraint != null)
+                            return false;
+                    }
+                    else if (!targetConstraint.equals(other.targetConstraint))
+                        return false;
+                    return true;
+                }
+                
+                
+            }
+            
             @Override
             public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels,
                     List<Compartment> compartments) {
 
-                Agent realAgent = transformMap.get(sourceAgent);
-                Location oldLocation = realAgent.location;
+                List<Location> oldLocations = new ArrayList<Location>();
+                List<Location> targetConstraints = new ArrayList<Location>();
+                List<ChannelConstraint> channelConstraints = new ArrayList<ChannelConstraint>();
                 
-                if (!oldLocation.equals(sourceAgent.location) && !sourceAgent.location.isRefinement(oldLocation)) {
-                    return false;
+                for (int index=0; index<sourceAgents.size(); index++) {
+                    Agent sourceAgent = sourceAgents.get(index);
+                    Location targetConstraint = targetLocations.get(index);
+                    Agent realAgent = transformMap.get(sourceAgent);
+                    Location oldLocation = realAgent.location;
+                    
+                    if (!oldLocation.equals(sourceAgent.location) && !sourceAgent.location.isRefinement(oldLocation)) {
+                        return false;
+                    }
+                    ChannelConstraint channelConstraint = new ChannelConstraint(oldLocation, targetConstraint);
+                    if (!channelConstraints.contains(channelConstraint)) {
+                        channelConstraints.add(channelConstraint);
+                        oldLocations.add(oldLocation);
+                        targetConstraints.add(targetConstraint);
+                    }
                 }
                 
                 Channel channel = null;
@@ -381,21 +462,36 @@ abstract class TransformPrimitive {
                     throw new IllegalStateException("Unknown channel: " + channelName);
                 }
                 
-                List<Location> newLocations = channel.applyChannel(oldLocation, targetLocation, compartments);
-                Location newLocation;
-                if (newLocations.size() == 0) {
+                List<List<Location>> newLocationLists = channel.applyChannel(oldLocations, targetConstraints, compartments);
+                List<Location> newLocations;
+                if (newLocationLists.size() == 0) {
                     return false;
                 }
-                else if (newLocations.size() == 1) {
-                    newLocation = newLocations.get(0);
+                else if (newLocationLists.size() == 1) {
+                    newLocations = newLocationLists.get(0);
                 }
                 else {
-                    int item = (int) (newLocations.size() * Math.random());
-                    newLocation =  newLocations.get(item);
+                    int item = (int) (newLocationLists.size() * Math.random());
+                    newLocations =  newLocationLists.get(item);
                 }
-                
-                for (Agent agent : Utils.getLinkedAgents(realAgent)) {
-                    agent.setLocation(newLocation);
+
+                Set<Agent> movedAgents = new HashSet<Agent>();
+                for (int index=0; index<sourceAgents.size(); index++) {
+                    Agent sourceAgent = sourceAgents.get(index);
+                    Location targetConstraint = targetLocations.get(index);
+                    Agent realAgent = transformMap.get(sourceAgent);
+                    if (!movedAgents.contains(realAgent)) {
+                        Location oldLocation = realAgent.location;
+                        ChannelConstraint channelConstraint = new ChannelConstraint(oldLocation, targetConstraint);
+                        
+                        Location newLocation = newLocations.get(channelConstraints.indexOf(channelConstraint));
+                        for (Agent agent : Utils.getLinkedAgents(realAgent)) {
+                            if (!movedAgents.contains(agent)) {
+                                agent.setLocation(newLocation);
+                                movedAgents.add(agent);
+                            }
+                        }
+                    }
                 }
                 return true;
             }

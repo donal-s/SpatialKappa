@@ -1,20 +1,18 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.demonsoft.spatialkappa.model.Agent;
-import org.demonsoft.spatialkappa.model.AgentSite;
-import org.demonsoft.spatialkappa.model.Complex;
-import org.demonsoft.spatialkappa.model.ComplexMapping;
-import org.demonsoft.spatialkappa.model.ComplexMatcher;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.*;
 import org.junit.Test;
 
 public class ComplexMatcherTest {

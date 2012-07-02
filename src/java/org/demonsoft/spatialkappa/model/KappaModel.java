@@ -1,6 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.propogateLocation;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -61,21 +62,6 @@ public class KappaModel implements IKappaModel {
         initialValues.add(new InitialValue(complexes, quantity, location));
     }
 
-    private void propogateLocation(List<Agent> agents, Location location) {
-        for (Agent agent : agents) {
-            if (agent.location == NOT_LOCATED) {
-                agent.setLocation(location);
-            }
-        }
-    }
-
-    private void setLocation(List<Agent> agents, Location location) {
-        for (Agent agent : agents) {
-            if (agent.location.isRefinement(location)) {
-                agent.setLocation(location);
-            }
-        }
-    }
 
 
 	public void addInitialValue(List<Agent> agents, VariableReference reference, Location location) {
@@ -201,77 +187,30 @@ public class KappaModel implements IKappaModel {
         Map<Complex, Integer> result = new HashMap<Complex, Integer>();
         
         for (InitialValue initialValue : initialValues) {
-            boolean partition = false;
-            Compartment compartment = null;
-            
-            int quantity = initialValue.quantity;
             if (initialValue.reference != null) {
-                quantity = variables.get(initialValue.reference.variableName).expression.evaluate(this);
+                initialValue.quantity = variables.get(initialValue.reference.variableName).expression.evaluate(this);
             }
-            
-            Location location = initialValue.location;
-            if (location != NOT_LOCATED) {
-                compartment = location.getReferencedCompartment(compartments);
-                if (compartment != null && compartment.getDimensions().length != location.getIndices().length) {
-                    partition = true;
-                }
-
-                if (partition && compartment != null) {
-                    int[] cellCounts = compartment.getDistributedCellCounts(quantity);
-                    Location[] cellLocations = compartment.getDistributedCellReferences();
-                    
-                    for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
-                        Location cellLocation = cellLocations[cellIndex];
-                        for (Complex complex : initialValue.complexes) {
-                            addInitialLocatedValue(result, complex, cellLocation, cellCounts[cellIndex]);
-                        }
-                    }
-                }
-                else {
-                    for (Complex complex : initialValue.complexes) {
-                        addInitialLocatedValue(result, complex, location, quantity);
-                    }
-                }
-            }
-            else { // location == null
-                if (compartments.size() > 0) {
-                    int[] cellCounts = Compartment.getDistributedCellCounts(initialValue.quantity, compartments);
-                    Location[] cellLocations = Compartment.getDistributedCellReferences(compartments);
-                    
-                    for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
-                        Location cellLocation = cellLocations[cellIndex];
-                        for (Complex complex : initialValue.complexes) {
-                            addInitialLocatedValue(result, complex, cellLocation, cellCounts[cellIndex]);
-                        }
-                    }
-            }
-                else { // no compartments
-                    for (Complex complex : initialValue.complexes) {
-                        addInitialLocatedValue(result, complex, location, quantity);
-                    }
-                }
-
+            Map<Complex, Integer> currentResult = initialValue.getFixedLocatedComplexMap(compartments, channels);
+            for (Map.Entry<Complex, Integer> current : currentResult.entrySet()) {
+                addInitialLocatedValue(result, current.getKey(), current.getValue());
             }
         }
-
         return result;
     }
 
-    private void addInitialLocatedValue(Map<Complex, Integer> result, Complex complex, Location location, int quantity) {
-        Complex locatedComplex = complex.clone();
-        for (Agent agent : locatedComplex.agents) {
+    private void addInitialLocatedValue(Map<Complex, Integer> result, Complex complex, int quantity) {
+        for (Agent agent : complex.agents) {
             addDefaultAgentSites(agent);
         }
-        locatedComplex = locatedComplex.clone();
-        setLocation(locatedComplex.agents, location);
+        complex.update();
         
         for (Map.Entry<Complex, Integer> entry : result.entrySet()) {
-            if (locatedComplex.isExactMatch(entry.getKey())) {
+            if (complex.isExactMatch(entry.getKey())) {
                 entry.setValue(entry.getValue() + quantity);
                 return;
             }
         }
-        result.put(locatedComplex, quantity);
+        result.put(complex, quantity);
     }
 
     private void addDefaultAgentSites(Agent agent) {
@@ -367,8 +306,8 @@ public class KappaModel implements IKappaModel {
         return result;
     }
 
-    @SuppressWarnings("hiding")
-    public List<MappingInstance> initMappingStructure(Complex complex, List<Compartment> compartments, List<Channel> channels) {
+    // TODO rename and move to somewhere more sensible
+    public static List<MappingInstance> initMappingStructure(Complex complex, List<Compartment> compartments, List<Channel> channels) {
         if (complex == null || compartments == null || channels == null) {
             throw new NullPointerException();
         }
@@ -376,7 +315,7 @@ public class KappaModel implements IKappaModel {
         List<Agent> remainingTemplateAgents = new ArrayList<Agent>(complex.agents);
         List<Agent> fixedTemplateAgents = getFixedAgents(complex, compartments);
         remainingTemplateAgents.removeAll(fixedTemplateAgents);
-        List<AgentLink> remainingTemplateLinks = complex.agentLinks;
+        List<AgentLink> remainingTemplateLinks = new ArrayList<AgentLink>(complex.agentLinks);
         List<MappingInstance> mappings = new ArrayList<MappingInstance>();
         
         if (fixedTemplateAgents.size() > 0) {
@@ -385,7 +324,7 @@ public class KappaModel implements IKappaModel {
             
             MappingInstance mappingInstance = new MappingInstance();
             for (Agent agent : fixedTemplateAgents) {
-                mappingInstance.mapping.put(agent, agent);
+                mappingInstance.mapping.put(agent, agent.clone());
             }
             mappings.add(mappingInstance);
         }
@@ -462,7 +401,7 @@ public class KappaModel implements IKappaModel {
         return mappings;
     }
     
-    private void reorderLocatedMappings(List<MappingInstance> mappings, List<Agent> templateAgents) {
+    private static void reorderLocatedMappings(List<MappingInstance> mappings, List<Agent> templateAgents) {
         for (MappingInstance mapping : mappings) {
             mapping.locatedAgents.clear();
             for (Agent templateAgent : templateAgents) {
@@ -524,7 +463,7 @@ public class KappaModel implements IKappaModel {
         throw new IllegalArgumentException("Locations are incompatible: " + location1 + "; " + location2);
     }
 
-    List<AgentLink> getInternalLinks(List<AgentLink> links, List<Agent> agents) {
+    static List<AgentLink> getInternalLinks(List<AgentLink> links, List<Agent> agents) {
         if (links == null || agents == null) {
             throw new NullPointerException();
         }
@@ -541,7 +480,7 @@ public class KappaModel implements IKappaModel {
         return result;
     }
     
-    @SuppressWarnings("hiding")
+    static
     List<Location> getPossibleLocations(Location sourceLocation, Location locationConstraint, Channel channel, List<Compartment> compartments) {
         if (sourceLocation == null || compartments == null) {
             throw new NullPointerException();
@@ -576,7 +515,7 @@ public class KappaModel implements IKappaModel {
         return result;
     }
 
-    Agent chooseNextAgent(List<Agent> fixedAgents, List<Agent> remainingAgents, List<AgentLink> remainingLinks) {
+    static Agent chooseNextAgent(List<Agent> fixedAgents, List<Agent> remainingAgents, List<AgentLink> remainingLinks) {
         if (fixedAgents == null || remainingAgents == null || remainingLinks == null) {
             throw new NullPointerException();
         }
@@ -594,7 +533,7 @@ public class KappaModel implements IKappaModel {
         throw new IllegalArgumentException("No next agent available");
     }
 
-    @SuppressWarnings("hiding")
+    static
     List<Agent> getFixedAgents(Complex complex, List<Compartment> compartments) {
         if (complex == null || compartments == null) {
             throw new NullPointerException();
@@ -615,8 +554,7 @@ public class KappaModel implements IKappaModel {
         return result;
     }
     
-    @SuppressWarnings("hiding")
-    public Channel getChannel(List<Channel> channels, String channelName) {
+    public static Channel getChannel(List<Channel> channels, String channelName) {
         for (Channel channel : channels) {
             if (channelName.equals(channel.getName())) {
                 return channel;
@@ -662,9 +600,6 @@ public class KappaModel implements IKappaModel {
 		return orderedVariableNames;
 	}
     
-
-
-
     public void validate() {
         
         for (Variable variable : variables.values()) {

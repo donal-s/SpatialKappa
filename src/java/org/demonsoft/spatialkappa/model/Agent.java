@@ -201,7 +201,19 @@ public class Agent implements Serializable {
         List<Agent> result = new ArrayList<Agent>();
         
         if (location == NOT_LOCATED) {
-            result.add(this);
+            if (compartments.size() == 0) {
+                result.add(this.clone());
+            }
+            else {
+                for (Compartment compartment : compartments) {
+                    Location[] locations = compartment.getDistributedCellReferences();
+                    for (Location currentLocation : locations) {
+                        Agent locatedAgent = clone();
+                        locatedAgent.location = currentLocation;
+                        result.add(locatedAgent);
+                    }
+                }
+            }
         }
         else {
             Compartment compartment = location.getReferencedCompartment(compartments);
@@ -209,7 +221,7 @@ public class Agent implements Serializable {
                 throw new IllegalArgumentException("Unknown location: " + location);
             }
             if (location.getIndices().length == compartment.getDimensions().length) {
-                result.add(this);
+                result.add(this.clone());
             }
             else {
                 Location[] locations = compartment.getDistributedCellReferences();

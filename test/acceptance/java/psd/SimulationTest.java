@@ -29,29 +29,28 @@ public class SimulationTest {
     
     @Test
     public void testTest2_1_diffusionAcrossFullyPermeableMembrane() throws Exception {
-        checkEventSimulation("test-2-1-input.ka", new String[] {"dimer in [0]", "dimer in [1]"}, 200, 50, 
+        checkEventSimulation("test-2-1-input.ka", new String[] {"dimer in [0]", "dimer in [1]"}, 400, 50, 
                 new float[][] {
-                    {1000, 0}, {800, 200}, {700, 300}, {650, 350}, {600, 400}, {575, 425}, {550, 450}, {525, 475}, {500, 500}
+                    {1000, 0}, {700, 300}, {600, 400}, {550, 450}, {500, 500}, {500, 500}, {500, 500}
                 });
     }
     
     @Test
     public void testTest2_2_diffusionAcrossPartiallyPermeableMembrane() throws Exception {
         checkEventSimulation("test-2-2-input.ka", 
-                new String[] {"dimer in [0]", "dimer in [1]", "dimer embedded", "A in [0]", "A in [1]", "B in [0]", "B in [1]"}, 400, 60, 
+                new String[] {"dimer in [0]", "dimer in [1]", "dimer embedded", "A in [0]", "A in [1]", "B in [0]", "B in [1]"}, 800, 100, 
                 new float[][] {
-                {1000, 0, 0, 1000, 0, 1000, 0}, 
-                {820, 0, 180, 820, 180, 1000, 0}, 
-                {730, 0, 270, 730, 270, 1000, 0}, 
-                {670, 0, 330, 670, 330, 1000, 0}, 
-                {570, 0, 430, 570, 430, 1000, 0}, 
-                {550, 0, 450, 550, 450, 1000, 0}, 
+                {1000, 0, 0, 2000, 0, 2000, 0}, 
+                {730, 0, 270, 1460, 540, 2000, 0}, 
+                {570, 0, 430, 1140, 860, 2000, 0}, 
+                {530, 0, 470, 1060, 940, 2000, 0}, 
+                {500, 0, 500, 1000, 1000, 2000, 0}, 
                 });
     }
     
     @Test
     public void testTest2_3_diffusionBetweenCompartmentsOfDifferentDimensions() throws Exception {
-        checkEventSimulation("test-2-3-input.ka", new String[] {"dimer in membrane", "dimer in cytosol[0]", "dimer in cytosol[1]", "dimer in cytosol[2]"}, 400, 60, 
+        checkEventSimulation("test-2-3-input.ka", new String[] {"dimer in membrane", "dimer in cytosol[0]", "dimer in cytosol[1]", "dimer in cytosol[2]"}, 400, 80, 
                 new float[][] {
                 {1000, 0, 0, 0}, 
                 {700, 270, 30, 0}, 
@@ -78,7 +77,7 @@ public class SimulationTest {
             });
     }
     
-    // @Test TODO - work in progress
+//     @Test //TODO - work in progress
     public void testTest2_6_membraneBoundScaffold3D() throws Exception {
         checkTimeSimulation("test-2-6-input.ka", new String[] {"AB"}, 0.002f, 60, 
                 new float[][] {
@@ -96,10 +95,10 @@ public class SimulationTest {
     
     // @Test TODO - work in progress
     public void testTest2_8_lateralDiffusionOfTransmembraneProteins() throws Exception {
-        checkEventSimulation("test-2-8-input.ka", new String[] {"[A(x~s)]", "[A(x~t)]"}, 200, 50, 
+        checkEventSimulation("test-2-8-input.ka", new String[] {"AB", "A2B2"}, 200, 50, 
                 new float[][] {
-                    {1000, 0}, {800, 200}, {600, 400}, {400, 600}, {200, 800}, {0, 1000}, {0, 1000}
-                });
+                {0, 0}, {90, 0}, {140, 0}, {0, 600}, {0, 800}, {0, 1000}, {0, 1000}
+            });
     }
     
     // @Test TODO - work in progress

@@ -25,6 +25,7 @@ tokens {
   COMPARTMENT;
   DIMENSION;
   LOCATION;
+  LOCATIONS;
   LOCATION_PAIR;
   CELL_INDEX_EXPR;
   INDEX;
@@ -209,9 +210,16 @@ channelDecl
 
 channelExpr
   :
-  sourceCompartment=locationExpr FORWARD_TRANSITION targetCompartment=locationExpr
+  sourceCompartments=locationsExpr FORWARD_TRANSITION targetCompartments=locationsExpr
     ->
-      ^(LOCATION_PAIR $sourceCompartment $targetCompartment)
+      ^(LOCATION_PAIR $sourceCompartments $targetCompartments)
+  ;
+
+locationsExpr
+  :
+  locationExpr (',' locationExpr)*
+    ->
+     ^(LOCATIONS locationExpr+)
   ;
 
 locationExpr

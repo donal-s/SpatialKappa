@@ -1,10 +1,14 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.*;
-import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,8 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.demonsoft.spatialkappa.model.Agent;
-import org.demonsoft.spatialkappa.model.AgentSite;
 import org.junit.Test;
 
 public class AgentTest {
@@ -201,8 +203,6 @@ public class AgentTest {
         Location location = new Location("unknown");
         Agent agent = new Agent("name", location, site1, site2);
         List<Compartment> compartments = new ArrayList<Compartment>();
-        compartments.add(new Compartment("nucleus"));
-        compartments.add(new Compartment("cytosol", 2, 2));
         
         try {
             agent.getLocatedAgents(null);
@@ -220,21 +220,34 @@ public class AgentTest {
             // Expected exception
         }
         
+        // No compartments
         agent.location = NOT_LOCATED;
         checkGetLocatedAgents(agent, compartments, agent);
+        
+        // With compartments
+        compartments.add(new Compartment("nucleus"));
+        compartments.add(new Compartment("cytosol", 2, 2));
+
+        checkGetLocatedAgents(agent, compartments, 
+                new Agent("name", new Location("nucleus"), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_0, INDEX_0), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_1, INDEX_0), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_0, INDEX_1), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_1, INDEX_1), site1, site2)
+                );
 
         agent.location = new Location("nucleus");
         checkGetLocatedAgents(agent, compartments, agent);
 
-        agent.location = new Location("cytosol", new CellIndexExpression("1"), new CellIndexExpression("1"));
+        agent.location = new Location("cytosol", INDEX_1, INDEX_1);
         checkGetLocatedAgents(agent, compartments, agent);
 
         agent.location = new Location("cytosol");
         checkGetLocatedAgents(agent, compartments, 
-                new Agent("name", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("0")), site1, site2),
-                new Agent("name", new Location("cytosol", new CellIndexExpression("1"), new CellIndexExpression("0")), site1, site2),
-                new Agent("name", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")), site1, site2),
-                new Agent("name", new Location("cytosol", new CellIndexExpression("1"), new CellIndexExpression("1")), site1, site2)
+                new Agent("name", new Location("cytosol", INDEX_0, INDEX_0), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_1, INDEX_0), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_0, INDEX_1), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_1, INDEX_1), site1, site2)
                 );
     }
 

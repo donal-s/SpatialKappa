@@ -10,10 +10,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -406,171 +404,6 @@ public class SpatialTranslatorTest {
     }
 
     @Test
-    public void testGetPartitionedLocations() throws Exception {
-        List<Compartment> compartments = new ArrayList<Compartment>();
-        Compartment cytosol = new Compartment("cytosol", 2, 2);
-        Compartment membrane = new Compartment("membrane", 3);
-        compartments.add(cytosol);
-        compartments.add(membrane);
-        
-        List<Agent> agents = new ArrayList<Agent>();
-
-        try {
-            translator.getPartitionedLocations(agents, null);
-            fail("null should have failed");
-        }
-        catch (NullPointerException ex) {
-            // Expected exception
-        }
- 
-        assertEquals(0, translator.getPartitionedLocations(null, compartments).size());
-    	
-    	Set<Location> expected = new HashSet<Location>();
-
-    	agents.add(new Agent("A", new Location("cytosol")));
-    	expected.add(new Location("cytosol"));
-    	assertEquals(expected, translator.getPartitionedLocations(agents, compartments));
-
-    	agents.clear();
-    	expected.clear();
-    	
-    	agents.add(new Agent("A", new Location("cytosol", new CellIndexExpression("1"))));
-    	expected.add(new Location("cytosol", new CellIndexExpression("1")));
-    	assertEquals(expected, translator.getPartitionedLocations(agents, compartments));
-
-    	agents.clear();
-    	expected.clear();
-    	
-    	agents.add(new Agent("A", new Location("cytosol", new CellIndexExpression("1"), new CellIndexExpression("1"))));
-    	assertEquals(expected, translator.getPartitionedLocations(agents, compartments));
-
-    	agents.clear();
-    	expected.clear();
-    	
-    	agents.add(new Agent("A", new Location("cytosol")));
-    	agents.add(new Agent("B", new Location("cytosol")));
-    	expected.add(new Location("cytosol"));
-    	assertEquals(expected, translator.getPartitionedLocations(agents, compartments));
-
-    	agents.clear();
-    	expected.clear();
-    	
-    	agents.add(new Agent("A", new Location("cytosol")));
-    	agents.add(new Agent("B", new Location("membrane")));
-    	expected.add(new Location("cytosol"));
-    	expected.add(new Location("membrane"));
-    	assertEquals(expected, translator.getPartitionedLocations(agents, compartments));
-    }
-    
-    @Test
-    public void testCreatePartitionMaps() throws Exception {
-    	
-    	IKappaModel model = new KappaModel();
-    	Compartment cytosol = new Compartment("cytosol", 2, 2);
-    	Compartment membrane = new Compartment("membrane", 3);
-    	Location locationCytosol = new Location("cytosol");
-    	Location locationMembrane = new Location("membrane");
-    	
-    	model.addCompartment(cytosol);
-    	model.addCompartment(membrane);
-    	translator = new SpatialTranslator(model);
-    	
-    	List<Location> locations = new ArrayList<Location>();
-    	List<Map<Location, String>> expected = new ArrayList<Map<Location,String>>();
-    	
-    	assertEquals(expected, translator.createPartitionMaps(locations));
-    	
-    	locations.add(new Location("cytosol"));
-    	Map<Location, String> rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~0");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~0");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~1");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~1");
-    	
-    	assertEquals(expected, translator.createPartitionMaps(locations));
-
-    	locations.clear();
-    	expected.clear();
-
-    	locations.add(new Location("membrane"));
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~0");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~1");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~2");
-    	
-       	assertEquals(expected, translator.createPartitionMaps(locations));
-
-       	locations.clear();
-    	expected.clear();
-
-    	locations.add(new Location("cytosol"));
-    	locations.add(new Location("membrane"));
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~0");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~0");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~0");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~1");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~0");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~2");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~0");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~0");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~0");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~1");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~0");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~2");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~1");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~0");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~1");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~1");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~0,loc_index_2~1");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~2");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~1");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~0");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~1");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~1");
-    	rowMap = new HashMap<Location, String>();
-    	expected.add(rowMap);
-    	rowMap.put(locationCytosol, "loc~cytosol,loc_index_1~1,loc_index_2~1");
-    	rowMap.put(locationMembrane, "loc~membrane,loc_index_1~2");
-    	
-       	assertEquals(expected, translator.createPartitionMaps(locations));
-    }
-    
-
-    @Test
     public void testHasLinksWithChannels() throws Exception {
         
         try {
@@ -658,7 +491,10 @@ public class SpatialTranslatorTest {
         "%init: 200 A(state~blue,loc~cytosol,loc_index_1~1)\n" + 
         "%init: 200 A(state~blue,loc~cytosol,loc_index_1~2)\n" + 
         "%init: 200 A(state~blue,loc~cytosol,loc_index_1~3)\n" + 
-        "%init: 800 A(state~green)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~0)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~1)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~2)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~3)\n" + 
         "%init: 800 A(state~red,loc~cytosol,loc_index_1~0)\n" + 
         "\n" + 
         "%var: 'green count' 800.0\n" + 
@@ -726,7 +562,10 @@ public class SpatialTranslatorTest {
         "%init: 200 A(state~blue,loc~cytosol,loc_index_1~1)\n" + 
         "%init: 200 A(state~blue,loc~cytosol,loc_index_1~2)\n" + 
         "%init: 200 A(state~blue,loc~cytosol,loc_index_1~3)\n" + 
-        "%init: 800 A(state~green)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~0)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~1)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~2)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~3)\n" + 
         "%init: 800 A(state~red,loc~cytosol,loc_index_1~0)\n" + 
         "\n" + 
         "%var: 'all red' A(state~red)\n" + 
@@ -795,8 +634,22 @@ public class SpatialTranslatorTest {
         "'cell exit2-1' B(loc~cytosol,loc_index_1~2) -> B(loc~membrane,loc_index_1~0) @ 0.3\n" + 
         "'cell exit2-2' B(loc~cytosol,loc_index_1~3) -> B(loc~membrane,loc_index_1~1) @ 0.3\n" + 
         "\n" +
-        "%init: 800 A(state~red)\n" + 
-        "%init: 800 B\n" + 
+        "%init: 100 A(state~red,loc~cytosol,loc_index_1~0)\n" + 
+        "%init: 100 A(state~red,loc~cytosol,loc_index_1~1)\n" + 
+        "%init: 100 A(state~red,loc~cytosol,loc_index_1~2)\n" + 
+        "%init: 100 A(state~red,loc~cytosol,loc_index_1~3)\n" + 
+        "%init: 100 A(state~red,loc~membrane,loc_index_1~0)\n" + 
+        "%init: 100 A(state~red,loc~membrane,loc_index_1~1)\n" + 
+        "%init: 100 A(state~red,loc~membrane,loc_index_1~2)\n" + 
+        "%init: 100 A(state~red,loc~membrane,loc_index_1~3)\n" + 
+        "%init: 100 B(loc~cytosol,loc_index_1~0)\n" + 
+        "%init: 100 B(loc~cytosol,loc_index_1~1)\n" + 
+        "%init: 100 B(loc~cytosol,loc_index_1~2)\n" + 
+        "%init: 100 B(loc~cytosol,loc_index_1~3)\n" + 
+        "%init: 100 B(loc~membrane,loc_index_1~0)\n" + 
+        "%init: 100 B(loc~membrane,loc_index_1~1)\n" + 
+        "%init: 100 B(loc~membrane,loc_index_1~2)\n" + 
+        "%init: 100 B(loc~membrane,loc_index_1~3)\n" + 
         "\n" + 
         "\n" + 
         "";
@@ -913,7 +766,15 @@ public class SpatialTranslatorTest {
         "'diffusion RED-31' RED(loc~cytosol,loc_index_1~2,loc_index_2~0) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~1) @ 0.05\n" + 
         "'diffusion RED-32' RED(loc~cytosol,loc_index_1~2,loc_index_2~1) -> RED(loc~cytosol,loc_index_1~1,loc_index_2~2) @ 0.05\n" + 
         "\n" + 
-        "%init: 40 RED\n" + 
+        "%init: 5 RED(loc~cytosol,loc_index_1~0,loc_index_2~0)\n" + 
+        "%init: 5 RED(loc~cytosol,loc_index_1~1,loc_index_2~0)\n" + 
+        "%init: 5 RED(loc~cytosol,loc_index_1~2,loc_index_2~0)\n" + 
+        "%init: 5 RED(loc~cytosol,loc_index_1~0,loc_index_2~1)\n" + 
+        "%init: 4 RED(loc~cytosol,loc_index_1~1,loc_index_2~1)\n" + 
+        "%init: 4 RED(loc~cytosol,loc_index_1~2,loc_index_2~1)\n" + 
+        "%init: 4 RED(loc~cytosol,loc_index_1~0,loc_index_2~2)\n" + 
+        "%init: 4 RED(loc~cytosol,loc_index_1~1,loc_index_2~2)\n" + 
+        "%init: 4 RED(loc~cytosol,loc_index_1~2,loc_index_2~2)\n" + 
         "\n" + 
         "\n" + 
         "";
@@ -1103,14 +964,26 @@ public class SpatialTranslatorTest {
         "%agent: B(s~right~centre~left~outside~bottom~middle~top~inside~back~front,loc~cytosol,loc_index_1~0~1~2~3)\n" + 
         "\n" + 
         "\n" + 
-        "%init: 800 A(state~green)\n" + 
-        "%init: 800 B(s~right)\n" + 
-		"%init: 800 A(state~purple)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~0)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~1)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~2)\n" + 
+        "%init: 200 A(state~green,loc~cytosol,loc_index_1~3)\n" + 
+        "%init: 200 B(s~right,loc~cytosol,loc_index_1~0)\n" + 
+        "%init: 200 B(s~right,loc~cytosol,loc_index_1~1)\n" + 
+        "%init: 200 B(s~right,loc~cytosol,loc_index_1~2)\n" + 
+        "%init: 200 B(s~right,loc~cytosol,loc_index_1~3)\n" + 
+        "%init: 200 A(state~purple,loc~cytosol,loc_index_1~0)\n" + 
+        "%init: 200 A(state~purple,loc~cytosol,loc_index_1~1)\n" + 
+        "%init: 200 A(state~purple,loc~cytosol,loc_index_1~2)\n" + 
+        "%init: 200 A(state~purple,loc~cytosol,loc_index_1~3)\n" + 
         "%init: 200 B(s~centre,loc~cytosol,loc_index_1~0)\n" + 
         "%init: 200 B(s~centre,loc~cytosol,loc_index_1~1)\n" + 
         "%init: 200 B(s~centre,loc~cytosol,loc_index_1~2)\n" + 
         "%init: 200 B(s~centre,loc~cytosol,loc_index_1~3)\n" + 
-		"%init: 800 A(state~orange)\n" + 
+        "%init: 200 A(state~orange,loc~cytosol,loc_index_1~0)\n" + 
+        "%init: 200 A(state~orange,loc~cytosol,loc_index_1~1)\n" + 
+        "%init: 200 A(state~orange,loc~cytosol,loc_index_1~2)\n" + 
+        "%init: 200 A(state~orange,loc~cytosol,loc_index_1~3)\n" + 
         "%init: 800 B(s~left,loc~cytosol,loc_index_1~3)\n" +
 		"%init: 200 A(state~blue,loc~cytosol,loc_index_1~0)\n" + 
 		"%init: 200 A(state~blue,loc~cytosol,loc_index_1~1)\n" + 
