@@ -18,24 +18,24 @@ import org.junit.Test;
 public class SpatialKappaParserTest {
 
     @Test
-    public void testRuleExpr_transform() throws Exception {
-        runParserRule("ruleExpr", "A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+    public void testRuleDecl_transform() throws Exception {
+        runParserRule("ruleDecl", "A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 "(RULE (TRANSITION (LHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
                 "(RATE (VAR_EXPR 1)))");
-        runParserRule("ruleExpr", "'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+        runParserRule("ruleDecl", "'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 "(RULE (TRANSITION (LHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
                 "(RATE (VAR_EXPR 1)) label)");
-        runParserRule("ruleExpr", "'IPTG addition{77331}'  -> IPTG(laci) @ 0.0", 
+        runParserRule("ruleDecl", "'IPTG addition{77331}'  -> IPTG(laci) @ 0.0", 
                 "(RULE (TRANSITION LHS (RHS (AGENTS (AGENT IPTG (INTERFACE laci))))) (RATE (VAR_EXPR 0.0)) IPTG addition{77331})");
         
-        runParserRule("ruleExpr", "'bin' CRY(clk),EBOX-CLK-BMAL1(cry) -> CRY(clk!2), EBOX-CLK-BMAL1(cry!2) @ 127.286", 
+        runParserRule("ruleDecl", "'bin' CRY(clk),EBOX-CLK-BMAL1(cry) -> CRY(clk!2), EBOX-CLK-BMAL1(cry!2) @ 127.286", 
                 "(RULE (TRANSITION (LHS (AGENTS (AGENT CRY (INTERFACE clk)) (AGENT EBOX-CLK-BMAL1 (INTERFACE cry)))) " +
                 "(RHS (AGENTS (AGENT CRY (INTERFACE clk (LINK 2))) (AGENT EBOX-CLK-BMAL1 (INTERFACE cry (LINK 2)))))) " +
                 "(RATE (VAR_EXPR 127.286)) bin)");
 
-        runParserRule("ruleExpr", "'AB embed'    A:cytosol[0](s!1),B:cytosol[0](s!1) ->:intra A:cytosol[1](s!1:intra),B:cytosol[0](s!1) @ 1.0", 
+        runParserRule("ruleDecl", "'AB embed'    A:cytosol[0](s!1),B:cytosol[0](s!1) ->:intra A:cytosol[1](s!1:intra),B:cytosol[0](s!1) @ 1.0", 
                 "(RULE (TRANSITION (LHS (AGENTS (AGENT A (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0))) (INTERFACE s (LINK 1))) " +
                 "(AGENT B (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0))) (INTERFACE s (LINK 1))))) " +
                 "(RHS (AGENTS (AGENT A (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 1))) (INTERFACE s (LINK (CHANNEL intra) 1))) " +
@@ -46,35 +46,35 @@ public class SpatialKappaParserTest {
         
 
         // <-> rules no longer valid
-//        runParserRuleFail("ruleExpr", "A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
-//        runParserRuleFail("ruleExpr", "'label' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
+//        runParserRuleFail("ruleDecl", "A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
+//        runParserRuleFail("ruleDecl", "'label' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
 
     }
 
     @Test
-    public void testTransformExpr_transform() throws Exception {
-        runParserRule("transformExpr", "A(s),B(x) -> @", 
+    public void testTransition_transform() throws Exception {
+        runParserRule("transition", "A(s),B(x) -> @", 
                 "(TRANSITION (LHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) RHS)");
-        runParserRule("transformExpr", "-> A(s!1),B(x!1)", 
+        runParserRule("transition", "-> A(s!1),B(x!1)", 
                 "(TRANSITION LHS (RHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))))");
-        runParserRule("transformExpr", "A(s),B(x) -> A(s!1),B(x!1)", 
+        runParserRule("transition", "A(s),B(x) -> A(s!1),B(x!1)", 
                 "(TRANSITION (LHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) (RHS (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))))");
 
         // <-> rules no longer valid
-//        runParserRuleFail("transformExpr", "A(s),B(x) <-> @");
-        runParserRuleFail("transformExpr", "<-> A(s!1),B(x!1)");
-//        runParserRuleFail("transformExpr", "A(s),B(x) <-> A(s!1),B(x!1)");
+//        runParserRuleFail("transition", "A(s),B(x) <-> @");
+        runParserRuleFail("transition", "<-> A(s!1),B(x!1)");
+//        runParserRuleFail("transition", "A(s),B(x) <-> A(s!1),B(x!1)");
     }
 
     @Test
-    public void testTransformExpr_transport() throws Exception {
-        runParserRule("transformExpr", "->:intra-cytosol @", 
+    public void testTransition_transport() throws Exception {
+        runParserRule("transition", "->:intra-cytosol @", 
                 "(TRANSITION LHS RHS (CHANNEL intra-cytosol))");
-        runParserRule("transformExpr", "A(s),B(x) ->:intra-cytosol A(s),B(x)", 
+        runParserRule("transition", "A(s),B(x) ->:intra-cytosol A(s),B(x)", 
                 "(TRANSITION (LHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
                 "(CHANNEL intra-cytosol))");
-        runParserRule("transformExpr", "A:cytosol[0](s!1),B:cytosol[0](s!1) ->:intra A:cytosol[1](s!1:intra),B:cytosol[0](s!1)", 
+        runParserRule("transition", "A:cytosol[0](s!1),B:cytosol[0](s!1) ->:intra A:cytosol[1](s!1:intra),B:cytosol[0](s!1)", 
                 "(TRANSITION (LHS (AGENTS (AGENT A (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0))) (INTERFACE s (LINK 1))) " +
                 "(AGENT B (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0))) (INTERFACE s (LINK 1))))) " +
                 "(RHS (AGENTS (AGENT A (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 1))) (INTERFACE s (LINK (CHANNEL intra) 1))) " +
@@ -82,22 +82,22 @@ public class SpatialKappaParserTest {
     }
 
     @Test
-    public void testRuleExpr_transform_spatial() throws Exception {
-        runParserRule("ruleExpr", "'label' :cytosol A:membrane(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
-                "(RULE (TRANSITION (LHS (LOCATION cytosol) (AGENTS (AGENT A (LOCATION membrane) (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
+    public void testRuleDecl_transform_spatial() throws Exception {
+        runParserRule("ruleDecl", "'label' :cytosol A:membrane(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+                "(RULE (TRANSITION (LHS (AGENTS (LOCATION cytosol) (AGENT A (LOCATION membrane) (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
                 "(RATE (VAR_EXPR 1)) label)");
-        runParserRule("ruleExpr", ":cytosol A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
-                "(RULE (TRANSITION (LHS (LOCATION cytosol) (AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
+        runParserRule("ruleDecl", ":cytosol A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+                "(RULE (TRANSITION (LHS (AGENTS (LOCATION cytosol) (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
                 "(RATE (VAR_EXPR 1)))");
-        runParserRule("ruleExpr", "'label' :cytosol[0][1] A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
-                "(RULE (TRANSITION (LHS (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))) " +
-                "(AGENTS (AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
+        runParserRule("ruleDecl", "'label' :cytosol[0][1] A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+                "(RULE (TRANSITION (LHS (AGENTS (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))) " +
+                "(AGENT A (INTERFACE s (LINK 1))) (AGENT B (INTERFACE x (LINK 1))))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x))))) " +
                 "(RATE (VAR_EXPR 1)) label)");
  
-        runParserRule("ruleExpr", "'unbinRv{200960}' REV-ERBa(rore!1,loc~nuc), RORE(rev-erba!1,gene!_) -> REV-ERBa(rore,loc~nuc), RORE(rev-erba,gene!_) @ 21.8", 
+        runParserRule("ruleDecl", "'unbinRv{200960}' REV-ERBa(rore!1,loc~nuc), RORE(rev-erba!1,gene!_) -> REV-ERBa(rore,loc~nuc), RORE(rev-erba,gene!_) @ 21.8", 
                     "(RULE (TRANSITION (LHS (AGENTS (AGENT REV-ERBa (INTERFACE rore (LINK 1)) (INTERFACE loc (STATE nuc))) " +
                     "(AGENT RORE (INTERFACE rev-erba (LINK 1)) (INTERFACE gene (LINK OCCUPIED))))) " +
                     "(RHS (AGENTS (AGENT REV-ERBa (INTERFACE rore) (INTERFACE loc (STATE nuc))) " +
@@ -105,64 +105,62 @@ public class SpatialKappaParserTest {
                     "(RATE (VAR_EXPR 21.8)) unbinRv{200960})");
 
         // <-> rules no longer valid
-        runParserRuleFail("ruleExpr", "'label' cytosol A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
-        runParserRuleFail("ruleExpr", "'label' cytosol[0][1] A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
+        runParserRuleFail("ruleDecl", "'label' cytosol A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
+        runParserRuleFail("ruleDecl", "'label' cytosol[0][1] A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
     }
 
     @Test
-    public void testRuleExpr_transport() throws Exception {
-        runParserRule("ruleExpr", "->:intra-cytosol @ 0.1", 
+    public void testRuleDecl_transport() throws Exception {
+        runParserRule("ruleDecl", "->:intra-cytosol @ 0.1", 
                 "(RULE (TRANSITION LHS RHS " +
                 "(CHANNEL intra-cytosol)) " +
                 "(RATE (VAR_EXPR 0.1)))");
-        runParserRule("ruleExpr", "'transport-all' ->:intra-cytosol @ 0.1", 
+        runParserRule("ruleDecl", "'transport-all' ->:intra-cytosol @ 0.1", 
                 "(RULE (TRANSITION LHS RHS " +
                 "(CHANNEL intra-cytosol)) " +
                 "(RATE (VAR_EXPR 0.1)) transport-all)");
-        runParserRule("ruleExpr", "A(s),B(x) ->:intra-cytosol A(s),B(x) @ 0.1", 
+        runParserRule("ruleDecl", "A(s),B(x) ->:intra-cytosol A(s),B(x) @ 0.1", 
                 "(RULE (TRANSITION (LHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
                 "(CHANNEL intra-cytosol)) " +
                 "(RATE (VAR_EXPR 0.1)))");
-        runParserRule("ruleExpr", "'transport-all' A(s),B(x) ->:intra-cytosol A(s),B(x) @ 0.1", 
+        runParserRule("ruleDecl", "'transport-all' A(s),B(x) ->:intra-cytosol A(s),B(x) @ 0.1", 
                 "(RULE (TRANSITION (LHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
                 "(CHANNEL intra-cytosol)) " +
                 "(RATE (VAR_EXPR 0.1)) transport-all)");
 
         // With rule locations
-        runParserRule("ruleExpr", ":source ->:intra-cytosol @ 0.1", 
+        runParserRule("ruleDecl", ":source ->:intra-cytosol @ 0.1", 
                 "(RULE (TRANSITION (LHS (LOCATION source)) RHS " +
                 "(CHANNEL intra-cytosol)) " +
                 "(RATE (VAR_EXPR 0.1)))");
-        runParserRule("ruleExpr", "'transport-all' ->:intra-cytosol :target @ 0.1", 
+        runParserRule("ruleDecl", "'transport-all' ->:intra-cytosol :target @ 0.1", 
                 "(RULE (TRANSITION LHS (RHS (LOCATION target)) " +
                 "(CHANNEL intra-cytosol)) " +
                 "(RATE (VAR_EXPR 0.1)) transport-all)");
-        runParserRule("ruleExpr", "A(s),B(x) ->:intra-cytosol :target A(s),B(x) @ 0.1", 
+        runParserRule("ruleDecl", "A(s),B(x) ->:intra-cytosol :target A(s),B(x) @ 0.1", 
                 "(RULE (TRANSITION (LHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
-                "(RHS (LOCATION target) (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
+                "(RHS (AGENTS (LOCATION target) (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
                 "(CHANNEL intra-cytosol)) " +
                 "(RATE (VAR_EXPR 0.1)))");
-        runParserRule("ruleExpr", "'transport-all' :source A(s),B(x) ->:intra-cytosol A(s),B(x) @ 0.1", 
-                "(RULE (TRANSITION (LHS (LOCATION source) (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
+        runParserRule("ruleDecl", "'transport-all' :source A(s),B(x) ->:intra-cytosol A(s),B(x) @ 0.1", 
+                "(RULE (TRANSITION (LHS (AGENTS (LOCATION source) (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
                 "(RHS (AGENTS (AGENT A (INTERFACE s)) (AGENT B (INTERFACE x)))) " +
                 "(CHANNEL intra-cytosol)) " +
                 "(RATE (VAR_EXPR 0.1)) transport-all)");
 
         // Show difference between rule channel and target location syntax
-        runParserRule("ruleExpr", "'transport-all' -> :target @ 0.1", 
-                "(RULE (TRANSITION LHS (RHS (LOCATION target))) " +
-                "(RATE (VAR_EXPR 0.1)) transport-all)");
+        runParserRuleFail("ruleDecl", "'transport-all' -> :target @ 0.1");
     }
 
     @Test
-    public void testLocationExpr() throws Exception {
-        runParserRule("locationExpr", "label", 
+    public void testLocation() throws Exception {
+        runParserRule("location", "label", 
                 "(LOCATION label)");
-        runParserRule("locationExpr", "label[1]", 
+        runParserRule("location", "label[1]", 
                 "(LOCATION label (INDEX (CELL_INDEX_EXPR 1)))");
-        runParserRule("locationExpr", "label[1][20+x]", 
+        runParserRule("location", "label[1][20+x]", 
                 "(LOCATION label (INDEX (CELL_INDEX_EXPR 1)) (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR 20) (CELL_INDEX_EXPR x))))");
     }
 
@@ -179,139 +177,139 @@ public class SpatialKappaParserTest {
     }
 
     @Test
-    public void testStateExpr() throws Exception {
-        runParserRule("stateExpr", "~a", "(STATE a)");
-        runParserRule("stateExpr", "~3-_9Za", "(STATE 3-_9Za)");
+    public void testState() throws Exception {
+        runParserRule("state", "~a", "(STATE a)");
+        runParserRule("state", "~3-_9Za", "(STATE 3-_9Za)");
         
         // Invalid characters
-        runParserRule("stateExpr", "~3^a", "(STATE 3)");
+        runParserRule("state", "~3^a", "(STATE 3)");
     }
 
     @Test
-    public void testLinkExpr() throws Exception {
-        runParserRule("linkExpr", "! 0", "(LINK 0)");
-        runParserRule("linkExpr", "! 1", "(LINK 1)");
-        runParserRule("linkExpr", "!1", "(LINK 1)");
-        runParserRule("linkExpr", "?", "(LINK ANY)");
-        runParserRule("linkExpr", "!_", "(LINK OCCUPIED)");
-        runParserRule("linkExpr", "! _", "(LINK OCCUPIED)");
+    public void testLink() throws Exception {
+        runParserRule("link", "! 0", "(LINK 0)");
+        runParserRule("link", "! 1", "(LINK 1)");
+        runParserRule("link", "!1", "(LINK 1)");
+        runParserRule("link", "?", "(LINK ANY)");
+        runParserRule("link", "!_", "(LINK OCCUPIED)");
+        runParserRule("link", "! _", "(LINK OCCUPIED)");
         
-        runParserRuleFail("linkExpr", "! -1");
-        runParserRuleFail("linkExpr", "!");
-        runParserRuleFail("linkExpr", "! 0.1");
-        runParserRuleFail("linkExpr", "! a");
+        runParserRuleFail("link", "! -1");
+        runParserRuleFail("link", "!");
+        runParserRuleFail("link", "! 0.1");
+        runParserRuleFail("link", "! a");
     }
 
     @Test
-    public void testLinkExpr_withNamedChannel() throws Exception {
-        runParserRule("linkExpr", "! 0:channel", "(LINK (CHANNEL channel) 0)");
-        runParserRule("linkExpr", "! 1:channel", "(LINK (CHANNEL channel) 1)");
-        runParserRule("linkExpr", "!1:channel", "(LINK (CHANNEL channel) 1)");
-        runParserRule("linkExpr", "!_:channel", "(LINK (CHANNEL channel) OCCUPIED)");
-        runParserRule("linkExpr", "! _:channel", "(LINK (CHANNEL channel) OCCUPIED)");
+    public void testLink_withNamedChannel() throws Exception {
+        runParserRule("link", "! 0:channel", "(LINK (CHANNEL channel) 0)");
+        runParserRule("link", "! 1:channel", "(LINK (CHANNEL channel) 1)");
+        runParserRule("link", "!1:channel", "(LINK (CHANNEL channel) 1)");
+        runParserRule("link", "!_:channel", "(LINK (CHANNEL channel) OCCUPIED)");
+        runParserRule("link", "! _:channel", "(LINK (CHANNEL channel) OCCUPIED)");
 
         // Suffix will be caught by next invoked rule
-        runParserRule("linkExpr", "?:channel", "(LINK ANY)");
-        runParserRule("linkExpr", "?channel", "(LINK ANY)");
+        runParserRule("link", "?:channel", "(LINK ANY)");
+        runParserRule("link", "?channel", "(LINK ANY)");
 
-        runParserRuleFail("linkExpr", ":");
-        runParserRuleFail("linkExpr", ":channel");
-        runParserRuleFail("linkExpr", "!:channel");
-        runParserRuleFail("linkExpr", "! -1:channel");
-        runParserRuleFail("linkExpr", "!:channel");
-        runParserRuleFail("linkExpr", "! 0.1:channel");
-        runParserRuleFail("linkExpr", "! a:channel");
+        runParserRuleFail("link", ":");
+        runParserRuleFail("link", ":channel");
+        runParserRuleFail("link", "!:channel");
+        runParserRuleFail("link", "! -1:channel");
+        runParserRuleFail("link", "!:channel");
+        runParserRuleFail("link", "! 0.1:channel");
+        runParserRuleFail("link", "! a:channel");
     }
 
     @Test
-    public void testKineticExpr() throws Exception {
-        runParserRule("kineticExpr", "@ 0.1", "(RATE (VAR_EXPR 0.1))");
-        runParserRule("kineticExpr", "@ 'x'", "(RATE (VAR_EXPR x))");
-        runParserRule("kineticExpr", "@ 'x' / 2", "(RATE (VAR_EXPR / (VAR_EXPR x) (VAR_EXPR 2)))");
-        runParserRule("kineticExpr", "@ 'x'-2", "(RATE (VAR_EXPR - (VAR_EXPR x) (VAR_EXPR 2)))");
-        runParserRule("kineticExpr", "@ 'x'^'y'", "(RATE (VAR_EXPR ^ (VAR_EXPR x) (VAR_EXPR y)))");
-        runParserRule("kineticExpr", "@ [inf]", "(RATE (VAR_EXPR VAR_INFINITY))");
+    public void testRate() throws Exception {
+        runParserRule("rate", "@ 0.1", "(RATE (VAR_EXPR 0.1))");
+        runParserRule("rate", "@ 'x'", "(RATE (VAR_EXPR x))");
+        runParserRule("rate", "@ 'x' / 2", "(RATE (VAR_EXPR / (VAR_EXPR x) (VAR_EXPR 2)))");
+        runParserRule("rate", "@ 'x'-2", "(RATE (VAR_EXPR - (VAR_EXPR x) (VAR_EXPR 2)))");
+        runParserRule("rate", "@ 'x'^'y'", "(RATE (VAR_EXPR ^ (VAR_EXPR x) (VAR_EXPR y)))");
+        runParserRule("rate", "@ [inf]", "(RATE (VAR_EXPR VAR_INFINITY))");
     }
 
     @Test
-    public void testInitExpr() throws Exception {
-        runParserRule("initExpr", "%init: 5 A(x~a),B(y~d)", 
+    public void testInitDecl() throws Exception {
+        runParserRule("initDecl", "%init: 5 A(x~a),B(y~d)", 
                 "(INIT (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) 5)");
-//        runParserRule("initExpr", "%init: 5 (A(x~a),B(y~d))", TODO
+//        runParserRule("initDecl", "%init: 5 (A(x~a),B(y~d))", TODO
 //                "(INIT (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) 5)");
-        runParserRule("initExpr", "%init: 'label' A(x~a),B(y~d)", 
+        runParserRule("initDecl", "%init: 'label' A(x~a),B(y~d)", 
             "(INIT (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
     }
 
     @Test
-    public void testAgentExpr() throws Exception {
-        runParserRule("agentExpr", "%agent: Agent", "(AGENT_DECL Agent)");
-        runParserRule("agentExpr", "%agent: Agent()", "(AGENT_DECL Agent)");
-        runParserRule("agentExpr", "%agent: Agent(none,single~value,multiple~val1~val2~val3)", 
+    public void testAgentDecl() throws Exception {
+        runParserRule("agentDecl", "%agent: Agent", "(AGENT_DECL Agent)");
+        runParserRule("agentDecl", "%agent: Agent()", "(AGENT_DECL Agent)");
+        runParserRule("agentDecl", "%agent: Agent(none,single~value,multiple~val1~val2~val3)", 
         		"(AGENT_DECL Agent (INTERFACE none) (INTERFACE single (STATE value)) " +
         		"(INTERFACE multiple (STATE val1) (STATE val2) (STATE val3)))");
     }
     
 
     @Test
-    public void testPlotExpr() throws Exception {
-        runParserRule("plotExpr", "%plot: 'label'\n", "(PLOT label)");
+    public void testPlotDecl() throws Exception {
+        runParserRule("plotDecl", "%plot: 'label'\n", "(PLOT label)");
         
-        runParserRuleFail("plotExpr", "%plot: '\n");
+        runParserRuleFail("plotDecl", "%plot: '\n");
     }
 
     @Test
-    public void testObsExpr() throws Exception {
-        runParserRule("obsExpr", "%obs: 'label' A(x~a),B(y~d)", 
+    public void testObsDecl() throws Exception {
+        runParserRule("obsDecl", "%obs: 'label' A(x~a),B(y~d)", 
             "(OBSERVATION (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
-        runParserRule("obsExpr", "%obs: A(x~a),B(y~d)", 
+        runParserRule("obsDecl", "%obs: A(x~a),B(y~d)", 
             "(OBSERVATION (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))))");
         
-        runParserRuleFail("obsExpr", "%obs: \n");
-        runParserRuleFail("obsExpr", "%obs: 'label'\n");
+        runParserRuleFail("obsDecl", "%obs: \n");
+        runParserRuleFail("obsDecl", "%obs: 'label'\n");
     }
 
     @Test
-    public void testVarExpr() throws Exception {
-        runParserRule("varExpr", "%var: 'label' A(x~a),B(y~d)", 
+    public void testVarDecl() throws Exception {
+        runParserRule("varDecl", "%var: 'label' A(x~a),B(y~d)", 
                 "(VARIABLE (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
     
-        runParserRule("varExpr", "%var: 'label' 800", 
+        runParserRule("varDecl", "%var: 'label' 800", 
                 "(VARIABLE (VAR_EXPR 800) label)");
         
-        runParserRule("varExpr", "%var: 'label' 2.55e4", 
+        runParserRule("varDecl", "%var: 'label' 2.55e4", 
                 "(VARIABLE (VAR_EXPR 2.55e4) label)");
-        runParserRule("varExpr", "%var: 'label' ('a' + 'b') * 2", 
+        runParserRule("varDecl", "%var: 'label' ('a' + 'b') * 2", 
                 "(VARIABLE (VAR_EXPR * (VAR_EXPR + (VAR_EXPR a) (VAR_EXPR b)) (VAR_EXPR 2)) label)");
-        runParserRule("varExpr", "%var: 'label' 'a' + 'b' + 2", 
+        runParserRule("varDecl", "%var: 'label' 'a' + 'b' + 2", 
                 "(VARIABLE (VAR_EXPR + (VAR_EXPR + (VAR_EXPR a) (VAR_EXPR b)) (VAR_EXPR 2)) label)");
-        runParserRule("varExpr", "%var: 'label' 'a' + 'b' * 2", 
+        runParserRule("varDecl", "%var: 'label' 'a' + 'b' * 2", 
                 "(VARIABLE (VAR_EXPR + (VAR_EXPR a) (VAR_EXPR * (VAR_EXPR b) (VAR_EXPR 2))) label)");
-        runParserRule("varExpr", "%var: 'label' [inf] * 2", 
+        runParserRule("varDecl", "%var: 'label' [inf] * 2", 
                 "(VARIABLE (VAR_EXPR * (VAR_EXPR VAR_INFINITY) (VAR_EXPR 2)) label)");
-        runParserRule("varExpr", "%var: 'label' [pi] ^ 2", 
+        runParserRule("varDecl", "%var: 'label' [pi] ^ 2", 
                 "(VARIABLE (VAR_EXPR ^ (VAR_EXPR PI) (VAR_EXPR 2)) label)");
 
-        runParserRule("varExpr", "%var: 'label' [log] 'n'", 
+        runParserRule("varDecl", "%var: 'label' [log] 'n'", 
                 "(VARIABLE (VAR_EXPR LOG (VAR_EXPR n)) label)");
-        runParserRule("varExpr", "%var: 'label' [sin] 'n'", 
+        runParserRule("varDecl", "%var: 'label' [sin] 'n'", 
                 "(VARIABLE (VAR_EXPR SIN (VAR_EXPR n)) label)");
-        runParserRule("varExpr", "%var: 'label' [cos] 'n'", 
+        runParserRule("varDecl", "%var: 'label' [cos] 'n'", 
                 "(VARIABLE (VAR_EXPR COS (VAR_EXPR n)) label)");
-        runParserRule("varExpr", "%var: 'label' [tan] 'n'", 
+        runParserRule("varDecl", "%var: 'label' [tan] 'n'", 
                 "(VARIABLE (VAR_EXPR TAN (VAR_EXPR n)) label)");
-        runParserRule("varExpr", "%var: 'label' [sqrt] 'n'", 
+        runParserRule("varDecl", "%var: 'label' [sqrt] 'n'", 
                 "(VARIABLE (VAR_EXPR SQRT (VAR_EXPR n)) label)");
-        runParserRule("varExpr", "%var: 'label' [exp] 'n'", 
+        runParserRule("varDecl", "%var: 'label' [exp] 'n'", 
                 "(VARIABLE (VAR_EXPR EXP (VAR_EXPR n)) label)");
 
-        runParserRule("varExpr", "%var: 'label' [mod] 'n' 2", 
+        runParserRule("varDecl", "%var: 'label' [mod] 'n' 2", 
                 "(VARIABLE (VAR_EXPR MODULUS (VAR_EXPR n) (VAR_EXPR 2)) label)");
 
         // TODO - handle the rest of the grammar as needed
         
-        runParserRuleFail("varExpr", "%var: ");
-//        runParserRuleFail("varExpr", "%var: A(x~a),B(y~d)"); // TODO - handle this
+        runParserRuleFail("varDecl", "%var: ");
+//        runParserRuleFail("varDecl", "%var: A(x~a),B(y~d)"); // TODO - handle this
     }
 
     @Test
@@ -335,22 +333,22 @@ public class SpatialKappaParserTest {
     }
     
     @Test
-    public void testModExpr() throws Exception {
-        runParserRule("modExpr", "%mod: ([T]>10) && ('v1'/'v2') < 1 do $ADD 'n' C(x1~p)", 
+    public void testModDecl() throws Exception {
+        runParserRule("modDecl", "%mod: ([T]>10) && ('v1'/'v2') < 1 do $ADD 'n' C(x1~p)", 
                 "(PERTURBATION" +
                 " (CONDITION (BOOL_EXPR AND (BOOL_EXPR > (VAR_EXPR TIME) (VAR_EXPR 10)) (BOOL_EXPR < (VAR_EXPR / (VAR_EXPR v1) (VAR_EXPR v2)) (VAR_EXPR 1))))" +
                 " (EFFECT ADD (VAR_EXPR n) (AGENTS (AGENT C (INTERFACE x1 (STATE p))))))");
-        runParserRule("modExpr", "%mod: ([log][E]>10) || [true] do $SNAPSHOT until [false]", 
+        runParserRule("modDecl", "%mod: ([log][E]>10) || [true] do $SNAPSHOT until [false]", 
                 "(PERTURBATION" +
                 " (CONDITION (BOOL_EXPR OR (BOOL_EXPR > (VAR_EXPR LOG (VAR_EXPR EVENTS)) (VAR_EXPR 10)) (BOOL_EXPR TRUE)))" +
                 " (EFFECT SNAPSHOT)" +
                 " (UNTIL (BOOL_EXPR FALSE)))");
-        runParserRule("modExpr", "%mod: ([mod] [T] 100)=0 do $DEL [inf] C() until [T]>1000", 
+        runParserRule("modDecl", "%mod: ([mod] [T] 100)=0 do $DEL [inf] C() until [T]>1000", 
                 "(PERTURBATION" +
                 " (CONDITION (BOOL_EXPR = (VAR_EXPR MODULUS (VAR_EXPR TIME) (VAR_EXPR 100)) (VAR_EXPR 0)))" +
                 " (EFFECT REMOVE (VAR_EXPR VAR_INFINITY) (AGENTS (AGENT C)))" +
                 " (UNTIL (BOOL_EXPR > (VAR_EXPR TIME) (VAR_EXPR 1000))))");
-        runParserRule("modExpr", "%mod: [not][false] do 'rule_name' := [inf]", 
+        runParserRule("modDecl", "%mod: [not][false] do 'rule_name' := [inf]", 
                 "(PERTURBATION" +
                 " (CONDITION (BOOL_EXPR NOT (BOOL_EXPR FALSE)))" +
                 " (EFFECT SET (TARGET rule_name) (VAR_EXPR VAR_INFINITY)))");
@@ -412,19 +410,19 @@ public class SpatialKappaParserTest {
     }
     
     @Test
-    public void testCompartmentExpr() throws Exception {
-        runParserRule("compartmentExpr", "%compartment: label", "(COMPARTMENT label)");
-        runParserRule("compartmentExpr", "%compartment: label[1]", "(COMPARTMENT label (DIMENSION 1))");
-        runParserRule("compartmentExpr", "%compartment: label[0]", "(COMPARTMENT label (DIMENSION 0))");
-        runParserRule("compartmentExpr", "%compartment: label [1][20]", "(COMPARTMENT label (DIMENSION 1) (DIMENSION 20))");
-        runParserRule("compartmentExpr", "%compartment: 0_complex1Label-with-Stuff", "(COMPARTMENT 0_complex1Label-with-Stuff)");
+    public void testCompartmentDecl() throws Exception {
+        runParserRule("compartmentDecl", "%compartment: label", "(COMPARTMENT label)");
+        runParserRule("compartmentDecl", "%compartment: label[1]", "(COMPARTMENT label (DIMENSION 1))");
+        runParserRule("compartmentDecl", "%compartment: label[0]", "(COMPARTMENT label (DIMENSION 0))");
+        runParserRule("compartmentDecl", "%compartment: label [1][20]", "(COMPARTMENT label (DIMENSION 1) (DIMENSION 20))");
+        runParserRule("compartmentDecl", "%compartment: 0_complex1Label-with-Stuff", "(COMPARTMENT 0_complex1Label-with-Stuff)");
         
         // Error cases - TODO have them throw exceptions
-        runParserRuleFail("compartmentExpr", "%compartment:");
-        runParserRuleFail("compartmentExpr", "%compartment: \'label\'[10]");
-//        runParserRuleFail("compartmentExpr", "%compartment: \"label\"[10]"); //TODO check
-        runParserRule("compartmentExpr", "%compartment: label[-1]", "(COMPARTMENT label (DIMENSION 1))");
-        runParserRuleFail("compartmentExpr", "%compartment: label[1.0]");
+        runParserRuleFail("compartmentDecl", "%compartment:");
+        runParserRuleFail("compartmentDecl", "%compartment: \'label\'[10]");
+//        runParserRuleFail("compartmentDecl", "%compartment: \"label\"[10]"); //TODO check
+        runParserRule("compartmentDecl", "%compartment: label[-1]", "(COMPARTMENT label (DIMENSION 1))");
+        runParserRuleFail("compartmentDecl", "%compartment: label[1.0]");
     }
 
     @Test
@@ -482,13 +480,6 @@ public class SpatialKappaParserTest {
     }
 
     @Test
-    public void testCompartmentReferenceExpr() throws Exception {
-        runParserRule("locationExpr", "compartment1", "(LOCATION compartment1)");
-        runParserRule("locationExpr", "compartment1[x][x+1]", 
-                "(LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x)) (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1))))");
-    }
-
-    @Test
     public void testCellIndexExpr() throws Exception {
         runParserRule("cellIndexExpr", "1", "(CELL_INDEX_EXPR 1)");
         runParserRule("cellIndexExpr", "x", "(CELL_INDEX_EXPR x)");
@@ -520,34 +511,34 @@ public class SpatialKappaParserTest {
     }
 
     @Test
-    public void testObsExpr_spatial() throws Exception {
-        runParserRule("obsExpr", "%obs: 'label' :cytosol A:membrane(x~a),B(y~d)", 
-            "(OBSERVATION (AGENTS (AGENT A (LOCATION membrane) (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label (LOCATION cytosol))");
-        runParserRule("obsExpr", "%obs: 'label' :cytosol[0][1] A(x~a),B(y~d)", 
-            "(OBSERVATION (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label " +
-            "(LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))))");
-        runParserRule("obsExpr", "%obs: :cytosol[0][1] A(x~a),B(y~d)", 
-            "(OBSERVATION (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) " +
-            "(LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))))");
+    public void testObsDecl_spatial() throws Exception {
+        runParserRule("obsDecl", "%obs: 'label' :cytosol A:membrane(x~a),B(y~d)", 
+            "(OBSERVATION (AGENTS (LOCATION cytosol) (AGENT A (LOCATION membrane) (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
+        runParserRule("obsDecl", "%obs: 'label' :cytosol[0][1] A(x~a),B(y~d)", 
+            "(OBSERVATION (AGENTS (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))) " +
+            "(AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
+        runParserRule("obsDecl", "%obs: :cytosol[0][1] A(x~a),B(y~d)", 
+            "(OBSERVATION (AGENTS (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))) " +
+            "(AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))))");
         
-        runParserRuleFail("obsExpr", "%obs: :cytosol[0][1]");
+        runParserRuleFail("obsDecl", "%obs: :cytosol[0][1]");
     }
 
     @Test
-    public void testInitExpr_spatial() throws Exception {
-        runParserRule("initExpr", "%init: 5 :cytosol A(x~a),B(y~d)", 
-                "(INIT (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) 5 (LOCATION cytosol))");
-        runParserRule("initExpr", "%init: 5 :cytosol A:membrane(x~a),B(y~d)", 
-                "(INIT (AGENTS (AGENT A (LOCATION membrane) (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) 5 (LOCATION cytosol))");
-        runParserRule("initExpr", "%init: 5 :cytosol[0][1] A(x~a),B(y~d)", 
-                "(INIT (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) 5 " +
-                "(LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))))");
+    public void testInitDecl_spatial() throws Exception {
+        runParserRule("initDecl", "%init: 5 :cytosol A(x~a),B(y~d)", 
+                "(INIT (AGENTS (LOCATION cytosol) (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) 5)");
+        runParserRule("initDecl", "%init: 5 :cytosol A:membrane(x~a),B(y~d)", 
+                "(INIT (AGENTS (LOCATION cytosol) (AGENT A (LOCATION membrane) (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) 5)");
+        runParserRule("initDecl", "%init: 5 :cytosol[0][1] A(x~a),B(y~d)", 
+                "(INIT (AGENTS (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))) " +
+                "(AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) 5)");
         
-        runParserRule("initExpr", "%init: 'label' :cytosol A(x~a),B(y~d)", 
-                "(INIT (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label (LOCATION cytosol))");
-        runParserRule("initExpr", "%init: 'label' :cytosol[0][1] A(x~a),B(y~d)", 
-                "(INIT (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label " +
-                "(LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))))");
+        runParserRule("initDecl", "%init: 'label' :cytosol A(x~a),B(y~d)", 
+                "(INIT (AGENTS (LOCATION cytosol) (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
+        runParserRule("initDecl", "%init: 'label' :cytosol[0][1] A(x~a),B(y~d)", 
+                "(INIT (AGENTS (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))) " +
+                "(AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
     }
 
     @Test
@@ -582,12 +573,12 @@ public class SpatialKappaParserTest {
     }
     
     @Test
-    public void testIface() throws Exception {
-        runParserRule("iface", "l", "(INTERFACE l)");
-        runParserRule("iface", "l_new", "(INTERFACE l_new)");
-        runParserRule("iface", "l-new", "(INTERFACE l-new)");
-        runParserRule("iface", "l!1", "(INTERFACE l (LINK 1))");
-        runParserRule("iface", "x~a", "(INTERFACE x (STATE a))");
+    public void testAgentInterface() throws Exception {
+        runParserRule("agentInterface", "l", "(INTERFACE l)");
+        runParserRule("agentInterface", "l_new", "(INTERFACE l_new)");
+        runParserRule("agentInterface", "l-new", "(INTERFACE l-new)");
+        runParserRule("agentInterface", "l!1", "(INTERFACE l (LINK 1))");
+        runParserRule("agentInterface", "x~a", "(INTERFACE x (STATE a))");
     }
 
     @Test

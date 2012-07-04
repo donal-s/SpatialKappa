@@ -36,7 +36,7 @@ import org.demonsoft.spatialkappa.model.VariableExpression;
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
 import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.demonsoft.spatialkappa.model.VariableReference;
-import org.demonsoft.spatialkappa.parser.SpatialKappaWalker.linkExpr_return;
+import org.demonsoft.spatialkappa.parser.SpatialKappaWalker.link_return;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
@@ -52,75 +52,75 @@ public class SpatialKappaWalkerTest {
     private Object[] mocks = { kappaModel };
     
     @Test
-    public void testRuleExpr_transform() throws Exception {
+    public void testRuleDecl_transform() throws Exception {
 
-        checkRuleExpr("A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+        checkRuleDecl("A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 null, NOT_LOCATED, "[A(s!1), B(x!1)]", NOT_LOCATED, "[A(s), B(x)]", null, new VariableExpression(1));
 
-        checkRuleExpr("'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+        checkRuleDecl("'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 "label", NOT_LOCATED, "[A(s!1), B(x!1)]", NOT_LOCATED, "[A(s), B(x)]", null, new VariableExpression(1));
 
-        checkRuleExpr("'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 'x'+[inf]", 
+        checkRuleDecl("'label' A(s!1),B(x!1)   -> A(s),  B(x) @ 'x'+[inf]", 
                 "label", NOT_LOCATED, "[A(s!1), B(x!1)]", NOT_LOCATED, "[A(s), B(x)]", null, 
                 new VariableExpression(new VariableExpression(new VariableReference("x")), Operator.PLUS, 
                         new VariableExpression(Constant.INFINITY)));
 
-        checkRuleExpr("'IPTG addition{77331}'  -> IPTG(laci) @ 0.0", 
+        checkRuleDecl("'IPTG addition{77331}'  -> IPTG(laci) @ 0.0", 
                 "IPTG addition{77331}", NOT_LOCATED, null, NOT_LOCATED, "[IPTG(laci)]", null, new VariableExpression(0));
 
-        checkRuleExpr("'bin' CRY(clk),EBOX-CLK-BMAL1(cry) -> CRY(clk!2), EBOX-CLK-BMAL1(cry!2) @ 127.2862", 
+        checkRuleDecl("'bin' CRY(clk),EBOX-CLK-BMAL1(cry) -> CRY(clk!2), EBOX-CLK-BMAL1(cry!2) @ 127.2862", 
                 "bin", NOT_LOCATED, "[CRY(clk), EBOX-CLK-BMAL1(cry)]", NOT_LOCATED, "[CRY(clk!2), EBOX-CLK-BMAL1(cry!2)]", null, 
                 new VariableExpression(127.2862f));
 
     }
 
     @Test
-    public void testRuleExpr_transform_spatial() throws Exception {
+    public void testRuleDecl_transform_spatial() throws Exception {
 
         Location location = new Location("cytosol");
 
-        checkRuleExpr("'label' :cytosol A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+        checkRuleDecl("'label' :cytosol A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 "label", location, "[A(s!1), B(x!1)]", NOT_LOCATED, "[A(s), B(x)]", null, new VariableExpression(1));
 
-        checkRuleExpr(":cytosol A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+        checkRuleDecl(":cytosol A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 null, new Location("cytosol"), "[A(s!1), B(x!1)]", NOT_LOCATED, "[A(s), B(x)]", null, new VariableExpression(1));
 
         location = new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1"));
 
-        checkRuleExpr("'label' :cytosol[0][1] A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
+        checkRuleDecl("'label' :cytosol[0][1] A(s!1),B(x!1)   -> A(s),  B(x) @ 1", 
                 "label", new Location("cytosol", INDEX_0, INDEX_1), "[A(s!1), B(x!1)]", NOT_LOCATED, "[A(s), B(x)]", null, new VariableExpression(1));
     }
     
     @Test
-    public void testRuleExpr_transport() throws Exception {
-        checkRuleExpr("->:intra-cytosol @ 1", null,
+    public void testRuleDecl_transport() throws Exception {
+        checkRuleDecl("->:intra-cytosol @ 1", null,
                 NOT_LOCATED, null, NOT_LOCATED, null, "intra-cytosol", new VariableExpression(1));
 
-        checkRuleExpr("'label' ->:intra-cytosol @ 1", 
+        checkRuleDecl("'label' ->:intra-cytosol @ 1", 
                 "label", NOT_LOCATED, null, NOT_LOCATED, null, "intra-cytosol", new VariableExpression(1));
 
-        checkRuleExpr("A(s),B(x) ->:intra-cytosol A(s),B(x) @ 1", 
+        checkRuleDecl("A(s),B(x) ->:intra-cytosol A(s),B(x) @ 1", 
                 null, NOT_LOCATED, "[A(s), B(x)]", NOT_LOCATED, "[A(s), B(x)]", "intra-cytosol", new VariableExpression(1));
 
-        checkRuleExpr("'label' A(s),B(x) ->:intra-cytosol A(s),B(x) @ 1", 
+        checkRuleDecl("'label' A(s),B(x) ->:intra-cytosol A(s),B(x) @ 1", 
                 "label", NOT_LOCATED, "[A(s), B(x)]", NOT_LOCATED, "[A(s), B(x)]", "intra-cytosol", new VariableExpression(1));
         
         // with rule locations
-        checkRuleExpr(":source ->:intra-cytosol @ 1", 
+        checkRuleDecl(":source ->:intra-cytosol @ 1", 
                 null, new Location("source"), null, NOT_LOCATED, null, "intra-cytosol", new VariableExpression(1));
 
-        checkRuleExpr("'label' ->:intra-cytosol :target @ 1", 
+        checkRuleDecl("'label' ->:intra-cytosol :target @ 1", 
                 "label", NOT_LOCATED, null, new Location("target"), null, "intra-cytosol", new VariableExpression(1));
 
-        checkRuleExpr("A(s),B(x) ->:intra-cytosol :target A(s),B(x) @ 1", 
+        checkRuleDecl("A(s),B(x) ->:intra-cytosol :target A(s),B(x) @ 1", 
                 null, NOT_LOCATED, "[A(s), B(x)]", new Location("target"), "[A(s), B(x)]", "intra-cytosol", new VariableExpression(1));
 
-        checkRuleExpr("'label' :source A(s),B(x) ->:intra-cytosol A(s),B(x) @ 1", 
+        checkRuleDecl("'label' :source A(s),B(x) ->:intra-cytosol A(s),B(x) @ 1", 
                 "label", new Location("source"), "[A(s), B(x)]", NOT_LOCATED, "[A(s), B(x)]", "intra-cytosol", new VariableExpression(1));
     }
 
 
-    private void checkRuleExpr(String inputText, String label, Location leftLocation, String leftSideAgents, 
+    private void checkRuleDecl(String inputText, String label, Location leftLocation, String leftSideAgents, 
             Location rightLocation, String rightSideAgents, String channelName, VariableExpression rate) throws Exception {
         lhsAgents.reset();
         rhsAgents.reset();
@@ -128,62 +128,62 @@ public class SpatialKappaWalkerTest {
         kappaModel.addTransition(eq(label), eq(leftLocation), capture(lhsAgents), eq(channelName), eq(rightLocation), 
                 capture(rhsAgents), eq(rate));
         replay(mocks);
-        runParserRule("ruleExpr", inputText);
+        runParserRule("ruleDecl", inputText);
         verify(mocks);
         assertEquals(leftSideAgents, lhsAgents.getValue() == null ? null : lhsAgents.getValue().toString());
         assertEquals(rightSideAgents, rhsAgents.getValue() == null ? null : rhsAgents.getValue().toString());
     }
 
     @Test
-    public void testInitExpr() throws Exception {
-        checkInitExpr_value("%init: 5 A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, NOT_LOCATED);
+    public void testInitDecl() throws Exception {
+        checkInitDecl_value("%init: 5 A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, NOT_LOCATED);
         
-        checkInitExpr_reference("%init: 'label' A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", NOT_LOCATED);
+        checkInitDecl_reference("%init: 'label' A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", NOT_LOCATED);
     }
 
     @Test
-    public void testInitExpr_spatial() throws Exception {
+    public void testInitDecl_spatial() throws Exception {
 
-        checkInitExpr_value("%init: 5 :cytosol A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, new Location("cytosol"));
-        checkInitExpr_value("%init: 5 :cytosol[0][1] A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, 
+        checkInitDecl_value("%init: 5 :cytosol A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, new Location("cytosol"));
+        checkInitDecl_value("%init: 5 :cytosol[0][1] A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, 
                 new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")));
         
-        checkInitExpr_reference("%init: 'label' :cytosol A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", new Location("cytosol"));
-        checkInitExpr_reference("%init: 'label' :cytosol[0][1] A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", 
+        checkInitDecl_reference("%init: 'label' :cytosol A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", new Location("cytosol"));
+        checkInitDecl_reference("%init: 'label' :cytosol[0][1] A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", 
                 new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")));
     }
     
     //TODO test agent specific locations
 
-    private void checkInitExpr_reference(String inputText, String leftSideAgents, String label, Location location) throws Exception {
+    private void checkInitDecl_reference(String inputText, String leftSideAgents, String label, Location location) throws Exception {
         lhsAgents.reset();
         reset(mocks);
         kappaModel.addInitialValue(capture(lhsAgents), eq(new VariableReference(label)), eq(location));
         replay(mocks);
-        runParserRule("initExpr", inputText);
+        runParserRule("initDecl", inputText);
         verify(mocks);
         assertEquals(leftSideAgents, lhsAgents.getValue().toString());
     }
 
-    private void checkInitExpr_value(String inputText, String leftSideAgents, int value, Location location) throws Exception {
+    private void checkInitDecl_value(String inputText, String leftSideAgents, int value, Location location) throws Exception {
         lhsAgents.reset();
         reset(mocks);
         kappaModel.addInitialValue(capture(lhsAgents), eq("" + value), eq(location));
         replay(mocks);
-        runParserRule("initExpr", inputText);
+        runParserRule("initDecl", inputText);
         verify(mocks);
         assertEquals(leftSideAgents, lhsAgents.getValue().toString());
     }
 
     @Test
-    public void testCompartmentExpr() throws Exception {
-        checkCompartmentExpr("%compartment: label", "label", new Integer[0]);
-        checkCompartmentExpr("%compartment: label[1]", "label", new Integer[] {1});
-        checkCompartmentExpr("%compartment: label[1][20]", "label", new Integer[] {1, 20});
-        checkCompartmentExpr("%compartment: 0_complex1Label-with-Stuff", "0_complex1Label-with-Stuff", new Integer[0]);
+    public void testCompartmentDecl() throws Exception {
+        checkCompartmentDecl("%compartment: label", "label", new Integer[0]);
+        checkCompartmentDecl("%compartment: label[1]", "label", new Integer[] {1});
+        checkCompartmentDecl("%compartment: label[1][20]", "label", new Integer[] {1, 20});
+        checkCompartmentDecl("%compartment: 0_complex1Label-with-Stuff", "0_complex1Label-with-Stuff", new Integer[0]);
 
         try {
-            runParserRule("compartmentExpr", "%compartment: label[0]");
+            runParserRule("compartmentDecl", "%compartment: label[0]");
             fail("invalid should have failed");
         }
         catch (Exception ex) {
@@ -191,11 +191,11 @@ public class SpatialKappaWalkerTest {
         }
     }
     
-    private void checkCompartmentExpr(String inputText, String name, Integer[] dimensions) throws Exception {
+    private void checkCompartmentDecl(String inputText, String name, Integer[] dimensions) throws Exception {
         reset(mocks);
         kappaModel.addCompartment(eq(name), eq(Arrays.asList(dimensions)));
         replay(mocks);
-        runParserRule("compartmentExpr", inputText);
+        runParserRule("compartmentDecl", inputText);
         verify(mocks);
     }
 
@@ -227,20 +227,20 @@ public class SpatialKappaWalkerTest {
 
     
     @Test
-    public void testTransformExpr_transform() throws Exception {
-        checkTransform("[A(s!1), B(x!1)]", "[A(s), B(x)]", null, runParserRule("transformExpr", "A(s!1),B(x!1)   -> A(s),  B(x)"));
-        checkTransform(null, "[A(s), B(x)]", null, runParserRule("transformExpr", "-> A(s),  B(x)"));
+    public void testTransition_transform() throws Exception {
+        checkTransition("[A(s!1), B(x!1)]", "[A(s), B(x)]", null, runParserRule("transition", "A(s!1),B(x!1)   -> A(s),  B(x)"));
+        checkTransition(null, "[A(s), B(x)]", null, runParserRule("transition", "-> A(s),  B(x)"));
     }
 
     @Test
-    public void testTransformExpr_transport() throws Exception {
-        checkTransform(null, null, "intra-cytosol", 
-                runParserRule("transformExpr", "->:intra-cytosol @"));
-        checkTransform("[A(s), B(x)]", "[A(s), B(x)]", "intra-cytosol", 
-                runParserRule("transformExpr", "A(s),B(x) ->:intra-cytosol A(s),B(x)"));
+    public void testTransition_transport() throws Exception {
+        checkTransition(null, null, "intra-cytosol", 
+                runParserRule("transition", "->:intra-cytosol @"));
+        checkTransition("[A(s), B(x)]", "[A(s), B(x)]", "intra-cytosol", 
+                runParserRule("transition", "A(s),B(x) ->:intra-cytosol A(s),B(x)"));
     }
 
-    private void checkTransform(String leftAgents, String rightAgents, String channel, Object actual) throws Exception {
+    private void checkTransition(String leftAgents, String rightAgents, String channel, Object actual) throws Exception {
         if (leftAgents == null) {
             assertNull(actual.getClass().getDeclaredField("lhs").get(actual));
         }
@@ -262,49 +262,49 @@ public class SpatialKappaWalkerTest {
     }
 
     @Test
-    public void testLinkExpr() throws Exception {
-        checkLinkExpr("! 0", "0", null);
-        checkLinkExpr("! 1", "1", null);
-        checkLinkExpr("!1", "1", null);
-        checkLinkExpr("?", "?", null);
-        checkLinkExpr("!_", "_", null);
-        checkLinkExpr("! _", "_", null);
+    public void testLink() throws Exception {
+        checkLink("! 0", "0", null);
+        checkLink("! 1", "1", null);
+        checkLink("!1", "1", null);
+        checkLink("?", "?", null);
+        checkLink("!_", "_", null);
+        checkLink("! _", "_", null);
     }
 
     @Test
-    public void testLinkExpr_withNamedChannel() throws Exception {
-        checkLinkExpr("! 0:channel", "0", "channel");
-        checkLinkExpr("! 1:channel", "1", "channel");
-        checkLinkExpr("!1:channel", "1", "channel");
-        checkLinkExpr("!_:channel", "_", "channel");
-        checkLinkExpr("! _:channel", "_", "channel");
+    public void testLink_withNamedChannel() throws Exception {
+        checkLink("! 0:channel", "0", "channel");
+        checkLink("! 1:channel", "1", "channel");
+        checkLink("!1:channel", "1", "channel");
+        checkLink("!_:channel", "_", "channel");
+        checkLink("! _:channel", "_", "channel");
 
         // Suffix will be caught by next invoked rule
-        checkLinkExpr("?:channel", "?", null);
-        checkLinkExpr("?channel", "?", null);
+        checkLink("?:channel", "?", null);
+        checkLink("?channel", "?", null);
     }
 
-    private void checkLinkExpr(String input, String expectedLink, String expectedChannel) throws Exception {
-    	linkExpr_return result = (linkExpr_return) runParserRule("linkExpr", input);
+    private void checkLink(String input, String expectedLink, String expectedChannel) throws Exception {
+    	link_return result = (link_return) runParserRule("link", input);
     	assertNotNull(result);
     	assertEquals(expectedLink, result.linkName);
 		assertEquals(expectedChannel, result.channelName);
 	}
 
 	@Test
-    public void testObsExpr() throws Exception {
-        checkObsExpr("obsExpr", "%obs: A(x~a),B(y~d)\n", "[A(x~a), B(y~d)]", "[A(x~a), B(y~d)]", NOT_LOCATED, true);
-        checkObsExpr("obsExpr", "%obs: 'label' A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", NOT_LOCATED, true);
+    public void testObsDecl() throws Exception {
+        checkObsDecl("obsDecl", "%obs: A(x~a),B(y~d)\n", "[A(x~a), B(y~d)]", "[A(x~a), B(y~d)]", NOT_LOCATED, true);
+        checkObsDecl("obsDecl", "%obs: 'label' A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", NOT_LOCATED, true);
     }
 
     @Test
-    public void testObsExpr_spatial() throws Exception {
-        checkObsExpr("obsExpr", "%obs: 'label' :cytosol A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol"), true);
-        checkObsExpr("obsExpr", "%obs: 'label' :cytosol[0][1] A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")), true);
-        checkObsExpr("obsExpr", "%obs: 'label' A:cytosol[0][1](x~a),B:cytosol[0][1](y~d)\n", "label", "[A:cytosol[0][1](x~a), B:cytosol[0][1](y~d)]", NOT_LOCATED, true);
+    public void testObsDecl_spatial() throws Exception {
+        checkObsDecl("obsDecl", "%obs: 'label' :cytosol A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol"), true);
+        checkObsDecl("obsDecl", "%obs: 'label' :cytosol[0][1] A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")), true);
+        checkObsDecl("obsDecl", "%obs: 'label' A:cytosol[0][1](x~a),B:cytosol[0][1](y~d)\n", "label", "[A:cytosol[0][1](x~a), B:cytosol[0][1](y~d)]", NOT_LOCATED, true);
            }
 
-    private void checkObsExpr(String ruleName, String inputText, String label, String leftSideAgents, Location location, boolean inObservations) throws Exception {
+    private void checkObsDecl(String ruleName, String inputText, String label, String leftSideAgents, Location location, boolean inObservations) throws Exception {
         lhsAgents.reset();
         reset(mocks);
         kappaModel.addVariable(capture(lhsAgents), eq(label), eq(location));
@@ -318,8 +318,8 @@ public class SpatialKappaWalkerTest {
     }
 
     @Test
-    public void testPlotExpr() throws Exception {
-        checkPlotExpr("%plot: 'label'\n", "label");
+    public void testPlotDecl() throws Exception {
+        checkPlotDecl("%plot: 'label'\n", "label");
     }
 
     @Test
@@ -345,58 +345,58 @@ public class SpatialKappaWalkerTest {
         verify(mocks);
     }
     
-    private void checkPlotExpr(String inputText, String label) throws Exception {
+    private void checkPlotDecl(String inputText, String label) throws Exception {
         reset(mocks);
         kappaModel.addPlot(label);
         replay(mocks);
-        runParserRule("plotExpr", inputText);
+        runParserRule("plotDecl", inputText);
         verify(mocks);
     }
 
     @Test
-    public void testVarExpr() throws Exception {
-        checkObsExpr("varExpr", "%var: 'label' A(x~a),B(y~d)", "label", "[A(x~a), B(y~d)]", NOT_LOCATED, false);
-        checkObsExpr("varExpr", "%var: 'label' A:cytosol(x~a),B:cytosol(y~d)", 
+    public void testVarDecl() throws Exception {
+        checkObsDecl("varDecl", "%var: 'label' A(x~a),B(y~d)", "label", "[A(x~a), B(y~d)]", NOT_LOCATED, false);
+        checkObsDecl("varDecl", "%var: 'label' A:cytosol(x~a),B:cytosol(y~d)", 
                 "label", "[A:cytosol(x~a), B:cytosol(y~d)]", NOT_LOCATED, false);
-        checkVarExpr("%var: 'label' 2.55e4", "25500.0", "label");
-        checkVarExpr("%var: 'label' ('a' + 'b') * 2", "(('a' + 'b') * 2.0)", "label");
-        checkVarExpr("%var: 'label' [inf] * 2", "([inf] * 2.0)", "label");
-        checkVarExpr("%var: 'label' [inf] * 2", "([inf] * 2.0)", "label");
-        checkVarExpr("%var: 'label' [pi] ^ 2", "([pi] ^ 2.0)", "label");
-        checkVarExpr("%var: 'label' [log] 'n'", "[log] ('n')", "label");
-        checkVarExpr("%var: 'label' [sin] 'n'", "[sin] ('n')", "label");
-        checkVarExpr("%var: 'label' [cos] 'n'", "[cos] ('n')", "label");
-        checkVarExpr("%var: 'label' [tan] 'n'", "[tan] ('n')", "label");
-        checkVarExpr("%var: 'label' [sqrt] 'n'", "[sqrt] ('n')", "label");
-        checkVarExpr("%var: 'label' [exp] 'n'", "[exp] ('n')", "label");
-        checkVarExpr("%var: 'label' [mod] 'n' 2", "([mod] 'n' 2.0)", "label");
-        checkVarExpr("%var: 'label' 'n' ^ 2", "('n' ^ 2.0)", "label");
+        checkVarDecl("%var: 'label' 2.55e4", "25500.0", "label");
+        checkVarDecl("%var: 'label' ('a' + 'b') * 2", "(('a' + 'b') * 2.0)", "label");
+        checkVarDecl("%var: 'label' [inf] * 2", "([inf] * 2.0)", "label");
+        checkVarDecl("%var: 'label' [inf] * 2", "([inf] * 2.0)", "label");
+        checkVarDecl("%var: 'label' [pi] ^ 2", "([pi] ^ 2.0)", "label");
+        checkVarDecl("%var: 'label' [log] 'n'", "[log] ('n')", "label");
+        checkVarDecl("%var: 'label' [sin] 'n'", "[sin] ('n')", "label");
+        checkVarDecl("%var: 'label' [cos] 'n'", "[cos] ('n')", "label");
+        checkVarDecl("%var: 'label' [tan] 'n'", "[tan] ('n')", "label");
+        checkVarDecl("%var: 'label' [sqrt] 'n'", "[sqrt] ('n')", "label");
+        checkVarDecl("%var: 'label' [exp] 'n'", "[exp] ('n')", "label");
+        checkVarDecl("%var: 'label' [mod] 'n' 2", "([mod] 'n' 2.0)", "label");
+        checkVarDecl("%var: 'label' 'n' ^ 2", "('n' ^ 2.0)", "label");
     }
 
-    private void checkVarExpr(String inputText, String expressionText, String label) throws Exception {
+    private void checkVarDecl(String inputText, String expressionText, String label) throws Exception {
         Capture<VariableExpression> expression = new Capture<VariableExpression>();
         reset(mocks);
         kappaModel.addVariable(capture(expression), eq(label));
         replay(mocks);
-        runParserRule("varExpr", inputText);
+        runParserRule("varDecl", inputText);
         verify(mocks);
         assertEquals(expressionText, expression.getValue().toString());
     }
 
     @Test
-    public void testModExpr() throws Exception {
-        checkModExpr("%mod: ([T]>10) && ('v1'/'v2') < 1 do $ADD 'n' C(x1~p)", "(([T] > 10.0) && (('v1' / 'v2') < 1.0)) do $ADD 'n' [C(x1~p)]");
-        checkModExpr("%mod: ([log][E]>10) || [true] do $SNAPSHOT until [false]", "(([log] ([E]) > 10.0) || [true]) do $SNAPSHOT until [false]");
-        checkModExpr("%mod: ([mod] [T] 100)=0 do $DEL [inf] C() until [T]>1000", "(([mod] [T] 100.0) = 0.0) do $DEL [inf] [C] until ([T] > 1000.0)");
-        checkModExpr("%mod: [not][false] do 'rule_name' := [inf]", "[not] [false] do 'rule_name' := [inf]");
+    public void testModDecl() throws Exception {
+        checkModDecl("%mod: ([T]>10) && ('v1'/'v2') < 1 do $ADD 'n' C(x1~p)", "(([T] > 10.0) && (('v1' / 'v2') < 1.0)) do $ADD 'n' [C(x1~p)]");
+        checkModDecl("%mod: ([log][E]>10) || [true] do $SNAPSHOT until [false]", "(([log] ([E]) > 10.0) || [true]) do $SNAPSHOT until [false]");
+        checkModDecl("%mod: ([mod] [T] 100)=0 do $DEL [inf] C() until [T]>1000", "(([mod] [T] 100.0) = 0.0) do $DEL [inf] [C] until ([T] > 1000.0)");
+        checkModDecl("%mod: [not][false] do 'rule_name' := [inf]", "[not] [false] do 'rule_name' := [inf]");
     }
     
-    private void checkModExpr(String inputText, String perturbationText) throws Exception {
+    private void checkModDecl(String inputText, String perturbationText) throws Exception {
         Capture<Perturbation> perturbation = new Capture<Perturbation>();
         reset(mocks);
         kappaModel.addPerturbation(capture(perturbation));
         replay(mocks);
-        runParserRule("modExpr", inputText);
+        runParserRule("modDecl", inputText);
         verify(mocks);
         assertEquals(perturbationText, perturbation.toString());
     }
@@ -480,21 +480,21 @@ public class SpatialKappaWalkerTest {
     }
 
     @Test
-    public void testAgentExpr() throws Exception {
-        checkAgentExpr("Agent", "%agent: Agent");
-        checkAgentExpr("Agent", "%agent: Agent()");
-        checkAgentExpr("Agent(none,single~value,multiple~val1~val2~val3)", 
+    public void testAgentDecl() throws Exception {
+        checkAgentDecl("Agent", "%agent: Agent");
+        checkAgentDecl("Agent", "%agent: Agent()");
+        checkAgentDecl("Agent(none,single~value,multiple~val1~val2~val3)", 
         		"%agent: Agent(none,single~value,multiple~val1~val2~val3)");
     }
     
 
     
-    private void checkAgentExpr(String expected, String inputText) throws Exception {
+    private void checkAgentDecl(String expected, String inputText) throws Exception {
         Capture<AggregateAgent> agent = new Capture<AggregateAgent>();
         reset(mocks);
         kappaModel.addAgentDeclaration(capture(agent));
         replay(mocks);
-        runParserRule("agentExpr", inputText);
+        runParserRule("agentDecl", inputText);
         verify(mocks);
         assertEquals(expected, agent.getValue().toString());
 	}
@@ -522,22 +522,22 @@ public class SpatialKappaWalkerTest {
     }
 
     @Test
-    public void testIface() throws Exception {
-    	checkParserRule("iface", "l", "l");
-    	checkParserRule("iface", "l!1", "l!1");
-    	checkParserRule("iface", "l!1:channel", "l!1:channel");
-    	checkParserRule("iface", "x~a", "x~a");
+    public void testAgentInterface() throws Exception {
+    	checkParserRule("agentInterface", "l", "l");
+    	checkParserRule("agentInterface", "l!1", "l!1");
+    	checkParserRule("agentInterface", "l!1:channel", "l!1:channel");
+    	checkParserRule("agentInterface", "x~a", "x~a");
     }
 
 
     @Test
-    public void testLocationExpr() throws Exception {
-        checkCompartmentReference("label", (Location) runParserRule("locationExpr", "label"));
-        checkCompartmentReference("label[1]", (Location) runParserRule("locationExpr", "label[1]"));
-        checkCompartmentReference("label[1][(20 + x)]", (Location) runParserRule("locationExpr", "label[1][20+x]"));
+    public void testLocation() throws Exception {
+        checkLocation("label", (Location) runParserRule("location", "label"));
+        checkLocation("label[1]", (Location) runParserRule("location", "label[1]"));
+        checkLocation("label[1][(20 + x)]", (Location) runParserRule("location", "label[1][20+x]"));
     }
     
-    private void checkCompartmentReference(String expected, Location actual) {
+    private void checkLocation(String expected, Location actual) {
         assertNotNull(actual);
         assertEquals(expected, actual.toString());
     }

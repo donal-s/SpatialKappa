@@ -609,7 +609,7 @@ public class TransitionMatchingSpatialTest {
         "%compartment: cytosol [4]\n" + 
         "%channel: intra-cytosol :cytosol [x] -> :cytosol [x+1]\n" + 
         "'diffusion-all' ->:intra-cytosol @ 0.1\n" + 
-        "'source' :cytosol[0] -> A() @ 5\n" + 
+        "'source' -> :cytosol[0] A() @ 5\n" + 
         "'sink' :cytosol[3] A() -> @ [inf]\n" + 
         "%obs: 'val[0]' :cytosol[0] A() \n" + 
         "%obs: 'val[1]' :cytosol[1] A() \n" + 
