@@ -72,7 +72,14 @@ public class SpatialTranslatorTest {
     public void testTest1_9_spatialEGFRModel() throws Exception {
         translator = new SpatialTranslator(new File(TEST_DATA_DIRECTORY, "test-1-9-input.ka"));
         String testOutput = FileUtils.readFileToString(new File(TEST_DATA_DIRECTORY, "test-1-9-output.ka"));
-        assertEquals(testOutput, translator.translateToKappa());
+        String actual = translator.translateToKappa();
+        
+        // TODO - remove once moved to Java 7
+        // Workaround for annoying float to string bug - different JRE's give different results
+        if (!testOutput.equals(actual)) {
+            testOutput = testOutput.replace("%var: 'km16' 0.005", "%var: 'km16' 0.0050");
+            assertEquals(testOutput, translator.translateToKappa());
+        }
     }
 
     private static final String TEST_DATA_DIRECTORY = "test/acceptance/data/";
