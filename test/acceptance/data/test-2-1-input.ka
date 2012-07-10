@@ -1,10 +1,18 @@
+### PSD Project Stage 2 acceptance tests
+### Test 2.1 - Diffusion across fully permeable membrane
+### Last modified 06-07-2012
+
 %agent: A(s)
 %agent: B(s)
 
-%compartment: cytosol [2]
+%compartment: cytosol[2]
+%channel: intra (:cytosol[0] -> :cytosol[1]) + (:cytosol[1] -> :cytosol[0])
 
-%channel: intra (:cytosol [0] -> :cytosol [1]) + (:cytosol [1] -> :cytosol [0])
+### Different ways of specifying the diffusion rule - equivalent for this model
 
+#'diffusion' ->:intra @ 1.0
+#'diffusion' A(s!_) ->:intra A(s!_) @ 1.0
+#'diffusion' A(s?) ->:intra A(s?) @ 1.0
 'diffusion' A(s!1),B(s!1) ->:intra A(s!1),B(s!1) @ 1.0
 
 %init: 1000 :cytosol[0] A(s!1),B(s!1)

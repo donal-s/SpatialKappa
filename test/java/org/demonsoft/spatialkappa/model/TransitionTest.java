@@ -291,14 +291,14 @@ public class TransitionTest {
                 
         Transition transition = new Transition("test", leftAgents, null, rightAgents, 10.0f);
                 
-        TransformPrimitive[] expected = new TransformPrimitive[] {
-                TransformPrimitive.getDeleteLink(getAgentLink(leftAgents, "1")),
-                TransformPrimitive.getDeleteLink(leftAgent2.getComplex().getAgentLink(leftAgent2, "binding")),
-                TransformPrimitive.getDeleteLink(getAgentLink(rightAgents, "3")),
-                TransformPrimitive.getCreateAgent(rightAgent3, leftAgent2),
-                TransformPrimitive.getCreateLink(leftAgent2.getSite("binding"), leftAgent4.getSite("dna"), null),
-                TransformPrimitive.getCreateLink(leftAgent3.getSite("downstream"), rightAgent3.getSite("upstream"), null),
-                TransformPrimitive.getCreateLink(leftAgent4.getSite("rna"), rightAgent3.getSite("downstream"), null),
+        TransitionPrimitive[] expected = new TransitionPrimitive[] {
+                TransitionPrimitive.getDeleteLink(getAgentLink(leftAgents, "1")),
+                TransitionPrimitive.getDeleteLink(leftAgent2.getComplex().getAgentLink(leftAgent2, "binding")),
+                TransitionPrimitive.getDeleteLink(getAgentLink(rightAgents, "3")),
+                TransitionPrimitive.getCreateAgent(rightAgent3, leftAgent2),
+                TransitionPrimitive.getCreateLink(leftAgent2.getSite("binding"), leftAgent4.getSite("dna"), null),
+                TransitionPrimitive.getCreateLink(leftAgent3.getSite("downstream"), rightAgent3.getSite("upstream"), null),
+                TransitionPrimitive.getCreateLink(leftAgent4.getSite("rna"), rightAgent3.getSite("downstream"), null),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
@@ -317,8 +317,8 @@ public class TransitionTest {
         Agent rightAgent = new Agent("DNA");
         Transition transition = new Transition("test", Utils.getList(leftAgent), "channel", Utils.getList(rightAgent), 10.0f);
                 
-        TransformPrimitive[] expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveAgents(getList(leftAgent), getList(NOT_LOCATED), "channel"),
+        TransitionPrimitive[] expected = new TransitionPrimitive[] {
+                TransitionPrimitive.getMoveAgents(getList(leftAgent), getList(NOT_LOCATED), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
@@ -332,8 +332,8 @@ public class TransitionTest {
         rightAgent = new Agent("DNA", new Location("target"));
         transition = new Transition("test", Utils.getList(leftAgent), "channel", Utils.getList(rightAgent), 10.0f);
                 
-        expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveAgents(getList(leftAgent), getList(new Location("target")), "channel"),
+        expected = new TransitionPrimitive[] {
+                TransitionPrimitive.getMoveAgents(getList(leftAgent), getList(new Location("target")), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
@@ -348,8 +348,8 @@ public class TransitionTest {
         List<Agent> rightAgents = getList(new Agent("A", new Location("locB")), new Agent("B", new Location("locB")), new Agent("C", new Location("locA"))); 
         Transition transition = new Transition("test", leftAgents, "channel", rightAgents, 10.0f);
                 
-        TransformPrimitive[] expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveAgents(getList(leftAgents.get(0), leftAgents.get(1)), getList(new Location("locB"), new Location("locB")), "channel"),
+        TransitionPrimitive[] expected = new TransitionPrimitive[] {
+                TransitionPrimitive.getMoveAgents(getList(leftAgents.get(0), leftAgents.get(1)), getList(new Location("locB"), new Location("locB")), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
@@ -370,8 +370,8 @@ public class TransitionTest {
         Transition transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
         Complex leftTemplateComplex = transition.sourceComplexes.get(0);        
         
-        TransformPrimitive[] expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveAgents(getList(leftTemplateAgent), getList(NOT_LOCATED), "channel"),
+        TransitionPrimitive[] expected = new TransitionPrimitive[] {
+                TransitionPrimitive.getMoveAgents(getList(leftTemplateAgent), getList(NOT_LOCATED), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
@@ -385,8 +385,9 @@ public class TransitionTest {
         Map<Agent, Agent> mapping = new HashMap<Agent, Agent>();
         mapping.put(leftTemplateAgent, leftRealAgent);
         List<ComplexMapping> sourceComplexMappings = getList(new ComplexMapping(leftTemplateComplex, leftRealComplex, mapping));
+        TransitionInstance transitionInstance = new TransitionInstance(sourceComplexMappings, 1);
         
-        List<Complex> result = transition.apply(sourceComplexMappings, channels, compartments);
+        List<Complex> result = transition.apply(transitionInstance, channels, compartments);
         assertEquals("[[DNA:B]]", result.toString());
     }
 
@@ -403,8 +404,8 @@ public class TransitionTest {
         List<Agent> rightTemplateAgents = getList(new Agent("A", new Location("locD")), new Agent("B", new Location("locE")), new Agent("C", new Location("locC"))); 
         Transition transition = new Transition("test", leftTemplateAgents, "channel", rightTemplateAgents, 10.0f);
 
-        TransformPrimitive[] expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveAgents(getList(leftTemplateAgents.get(0), leftTemplateAgents.get(1)), getList(new Location("locD"), new Location("locE")), "channel"),
+        TransitionPrimitive[] expected = new TransitionPrimitive[] {
+                TransitionPrimitive.getMoveAgents(getList(leftTemplateAgents.get(0), leftTemplateAgents.get(1)), getList(new Location("locD"), new Location("locE")), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
@@ -427,8 +428,9 @@ public class TransitionTest {
                 new ComplexMapping(leftTemplateAgents.get(0).getComplex(), leftRealAgents.get(0).getComplex(), mapping1),
                 new ComplexMapping(leftTemplateAgents.get(1).getComplex(), leftRealAgents.get(1).getComplex(), mapping2),
                 new ComplexMapping(leftTemplateAgents.get(2).getComplex(), leftRealAgents.get(2).getComplex(), mapping3));
+        TransitionInstance transitionInstance = new TransitionInstance(sourceComplexMappings, 1);
         
-        List<Complex> result = transition.apply(sourceComplexMappings, channels, compartments);
+        List<Complex> result = transition.apply(transitionInstance, channels, compartments);
         Collections.sort(result, new Comparator<Complex>() {
             public int compare(Complex o1, Complex o2) {
                 return o1.toString().compareTo(o2.toString());
@@ -450,10 +452,10 @@ public class TransitionTest {
                 "channel", Utils.getList(rightTemplateAgent1, rightTemplateAgent2), 10.0f);
         Complex leftTemplateComplex = transition.sourceComplexes.get(0);        
         
-        TransformPrimitive[] expected = new TransformPrimitive[] {
-                TransformPrimitive.getDeleteLink(leftTemplateComplex.agentLinks.get(0)),
-                TransformPrimitive.getMoveAgents(getList(leftTemplateAgent1), getList(new Location("B")), "channel"),
-                TransformPrimitive.getCreateLink(leftTemplateAgent1.getSite("s"), leftTemplateAgent2.getSite("s"), "channel")
+        TransitionPrimitive[] expected = new TransitionPrimitive[] {
+                TransitionPrimitive.getDeleteLink(leftTemplateComplex.agentLinks.get(0)),
+                TransitionPrimitive.getMoveAgents(getList(leftTemplateAgent1), getList(new Location("B")), "channel"),
+                TransitionPrimitive.getCreateLink(leftTemplateAgent1.getSite("s"), leftTemplateAgent2.getSite("s"), "channel")
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
@@ -470,50 +472,51 @@ public class TransitionTest {
         mapping.put(leftTemplateAgent1, leftRealAgent1);
         mapping.put(leftTemplateAgent2, leftRealAgent2);
         List<ComplexMapping> sourceComplexMappings = getList(new ComplexMapping(leftTemplateComplex, leftRealComplex, mapping));
+        TransitionInstance transitionInstance = new TransitionInstance(sourceComplexMappings, 1);
         
-        List<Complex> result = transition.apply(sourceComplexMappings, channels, compartments);
+        List<Complex> result = transition.apply(transitionInstance, channels, compartments);
         assertEquals("[[agent1:B(s!1:channel), agent2:A(s!1:channel)]]", result.toString());
     }
 
     @Test
     public void testTransition_checkPrimitives_locationsOnly() {
         Transition transition = new Transition("test", (Location) null, "channel", null, 10.0f);
-        TransformPrimitive[] expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveComplex(null, null, "channel"),
+        TransitionPrimitive[] expected = new TransitionPrimitive[] {
+                TransitionPrimitive.getMoveComplex(null, null, "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         assertEquals(0, transition.getLeftRightAgentMap().size());
         
         transition = new Transition("test", null, "channel", new Location("B"), 10.0f);
-        expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveComplex(null, new Location("B"), "channel"),
+        expected = new TransitionPrimitive[] {
+                TransitionPrimitive.getMoveComplex(null, new Location("B"), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         assertEquals(0, transition.getLeftRightAgentMap().size());
         
         transition = new Transition("test", new Location("A"), "channel", null, 10.0f);
-        expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveComplex(new Location("A"), null, "channel"),
+        expected = new TransitionPrimitive[] {
+                TransitionPrimitive.getMoveComplex(new Location("A"), null, "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         assertEquals(0, transition.getLeftRightAgentMap().size());
         
         transition = new Transition("test", new Location("A"), "channel", new Location("B"), 10.0f);
-        expected = new TransformPrimitive[] {
-                TransformPrimitive.getMoveComplex(new Location("A"), new Location("B"), "channel"),
+        expected = new TransitionPrimitive[] {
+                TransitionPrimitive.getMoveComplex(new Location("A"), new Location("B"), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         assertEquals(0, transition.getLeftRightAgentMap().size());
     }
 
-    private void checkPrimitives(List<TransformPrimitive> expected, List<TransformPrimitive> actual) {
+    private void checkPrimitives(List<TransitionPrimitive> expected, List<TransitionPrimitive> actual) {
         assertEquals(expected.size(), actual.size());
 
         Set<String> actualStrings = new HashSet<String>();
-        for (TransformPrimitive primitive : actual) {
+        for (TransitionPrimitive primitive : actual) {
             actualStrings.add(primitive.toString());
         }
-        for (TransformPrimitive primitive : expected) {
+        for (TransitionPrimitive primitive : expected) {
             String primitiveString = primitive.toString();
             if (!actualStrings.contains(primitiveString)) {
                 fail("Primitive not found: " + primitiveString + "\nin:" + actualStrings);
@@ -723,7 +726,7 @@ public class TransitionTest {
     }
 
     @Test
-    public void testCanApply() {
+    public void testGetApplicationCount() {
         List<Compartment> compartments = getList(new Compartment("A"), new Compartment("B"), new Compartment("C"));
         Channel channel = new Channel("channel");
         channel.addLocationPair(getList(new Location("A")), getList(new Location("B")));
@@ -737,13 +740,13 @@ public class TransitionTest {
         Transition transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
         
         List<ComplexMapping> complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A")), leftTemplateAgent);
-        assertTrue(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(2, transition.getApplicationCount(complexMappings, channels, compartments));
         
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("B")), leftTemplateAgent);
-        assertTrue(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(1, transition.getApplicationCount(complexMappings, channels, compartments));
        
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("C")), leftTemplateAgent);
-        assertFalse(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(0, transition.getApplicationCount(complexMappings, channels, compartments));
 
         // Test compartments - no source constraint - target constraint
         leftTemplateAgent = new Agent("DNA"); 
@@ -751,13 +754,13 @@ public class TransitionTest {
         transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
         
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A")), leftTemplateAgent);
-        assertTrue(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(1, transition.getApplicationCount(complexMappings, channels, compartments));
         
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("B")), leftTemplateAgent);
-        assertFalse(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(0, transition.getApplicationCount(complexMappings, channels, compartments));
        
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("C")), leftTemplateAgent);
-        assertFalse(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(0, transition.getApplicationCount(complexMappings, channels, compartments));
 
         // Test compartments - source constraint - no target constraint
         leftTemplateAgent = new Agent("DNA", new Location("B")); 
@@ -765,13 +768,13 @@ public class TransitionTest {
         transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
         
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A")), leftTemplateAgent);
-        assertFalse(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(0, transition.getApplicationCount(complexMappings, channels, compartments));
         
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("B")), leftTemplateAgent);
-        assertTrue(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(1, transition.getApplicationCount(complexMappings, channels, compartments));
        
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("C")), leftTemplateAgent);
-        assertFalse(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(0, transition.getApplicationCount(complexMappings, channels, compartments));
 
         // Test compartments - source constraint - target constraint
         leftTemplateAgent = new Agent("DNA", new Location("C")); 
@@ -779,13 +782,13 @@ public class TransitionTest {
         transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
         
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A")), leftTemplateAgent);
-        assertFalse(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(0, transition.getApplicationCount(complexMappings, channels, compartments));
         
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("B")), leftTemplateAgent);
-        assertFalse(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(0, transition.getApplicationCount(complexMappings, channels, compartments));
        
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("C")), leftTemplateAgent);
-        assertFalse(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(0, transition.getApplicationCount(complexMappings, channels, compartments));
 
         
         // Test voxels
@@ -797,13 +800,13 @@ public class TransitionTest {
         transition = new Transition("test", Utils.getList(leftTemplateAgent), "channel", Utils.getList(rightTemplateAgent), 10.0f);
         
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A", INDEX_0)), leftTemplateAgent);
-        assertTrue(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(1, transition.getApplicationCount(complexMappings, channels, compartments));
         
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A", INDEX_1)), leftTemplateAgent);
-        assertTrue(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(1, transition.getApplicationCount(complexMappings, channels, compartments));
        
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A", INDEX_2)), leftTemplateAgent);
-        assertFalse(transition.canApply(complexMappings, channels, compartments));
+        assertEquals(0, transition.getApplicationCount(complexMappings, channels, compartments));
     }
     
     private List<ComplexMapping> getTestComplexMappings(Agent realAgent, Agent templateAgent) {
@@ -822,7 +825,7 @@ public class TransitionTest {
                 new Agent("D", new AgentSite("s4", null, "1")));
         getComplexes(leftAgents);
         int[] indexMapLeftRight = new int[] { DELETED, 1, DELETED, 3  };
-        List<TransformPrimitive> primitives = new ArrayList<TransformPrimitive>();
+        List<TransitionPrimitive> primitives = new ArrayList<TransitionPrimitive>();
         Set<AgentLink> deletedLinks = new HashSet<AgentLink>();
         Set<Agent> deletedAgents = new HashSet<Agent>();
 
@@ -862,7 +865,7 @@ public class TransitionTest {
         getComplexes(leftAgents);
         getComplexes(rightAgents);
         int[] indexMapLeftRight = new int[] { 0, 1, 2, 3, DELETED };
-        List<TransformPrimitive> primitives = new ArrayList<TransformPrimitive>();
+        List<TransitionPrimitive> primitives = new ArrayList<TransitionPrimitive>();
         Set<AgentLink> deletedLinks = new HashSet<AgentLink>();
 
         Transition transition = new Transition(null, getList(new Agent("a1")), null, getList(new Agent("b1")), 0.1f);
@@ -918,7 +921,7 @@ public class TransitionTest {
         getComplexes(leftAgents);
         getComplexes(rightAgents);
         int[] indexMapRightLeft = new int[] { 0, 1, 2, 3, UNMAPPED, UNMAPPED };
-        List<TransformPrimitive> primitives = new ArrayList<TransformPrimitive>();
+        List<TransitionPrimitive> primitives = new ArrayList<TransitionPrimitive>();
 
         Transition transition = new Transition(null, getList(new Agent("a1")), null, getList(new Agent("b1")), 0.1f);
         transition.createPrimitivesAddLinks(leftAgents, rightAgents, indexMapRightLeft, primitives);

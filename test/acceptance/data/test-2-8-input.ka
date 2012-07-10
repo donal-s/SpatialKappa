@@ -1,3 +1,7 @@
+### PSD Project Stage 2 acceptance tests
+### Test 2.8 - Lateral diffusion of transmembrane proteins
+### Last modified 10-07-2012
+
 %agent: A_Membrane(s,t,d)
 %agent: B_Membrane(s,t,d)
 %agent: A_Cytosol(d)
@@ -14,7 +18,7 @@
 		(:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y+1], :cytosol [u][v+1][0]) + \
 		(:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y -1], :cytosol [u][v -1][0])
 
-%channel: domainLink       :membrane [x][y] -> :cytosol [x][y][0]
+%channel: domainLink       (:membrane [x][y] -> :cytosol [x][y][0]) + (:cytosol [x][y][0] -> :membrane [x][y])
 
 'diffusion A' A_Membrane(s,t,d!1:domainLink),A_Cytosol(d!1) ->:diffusion A_Membrane(s,t,d!1:domainLink),A_Cytosol(d!1) @ 1.0
 'diffusion B' B_Membrane(s,t,d!1:domainLink),B_Cytosol(d!1) ->:diffusion B_Membrane(s,t,d!1:domainLink),B_Cytosol(d!1) @ 1.0
@@ -32,9 +36,14 @@
             A_Membrane(s!1,t!4), B_Membrane(s!1,t!3), A_Membrane(s!2,t!3), B_Membrane(s!2,t!4) @ 0.1
 
 
-%init: 1000 A_Membrane(s,t,d!1:domainLink),A_Cytosol(d!1)
-%init: 1000 B_Membrane(s,t,d!1:domainLink),B_Cytosol(d!1)
+%init: 1000 A_Membrane:membrane(s,t,d!1:domainLink),A_Cytosol:cytosol(d!1)
+%init: 1000 B_Membrane:membrane(s,t,d!1:domainLink),B_Cytosol:cytosol(d!1)
 %init: 1 :membrane[2][2] C
 
 %obs: 'AB' A_Membrane(s!1,t),B_Membrane(s!1,t)
-%obs: 'A2B2' A_Membrane(s!1,t!3),B_Membrane(s!1,t!4),A_Membrane(s!2,t!4),B_Membrane(s!2,t!3)
+%var: 'A2B2 doubled all' A_Membrane(s!1,t!3),B_Membrane(s!1,t!4),A_Membrane(s!2,t!4),B_Membrane(s!2,t!3)
+%var: 'A2B2 doubled centre' :membrane[2][2] A_Membrane(s!1,t!3),B_Membrane(s!1,t!4),A_Membrane(s!2,t!4),B_Membrane(s!2,t!3)
+%var: 'A2B2 centre' 'A2B2 doubled centre' / 2
+%var: 'A2B2 not centre' ('A2B2 doubled all' - 'A2B2 doubled centre') / 2
+%plot: 'A2B2 centre'
+%plot: 'A2B2 not centre'

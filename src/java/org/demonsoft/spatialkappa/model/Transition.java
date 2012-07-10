@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.demonsoft.spatialkappa.model.TransformPrimitive.Type;
+import org.demonsoft.spatialkappa.model.TransitionPrimitive.Type;
 
 
 public class Transition {
@@ -30,7 +30,7 @@ public class Transition {
     public final List<Complex> targetComplexes = new ArrayList<Complex>();
     public final String channelName;
     
-    List<TransformPrimitive> bestPrimitives;
+    public List<TransitionPrimitive> bestPrimitives;
     int bestPrimitivesCost = Integer.MAX_VALUE;
     int[] bestIndexMapLeftRight;
     public final List<Agent> leftAgents = new ArrayList<Agent>();
@@ -136,12 +136,12 @@ public class Transition {
 
     @SuppressWarnings("hiding")
     private void createTransitionMap(Location leftLocation, Location rightLocation, String channelName) {
-        List<TransformPrimitive> primitives = getList(TransformPrimitive.getMoveComplex(leftLocation, rightLocation, channelName));
+        List<TransitionPrimitive> primitives = getList(TransitionPrimitive.getMoveComplex(leftLocation, rightLocation, channelName));
         chooseLowerCostPrimitives(primitives, new int[0]);
     }
 
 
-    private void chooseLowerCostPrimitives(List<TransformPrimitive> currentPrimitives, int[] indexMapLeftRight) {
+    private void chooseLowerCostPrimitives(List<TransitionPrimitive> currentPrimitives, int[] indexMapLeftRight) {
         int currentScore = getPrimitivesCost(currentPrimitives);
         if (currentScore < bestPrimitivesCost) {
             bestPrimitives = currentPrimitives;
@@ -150,7 +150,7 @@ public class Transition {
         }
     }
 
-    private int getPrimitivesCost(List<TransformPrimitive> primitives) {
+    private int getPrimitivesCost(List<TransitionPrimitive> primitives) {
         Map<String, Integer> deleteAgents = new HashMap<String, Integer>();
         Map<String, Integer> createAgents = new HashMap<String, Integer>();
         Map<String, Integer> deleteLinks = new HashMap<String, Integer>();
@@ -161,7 +161,7 @@ public class Transition {
         int cost = 0;
         
         
-        for (TransformPrimitive primitive : primitives) {
+        for (TransitionPrimitive primitive : primitives) {
             if (primitive.type == Type.DELETE_AGENT) {
                 if (deleteAgents.containsKey(primitive.sourceAgent.name)) {
                     deleteAgents.put(primitive.sourceAgent.name, deleteAgents.get(primitive.sourceAgent.name) + 1);
@@ -291,8 +291,8 @@ public class Transition {
         }
     }
 
-    List<TransformPrimitive> createPrimitives(List<Agent> leftSideAgents, List<Agent> rightSideAgents, int[] indexMapLeftRight, int[] indexMapRightLeft) {
-        List<TransformPrimitive> primitives = new ArrayList<TransformPrimitive>();
+    List<TransitionPrimitive> createPrimitives(List<Agent> leftSideAgents, List<Agent> rightSideAgents, int[] indexMapLeftRight, int[] indexMapRightLeft) {
+        List<TransitionPrimitive> primitives = new ArrayList<TransitionPrimitive>();
         Set<AgentLink> deletedLinks = new HashSet<AgentLink>();
         Set<Agent> deletedAgents = new HashSet<Agent>();
         Set<Complex> createdComplexes = new HashSet<Complex>();
@@ -317,7 +317,7 @@ public class Transition {
     }
 
     void createPrimitivesMoveAgents(List<Agent> leftSideAgents, List<Agent> rightSideAgents, int[] indexMapLeftRight,
-            List<TransformPrimitive> primitives) {
+            List<TransitionPrimitive> primitives) {
         if (channelName == null) {
             return;
         }
@@ -338,23 +338,23 @@ public class Transition {
                 }
             }
         }
-        primitives.add(TransformPrimitive.getMoveAgents(movedAgents, targetLocations, channelName));
+        primitives.add(TransitionPrimitive.getMoveAgents(movedAgents, targetLocations, channelName));
     }
 
-    void createPrimitivesMoveComplexes(List<TransformPrimitive> primitives) {
+    void createPrimitivesMoveComplexes(List<TransitionPrimitive> primitives) {
         if (leftAgents.size() == 0 && rightAgents.size() == 0) {
-            primitives.add(TransformPrimitive.getMoveComplex(leftLocation, rightLocation, channelName));
+            primitives.add(TransitionPrimitive.getMoveComplex(leftLocation, rightLocation, channelName));
         }
     }
 
     void createPrimitivesDeleteAgents(List<Agent> leftSideAgents, int[] indexMapLeftRight,
-            List<TransformPrimitive> primitives, Set<AgentLink> deletedLinks, Set<Agent> deletedAgents) {
+            List<TransitionPrimitive> primitives, Set<AgentLink> deletedLinks, Set<Agent> deletedAgents) {
         for (int index = 0; index < indexMapLeftRight.length; index++) {
             if (indexMapLeftRight[index] == DELETED) {
                 Agent leftAgent = leftSideAgents.get(index);
                 deletedLinks.addAll(leftAgent.getLinks());
                 if (!deletedAgents.contains(leftAgent)) {
-                    primitives.add(TransformPrimitive.getDeleteAgent(leftAgent));
+                    primitives.add(TransitionPrimitive.getDeleteAgent(leftAgent));
                     deletedAgents.add(leftAgent);
                 }
             }
@@ -362,7 +362,7 @@ public class Transition {
     }
 
     void createPrimitivesDeleteLinks(List<Agent> leftSideAgents, List<Agent> rightSideAgents, int[] indexMapLeftRight,
-            List<TransformPrimitive> primitives, Set<AgentLink> deletedLinks) {
+            List<TransitionPrimitive> primitives, Set<AgentLink> deletedLinks) {
         for (int index = 0; index < indexMapLeftRight.length; index++) {
             if (indexMapLeftRight[index] == DELETED) {
                 continue;
@@ -405,7 +405,7 @@ public class Transition {
                 }
                 if (delete) {
                     if (!deletedLinks.contains(link)) {
-                        primitives.add(TransformPrimitive.getDeleteLink(link));
+                        primitives.add(TransitionPrimitive.getDeleteLink(link));
                         deletedLinks.add(link);
                     }
                 }
@@ -413,7 +413,7 @@ public class Transition {
         }
     }
 
-    private void createPrimitivesCreateComplexes(List<Agent> rightSideAgents, int[] indexMapRightLeft, List<TransformPrimitive> primitives,
+    private void createPrimitivesCreateComplexes(List<Agent> rightSideAgents, int[] indexMapRightLeft, List<TransitionPrimitive> primitives,
             Set<Complex> createdComplexes) {
         Set<Agent> copyRightAgents = new HashSet<Agent>(rightSideAgents);
         while (!copyRightAgents.isEmpty()) {
@@ -429,14 +429,14 @@ public class Transition {
                 }
             }
             if (!existingComplex) {
-                primitives.add(TransformPrimitive.getCreateComplex(rightComplex));
+                primitives.add(TransitionPrimitive.getCreateComplex(rightComplex));
                 createdComplexes.add(rightComplex);
             }
         }
     }
 
     private void createPrimitivesCreateAgentsAndMergeComplexes(List<Agent> leftSideAgents, List<Agent> rightSideAgents, int[] indexMapRightLeft,
-            List<TransformPrimitive> primitives, Set<Complex> createdComplexes) {
+            List<TransitionPrimitive> primitives, Set<Complex> createdComplexes) {
         Set<Agent> copyRightAgents;
         copyRightAgents = new HashSet<Agent>(rightSideAgents);
         while (!copyRightAgents.isEmpty()) {
@@ -457,17 +457,17 @@ public class Transition {
                     }
                 }
                 else if (!createdComplexes.contains(agent.getComplex())) {
-                    primitives.add(TransformPrimitive.getCreateAgent(agent, leftTargetAgent));
+                    primitives.add(TransitionPrimitive.getCreateAgent(agent, leftTargetAgent));
                 }
             }
             for (Agent agent : mergableComplexAgents.values()) {
-                primitives.add(TransformPrimitive.getMergeComplexes(agent, leftTargetAgent));
+                primitives.add(TransitionPrimitive.getMergeComplexes(agent, leftTargetAgent));
             }
         }
     }
 
     private void createPrimitivesChangeSiteStates(List<Agent> leftSideAgents, List<Agent> rightSideAgents, int[] indexMapLeftRight,
-            List<TransformPrimitive> primitives) {
+            List<TransitionPrimitive> primitives) {
         for (int index = 0; index < indexMapLeftRight.length; index++) {
             if (indexMapLeftRight[index] != DELETED) {
                 Agent leftAgent = leftSideAgents.get(index);
@@ -476,15 +476,15 @@ public class Transition {
                     AgentSite rightSite = rightAgent.getSite(leftSite.name);
                     if (leftSite.getState() == null) {
                         if (rightSite != null && rightSite.getState() != null) {
-                            primitives.add(TransformPrimitive.getChangeState(leftAgent, leftSite, rightSite.getState()));
+                            primitives.add(TransitionPrimitive.getChangeState(leftAgent, leftSite, rightSite.getState()));
                         }
                     }
                     else {
                         if (rightSite != null && !leftSite.getState().equals(rightSite.getState())) {
-                            primitives.add(TransformPrimitive.getChangeState(leftAgent, leftSite, rightSite.getState()));
+                            primitives.add(TransitionPrimitive.getChangeState(leftAgent, leftSite, rightSite.getState()));
                         }
                         else if (rightSite == null) {
-                            primitives.add(TransformPrimitive.getChangeState(leftAgent, leftSite, null));
+                            primitives.add(TransitionPrimitive.getChangeState(leftAgent, leftSite, null));
                         }
                     }
                 }
@@ -492,7 +492,7 @@ public class Transition {
         }
     }
 
-    void createPrimitivesAddLinks(List<Agent> leftSideAgents, List<Agent> rightSideAgents, int[] indexMapRightLeft, List<TransformPrimitive> primitives) {
+    void createPrimitivesAddLinks(List<Agent> leftSideAgents, List<Agent> rightSideAgents, int[] indexMapRightLeft, List<TransitionPrimitive> primitives) {
         Set<AgentLink> addedLinks = new HashSet<AgentLink>();
         for (int index = 0; index < indexMapRightLeft.length; index++) {
             Agent rightAgent = rightSideAgents.get(index);
@@ -530,7 +530,7 @@ public class Transition {
                         AgentSite leftTargetSite = leftTargetAgent.getSite(rightTargetSite.name);
                         if (leftLink == null) {
                             if (!addedLinks.contains(link)) {
-                                primitives.add(TransformPrimitive.getCreateLink(leftSite, leftTargetSite, channelName));
+                                primitives.add(TransitionPrimitive.getCreateLink(leftSite, leftTargetSite, channelName));
                                 addedLinks.add(link);
                             }
                             continue;
@@ -541,7 +541,7 @@ public class Transition {
                                 indexMapRightLeft[rightTargetIndex] != leftSideAgents.indexOf(leftCurrentTargetAgent) ||
                                 !equal(link.getChannel(), leftLink.getChannel()))
                                 && !addedLinks.contains(link)) {
-                            primitives.add(TransformPrimitive.getCreateLink(leftSite, leftTargetSite, link.getChannel()));
+                            primitives.add(TransitionPrimitive.getCreateLink(leftSite, leftTargetSite, link.getChannel()));
                             addedLinks.add(link);
                         }
                     }
@@ -630,7 +630,7 @@ public class Transition {
 
         if (showPrimitives && bestPrimitives != null) {
             builder.append(":");
-            for (TransformPrimitive primitive : bestPrimitives) {
+            for (TransitionPrimitive primitive : bestPrimitives) {
                 builder.append("\t").append(primitive).append("\n");
             }
         }
@@ -672,11 +672,11 @@ public class Transition {
         return result;
     }
 
-    public List<Complex> apply(List<ComplexMapping> sourceComplexMappings, List<Channel> channels, List<Compartment> compartments) {
+    public List<Complex> apply(TransitionInstance transitionInstance, List<Channel> channels, List<Compartment> compartments) {
         boolean transportComplexesOnly = false;
         List<Complex> complexes = new ArrayList<Complex>();
         Map<Agent, Agent> transformMap = new HashMap<Agent, Agent>();
-        for (ComplexMapping complexMapping : sourceComplexMappings) {
+        for (ComplexMapping complexMapping : transitionInstance.sourceMapping) {
             if (complexMapping.template != ComplexMapping.UNSPECIFIED_COMPLEX) {
                 transformMap.putAll(complexMapping.mapping);
             }
@@ -696,7 +696,7 @@ public class Transition {
             }
         }
         
-        for (TransformPrimitive primitive : bestPrimitives) {
+        for (TransitionPrimitive primitive : bestPrimitives) {
             primitive.apply(transformMap, complexes, channels, compartments);
         }
 
@@ -745,7 +745,8 @@ public class Transition {
         return result;
     }
 
-    public boolean canApply(List<ComplexMapping> sourceComplexMappings, List<Channel> channels, List<Compartment> compartments) {
+    public int getApplicationCount(List<ComplexMapping> sourceComplexMappings, List<Channel> channels,
+            List<Compartment> compartments) {
         boolean transportComplexesOnly = false;
         List<Complex> complexes = new ArrayList<Complex>();
         Map<Agent, Agent> transformMap = new HashMap<Agent, Agent>();
@@ -769,13 +770,15 @@ public class Transition {
             }
         }
         
-        for (TransformPrimitive primitive : bestPrimitives) {
-            if (!primitive.apply(transformMap, complexes, channels, compartments)) {
-                return false;
+        int applicationCount = 1;
+        for (TransitionPrimitive primitive : bestPrimitives) {
+            applicationCount *= primitive.getApplicationCount(transformMap, complexes, channels, compartments);
+            if (applicationCount == 0) {
+                return 0;
             }
         }
 
-        return true;
+        return applicationCount;
     }
 
 }

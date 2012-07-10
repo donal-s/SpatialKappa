@@ -18,7 +18,7 @@ import java.util.Map;
 import org.junit.Test;
 
 
-public class TransformPrimitiveTest {
+public class TransitionPrimitiveTest {
 
     @Test
     public void testCreation() {
@@ -30,15 +30,15 @@ public class TransformPrimitiveTest {
         AgentLink agentLink = new AgentLink(sourceSite, targetSite);
         String state = "u";
 
-        assertEquals("CHANGE_STATE(source, sourceSite~s!1, u)", TransformPrimitive.getChangeState(sourceAgent, sourceSite, state).toString());
-        assertEquals("CREATE_AGENT(source, target)", TransformPrimitive.getCreateAgent(sourceAgent, targetAgent).toString());
-        assertEquals("CREATE_COMPLEX([source])", TransformPrimitive.getCreateComplex(complex).toString());
-        assertEquals("CREATE_LINK(null [sourceSite~s!1] -> null [targetSite~t!1])", TransformPrimitive.getCreateLink(sourceSite, targetSite, null).toString());
-        assertEquals("DELETE_AGENT(source)", TransformPrimitive.getDeleteAgent(sourceAgent).toString());
-        assertEquals("DELETE_LINK(sourceSite~s!1->targetSite~t!1)", TransformPrimitive.getDeleteLink(agentLink).toString());
-        assertEquals("MERGE_COMPLEXES(source, target)", TransformPrimitive.getMergeComplexes(sourceAgent, targetAgent).toString());
-        assertEquals("MOVE_COMPLEX(source, target, channel)", TransformPrimitive.getMoveComplex(new Location("source"), new Location("target"), "channel").toString());
-        assertEquals("MOVE_AGENTS([source], [target], channel)", TransformPrimitive.getMoveAgents(getList(sourceAgent), getList(new Location("target")), "channel").toString());
+        assertEquals("CHANGE_STATE(source, sourceSite~s!1, u)", TransitionPrimitive.getChangeState(sourceAgent, sourceSite, state).toString());
+        assertEquals("CREATE_AGENT(source, target)", TransitionPrimitive.getCreateAgent(sourceAgent, targetAgent).toString());
+        assertEquals("CREATE_COMPLEX([source])", TransitionPrimitive.getCreateComplex(complex).toString());
+        assertEquals("CREATE_LINK(null [sourceSite~s!1] -> null [targetSite~t!1])", TransitionPrimitive.getCreateLink(sourceSite, targetSite, null).toString());
+        assertEquals("DELETE_AGENT(source)", TransitionPrimitive.getDeleteAgent(sourceAgent).toString());
+        assertEquals("DELETE_LINK(sourceSite~s!1->targetSite~t!1)", TransitionPrimitive.getDeleteLink(agentLink).toString());
+        assertEquals("MERGE_COMPLEXES(source, target)", TransitionPrimitive.getMergeComplexes(sourceAgent, targetAgent).toString());
+        assertEquals("MOVE_COMPLEX(source, target, channel)", TransitionPrimitive.getMoveComplex(new Location("source"), new Location("target"), "channel").toString());
+        assertEquals("MOVE_AGENTS([source], [target], channel)", TransitionPrimitive.getMoveAgents(getList(sourceAgent), getList(new Location("target")), "channel").toString());
     }
 
     @SuppressWarnings("unused")
@@ -244,18 +244,18 @@ public class TransformPrimitiveTest {
     }
 
     private void checkApplyMergeComplexes(Agent templateSourceAgent, Agent templateTargetAgent, Map<Agent, Agent> transformMap, String[] expectedComplexes) {
-        checkApplyPrimitive(TransformPrimitive.getMergeComplexes(templateSourceAgent, templateTargetAgent), transformMap, expectedComplexes);
+        checkApplyPrimitive(TransitionPrimitive.getMergeComplexes(templateSourceAgent, templateTargetAgent), transformMap, expectedComplexes);
     }
 
     private void checkApplyMoveComplex(Location templateSourceLocation, Location templateTargetLocation, String channelName, Complex realComplex, List<Channel> channels, List<Compartment> compartments, String[] expectedComplexes) {
-        checkApplyPrimitive(TransformPrimitive.getMoveComplex(templateSourceLocation, templateTargetLocation, channelName), 
+        checkApplyPrimitive(TransitionPrimitive.getMoveComplex(templateSourceLocation, templateTargetLocation, channelName), 
                 null, realComplex, channels, compartments, expectedComplexes);
     }
 
     private void checkApplyMoveAgents(Agent templateSourceAgent, Location templateTargetLocation, String channelName, Agent realAgent, List<Channel> channels, List<Compartment> compartments, String[] expectedComplexes) {
         Map<Agent, Agent> transformMap = new HashMap<Agent, Agent>();
         transformMap.put(templateSourceAgent, realAgent);
-        checkApplyPrimitive(TransformPrimitive.getMoveAgents(getList(templateSourceAgent), getList(templateTargetLocation), channelName), 
+        checkApplyPrimitive(TransitionPrimitive.getMoveAgents(getList(templateSourceAgent), getList(templateTargetLocation), channelName), 
                 transformMap, null, channels, compartments, expectedComplexes);
     }
     
@@ -266,26 +266,26 @@ public class TransformPrimitiveTest {
         for (int index=0; index<templateSourceAgents.size(); index++) {
             transformMap.put(templateSourceAgents.get(index), realSourceAgents.get(index));
         }
-        checkApplyPrimitive(TransformPrimitive.getMoveAgents(templateSourceAgents, targetConstraints, channelName), 
+        checkApplyPrimitive(TransitionPrimitive.getMoveAgents(templateSourceAgents, targetConstraints, channelName), 
                 transformMap, null, channels, compartments, expectedComplexes);
     }
 
 
 
     private void checkApplyDeleteAgent(Agent templateAgent, Map<Agent, Agent> transformMap, String[] expectedComplexes) {
-        checkApplyPrimitive(TransformPrimitive.getDeleteAgent(templateAgent), transformMap, expectedComplexes);
+        checkApplyPrimitive(TransitionPrimitive.getDeleteAgent(templateAgent), transformMap, expectedComplexes);
     }
 
     private void checkApplyChangeState(Agent templateAgent, AgentSite templateSite, String state, Map<Agent, Agent> transformMap, String[] expectedComplexes) {
-        checkApplyPrimitive(TransformPrimitive.getChangeState(templateAgent, templateSite, state), transformMap, expectedComplexes);
+        checkApplyPrimitive(TransitionPrimitive.getChangeState(templateAgent, templateSite, state), transformMap, expectedComplexes);
     }
 
-    private void checkApplyPrimitive(TransformPrimitive primitive, Map<Agent, Agent> transformMap, String[] expectedComplexes) {
+    private void checkApplyPrimitive(TransitionPrimitive primitive, Map<Agent, Agent> transformMap, String[] expectedComplexes) {
         checkApplyPrimitive(primitive, transformMap, null, null, null, expectedComplexes);
     }
 
 
-    private void checkApplyPrimitive(TransformPrimitive primitive, Map<Agent, Agent> transformMap, Complex realComplex, List<Channel> channels, List<Compartment> compartments, String[] expectedComplexes) {
+    private void checkApplyPrimitive(TransitionPrimitive primitive, Map<Agent, Agent> transformMap, Complex realComplex, List<Channel> channels, List<Compartment> compartments, String[] expectedComplexes) {
         List<Complex> targetComplexes = new ArrayList<Complex>();
         
         if (transformMap != null) {

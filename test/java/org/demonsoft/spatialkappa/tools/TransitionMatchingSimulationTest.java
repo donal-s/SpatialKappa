@@ -1,8 +1,11 @@
 package org.demonsoft.spatialkappa.tools;
 
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -28,7 +31,7 @@ import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.Transition;
-import org.demonsoft.spatialkappa.model.Utils;
+import org.demonsoft.spatialkappa.model.TransitionInstance;
 import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.VariableExpression;
 import org.junit.Before;
@@ -321,21 +324,22 @@ public class TransitionMatchingSimulationTest {
         assertEquals(new ObservationElement(0), simulation.getTransitionFiredCount(new Variable("other")));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void testGetNewTransitionMappings() {
+    public void testGetNewTransitionInstances() {
         List<ComplexMapping> newComponentComplexMappings = new ArrayList<ComplexMapping>();
         Map<Complex, List<ComplexMapping>> allComponentComplexMappings = new HashMap<Complex, List<ComplexMapping>>();
         Complex complex = new Complex(new Agent("agent"));
-        List<Agent> sourceAgents = Utils.getList(new Agent("agent"));
-        List<Agent> targetAgents = Utils.getList(new Agent("agent"));
+        List<Agent> sourceAgents = getList(new Agent("agent"));
+        List<Agent> targetAgents = getList(new Agent("agent"));
         Transition transition = new Transition(null, sourceAgents, null, targetAgents, 1f);
         Map<Agent, Agent> agentMap = new HashMap<Agent, Agent>();
         List<Compartment> compartments = new ArrayList<Compartment>();
         List<Channel> channels = new ArrayList<Channel>();
+        Map<Complex, Integer> complexCounts = new HashMap<Complex, Integer>();
+        complexCounts.put(complex, 1);
         
         try {
-            simulation.getNewTransitionMappings(null, newComponentComplexMappings, allComponentComplexMappings, channels, compartments);
+            simulation.getNewTransitionInstances(null, newComponentComplexMappings, allComponentComplexMappings, complexCounts, channels, compartments);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -343,7 +347,7 @@ public class TransitionMatchingSimulationTest {
         }
 
         try {
-            simulation.getNewTransitionMappings(transition, null, allComponentComplexMappings, channels, compartments);
+            simulation.getNewTransitionInstances(transition, null, allComponentComplexMappings, complexCounts, channels, compartments);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -351,7 +355,7 @@ public class TransitionMatchingSimulationTest {
         }
 
         try {
-            simulation.getNewTransitionMappings(transition, newComponentComplexMappings, null, channels, compartments);
+            simulation.getNewTransitionInstances(transition, newComponentComplexMappings, null, complexCounts, channels, compartments);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -359,7 +363,7 @@ public class TransitionMatchingSimulationTest {
         }
         
         try {
-            simulation.getNewTransitionMappings(transition, newComponentComplexMappings, allComponentComplexMappings, null, compartments);
+            simulation.getNewTransitionInstances(transition, newComponentComplexMappings, allComponentComplexMappings, null, channels, compartments);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -367,7 +371,15 @@ public class TransitionMatchingSimulationTest {
         }
         
         try {
-            simulation.getNewTransitionMappings(transition, newComponentComplexMappings, allComponentComplexMappings, channels, null);
+            simulation.getNewTransitionInstances(transition, newComponentComplexMappings, allComponentComplexMappings, complexCounts, null, compartments);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            simulation.getNewTransitionInstances(transition, newComponentComplexMappings, allComponentComplexMappings, complexCounts, channels, null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -376,9 +388,9 @@ public class TransitionMatchingSimulationTest {
         
         // New mappings empty
         
-        List<List<ComplexMapping>> result = simulation.getNewTransitionMappings(
-                transition, newComponentComplexMappings, allComponentComplexMappings, channels, compartments);
-        List<List<ComplexMapping>> expected = new ArrayList<List<ComplexMapping>>();
+        List<TransitionInstance> result = simulation.getNewTransitionInstances(
+                transition, newComponentComplexMappings, allComponentComplexMappings, complexCounts, channels, compartments);
+        List<TransitionInstance> expected = new ArrayList<TransitionInstance>();
         assertEquals(expected, result);
         
         // Single component match
@@ -386,28 +398,33 @@ public class TransitionMatchingSimulationTest {
         transition = new Transition(null, sourceAgents, null, targetAgents, 1f);
         Complex component = getComplexByString("[agent]", transition.sourceComplexes);
         
-        newComponentComplexMappings = Utils.getList(new ComplexMapping(component, complex, agentMap));
-        result = simulation.getNewTransitionMappings(transition, newComponentComplexMappings, allComponentComplexMappings, channels, compartments);
-        expected = Utils.getList(newComponentComplexMappings);
+        newComponentComplexMappings = getList(new ComplexMapping(component, complex, agentMap));
+        result = simulation.getNewTransitionInstances(transition, newComponentComplexMappings, allComponentComplexMappings, 
+                complexCounts, channels, compartments);
+        expected = getList(new TransitionInstance(newComponentComplexMappings, 1));
         assertEquals(expected, result);
         
         // Multi component match - no spatial constraints
-        sourceAgents = Utils.getList(new Agent("agent"), new Agent("agent2"));
-        targetAgents = Utils.getList(new Agent("agent"), new Agent("agent2"));
+        sourceAgents = getList(new Agent("agent"), new Agent("agent2"));
+        targetAgents = getList(new Agent("agent"), new Agent("agent2"));
         transition = new Transition(null, sourceAgents, null, targetAgents, 1f);
         
         component = getComplexByString("[agent]", transition.sourceComplexes);
-        newComponentComplexMappings = Utils.getList(new ComplexMapping(component, complex, agentMap));
-        result = simulation.getNewTransitionMappings(transition, newComponentComplexMappings, allComponentComplexMappings, channels, compartments);
-        expected = new ArrayList<List<ComplexMapping>>();
+        newComponentComplexMappings = getList(new ComplexMapping(component, complex, agentMap));
+        result = simulation.getNewTransitionInstances(transition, newComponentComplexMappings, allComponentComplexMappings, 
+                complexCounts, channels, compartments);
+        expected = new ArrayList<TransitionInstance>();
         assertEquals(expected, result);
         
         allComponentComplexMappings.put(component, newComponentComplexMappings);
         Complex complex2 = new Complex(new Agent("agent2"));
+        complexCounts.put(complex2, 1);
         Complex component2 = getComplexByString("[agent2]", transition.sourceComplexes);
-        newComponentComplexMappings = Utils.getList(new ComplexMapping(component2, complex2, agentMap));
-        result = simulation.getNewTransitionMappings(transition, newComponentComplexMappings, allComponentComplexMappings, channels, compartments);
-        expected = Utils.getList(Utils.getList(new ComplexMapping(component2, complex2, agentMap), new ComplexMapping(component, complex, agentMap)));
+        newComponentComplexMappings = getList(new ComplexMapping(component2, complex2, agentMap));
+        result = simulation.getNewTransitionInstances(transition, newComponentComplexMappings, allComponentComplexMappings, 
+                complexCounts, channels, compartments);
+        expected = getList(new TransitionInstance(getList(new ComplexMapping(component2, complex2, agentMap), 
+                new ComplexMapping(component, complex, agentMap)), 1));
         assertEquals(expected, result);
         
         //TODO add spatial constraint tests
@@ -423,14 +440,13 @@ public class TransitionMatchingSimulationTest {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    public void testRemoveTransitionMappings() {
-        List<List<ComplexMapping>> transitionMappings = new ArrayList<List<ComplexMapping>>();
+    public void testRemoveTransitionInstances() {
+        List<TransitionInstance> transitionInstances = new ArrayList<TransitionInstance>();
         Complex complex = new Complex(new Agent("agent"));
         
         try {
-            simulation.removeTransitionMappings(null, complex);
+            simulation.removeTransitionInstances(null, complex);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -438,7 +454,7 @@ public class TransitionMatchingSimulationTest {
         }
 
         try {
-            simulation.removeTransitionMappings(transitionMappings, null);
+            simulation.removeTransitionInstances(transitionInstances, null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -447,32 +463,37 @@ public class TransitionMatchingSimulationTest {
 
         Complex component = new Complex(new Agent("agent"));
         Map<Agent, Agent> agentMap = new HashMap<Agent, Agent>();
-        List<ComplexMapping> notTargetMapping1 = Utils.getList(
+        List<ComplexMapping> notTargetMapping1 = getList(
                 new ComplexMapping(component, new Complex(new Agent("other")), agentMap));
-        List<ComplexMapping> notTargetMapping2 = Utils.getList(
+        List<ComplexMapping> notTargetMapping2 = getList(
                 new ComplexMapping(component, new Complex(new Agent("other")), agentMap),
                 new ComplexMapping(component, new Complex(new Agent("other")), agentMap));
-        List<ComplexMapping> targetMapping1 = Utils.getList(
+        List<ComplexMapping> targetMapping1 = getList(
                 new ComplexMapping(component, complex, agentMap));
-        List<ComplexMapping> targetMapping2 = Utils.getList(
+        List<ComplexMapping> targetMapping2 = getList(
                 new ComplexMapping(component, new Complex(new Agent("other")), agentMap),
                 new ComplexMapping(component, complex, agentMap),
                 new ComplexMapping(component, new Complex(new Agent("other")), agentMap));
         
-        transitionMappings = Utils.getList(notTargetMapping1, targetMapping1, notTargetMapping2, targetMapping2);
-        List<List<ComplexMapping>> expectedMappings = Utils.getList(notTargetMapping1, notTargetMapping2);
+        transitionInstances = getList(
+                new TransitionInstance(notTargetMapping1, 1), 
+                new TransitionInstance(targetMapping1, 1), 
+                new TransitionInstance(notTargetMapping2, 1), 
+                new TransitionInstance(targetMapping2, 1));
+        List<TransitionInstance> expectedInstances = getList(
+                new TransitionInstance(notTargetMapping1, 1), 
+                new TransitionInstance(notTargetMapping2, 1));
         
-        simulation.removeTransitionMappings(transitionMappings, complex);
-        assertEquals(expectedMappings, transitionMappings);
+        simulation.removeTransitionInstances(transitionInstances, complex);
+        assertEquals(expectedInstances, transitionInstances);
         
-        transitionMappings.clear();
-        expectedMappings.clear();
+        transitionInstances.clear();
+        expectedInstances.clear();
         
-        simulation.removeTransitionMappings(transitionMappings, complex);
-        assertEquals(expectedMappings, transitionMappings);
+        simulation.removeTransitionInstances(transitionInstances, complex);
+        assertEquals(expectedInstances, transitionInstances);
     }
     
-    @SuppressWarnings("unchecked")
     @Test
     public void testGetTotalTransitionActivity() {
         try {
@@ -495,38 +516,41 @@ public class TransitionMatchingSimulationTest {
         
         
         // Single list of single mapping
-        simulation.transitionComplexMappingMap.put(transition, 
-                getList(getList(new ComplexMapping(complex1))));
+        simulation.transitionInstanceMap.put(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1)));
         assertEquals(3, simulation.getTotalTransitionActivity(transition));
         
         // Single list of multiple mappings
-        simulation.transitionComplexMappingMap.put(transition, 
-                getList(getList(new ComplexMapping(complex1),new ComplexMapping(complex2))));
+        simulation.transitionInstanceMap.put(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1)));
         assertEquals(21, simulation.getTotalTransitionActivity(transition));
         
         // Multiple lists of single mappings
-        simulation.transitionComplexMappingMap.put(transition, 
-                getList(getList(new ComplexMapping(complex1)), 
-                        getList(new ComplexMapping(complex2))));
+        simulation.transitionInstanceMap.put(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1),
+                        new TransitionInstance(getList(new ComplexMapping(complex2)), 1)));
         assertEquals(10, simulation.getTotalTransitionActivity(transition));
         
         // Multiple lists of multiple mappings
-        simulation.transitionComplexMappingMap.put(transition, 
-                getList(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)),
-                        getList(new ComplexMapping(complex3), new ComplexMapping(complex4))));
+        simulation.transitionInstanceMap.put(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1),
+                        new TransitionInstance(getList(new ComplexMapping(complex3), new ComplexMapping(complex4)), 1)));
         assertEquals(43, simulation.getTotalTransitionActivity(transition));
         
+        // Multiple target locations per mapping
+        simulation.transitionInstanceMap.put(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 2)));
+        assertEquals(6, simulation.getTotalTransitionActivity(transition));
         
         transition = new Transition("createComplex", null, null, getList(new Agent("newAgent")), 1f);
         assertEquals(1, simulation.getTotalTransitionActivity(transition));
         
     }
     
-    @SuppressWarnings("unchecked")
     @Test
     public void testPickComplexMappings() {
         try {
-            simulation.pickComplexMappings(null);
+            simulation.pickTransitionInstance(null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -543,40 +567,42 @@ public class TransitionMatchingSimulationTest {
         simulation.complexStore.put(complex3, 12);
         simulation.complexStore.put(complex4, 2);
         
-        List<List<ComplexMapping>> mappingsList = getList(getList(new ComplexMapping(complex1)));
-        simulation.transitionComplexMappingMap.put(transition, mappingsList);
+        List<TransitionInstance> transitionInstances = getList(
+                new TransitionInstance(getList(new ComplexMapping(complex1)), 1));
+        simulation.transitionInstanceMap.put(transition, transitionInstances);
         Map<List<ComplexMapping>, Integer> expectedDistribution = new HashMap<List<ComplexMapping>, Integer>();
-        checkPickComplexMappings(transition, 100, 0, mappingsList, new int[] {100});
+        checkPickTransitionInstance(transition, 100, 0, transitionInstances, new int[] {100});
         
-        mappingsList = getList(
-                getList(new ComplexMapping(complex3)),
-                getList(new ComplexMapping(complex1), new ComplexMapping(complex4)));
-        simulation.transitionComplexMappingMap.put(transition, mappingsList);
-        checkPickComplexMappings(transition, 10000, 150, mappingsList, new int[] {6670, 3330});
+        transitionInstances = getList(
+                new TransitionInstance(getList(new ComplexMapping(complex3)), 1),
+                new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex4)), 1));
+        simulation.transitionInstanceMap.put(transition, transitionInstances);
+        checkPickTransitionInstance(transition, 10000, 150, transitionInstances, new int[] {6670, 3330});
         
-        // Check even random distribution
+        // Check even random distribution - with multiple locations per transition
         simulation.complexStore.put(complex1, 5);
         simulation.complexStore.put(complex2, 5);
         simulation.complexStore.put(complex3, 5);
         simulation.complexStore.put(complex4, 5);
         
-        mappingsList = getList(getList(new ComplexMapping(complex1)),
-                getList(new ComplexMapping(complex2)),
-                getList(new ComplexMapping(complex3)),
-                getList(new ComplexMapping(complex4)));
+        transitionInstances = getList(
+                new TransitionInstance(getList(new ComplexMapping(complex1)), 1),
+                new TransitionInstance(getList(new ComplexMapping(complex2)), 2),
+                new TransitionInstance(getList(new ComplexMapping(complex3)), 2),
+                new TransitionInstance(getList(new ComplexMapping(complex4)), 1));
         
-        simulation.transitionComplexMappingMap.put(transition, mappingsList);
+        simulation.transitionInstanceMap.put(transition, transitionInstances);
         expectedDistribution.clear();
-        checkPickComplexMappings(transition, 10000, 150, mappingsList, new int[] {2500, 2500, 2500, 2500});
+        checkPickTransitionInstance(transition, 12000, 200, transitionInstances, new int[] {2000, 4000, 4000, 2000});
     }
 
-    private void checkPickComplexMappings(Transition transition, int runCount, int error,
-            List<List<ComplexMapping>> mappingsList, int[] expectedDistribution) {
+    private void checkPickTransitionInstance(Transition transition, int runCount, int error,
+            List<TransitionInstance> transitionInstances, int[] expectedDistribution) {
         int[] actualDistribution = new int[expectedDistribution.length];
         
         for (int run=0; run < runCount; run++) {
-            List<ComplexMapping> result = simulation.pickComplexMappings(transition);
-            int index = mappingsList.indexOf(result);
+            TransitionInstance result = simulation.pickTransitionInstance(transition);
+            int index = transitionInstances.indexOf(result);
             assertTrue(index >= 0);
             actualDistribution[index] = actualDistribution[index] + 1;
         }
@@ -586,4 +612,156 @@ public class TransitionMatchingSimulationTest {
                     Math.abs(expectedDistribution[index] - actualDistribution[index]) <= error);
         }
     }
+    
+    @Test
+    public void testIsTransitionMappingComponentCompatible_invalidParameters() {
+        Agent templateAgent = new Agent("A");
+        Agent targetAgent = new Agent("A");
+        Complex targetComplex = new Complex(targetAgent);
+        Transition transition = new Transition(null, getList(templateAgent), null, getList(new Agent("A")), 1f);
+        List<ComplexMapping> complexMapping = new ArrayList<ComplexMapping>();
+        Map<Agent, Agent> mapping = new HashMap<Agent, Agent>();
+        mapping.put(templateAgent, targetAgent);
+        ComplexMapping componentComplexMapping = new ComplexMapping(templateAgent.getComplex(), targetComplex, mapping);
+        List<Channel> channels = new ArrayList<Channel>();
+        List<Compartment> compartments = new ArrayList<Compartment>();
+        
+        try {
+            simulation.isTransitionMappingComponentCompatible(null, complexMapping, componentComplexMapping, channels, compartments);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            simulation.isTransitionMappingComponentCompatible(transition, null, componentComplexMapping, channels, compartments);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            simulation.isTransitionMappingComponentCompatible(transition, complexMapping, null, channels, compartments);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            simulation.isTransitionMappingComponentCompatible(transition, complexMapping, componentComplexMapping, null, compartments);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        try {
+            simulation.isTransitionMappingComponentCompatible(transition, complexMapping, componentComplexMapping, channels, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+    }
+    
+    @Test
+    public void testIsTransitionMappingComponentCompatible_nonLocatedTransition() {
+        Agent templateAgentA = new Agent("A", new AgentSite("s", null, null));
+        Agent templateAgentB = new Agent("B", new AgentSite("s", null, null));
+        Transition transition = new Transition(null, getList(templateAgentA, templateAgentB), null, 
+                getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("B", new AgentSite("s", null, "1"))), 1f);
+
+        Agent targetAgentA = new Agent("A", new AgentSite("s", null, null));
+        Complex targetComplexA = new Complex(targetAgentA);
+        Agent targetAgentB = new Agent("B", new AgentSite("s", null, null));
+        Complex targetComplexB = new Complex(targetAgentB);
+
+        Map<Agent, Agent> mapping = new HashMap<Agent, Agent>();
+        mapping.put(templateAgentA, targetAgentA);
+        ComplexMapping complexMappingA = new ComplexMapping(templateAgentA.getComplex(), targetComplexA, mapping);
+        mapping = new HashMap<Agent, Agent>();
+        mapping.put(templateAgentB, targetAgentB);
+        ComplexMapping complexMappingB = new ComplexMapping(templateAgentB.getComplex(), targetComplexB, mapping);
+
+        List<ComplexMapping> complexMappings = new ArrayList<ComplexMapping>();
+        List<Channel> channels = new ArrayList<Channel>();
+        List<Compartment> compartments = new ArrayList<Compartment>();
+        
+        // First component mapping
+        assertTrue(simulation.isTransitionMappingComponentCompatible(transition, complexMappings, complexMappingA, channels, compartments));
+        assertTrue(simulation.isTransitionMappingComponentCompatible(transition, complexMappings, complexMappingB, channels, compartments));
+        
+        // Non located targets should be compatible
+        complexMappings.add(complexMappingA);
+        assertTrue(simulation.isTransitionMappingComponentCompatible(transition, complexMappings, complexMappingB, channels, compartments));
+        
+        // Co located targets should be compatible
+        complexMappings.clear();
+        targetAgentA = new Agent("A", new Location("cytosol", INDEX_1), new AgentSite("s", null, null));
+        targetComplexA = new Complex(targetAgentA);
+        targetAgentB = new Agent("B", new Location("cytosol", INDEX_1), new AgentSite("s", null, null));
+        targetComplexB = new Complex(targetAgentB);
+
+        mapping = new HashMap<Agent, Agent>();
+        mapping.put(templateAgentA, targetAgentA);
+        complexMappingA = new ComplexMapping(templateAgentA.getComplex(), targetComplexA, mapping);
+        mapping = new HashMap<Agent, Agent>();
+        mapping.put(templateAgentB, targetAgentB);
+        complexMappingB = new ComplexMapping(templateAgentB.getComplex(), targetComplexB, mapping);
+        
+        complexMappings.add(complexMappingA);
+        assertTrue(simulation.isTransitionMappingComponentCompatible(transition, complexMappings, complexMappingB, channels, compartments));
+        
+        // Differently located targets should not be compatible
+        complexMappings.clear();
+        targetAgentA = new Agent("A", new Location("cytosol", INDEX_1), new AgentSite("s", null, null));
+        targetComplexA = new Complex(targetAgentA);
+        targetAgentB = new Agent("B", new Location("cytosol", INDEX_0), new AgentSite("s", null, null));
+        targetComplexB = new Complex(targetAgentB);
+
+        mapping = new HashMap<Agent, Agent>();
+        mapping.put(templateAgentA, targetAgentA);
+        complexMappingA = new ComplexMapping(templateAgentA.getComplex(), targetComplexA, mapping);
+        mapping = new HashMap<Agent, Agent>();
+        mapping.put(templateAgentB, targetAgentB);
+        complexMappingB = new ComplexMapping(templateAgentB.getComplex(), targetComplexB, mapping);
+        
+        complexMappings.add(complexMappingA);
+        assertFalse(simulation.isTransitionMappingComponentCompatible(transition, complexMappings, complexMappingB, channels, compartments));
+    }
+    
+    @Test
+    public void testIsTransitionMappingComponentCompatible_sameTargetComplex() {
+        Agent templateAgentA = new Agent("A", new AgentSite("s", null, null));
+        Agent templateAgentB = new Agent("A", new AgentSite("s", null, null));
+        Transition transition = new Transition(null, getList(templateAgentA, templateAgentB), null, 
+                getList(new Agent("A", new AgentSite("s", null, "1")), new Agent("A", new AgentSite("s", null, "1"))), 1f);
+
+        Agent targetAgentA = new Agent("A", new AgentSite("s", null, null));
+        Complex targetComplexA = new Complex(targetAgentA);
+
+        Map<Agent, Agent> mapping = new HashMap<Agent, Agent>();
+        mapping.put(templateAgentA, targetAgentA);
+        ComplexMapping complexMappingA = new ComplexMapping(templateAgentA.getComplex(), targetComplexA, mapping);
+        mapping = new HashMap<Agent, Agent>();
+        mapping.put(templateAgentB, targetAgentA);
+        ComplexMapping complexMappingB = new ComplexMapping(templateAgentB.getComplex(), targetComplexA, mapping);
+
+        List<ComplexMapping> complexMappings = new ArrayList<ComplexMapping>();
+        List<Channel> channels = new ArrayList<Channel>();
+        List<Compartment> compartments = new ArrayList<Compartment>();
+        
+        // First component mapping
+        assertTrue(simulation.isTransitionMappingComponentCompatible(transition, complexMappings, complexMappingA, channels, compartments));
+        assertTrue(simulation.isTransitionMappingComponentCompatible(transition, complexMappings, complexMappingB, channels, compartments));
+        
+        // Same targets should be compatible - leave it to transition activity calculation to find conflicts
+        complexMappings.add(complexMappingA);
+        assertTrue(simulation.isTransitionMappingComponentCompatible(transition, complexMappings, complexMappingA, channels, compartments));
+    }
+    
+    // TODO locations in transition
 }

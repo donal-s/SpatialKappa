@@ -541,6 +541,8 @@ public class ChannelTest {
 
     }
     
+    // TODO check target locations are unique set
+    
     @Test
     public void testIsValidSourceLocations() {
         List<Compartment> compartments = getList(new Compartment("a", 4), new Compartment("b", 2));

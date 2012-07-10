@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.demonsoft.spatialkappa.model.Agent;
+import org.demonsoft.spatialkappa.model.AgentLink;
 import org.demonsoft.spatialkappa.model.Channel;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.Complex;
@@ -28,6 +29,8 @@ import org.demonsoft.spatialkappa.model.ObservationListener;
 import org.demonsoft.spatialkappa.model.Perturbation;
 import org.demonsoft.spatialkappa.model.SimulationState;
 import org.demonsoft.spatialkappa.model.Transition;
+import org.demonsoft.spatialkappa.model.TransitionInstance;
+import org.demonsoft.spatialkappa.model.TransitionPrimitive;
 import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.Variable.Type;
 import org.demonsoft.spatialkappa.model.VariableExpression;
@@ -38,7 +41,9 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     // TODO - should be ok
 //    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
 
-    private static final List<ComplexMapping> NO_MAPPINGS = new ArrayList<ComplexMapping>();
+    private static final List<ComplexMapping> NO_COMPLEX_MAPPINGS = new ArrayList<ComplexMapping>();
+    private static final List<TransitionInstance> NO_TRANSITION_INSTANCES = new ArrayList<TransitionInstance>();
+    private static final TransitionInstance EMPTY_TRANSITION_INSTANCE = new TransitionInstance(NO_COMPLEX_MAPPINGS, 1);
     
     private List<Transition> finiteRateTransitions = new ArrayList<Transition>();
     private List<Transition> infiniteRateTransitions = new ArrayList<Transition>();
@@ -49,7 +54,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     private final Map<Complex, List<Complex>> complexComponentMap = new HashMap<Complex, List<Complex>>();
     private final Map<Complex, List<Transition>> complexTransitionMap = new HashMap<Complex, List<Transition>>();
     private final Map<Complex, List<ComplexMapping>> componentComplexMappingMap = new HashMap<Complex, List<ComplexMapping>>();
-    final Map<Transition, List<List<ComplexMapping>>> transitionComplexMappingMap = new HashMap<Transition, List<List<ComplexMapping>>>();
+    final Map<Transition, List<TransitionInstance>> transitionInstanceMap = new HashMap<Transition, List<TransitionInstance>>();
     final Map<Complex, Integer> complexStore = new HashMap<Complex, Integer>();
     private final Map<Variable, List<ObservableMapValue>> observableComplexMap = new HashMap<Variable, List<ObservableMapValue>>();
     
@@ -349,12 +354,21 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     int getTotalTransitionActivity(Transition transition) {
         int totalComponentActivity = 0;
         if (transition.sourceComplexes.size() >  0 || transition.channelName != null) {
-            List<List<ComplexMapping>> allMappings = transitionComplexMappingMap.get(transition);
-            for (List<ComplexMapping> mappings : allMappings) {
+            List<TransitionInstance> transitionInstances = transitionInstanceMap.get(transition);
+            for (TransitionInstance transitionInstance : transitionInstances) {
                 int componentActivity = 1;
-                for (ComplexMapping mapping : mappings) {
-                    componentActivity *= complexStore.get(mapping.target);
+                for (Map.Entry<Complex, Integer> countEntry : transitionInstance.requiredComplexCounts.entrySet()) {
+                    int availableCount = complexStore.get(countEntry.getKey());
+                    if (countEntry.getValue() > availableCount) {
+                        componentActivity = 0;
+                        break;
+                    }
+                    for (int index=0; index < countEntry.getValue(); index++) {
+                        componentActivity *= (availableCount--);
+                    }
                 }
+                
+                componentActivity *= transitionInstance.targetLocationCount;
                 totalComponentActivity += componentActivity;
             }
         }
@@ -497,7 +511,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
 
     private void initialiseActivityMaps() {
         for (Transition transition : getAllTransitions()) {
-            transitionComplexMappingMap.put(transition, new ArrayList<List<ComplexMapping>>());
+            transitionInstanceMap.put(transition, new ArrayList<TransitionInstance>());
             if (transition.sourceComplexes.size() > 0) {
                 for (Complex component : transition.sourceComplexes) {
                     componentComplexMappingMap.put(component, new ArrayList<ComplexMapping>());
@@ -515,7 +529,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         }
 
         for (Complex complex : complexStore.keySet()) {
-            increaseTransitionActivities(complex);
+            increaseTransitionActivities(complex, true);
         }
     }
 
@@ -563,11 +577,11 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
 
     private boolean applyTransition(Transition transition, boolean incrementTime) {
 
-        List<ComplexMapping> concreteSourceComplexMappings = NO_MAPPINGS;
+        TransitionInstance concreteInstance = EMPTY_TRANSITION_INSTANCE;
         
         if (transition.sourceComplexes.size() > 0 || transition.channelName != null) {
-            concreteSourceComplexMappings = pickComplexMappings(transition);
-            if (concreteSourceComplexMappings == null) {
+            concreteInstance = pickTransitionInstance(transition);
+            if (concreteInstance == null) {
                 return false;
             }
         }
@@ -577,7 +591,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         }
 
         if (transition.sourceComplexes.size() > 0 || transition.channelName != null) {
-            for (ComplexMapping complexMapping : concreteSourceComplexMappings) {
+            for (ComplexMapping complexMapping : concreteInstance.sourceMapping) {
                 int quantity = complexStore.get(complexMapping.target) - 1;
                 complexStore.put(complexMapping.target, quantity);
                 reduceTransitionActivities(complexMapping.target);
@@ -586,107 +600,143 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         
         incrementTransitionsFired(transition);
 
-        List<Complex> resultComplexes = transition.apply(concreteSourceComplexMappings, kappaModel.getChannels(), kappaModel.getCompartments());
+        List<Complex> resultComplexes = transition.apply(concreteInstance, kappaModel.getChannels(), kappaModel.getCompartments());
         
         for (Complex complex : resultComplexes) {
-            complexStore.put(complex, 1);
-            increaseTransitionActivities(complex);
+            Complex canonicalComplex = getCanonicalComplex(complex);
+            if (canonicalComplex == null) {
+                complexStore.put(complex, 1);
+                increaseTransitionActivities(complex, true);
+            }
+            else {
+                complexStore.put(canonicalComplex, complexStore.get(canonicalComplex) + 1);
+                increaseTransitionActivities(canonicalComplex, false);
+            }
         }
 
         return true;
     }
 
-    List<ComplexMapping> pickComplexMappings(Transition transition) {
-        List<List<ComplexMapping>> allTransitionMappings = transitionComplexMappingMap.get(transition);
-        if (allTransitionMappings.size() == 0) {
+    private Complex getCanonicalComplex(Complex complex) {
+        for (Complex current : complexStore.keySet()) {
+            if (matcher.isExactMatch(complex, current)) {
+                return current;
+            }
+        }
+        return null;
+    }
+
+    TransitionInstance pickTransitionInstance(Transition transition) {
+        List<TransitionInstance> transitionInstances = transitionInstanceMap.get(transition);
+        if (transitionInstances.size() == 0) {
             return null;
         }
 
-        int[] allTransitionMappingsActivities = new int[allTransitionMappings.size()];
-        int totalTransitionMappingsActivity = 0;
-        for (int index = 0; index < allTransitionMappingsActivities.length; index++) {
-            List<ComplexMapping> mappings = allTransitionMappings.get(index);
+        int[] allTransitionInstanceActivities = new int[transitionInstances.size()];
+        int totalTransitionInstanceActivity = 0;
+        for (int index = 0; index < allTransitionInstanceActivities.length; index++) {
+            TransitionInstance transitionInstance = transitionInstances.get(index);
             int activity = 1;
-            for (ComplexMapping mapping : mappings) {
-                activity *= complexStore.get(mapping.target);
-            }
-            allTransitionMappingsActivities[index] = activity;
-            totalTransitionMappingsActivity += activity;
-        }
-        
-        
-        List<ComplexMapping> lastMappings = null;
-        int randomValue = (int) (totalTransitionMappingsActivity * Math.random());
-        for (int index = 0; index < allTransitionMappingsActivities.length; index++) {
-            if (allTransitionMappingsActivities[index] > 0) {
-                lastMappings = allTransitionMappings.get(index);
-                if (randomValue < allTransitionMappingsActivities[index]) {
+            for (Map.Entry<Complex, Integer> countEntry : transitionInstance.requiredComplexCounts.entrySet()) {
+                int availableCount = complexStore.get(countEntry.getKey());
+                if (countEntry.getValue() > availableCount) {
+                    activity = 0;
                     break;
                 }
-                randomValue -= allTransitionMappingsActivities[index];
+                for (int index2=0; index2 < countEntry.getValue(); index2++) {
+                    activity *= (availableCount--);
+                }
+            }
+
+            activity *= transitionInstance.targetLocationCount;
+            allTransitionInstanceActivities[index] = activity;
+            totalTransitionInstanceActivity += activity;
+        }
+        
+        
+        TransitionInstance lastInstance = null;
+        int randomValue = (int) (totalTransitionInstanceActivity * Math.random());
+        for (int index = 0; index < allTransitionInstanceActivities.length; index++) {
+            if (allTransitionInstanceActivities[index] > 0) {
+                lastInstance = transitionInstances.get(index);
+                if (randomValue < allTransitionInstanceActivities[index]) {
+                    break;
+                }
+                randomValue -= allTransitionInstanceActivities[index];
             }
         }
-        return lastMappings;
+        return lastInstance;
     }
 
-    private void increaseTransitionActivities(Complex complex) {
-        List<Complex> affectedTransitionComponents = new ArrayList<Complex>();
-        List<Transition> affectedTransitions = new ArrayList<Transition>();
-        complexComponentMap.put(complex, affectedTransitionComponents);
-        complexTransitionMap.put(complex, affectedTransitions);
-
-        for (Transition transition : getAllTransitions()) {
-            boolean found = false;
-            List<List<ComplexMapping>> newTransitionMappings = new ArrayList<List<ComplexMapping>>();
-            for (Complex component : transition.sourceComplexes) {
-                List<ComplexMapping> mappings = matcher.getPartialMatches(component, complex);
-                if (mappings.size() > 0) {
-                    affectedTransitionComponents.add(component);
-                    found = true;
-                    newTransitionMappings.addAll(getNewTransitionMappings(transition, mappings, componentComplexMappingMap,
-                            kappaModel.getChannels(), kappaModel.getCompartments()));
-                    componentComplexMappingMap.get(component).addAll(mappings);
-                }
-            }
-            if (transition.sourceComplexes.size() == 0 && transition.channelName != null) {
-                // Unspecified source complex
-                Location complexLocation = complex.getSingleLocation();
-                if (complexLocation != null && transition.leftLocation.isRefinement(complexLocation)) {
-                    Channel channel = kappaModel.getChannel(transition.channelName);
-                    if (channel.applyChannel(complexLocation, transition.rightLocation, kappaModel.getCompartments()).size() > 0) {
-                        // TODO - check move can actually be applied
-                        newTransitionMappings.add(getList(new ComplexMapping(complex)));
+    private void increaseTransitionActivities(Complex complex, boolean isNewComplex) {
+        if (isNewComplex) {
+            List<Complex> affectedTransitionComponents = new ArrayList<Complex>();
+            List<Transition> affectedTransitions = new ArrayList<Transition>();
+            complexComponentMap.put(complex, affectedTransitionComponents);
+            complexTransitionMap.put(complex, affectedTransitions);
+    
+            for (Transition transition : getAllTransitions()) {
+                boolean found = false;
+                List<TransitionInstance> newTransitionInstances = new ArrayList<TransitionInstance>();
+                for (Complex component : transition.sourceComplexes) {
+                    List<ComplexMapping> mappings = matcher.getPartialMatches(component, complex);
+                    if (mappings.size() > 0) {
+                        affectedTransitionComponents.add(component);
                         found = true;
+                        newTransitionInstances.addAll(getNewTransitionInstances(transition, mappings, componentComplexMappingMap,
+                                complexStore, kappaModel.getChannels(), kappaModel.getCompartments()));
+                        componentComplexMappingMap.get(component).addAll(mappings);
                     }
                 }
+                if (transition.sourceComplexes.size() == 0 && transition.channelName != null) {
+                    // Unspecified source complex
+                    Location complexLocation = complex.getSingleLocation();
+                    if (complexLocation != null && transition.leftLocation.isRefinement(complexLocation)) {
+                        Channel channel = kappaModel.getChannel(transition.channelName);
+                        List<Location> targetLocations = channel.applyChannel(complexLocation, transition.rightLocation, kappaModel.getCompartments());
+                        if (targetLocations.size() > 0) {
+                            // TODO - check move can actually be applied
+                            newTransitionInstances.add(new TransitionInstance(
+                                    getList(new ComplexMapping(complex)), targetLocations.size()));
+                            found = true;
+                        }
+                    }
+                }
+                if (found) {
+                    affectedTransitions.add(transition);
+                    transitionInstanceMap.get(transition).addAll(newTransitionInstances);
+                    updateTransitionActivity(transition, false);
+                }
             }
-            if (found) {
-                affectedTransitions.add(transition);
-                transitionComplexMappingMap.get(transition).addAll(newTransitionMappings);
+    
+            addComplexToObservables(complex);
+    
+    //        List<Transition> transitionMap = emptySubstrateTransitionMap.get(location);
+    //        if (transitionMap != null) {
+    //            for (Transition transition : transitionMap) {
+    //                updateTransitionActivity(transition, false);
+    //            }
+    //        }
+        }
+        else {
+            List<Transition> affectedTransitions = complexTransitionMap.get(complex);
+            for (Transition transition : affectedTransitions) {
                 updateTransitionActivity(transition, false);
             }
         }
-
-        addComplexToObservables(complex);
-
-//        List<Transition> transitionMap = emptySubstrateTransitionMap.get(location);
-//        if (transitionMap != null) {
-//            for (Transition transition : transitionMap) {
-//                updateTransitionActivity(transition, false);
-//            }
-//        }
-
     }
 
-    List<List<ComplexMapping>> getNewTransitionMappings(Transition transition, 
-            List<ComplexMapping> newComponentComplexMappings, Map<Complex, List<ComplexMapping>> allComponentComplexMappings,
-            List<Channel> channels, List<Compartment> compartments) {
+    List<TransitionInstance> getNewTransitionInstances(Transition transition, 
+            List<ComplexMapping> newComponentComplexMappings, 
+            Map<Complex, List<ComplexMapping>> allComponentComplexMappings,
+            Map<Complex, Integer> complexCounts, List<Channel> channels, List<Compartment> compartments) {
+        
         if (transition == null || newComponentComplexMappings == null || allComponentComplexMappings == null
-                || channels == null || compartments == null) {
+                || complexCounts == null || channels == null || compartments == null) {
             throw new NullPointerException();
         }
         if (newComponentComplexMappings.size() == 0) {
-            return new ArrayList<List<ComplexMapping>>();
+            return NO_TRANSITION_INSTANCES;
         }
         
         Complex newComponent = newComponentComplexMappings.get(0).template;
@@ -706,47 +756,117 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
             
             List<ComplexMapping> currentComponentComplexMappings = allComponentComplexMappings.get(currentComponent);
             if (currentComponentComplexMappings == null || currentComponentComplexMappings.size() == 0) {
-                return new ArrayList<List<ComplexMapping>>();
+                return NO_TRANSITION_INSTANCES;
             }
             for (ComplexMapping currentComponentComplexMapping : currentComponentComplexMappings) {
                 for (List<ComplexMapping> currentComplexMapping : mappings) {
                     
-                    // TODO Check compatibility here
-                    
-                    List<ComplexMapping> extendedComplexMapping = new ArrayList<ComplexMapping>(currentComplexMapping);
-                    extendedComplexMapping.add(currentComponentComplexMapping);
-                    newMappings.add(extendedComplexMapping);
+                    if (isTransitionMappingComponentCompatible(transition, currentComplexMapping, 
+                            currentComponentComplexMapping, channels, compartments)) {
+                        List<ComplexMapping> extendedComplexMapping = new ArrayList<ComplexMapping>(currentComplexMapping);
+                        extendedComplexMapping.add(currentComponentComplexMapping);
+                        newMappings.add(extendedComplexMapping);
+                    }
                 }
             }
             if (newMappings.size() == 0) {
-                return new ArrayList<List<ComplexMapping>>();
+                return NO_TRANSITION_INSTANCES;
             }
         }
         
+        List<TransitionInstance> result = new ArrayList<TransitionInstance>();
         // Check compatibility of complex locations
-        ListIterator<List<ComplexMapping>> iter = newMappings.listIterator();
-        while (iter.hasNext()) {
-            List<ComplexMapping> currentMappings = iter.next();
-            if (!transition.canApply(currentMappings, channels, compartments)) {
-                iter.remove();
+        for (List<ComplexMapping> currentMappings : newMappings) {
+            int locationCount = transition.getApplicationCount(currentMappings, channels, compartments);
+            if (locationCount > 0) {
+                result.add(new TransitionInstance(currentMappings, locationCount));
             }
         }
         
-        return newMappings;
+        return result;
     }
 
-    void removeTransitionMappings(List<List<ComplexMapping>> transitionMappings, Complex complex) {
-        if (transitionMappings == null || complex == null) {
+    boolean isTransitionMappingComponentCompatible(Transition transition,
+            List<ComplexMapping> complexMappings, ComplexMapping componentComplexMapping,
+            List<Channel> channels, List<Compartment> compartments) {
+        
+        if (transition == null || complexMappings == null || componentComplexMapping == null || channels == null || 
+                compartments == null) {
             throw new NullPointerException();
         }
-        ListIterator<List<ComplexMapping>> iter = transitionMappings.listIterator();
-        while (iter.hasNext()) {
-            List<ComplexMapping> mappings = iter.next();
-            for (ComplexMapping mapping : mappings) {
-                if (complex == mapping.target) {
-                    iter.remove();
-                    break;
+        for (TransitionPrimitive primitive : transition.bestPrimitives) {
+            if (primitive.type == TransitionPrimitive.Type.CREATE_LINK) {
+                if (primitive.targetSite == AgentLink.ANY || primitive.targetSite == AgentLink.NONE || primitive.targetSite == AgentLink.OCCUPIED) {
+                    continue;
                 }
+                Agent templateSourceAgent = primitive.sourceSite.agent;
+                Agent templateTargetAgent = primitive.targetSite.agent;
+                Complex templateSourceComplex = templateSourceAgent.getComplex();
+                Complex templateTargetComplex = templateTargetAgent.getComplex();
+
+                if (templateSourceComplex != componentComplexMapping.template && templateTargetComplex != componentComplexMapping.template) {
+                    continue;
+                }
+                if (templateTargetComplex == componentComplexMapping.template) {
+                    templateSourceAgent = primitive.targetSite.agent;
+                    templateTargetAgent = primitive.sourceSite.agent;
+                    templateSourceComplex = templateSourceAgent.getComplex();
+                    templateTargetComplex = templateTargetAgent.getComplex();
+                }
+                
+                ComplexMapping targetMapping = null;
+                for (ComplexMapping mapping : complexMappings) {
+                    if (templateTargetComplex == mapping.template) {
+                        targetMapping = mapping;
+                        break;
+                    }
+                }
+                if (targetMapping == null) {
+                    continue;
+                }
+                
+                Agent realSourceAgent = componentComplexMapping.mapping.get(templateSourceAgent);
+                Agent realTargetAgent = targetMapping.mapping.get(templateTargetAgent);
+                Location realSourceLocation = realSourceAgent.location;
+                Location realTargetLocation = realTargetAgent.location;
+                
+                if (primitive.channelName == null) {
+                    // Must be co located
+                    if (!realSourceLocation.equals(realTargetLocation)) {
+                        return false;
+                    }
+                }
+                else {
+                    Channel channel = null;
+                    for (Channel current : channels) {
+                        if (current.getName().equals(primitive.channelName)) {
+                            channel = current;
+                            break;
+                        }
+                    }
+                    if (channel == null) {
+                        throw new IllegalArgumentException("Channel not found: " + primitive.channelName);
+                    }
+                    if (channel.applyChannel(realSourceLocation, realTargetLocation, compartments).size() == 0) {
+                        return false;
+                    }
+                }
+            }
+        }
+        
+        // TODO handle unlinked complex groups
+        return true;
+    }
+
+    void removeTransitionInstances(List<TransitionInstance> transitionInstances, Complex complex) {
+        if (transitionInstances == null || complex == null) {
+            throw new NullPointerException();
+        }
+        ListIterator<TransitionInstance> iter = transitionInstances.listIterator();
+        while (iter.hasNext()) {
+            TransitionInstance transitionInstance = iter.next();
+            if (transitionInstance.requiredComplexCounts.containsKey(complex)) {
+                iter.remove();
             }
         }
     }
@@ -769,9 +889,11 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
                     }
                 }
             }
+            
             for (Transition transition : affectedTransitions) {
-                removeTransitionMappings(transitionComplexMappingMap.get(transition), complex);
+                removeTransitionInstances(transitionInstanceMap.get(transition), complex);
             }
+            
             removeComplexFromObservables(complex);
             
             complexStore.remove(complex);

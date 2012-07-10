@@ -138,5 +138,43 @@ public class Utils {
         }
     }
 
+    public static List<Agent> getLinkedColocatedAgents(Agent agent) {
+        if (agent == null) {
+            throw new NullPointerException();
+        }
+        List<Agent> result = new ArrayList<Agent>();
+        result.add(agent);
+        
+        Stack<AgentLink> links = new Stack<AgentLink>();
+        for (AgentLink link : agent.getLinks()) {
+            if (link.getChannel() == null) {
+                links.add(link);
+            }
+        }
+        
+        while (!links.isEmpty()) {
+            AgentLink link = links.pop();
+            Agent sourceAgent = link.sourceSite.agent;
+            if (sourceAgent != null && !result.contains(sourceAgent)) {
+                result.add(sourceAgent);
+                for (AgentLink newlink : sourceAgent.getLinks()) {
+                    if (newlink.getChannel() == null) {
+                        links.add(newlink);
+                    }
+                }
+            }
+            Agent targetAgent = link.targetSite.agent;
+            if (targetAgent != null && !result.contains(targetAgent)) {
+                result.add(targetAgent);
+                for (AgentLink newlink : targetAgent.getLinks()) {
+                    if (newlink.getChannel() == null) {
+                        links.add(newlink);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
 
 }

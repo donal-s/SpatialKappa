@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-abstract class TransformPrimitive {
-    enum Type {
+public abstract class TransitionPrimitive {
+    public enum Type {
         DELETE_LINK, DELETE_AGENT, CREATE_COMPLEX, MERGE_COMPLEXES, CREATE_AGENT, CREATE_LINK, CHANGE_STATE, MOVE_COMPLEX, MOVE_AGENTS
     }
 
-    public final TransformPrimitive.Type type;
+    public final TransitionPrimitive.Type type;
     public final Agent sourceAgent;
     public final Agent targetAgent;
     public final AgentLink agentLink;
@@ -27,7 +27,7 @@ abstract class TransformPrimitive {
     public final List<Agent> sourceAgents;
     public final List<Location> targetLocations;
 
-    TransformPrimitive(Type type, AgentLink agentLink, Agent sourceAgent, Agent targetAgent, Complex complex, AgentSite sourceSite,
+    TransitionPrimitive(Type type, AgentLink agentLink, Agent sourceAgent, Agent targetAgent, Complex complex, AgentSite sourceSite,
             AgentSite targetSite, String state, Location sourceLocation, Location targetLocation, String channelName) {
         this.type = type;
         this.sourceAgent = sourceAgent;
@@ -44,7 +44,7 @@ abstract class TransformPrimitive {
         this.targetLocations = null;
     }
 
-    public TransformPrimitive(Type type, List<Agent> sourceAgents, List<Location> targetLocations,
+    public TransitionPrimitive(Type type, List<Agent> sourceAgents, List<Location> targetLocations,
             String channelName) {
         this.type = type;
         this.sourceAgent = null;
@@ -93,7 +93,7 @@ abstract class TransformPrimitive {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        TransformPrimitive other = (TransformPrimitive) obj;
+        TransitionPrimitive other = (TransitionPrimitive) obj;
         if (agentLink == null) {
             if (other.agentLink != null)
                 return false;
@@ -188,8 +188,8 @@ abstract class TransformPrimitive {
         }
     }
 
-    public static TransformPrimitive getDeleteLink(AgentLink agentLink) {
-        return new TransformPrimitive(Type.DELETE_LINK, agentLink, null, null, null, null, null, null, null, null, null) {
+    public static TransitionPrimitive getDeleteLink(AgentLink agentLink) {
+        return new TransitionPrimitive(Type.DELETE_LINK, agentLink, null, null, null, null, null, null, null, null, null) {
             @Override
             public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Agent mappedSourceAgent = transformMap.get(agentLink.sourceSite.agent);
@@ -199,11 +199,11 @@ abstract class TransformPrimitive {
         };
     }
 
-    public static TransformPrimitive getCreateLink(AgentSite sourceSite, AgentSite targetSite, String channelName) {
+    public static TransitionPrimitive getCreateLink(AgentSite sourceSite, AgentSite targetSite, String channelName) {
         if (sourceSite == null || targetSite == null) {
             throw new NullPointerException();
         }
-        return new TransformPrimitive(Type.CREATE_LINK, null, null, null, null, sourceSite, targetSite, null, null, null, channelName) {
+        return new TransitionPrimitive(Type.CREATE_LINK, null, null, null, null, sourceSite, targetSite, null, null, null, channelName) {
             @Override
             public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
 
@@ -240,8 +240,8 @@ abstract class TransformPrimitive {
         };
     }
 
-    public static TransformPrimitive getDeleteAgent(Agent agent) {
-        return new TransformPrimitive(Type.DELETE_AGENT, null, agent, null, null, null, null, null, null, null, null) {
+    public static TransitionPrimitive getDeleteAgent(Agent agent) {
+        return new TransitionPrimitive(Type.DELETE_AGENT, null, agent, null, null, null, null, null, null, null, null) {
             @Override
             public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Agent mappedSourceAgent = transformMap.get(sourceAgent);
@@ -256,8 +256,8 @@ abstract class TransformPrimitive {
         };
     }
 
-    public static TransformPrimitive getCreateComplex(Complex complex) {
-        return new TransformPrimitive(Type.CREATE_COMPLEX, null, null, null, complex, null, null, null, null, null, null) {
+    public static TransitionPrimitive getCreateComplex(Complex complex) {
+        return new TransitionPrimitive(Type.CREATE_COMPLEX, null, null, null, complex, null, null, null, null, null, null) {
             @Override
             public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Complex cloneComplex = complex.clone();
@@ -267,8 +267,8 @@ abstract class TransformPrimitive {
         };
     }
 
-    public static TransformPrimitive getCreateAgent(Agent sourceAgent, Agent targetAgent) {
-        return new TransformPrimitive(Type.CREATE_AGENT, null, sourceAgent, targetAgent, null, null, null, null, null, null, null) {
+    public static TransitionPrimitive getCreateAgent(Agent sourceAgent, Agent targetAgent) {
+        return new TransitionPrimitive(Type.CREATE_AGENT, null, sourceAgent, targetAgent, null, null, null, null, null, null, null) {
             @Override
             public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Agent cloneAgent = sourceAgent.clone();
@@ -283,8 +283,8 @@ abstract class TransformPrimitive {
         };
     }
 
-    public static TransformPrimitive getChangeState(Agent agent, AgentSite agentSite, String state) {
-        return new TransformPrimitive(Type.CHANGE_STATE, null, agent, null, null, agentSite, null, state, null, null, null) {
+    public static TransitionPrimitive getChangeState(Agent agent, AgentSite agentSite, String state) {
+        return new TransitionPrimitive(Type.CHANGE_STATE, null, agent, null, null, agentSite, null, state, null, null, null) {
             @Override
             public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Agent target = transformMap.get(sourceAgent);
@@ -295,8 +295,8 @@ abstract class TransformPrimitive {
         };
     }
 
-    public static TransformPrimitive getMergeComplexes(Agent sourceAgent, Agent targetAgent) {
-        return new TransformPrimitive(Type.MERGE_COMPLEXES, null, sourceAgent, targetAgent, null, null, null, null, null, null, null) {
+    public static TransitionPrimitive getMergeComplexes(Agent sourceAgent, Agent targetAgent) {
+        return new TransitionPrimitive(Type.MERGE_COMPLEXES, null, sourceAgent, targetAgent, null, null, null, null, null, null, null) {
             @Override
             public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Agent mappedSourceAgent = transformMap.get(sourceAgent);
@@ -341,9 +341,30 @@ abstract class TransformPrimitive {
         return maxFound;
     }
 
-    public static TransformPrimitive getMoveComplex(Location sourceLocation, Location targetLocation, String channelName) {
-        return new TransformPrimitive(Type.MOVE_COMPLEX, null, null, null, null, null, null, null, sourceLocation, targetLocation, channelName) {
+    public static TransitionPrimitive getMoveComplex(Location sourceLocation, Location targetLocation, String channelName) {
+        return new TransitionPrimitive(Type.MOVE_COMPLEX, null, null, null, null, null, null, null, sourceLocation, targetLocation, channelName) {
 
+            @Override
+            public int getApplicationCount(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels,
+                    List<Compartment> compartments) {
+                Complex targetComplex = targetComplexes.get(0);
+                Location oldLocation = targetComplex.agents.get(0).location;
+                
+                Channel channel = null;
+                for (Channel current : channels) {
+                    if (channelName.equals(current.getName())) {
+                        channel = current;
+                    }
+                }
+
+                if (channel == null) {
+                    throw new IllegalStateException("Unknown channel: " + channelName);
+                }
+                
+                List<Location> newLocations = channel.applyChannel(oldLocation, targetLocation, compartments);
+                return newLocations.size();
+            }
+            
             @Override
             public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels, List<Compartment> compartments) {
                 Complex targetComplex = targetComplexes.get(0);
@@ -378,8 +399,8 @@ abstract class TransformPrimitive {
         };
     }
 
-    public static TransformPrimitive getMoveAgents(List<Agent> leftAgents, List<Location> targetLocations, String channelName) {
-        return new TransformPrimitive(Type.MOVE_AGENTS, leftAgents, targetLocations, channelName) {
+    public static TransitionPrimitive getMoveAgents(List<Agent> leftAgents, List<Location> targetLocations, String channelName) {
+        return new TransitionPrimitive(Type.MOVE_AGENTS, leftAgents, targetLocations, channelName) {
 
             class ChannelConstraint {
                 public final Location sourceLocation;
@@ -424,6 +445,46 @@ abstract class TransformPrimitive {
                 }
                 
                 
+            }
+            
+            @Override
+            public int getApplicationCount(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels,
+                    List<Compartment> compartments) {
+
+                List<Location> oldLocations = new ArrayList<Location>();
+                List<Location> targetConstraints = new ArrayList<Location>();
+                List<ChannelConstraint> channelConstraints = new ArrayList<ChannelConstraint>();
+                
+                for (int index=0; index<sourceAgents.size(); index++) {
+                    Agent sourceAgent = sourceAgents.get(index);
+                    Location targetConstraint = targetLocations.get(index);
+                    Agent realAgent = transformMap.get(sourceAgent);
+                    Location oldLocation = realAgent.location;
+                    
+                    if (!oldLocation.equals(sourceAgent.location) && !sourceAgent.location.isRefinement(oldLocation)) {
+                        return 0;
+                    }
+                    ChannelConstraint channelConstraint = new ChannelConstraint(oldLocation, targetConstraint);
+                    if (!channelConstraints.contains(channelConstraint)) {
+                        channelConstraints.add(channelConstraint);
+                        oldLocations.add(oldLocation);
+                        targetConstraints.add(targetConstraint);
+                    }
+                }
+                
+                Channel channel = null;
+                for (Channel current : channels) {
+                    if (channelName.equals(current.getName())) {
+                        channel = current;
+                    }
+                }
+
+                if (channel == null) {
+                    throw new IllegalStateException("Unknown channel: " + channelName);
+                }
+                
+                List<List<Location>> newLocationLists = channel.applyChannel(oldLocations, targetConstraints, compartments);
+                return newLocationLists.size();
             }
             
             @Override
@@ -485,7 +546,7 @@ abstract class TransformPrimitive {
                         ChannelConstraint channelConstraint = new ChannelConstraint(oldLocation, targetConstraint);
                         
                         Location newLocation = newLocations.get(channelConstraints.indexOf(channelConstraint));
-                        for (Agent agent : Utils.getLinkedAgents(realAgent)) {
+                        for (Agent agent : Utils.getLinkedColocatedAgents(realAgent)) {
                             if (!movedAgents.contains(agent)) {
                                 agent.setLocation(newLocation);
                                 movedAgents.add(agent);
@@ -496,6 +557,12 @@ abstract class TransformPrimitive {
                 return true;
             }
         };
+    }
+
+    @SuppressWarnings("unused")
+    public int getApplicationCount(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels,
+            List<Compartment> compartments) {
+        return 1;
     }
 
 }

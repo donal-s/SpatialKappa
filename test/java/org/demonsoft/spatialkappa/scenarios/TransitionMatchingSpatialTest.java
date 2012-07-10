@@ -409,7 +409,7 @@ public class TransitionMatchingSpatialTest {
     @Test
     public void testSimpleTransport() throws Exception {
         checkEventSimulation(SIMPLE_TRANSPORT_INPUT, new String[] {"val[0]", "val[1]", "val[2]", "val[3]"}, 400, 80, new float[][] {
-                {2000, 0, 0, 0}, {1680, 300, 20, 0}, {1445, 500, 50, 5}, {1235, 650, 100, 15},
+                {2000, 0, 0, 0}, {1680, 300, 20, 0}, {1500, 410, 80, 10}, {1350, 475, 125, 50},
         });
     }
     

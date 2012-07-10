@@ -115,5 +115,50 @@ public class UtilsTest {
         assertEquals(expected, result);
     }
 
+    @Test
+    public void testGetLinkedColocatedAgents() {
+
+        try {
+            Utils.getLinkedColocatedAgents(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        Agent agent1 = new Agent("agent1", new Location("A"));
+        Agent agent2 = new Agent("agent2", new Location("A"), new AgentSite("link1", null, "?"), new AgentSite("link2", null, "1"));
+        Agent agent3 = new Agent("agent3", new Location("A"), new AgentSite("link1", null, "?"), new AgentSite("link2", null, "2"));
+        Agent agent4 = new Agent("agent4", new Location("A"), new AgentSite("link1", null, "_"), new AgentSite("link2", null, "1"));
+        Agent agent5 = new Agent("agent5", new Location("B"), new AgentSite("link1", null, "_"), new AgentSite("link2", null, "2", "ch"), new AgentSite("link3", null, "3", "ch"));
+        Agent agent6 = new Agent("agent6", new Location("A"), new AgentSite("link1", null, "3"), new AgentSite("link2", (String) null, null));
+        Agent agent7 = new Agent("agent7", new Location("A"), new AgentSite("link1", (String) null, null));
+        Utils.getComplexes(getList(agent1, agent2, agent3, agent4, agent5, agent6, agent7));
+        
+        List<Agent> result = Utils.getLinkedColocatedAgents(agent1);
+        List<Agent> expected = getList(agent1);
+        assertEquals(expected, result);
+        
+        result = Utils.getLinkedColocatedAgents(agent2);
+        expected = getList(agent2, agent4);
+        assertEquals(expected, result);
+        
+        result = Utils.getLinkedColocatedAgents(agent5);
+        expected = getList(agent5);
+        assertEquals(expected, result);
+        
+        result = Utils.getLinkedColocatedAgents(agent3);
+        expected = getList(agent3);
+        assertEquals(expected, result);
+        
+        result = Utils.getLinkedColocatedAgents(agent6);
+        expected = getList(agent6);
+        assertEquals(expected, result);
+        
+        result = Utils.getLinkedColocatedAgents(agent7);
+        expected = getList(agent7);
+        assertEquals(expected, result);
+    }
+
 
 }
