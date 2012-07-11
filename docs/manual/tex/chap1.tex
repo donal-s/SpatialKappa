@@ -2,14 +2,14 @@
 
 \section{Obtaining the simulator}
 
-The simulator is available from GitHub as the source Eclipse project, or as a single executable jar file. Both are available at \url{https://github.com/donal-s/SpatialKappa/downloads}. The simulator in its current state was optimised specifically for the 2010 Edinburgh iGEM project. This is apparent mostly in the design of the compartment view pane. Extending this view for more generic use is a planned extension.
+The simulator is available from GitHub as the source Eclipse project, or as a single executable jar file. Both are available at \url{https://github.com/donal-s/SpatialKappa/downloads}. 
 
 \section{Starting the simulator}
 
 \subsection{Running the executable jar}
 
 The simulator can be started by running the executable jar file:\\
-\verb|java -jar SpatialKappa-v1.1.0.jar|\\\\
+\verb|java -jar SpatialKappa-v2.0.1.jar|\\\\
 Double clicking the jar file usually works too.
 
 \subsection{Running from the Eclipse project}
@@ -20,7 +20,6 @@ Running as a Java Application will bring up the simulator.
 
 
 \section{Using the simulator}
-
 
 The initial screen appears as figure \ref{fig:startup}.
 
@@ -63,7 +62,7 @@ The currently open Kappa file can be refreshed from disk by selecting the 'Reope
 
 With a successfully opened Kappa model, one can run a simulation by selecting the 'Run' button. Simulation parameters can be set on the toolbar before running. There is the option to do an event or a time based simulation. For an event based simulation, the number of steps for the simulation (i.e. data points on the time series chart), and the number of finite rate events per step can be set. Equivalent options for time based simulation can also be set.
 
-The simulation can be halted at any point by selecting the 'Stop' button. Note that complex simulations may take a while to start up while data structures are being generated.
+The simulation can be halted at any point by selecting the 'Stop' button. Note that complex simulations may take some time to start up while data structures are being generated.
 
 A replay file of the simulation is created in the same directory as the Kappa model. The file format is similar to that produced by KaSim.
 
@@ -73,15 +72,11 @@ As the simulation runs, the state of the simulation observables are logged to di
 
 The file format is similar to that produced by KaSim. Renaming KaSim data output to have the suffix \verb|.kareplay| will allow KaSim output to also be visualised using this tool.
 
-\section{Spatial visualisation tools}
+\section{Time series chart}
 
-While the raw data produced from simulations is useful, visualisation of the data is important. There are a couple of simple visualisation panels in the simulator. These are dynamically updated as the simulation runs to give the user an idea of how the simulation is progressing. They are however basic in comparison to some of the commercial simulation data visualisation tools available.
+While the raw data produced from simulations is useful, visualisation of the data is important. There is a simple visualisation panel in the simulator. This is dynamically updated as the simulation runs to give the user an idea of how the simulation is progressing. It is however basic in comparison to some of the commercial simulation data visualisation tools available.
 
-The excellent JFreeChart \citep{JFreeChartwebsite} library was used for generating the charting components. Both charts have formatting and save capability, and the time series panel is zoomable.
-
-\subsection{Time series chart}
-
-This chart is similar to the standard Gnuplot output from KaSim. It is a line graph showing observable quantity against time for all observable definitions in the model.
+The time series chart is similar to the standard Gnuplot output from KaSim. It is a line graph showing observable quantity against time for all observable definitions in the model. The excellent JFreeChart \citep{JFreeChartwebsite} library was used for generating the charting component. The chart has formatting and save capability, and is zoomable.
 
 \begin{figure}[h!]
  \centering
@@ -89,30 +84,4 @@ This chart is similar to the standard Gnuplot output from KaSim. It is a line gr
  % ChartPane.png: 1006x510 pixel, 72dpi, 35.49x17.99 cm, bb=0 0 1006 510
  \caption{Sample time series chart output}
  \label{fig:chartPane}
-\end{figure}
-
-\subsection{Cell mean chart}
-
-This chart plots the mean cell values of observables in compartments. The shaded area represents the standard deviation of these cell values from the compartment mean. It is a simple visualisation of the deviation of individual cell behaviour within a compartment over time.
-
-\begin{figure}[h!]
- \centering
- \includegraphics[scale=0.3]{./images/CellMeanChartPane.png}
- % ChartPane.png: 1006x510 pixel, 72dpi, 35.49x17.99 cm, bb=0 0 1006 510
- \caption{Sample cell mean chart output}
- \label{fig:cellMeanChartPane}
-\end{figure}
-
-\subsection{Compartment chart}
-
-This view allows more detailed visualisation of the transport of a species within the cells of a single compartment. It can show local positive feedback sites, or diffusion of a species through a compartment. There are a couple of visualisation options which can be selected at runtime to tailor the output.
-
-Note that the current implementation is designed to view a 3-channel hexagonal mesh, and that view works only for observations labelled \verb|'Red'|, \verb|'Blue'| and \verb|'Green'|. Making this more generic is also a planned area for extension.
-
-\begin{figure}[h!]
- \centering
- \includegraphics[scale=0.3]{./images/CompartmentView.png}
- % CompartmentView.png: 1006x510 pixel, 72dpi, 35.49x17.99 cm, bb=0 0 1006 510
- \caption{Sample compartment chart output}
- \label{fig:compartmentPane}
 \end{figure}

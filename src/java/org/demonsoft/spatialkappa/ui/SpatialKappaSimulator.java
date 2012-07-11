@@ -1,7 +1,7 @@
 package org.demonsoft.spatialkappa.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
+//import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -20,7 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Map;
 
-import javax.swing.BoxLayout;
+//import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -52,13 +52,13 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.DeviationRenderer;
-import org.jfree.data.xy.XYIntervalSeries;
-import org.jfree.data.xy.XYIntervalSeriesCollection;
+//import org.jfree.chart.renderer.xy.DeviationRenderer;
+//import org.jfree.data.xy.XYIntervalSeries;
+//import org.jfree.data.xy.XYIntervalSeriesCollection;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
-public class TransitionMatchingSimulatorGui implements ActionListener, ObservationListener {
+public class SpatialKappaSimulator implements ActionListener, ObservationListener {
 
 
     protected static final String WINDOW_TITLE = "Spatial Kappa Simulator v" + Version.VERSION;
@@ -91,8 +91,8 @@ public class TransitionMatchingSimulatorGui implements ActionListener, Observati
     protected File replayFile;
     JFrame frame;
     private ChartPanel basicChartPanel;
-    private ChartPanel cellMeanChartPanel;
-    protected JPanel cellViewChartPanel;
+//    private ChartPanel cellMeanChartPanel;
+//    protected JPanel cellViewChartPanel;
     private JTextArea consoleTextArea;
     private PrintStream consoleStream;
     private JToolBar toolbar;
@@ -119,7 +119,7 @@ public class TransitionMatchingSimulatorGui implements ActionListener, Observati
     JLabel labelStepSize;
 
     XYSeriesCollection chartData;
-    XYIntervalSeriesCollection cellChartData;
+//    XYIntervalSeriesCollection cellChartData;
     
     Dimension minimumSize;
     boolean stopSimulation;
@@ -129,7 +129,7 @@ public class TransitionMatchingSimulatorGui implements ActionListener, Observati
     
     
     
-    public TransitionMatchingSimulatorGui() throws Exception {
+    public SpatialKappaSimulator() throws Exception {
 
         frame = new JFrame(WINDOW_TITLE);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -140,12 +140,12 @@ public class TransitionMatchingSimulatorGui implements ActionListener, Observati
         basicChartPanel = new ChartPanel(ChartFactory.createXYLineChart("", "Time", "Quantity", null, PlotOrientation.VERTICAL, true, false, false));
         tabbedPane.add(basicChartPanel, "Observation chart");
 
-        cellMeanChartPanel = new ChartPanel(ChartFactory.createXYLineChart("", "Time", "Quantity", null, PlotOrientation.VERTICAL, true, false, false));
-        tabbedPane.add(cellMeanChartPanel, "Cell mean chart");
+//        cellMeanChartPanel = new ChartPanel(ChartFactory.createXYLineChart("", "Time", "Quantity", null, PlotOrientation.VERTICAL, true, false, false));
+//        tabbedPane.add(cellMeanChartPanel, "Cell mean chart");
 
-        cellViewChartPanel = new JPanel();
-        cellViewChartPanel.setLayout(new BoxLayout(cellViewChartPanel, BoxLayout.X_AXIS));
-        tabbedPane.add(cellViewChartPanel, "Compartment View");
+//        cellViewChartPanel = new JPanel();
+//        cellViewChartPanel.setLayout(new BoxLayout(cellViewChartPanel, BoxLayout.X_AXIS));
+//        tabbedPane.add(cellViewChartPanel, "Compartment View");
 
         consoleTextArea = new JTextArea();
         consoleTextArea.setEditable(false);
@@ -265,7 +265,7 @@ public class TransitionMatchingSimulatorGui implements ActionListener, Observati
 
     protected JButton makeToolbarButton(String imageName, String actionCommand, String toolTipText, String altText) {
         String imgLocation = TOOLBAR_BUTTON_IMAGE_PATH + imageName + ".gif";
-        URL imageURL = TransitionMatchingSimulatorGui.class.getResource(imgLocation);
+        URL imageURL = SpatialKappaSimulator.class.getResource(imgLocation);
 
         JButton button = new JButton();
         button.setActionCommand(actionCommand);
@@ -399,8 +399,8 @@ public class TransitionMatchingSimulatorGui implements ActionListener, Observati
             Observation observation = simulation.getCurrentObservation();
 
             createBasicChart(simulationName, observation);
-            createCellMeanChart(simulationName, observation, replay);
-            createCellViewChart(observation);
+//            createCellMeanChart(simulationName, observation, replay);
+//            createCellViewChart(observation);
 
             SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
@@ -428,72 +428,72 @@ public class TransitionMatchingSimulatorGui implements ActionListener, Observati
         }
     }
 
-    private void createCellViewChart(Observation observation) {
-        for (Component component : cellViewChartPanel.getComponents()) {
-            simulation.removeObservationListener((ObservationListener) component);
-        }
-        cellViewChartPanel.removeAll();
-        
-        String redObservable = null;
-        String greenObservable = null;
-        String blueObservable = null;
-        for (String observable : observation.orderedObservables) {
-            if (observable.equalsIgnoreCase("Red")) {
-                redObservable = observable;
-            }
-            else if (observable.equalsIgnoreCase("Green")) {
-                greenObservable = observable;
-            }
-            else if (observable.equalsIgnoreCase("Blue")) {
-                blueObservable = observable;
-            }
-        }
-        
-        if (redObservable != null && greenObservable != null && blueObservable != null) {
-            ThreeChannelCompartmentViewPanel compartmentPanel = new ThreeChannelCompartmentViewPanel();
-            simulation.addObservationListener(compartmentPanel);
-            cellViewChartPanel.add(compartmentPanel);
-            compartmentPanel.setCompartment(redObservable, greenObservable, blueObservable, observation);
-        }
-        else {
-            for (String observable : observation.orderedObservables) {
-                ObservationElement element = observation.observables.get(observable);
-                if (element.isCompartment) {
-                    CompartmentViewPanel compartmentPanel = new CompartmentViewPanel();
-                    simulation.addObservationListener(compartmentPanel);
-                    cellViewChartPanel.add(compartmentPanel);
-                    compartmentPanel.setCompartment(observable, observation);
-                    break;
-                }
-            }
-        }
-    }
+//    private void createCellViewChart(Observation observation) {
+//        for (Component component : cellViewChartPanel.getComponents()) {
+//            simulation.removeObservationListener((ObservationListener) component);
+//        }
+//        cellViewChartPanel.removeAll();
+//        
+//        String redObservable = null;
+//        String greenObservable = null;
+//        String blueObservable = null;
+//        for (String observable : observation.orderedObservables) {
+//            if (observable.equalsIgnoreCase("Red")) {
+//                redObservable = observable;
+//            }
+//            else if (observable.equalsIgnoreCase("Green")) {
+//                greenObservable = observable;
+//            }
+//            else if (observable.equalsIgnoreCase("Blue")) {
+//                blueObservable = observable;
+//            }
+//        }
+//        
+//        if (redObservable != null && greenObservable != null && blueObservable != null) {
+//            ThreeChannelCompartmentViewPanel compartmentPanel = new ThreeChannelCompartmentViewPanel();
+//            simulation.addObservationListener(compartmentPanel);
+//            cellViewChartPanel.add(compartmentPanel);
+//            compartmentPanel.setCompartment(redObservable, greenObservable, blueObservable, observation);
+//        }
+//        else {
+//            for (String observable : observation.orderedObservables) {
+//                ObservationElement element = observation.observables.get(observable);
+//                if (element.isCompartment) {
+//                    CompartmentViewPanel compartmentPanel = new CompartmentViewPanel();
+//                    simulation.addObservationListener(compartmentPanel);
+//                    cellViewChartPanel.add(compartmentPanel);
+//                    compartmentPanel.setCompartment(observable, observation);
+//                    break;
+//                }
+//            }
+//        }
+//    }
 
-    private void createCellMeanChart(String simulationName, Observation observation, boolean isReplay) {
-        cellChartData = new XYIntervalSeriesCollection();
-        for (String observable : observation.orderedObservables) {
-            ObservationElement element = observation.observables.get(observable);
-            if (element.isCompartment) {
-                float mean = element.getMean();
-                float stdDev = element.getStandardDeviation();
-                XYIntervalSeries series = new XYIntervalSeries(observable);
-                series.setNotify(!isReplay);
-                series.add(observation.time, observation.time, observation.time, mean, mean - stdDev, mean + stdDev);
-                cellChartData.addSeries(series);
-            }
-        }
-        JFreeChart chart = ChartFactory.createXYLineChart(simulationName, "Time", "Quantity", cellChartData, PlotOrientation.VERTICAL, true, false, false);
-        DeviationRenderer renderer = new DeviationRenderer(true, false);
-        renderer.setSeriesFillPaint(0, Color.RED);
-        renderer.setSeriesFillPaint(1, Color.GREEN);
-        renderer.setSeriesFillPaint(2, Color.BLUE);
-        renderer.setSeriesPaint(0, Color.RED);
-        renderer.setSeriesPaint(1, Color.GREEN);
-        renderer.setSeriesPaint(2, Color.BLUE);
-        chart.getXYPlot().setRenderer(renderer);
-        
-        cellMeanChartPanel.setChart(chart);
-    }
+//    private void createCellMeanChart(String simulationName, Observation observation, boolean isReplay) {
+//        cellChartData = new XYIntervalSeriesCollection();
+//        for (String observable : observation.orderedObservables) {
+//            ObservationElement element = observation.observables.get(observable);
+//            if (element.isCompartment) {
+//                float mean = element.getMean();
+//                float stdDev = element.getStandardDeviation();
+//                XYIntervalSeries series = new XYIntervalSeries(observable);
+//                series.setNotify(!isReplay);
+//                series.add(observation.time, observation.time, observation.time, mean, mean - stdDev, mean + stdDev);
+//                cellChartData.addSeries(series);
+//            }
+//        }
+//        JFreeChart chart = ChartFactory.createXYLineChart(simulationName, "Time", "Quantity", cellChartData, PlotOrientation.VERTICAL, true, false, false);
+//        DeviationRenderer renderer = new DeviationRenderer(true, false);
+//        renderer.setSeriesFillPaint(0, Color.RED);
+//        renderer.setSeriesFillPaint(1, Color.GREEN);
+//        renderer.setSeriesFillPaint(2, Color.BLUE);
+//        renderer.setSeriesPaint(0, Color.RED);
+//        renderer.setSeriesPaint(1, Color.GREEN);
+//        renderer.setSeriesPaint(2, Color.BLUE);
+//        chart.getXYPlot().setRenderer(renderer);
+//        
+//        cellMeanChartPanel.setChart(chart);
+//    }
 
     private void createBasicChart(String simulationName, Observation observation) {
         chartData = new XYSeriesCollection();
@@ -653,15 +653,15 @@ public class TransitionMatchingSimulatorGui implements ActionListener, Observati
                         XYSeries series = chartData.getSeries(key);
                         series.add(observation.time, value, !replayRunning);
                     }
-                    for (Map.Entry<String, ObservationElement> entry : observation.observables.entrySet()) {
-                        ObservationElement element = entry.getValue();
-                        if (element.isCompartment) {
-                            float mean = element.getMean();
-                            float stdDev = element.getStandardDeviation();
-                            XYIntervalSeries series = cellChartData.getSeries(cellChartData.indexOf(entry.getKey()));
-                            series.add(observation.time, observation.time, observation.time, mean, mean - stdDev, mean + stdDev);
-                        }
-                    }
+//                    for (Map.Entry<String, ObservationElement> entry : observation.observables.entrySet()) {
+//                        ObservationElement element = entry.getValue();
+//                        if (element.isCompartment) {
+//                            float mean = element.getMean();
+//                            float stdDev = element.getStandardDeviation();
+//                            XYIntervalSeries series = cellChartData.getSeries(cellChartData.indexOf(entry.getKey()));
+//                            series.add(observation.time, observation.time, observation.time, mean, mean - stdDev, mean + stdDev);
+//                        }
+//                    }
                     StringBuilder status = new StringBuilder();
                     status.append("Time elapsed (s): ").append(observation.elapsedTime / 1000);
                     status.append(", Estimated time remaining (s): ").append(observation.estimatedRemainingTime / 1000);
@@ -678,10 +678,10 @@ public class TransitionMatchingSimulatorGui implements ActionListener, Observati
                 for (Object series : chartData.getSeries()) {
                     ((XYSeries) series).fireSeriesChanged();
                 }
-                for (int index = 0; index < cellChartData.getSeriesCount(); index++) {
-                    cellChartData.getSeries(index).setNotify(true);
-                    cellChartData.getSeries(index).fireSeriesChanged();
-                }
+//                for (int index = 0; index < cellChartData.getSeriesCount(); index++) {
+//                    cellChartData.getSeries(index).setNotify(true);
+//                    cellChartData.getSeries(index).fireSeriesChanged();
+//                }
             }
             textAreaData.append(simulation.getDebugOutput());
             try {
@@ -726,7 +726,7 @@ public class TransitionMatchingSimulatorGui implements ActionListener, Observati
     
 
     public static void main(String[] args) throws Exception {
-        TransitionMatchingSimulatorGui simulator = new TransitionMatchingSimulatorGui();
+        SpatialKappaSimulator simulator = new SpatialKappaSimulator();
         if (args.length == 1) {
             File kappaFile = new File(args[0]);
             if (kappaFile.exists()) {

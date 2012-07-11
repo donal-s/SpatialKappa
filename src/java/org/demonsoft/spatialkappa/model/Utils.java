@@ -176,5 +176,13 @@ public class Utils {
         return result;
     }
 
+    public static Channel getChannel(List<Channel> channels, String channelName) {
+        for (Channel channel : channels) {
+            if (channelName.equals(channel.getName())) {
+                return channel;
+            }
+        }
+        return null;
+    }
 
 }

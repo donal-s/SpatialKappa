@@ -1,5 +1,8 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.getChannel;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -431,5 +434,203 @@ public class Complex implements Serializable {
         return result;
     }
 
+    public List<MappingInstance> getMappingInstances(List<Compartment> compartments, List<Channel> channels) {
+        if (compartments == null || channels == null) {
+            throw new NullPointerException();
+        }
+        
+        List<Agent> remainingTemplateAgents = new ArrayList<Agent>(agents);
+        List<Agent> fixedTemplateAgents = getFixedAgents(compartments);
+        remainingTemplateAgents.removeAll(fixedTemplateAgents);
+        List<AgentLink> remainingTemplateLinks = new ArrayList<AgentLink>(agentLinks);
+        List<MappingInstance> mappings = new ArrayList<MappingInstance>();
+        
+        if (fixedTemplateAgents.size() > 0) {
+            List<AgentLink> processedTemplateLinks = getInternalLinks(remainingTemplateLinks, fixedTemplateAgents);
+            remainingTemplateLinks.removeAll(processedTemplateLinks);
+            
+            MappingInstance mappingInstance = new MappingInstance();
+            for (Agent agent : fixedTemplateAgents) {
+                mappingInstance.mapping.put(agent, agent.clone());
+            }
+            mappings.add(mappingInstance);
+        }
+        
+        if (fixedTemplateAgents.size() == 0) {
+            Agent templateTargetAgent = remainingTemplateAgents.get(0);
+            fixedTemplateAgents.add(templateTargetAgent);
+            remainingTemplateAgents.remove(templateTargetAgent);
+            List<AgentLink> processedTemplateLinks = getInternalLinks(remainingTemplateLinks, fixedTemplateAgents);
+            remainingTemplateLinks.removeAll(processedTemplateLinks);
+            
+            List<Agent> locatedTargetAgents = templateTargetAgent.getLocatedAgents(compartments);
+            for (Agent locatedTargetAgent : locatedTargetAgents) {
+                MappingInstance mapping = new MappingInstance();
+                mapping.mapping.put(templateTargetAgent, locatedTargetAgent);
+                mappings.add(mapping);
+            }
+        }
+        
+        while (remainingTemplateAgents.size() > 0) {
+            Agent templateTargetAgent = chooseNextAgent(fixedTemplateAgents, remainingTemplateAgents, remainingTemplateLinks);
+            fixedTemplateAgents.add(templateTargetAgent);
+            remainingTemplateAgents.remove(templateTargetAgent);
+            List<AgentLink> addedTemplateLinks = getInternalLinks(remainingTemplateLinks, fixedTemplateAgents);
+            remainingTemplateLinks.removeAll(addedTemplateLinks);
+            
+            List<MappingInstance> newMappings = new ArrayList<MappingInstance>();
+            
+            for (MappingInstance oldMapping : mappings) {
+            
+                List<Location> targetLocations = null;
+                
+                for (AgentLink link : addedTemplateLinks) {
+                    Agent templateSourceAgent = link.getLinkedAgent(templateTargetAgent);
+                    
+                    if (templateSourceAgent != null) {
+                        Agent locatedSourceAgent = oldMapping.mapping.get(templateSourceAgent);
+                        
+                        String channelName = (link.sourceSite.getChannel() != null) ? link.sourceSite.getChannel() : link.targetSite.getChannel();
+                        Channel channel = null;
+                        if (channelName != null) {
+                            channel = getChannel(channels, channelName);
+                        }
+                        List<Location> currentTargetLocations = getPossibleLocations(locatedSourceAgent.location, templateTargetAgent.location, channel, compartments);
+                        
+                        if (targetLocations == null) {
+                            targetLocations = currentTargetLocations;
+                        }
+                        else {
+                            targetLocations.retainAll(currentTargetLocations);
+                        }
+                        // TODO handling !_ links
+                    }
+                }
+                
+                if (targetLocations == null || targetLocations.size() == 0) {
+                    continue;
+                }
+                
+                for (Location targetLocation : targetLocations) {
+                    MappingInstance newMapping = new MappingInstance();
+                    newMapping.mapping.putAll(oldMapping.mapping);
+                    Agent locatedTargetAgent = new Agent(templateTargetAgent.name, targetLocation, templateTargetAgent.getSites());
+                    newMapping.mapping.put(templateTargetAgent, locatedTargetAgent);
+                    
+                    newMappings.add(newMapping);
+                }
+            }
+            mappings = newMappings;
+        }
+        
+        reorderLocatedMappings(mappings, agents);
+        
+        return mappings;
+    }
+
+    private void reorderLocatedMappings(List<MappingInstance> mappings, List<Agent> templateAgents) {
+        for (MappingInstance mapping : mappings) {
+            mapping.locatedAgents.clear();
+            for (Agent templateAgent : templateAgents) {
+                mapping.locatedAgents.add(mapping.mapping.get(templateAgent));
+            }
+        }
+    }
+
+    List<Agent> getFixedAgents(List<Compartment> compartments) {
+        if (compartments == null) {
+            throw new NullPointerException();
+        }
+        List<Agent> result = new ArrayList<Agent>();
+        for (Agent agent : agents) {
+            Location location = agent.location;
+            if (location != null) {
+                Compartment compartment = location.getReferencedCompartment(compartments);
+                if (compartment != null) {
+                    if (location.getIndices().length == compartment.getDimensions().length 
+                            && location.isConcreteLocation()) {
+                        result.add(agent);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+    
+    static List<AgentLink> getInternalLinks(List<AgentLink> links, List<Agent> agents) {
+        if (links == null || agents == null) {
+            throw new NullPointerException();
+        }
+        List<AgentLink> result = new ArrayList<AgentLink>();
+        for (AgentLink link : links) {
+            if (link.sourceSite.agent != null && !agents.contains(link.sourceSite.agent)) {
+                continue;
+            }
+            if (link.targetSite.agent != null && !agents.contains(link.targetSite.agent)) {
+                continue;
+            }
+            result.add(link);
+        }
+        return result;
+    }
+    
+    static List<Location> getPossibleLocations(Location sourceLocation, Location locationConstraint, Channel channel, List<Compartment> compartments) {
+        if (sourceLocation == null || compartments == null) {
+            throw new NullPointerException();
+        }
+        List<Location> result = new ArrayList<Location>();
+        
+        if (channel == null) {
+            if (locationConstraint == NOT_LOCATED) {
+                result.add(sourceLocation);
+            }
+            else {
+                boolean matchNameOnly = locationConstraint.getIndices().length == 0;
+                if (sourceLocation.matches(locationConstraint, matchNameOnly)) {
+                    result.add(sourceLocation);
+                }
+            }
+        }
+        else { // channel != null
+            List<Location> targetLocations = sourceLocation.getLinkedLocations(compartments, channel);
+            if (locationConstraint == NOT_LOCATED) {
+                result.addAll(targetLocations);
+            }
+            else {
+                boolean matchNameOnly = locationConstraint.getIndices().length == 0;
+                for (Location targetLocation : targetLocations) {
+                    if (targetLocation.matches(locationConstraint, matchNameOnly)) {
+                        result.add(targetLocation);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    static Agent chooseNextAgent(List<Agent> fixedAgents, List<Agent> remainingAgents, List<AgentLink> remainingLinks) {
+        if (fixedAgents == null || remainingAgents == null || remainingLinks == null) {
+            throw new NullPointerException();
+        }
+        if (fixedAgents.size() == 0 || remainingAgents.size() == 0 || remainingLinks.size() == 0) {
+            throw new IllegalArgumentException("No next agent available");
+        }
+        for (AgentLink link : remainingLinks) {
+            if (fixedAgents.contains(link.sourceSite.agent)) {
+                return link.targetSite.agent;
+            }
+            if (fixedAgents.contains(link.targetSite.agent)) {
+                return link.sourceSite.agent;
+            }
+        }
+        throw new IllegalArgumentException("No next agent available");
+    }
+
+
+    public static class MappingInstance {
+        public final Map<Agent, Agent> mapping = new HashMap<Agent, Agent>();
+        public final List<Agent> locatedAgents = new ArrayList<Agent>();
+    }
+    
 
 }

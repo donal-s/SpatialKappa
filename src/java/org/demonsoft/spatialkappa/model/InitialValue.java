@@ -8,7 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.demonsoft.spatialkappa.model.KappaModel.MappingInstance;
+import org.demonsoft.spatialkappa.model.Complex.MappingInstance;
+
 
 public class InitialValue {
 
@@ -62,7 +63,7 @@ public class InitialValue {
         for (Complex complex : complexes) {
             List<Complex> resultComplexes = new ArrayList<Complex>();
 
-            List<MappingInstance> mappings = KappaModel.initMappingStructure(complex, compartments, channels);
+            List<MappingInstance> mappings = complex.getMappingInstances(compartments, channels);
             for (MappingInstance mapping : mappings) {
                 Complex locatedComplex = new Complex(mapping.locatedAgents);
                 resultComplexes.add(locatedComplex);

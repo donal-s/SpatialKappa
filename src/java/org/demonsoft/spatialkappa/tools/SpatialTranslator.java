@@ -1,6 +1,7 @@
 package org.demonsoft.spatialkappa.tools;
 
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.getChannel;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -25,10 +26,10 @@ import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.Channel;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.Complex;
+import org.demonsoft.spatialkappa.model.Complex.MappingInstance;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.InitialValue;
 import org.demonsoft.spatialkappa.model.KappaModel;
-import org.demonsoft.spatialkappa.model.KappaModel.MappingInstance;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Transition;
 import org.demonsoft.spatialkappa.model.Variable;
@@ -93,7 +94,6 @@ public class SpatialTranslator {
         }
         builder.append("\n");
 
-        // TODO - allow multiple diffusions same name
         // TODO - restrict diffusion agents to unlinked complexes
         for (Transition transition : kappaModel.getTransitions()) {
             builder.append(getKappaString(transition));
@@ -274,7 +274,7 @@ public class SpatialTranslator {
                 builder.append("\n");
             }
             else {
-                List<MappingInstance> mappings = ((KappaModel) kappaModel).initMappingStructure(variable.complex, 
+                List<MappingInstance> mappings = variable.complex.getMappingInstances(
                         kappaModel.getCompartments(), kappaModel.getChannels());
                 if (mappings.size() == 1) {
                     builder.append("%var: '").append(variable.label).append("'");
@@ -338,7 +338,7 @@ public class SpatialTranslator {
     String getKappaString(Transition transition) {
         StringBuilder builder = new StringBuilder();
         if (transition.channelName != null) {
-            Channel channel = ((KappaModel) kappaModel).getChannel(kappaModel.getChannels(), transition.channelName);
+            Channel channel = getChannel(kappaModel.getChannels(), transition.channelName);
             int labelSuffix = 1;
             String[][] stateSuffixPairs = getLinkStateSuffixPairs(channel, kappaModel.getCompartments());
             List<Agent> agents = transition.leftAgents;
@@ -433,7 +433,7 @@ public class SpatialTranslator {
         }
         
         for (Complex complex : initialValue.complexes) {
-            List<MappingInstance> mappings = ((KappaModel) kappaModel).initMappingStructure(complex, kappaModel.getCompartments(), kappaModel.getChannels());
+            List<MappingInstance> mappings = complex.getMappingInstances(kappaModel.getCompartments(), kappaModel.getChannels());
             int totalCellCount = mappings.size();
             if (totalCellCount > 0) {
                 int baseValue = quantity / totalCellCount;

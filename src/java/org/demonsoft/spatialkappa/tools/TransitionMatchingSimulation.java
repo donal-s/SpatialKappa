@@ -38,7 +38,6 @@ import org.demonsoft.spatialkappa.model.VariableExpression;
 
 public class TransitionMatchingSimulation implements Simulation, SimulationState {
 
-    // TODO - should be ok
 //    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
 
     private static final List<ComplexMapping> NO_COMPLEX_MAPPINGS = new ArrayList<ComplexMapping>();
@@ -103,9 +102,6 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         updateTransitionsFiredMap();
         initialiseActivityMaps();
     }
-
-
-    
 
 
     @Override

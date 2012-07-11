@@ -42,9 +42,6 @@ public class SpatialKappaParserTest {
                 "(AGENT B (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0))) (INTERFACE s (LINK 1))))) (CHANNEL intra)) " +
                 "(RATE (VAR_EXPR 1.0)) AB embed)");
 
-        
-        
-
         // <-> rules no longer valid
 //        runParserRuleFail("ruleDecl", "A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");
 //        runParserRuleFail("ruleDecl", "'label' A(s!1),B(x!1)   <-> A(s),  B(x) @ 1,2");

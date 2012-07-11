@@ -206,7 +206,7 @@ channelDecl
     ->
       ^(CHANNEL $linkName channel)
   |
-  '%channel:' linkName=id '(' + channel + ')' ('+' '('+ channel + ')')*
+  '%channel:' linkName=id '(' channel ')' ('+' '(' channel ')')*
     ->
       ^(CHANNEL $linkName channel+)
   ;

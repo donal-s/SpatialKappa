@@ -403,6 +403,7 @@ public abstract class TransitionPrimitive {
         return new TransitionPrimitive(Type.MOVE_AGENTS, leftAgents, targetLocations, channelName) {
 
             class ChannelConstraint {
+                @SuppressWarnings("hiding")
                 public final Location sourceLocation;
                 public final Location targetConstraint;
                 
@@ -456,6 +457,7 @@ public abstract class TransitionPrimitive {
                 List<ChannelConstraint> channelConstraints = new ArrayList<ChannelConstraint>();
                 
                 for (int index=0; index<sourceAgents.size(); index++) {
+                    @SuppressWarnings("hiding")
                     Agent sourceAgent = sourceAgents.get(index);
                     Location targetConstraint = targetLocations.get(index);
                     Agent realAgent = transformMap.get(sourceAgent);
@@ -496,6 +498,7 @@ public abstract class TransitionPrimitive {
                 List<ChannelConstraint> channelConstraints = new ArrayList<ChannelConstraint>();
                 
                 for (int index=0; index<sourceAgents.size(); index++) {
+                    @SuppressWarnings("hiding")
                     Agent sourceAgent = sourceAgents.get(index);
                     Location targetConstraint = targetLocations.get(index);
                     Agent realAgent = transformMap.get(sourceAgent);
@@ -538,6 +541,7 @@ public abstract class TransitionPrimitive {
 
                 Set<Agent> movedAgents = new HashSet<Agent>();
                 for (int index=0; index<sourceAgents.size(); index++) {
+                    @SuppressWarnings("hiding")
                     Agent sourceAgent = sourceAgents.get(index);
                     Location targetConstraint = targetLocations.get(index);
                     Agent realAgent = transformMap.get(sourceAgent);

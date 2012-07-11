@@ -93,7 +93,7 @@ public class SimulationTest {
                 });
     }
 
-     @Test //TODO - work in progress
+    @Test
     public void testTest2_8_lateralDiffusionOfTransmembraneProteins() throws Exception {
          checkTimeSimulation("test-2-8-input.ka", new String[] {"AB", "A2B2 centre", "A2B2 not centre"}, 10, 50, 
                 new float[][] {
@@ -101,20 +101,11 @@ public class SimulationTest {
                 });
     }
     
-    // @Test TODO - work in progress
-    public void testTest2_9_extensionOfEGFRModel() throws Exception {
-        checkEventSimulation("test-2-9-input.ka", new String[] {"[A(x~s)]", "[A(x~t)]"}, 200, 50, 
-                new float[][] {
-                    {1000, 0}, {800, 200}, {600, 400}, {400, 600}, {200, 800}, {0, 1000}, {0, 1000}
-                });
-    }
-
-    
     private void checkEventSimulation(String inputModelFilename, String[] observableNames, int eventsPerStep, float accuracy, float[][] expectedObservableValues) throws Exception {
         simulation = createSimulation(inputModelFilename);
         
         // Check time 0
-//        checkObservations(0, observableNames, accuracy, expectedObservableValues[0]);
+        checkObservations(0, observableNames, accuracy, expectedObservableValues[0]);
    
         // Check remaining steps
         for (int index = 1; index < expectedObservableValues.length; index++) {

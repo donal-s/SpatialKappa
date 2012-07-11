@@ -1,6 +1,13 @@
-# Kappa version of the BNGL egfr_net model contained in the models2 repository of BioNetGen.
-# Original BNGL version:
-# Kappa version: Donal Stewart 20-05-2012
+### Kappa version of the BNGL egfr_net model contained in the models2 repository of BioNetGen.
+### Original BNGL version:
+### Kappa version: Donal Stewart 11-07-2012
+
+### This model allows for 5 parallel simulations of the egfr_net model in parallel 1D cytosol compartments
+### There is no interaction between reagents in the 5 separate simulations
+### Each of the 5 simulations has a difference cytosol diffusion rate.
+### The overall reaction rate is indicated by the production of phosphorylated Shc in each simulation.
+
+%var: 'simulationCount' 5
 
 %var: 'egf_tot' 1.2e6
 %var: 'egfr_tot' 1.8e5
@@ -8,6 +15,12 @@
 %var: 'Shc_tot' 2.7e5
 %var: 'Sos_tot' 1.3e4
 %var: 'Grb2_Sos_tot' 4.9e4
+
+%var: 'diffusionRate1' 0.0005
+%var: 'diffusionRate2' 0.001
+%var: 'diffusionRate3' 0.002
+%var: 'diffusionRate4' 0.005
+%var: 'diffusionRate5' 0.01
 
 %var: 'kp1' 1.667e-06 # ligand-monomer binding (scaled)
 %var: 'km1' 0.06 # ligand-monomer dissociation
@@ -65,110 +78,127 @@
 %var: 'kp22' 1.667e-05 # binding of ShcP-Grb2 to Sos in cytosol (scaled)
 %var: 'km22' 0.064 # diss. of ShcP-Grb2 and Sos in cytosol
 
-%compartment: cytosol
-%compartment: extracellular
+%compartment: cytosol[5][5]
+%compartment: extracellular[5]
 
-%channel: cross (:cytosol -> :extracellular) + (:extracellular -> :cytosol)
+%channel: cross     (:cytosol[0][x] -> :extracellular[x]) + (:extracellular[x] -> :cytosol[0][x])
+%channel: diffusion1 (:cytosol [x][0] -> :cytosol [x+1][0]) + (:cytosol [x][0] -> :cytosol [x - 1][0])
+%channel: diffusion2 (:cytosol [x][1] -> :cytosol [x+1][1]) + (:cytosol [x][1] -> :cytosol [x - 1][1])
+%channel: diffusion3 (:cytosol [x][2] -> :cytosol [x+1][2]) + (:cytosol [x][2] -> :cytosol [x - 1][2])
+%channel: diffusion4 (:cytosol [x][3] -> :cytosol [x+1][3]) + (:cytosol [x][3] -> :cytosol [x - 1][3])
+%channel: diffusion5 (:cytosol [x][4] -> :cytosol [x+1][4]) + (:cytosol [x][4] -> :cytosol [x - 1][4])
 
 %agent: egf(r)
 %agent: Grb2(SH2,SH3)
-%agent: Shc(PTB,Y317~Y~pY)
+%agent: Shc(PTB,Y317~Y~pY,sim~1~2~3~4~5)
 %agent: Sos(dom)
 %agent: egfr-outside(l,dl) # dl = domain link
 %agent: egfr-inside(dl,r,Y1068~Y~pY,Y1148~Y~pY)
 
-%init: 'egf_tot' egf:extracellular
-%init: 'Grb2_tot' Grb2:cytosol
-%init: 'Shc_tot' Shc:cytosol
-%init: 'Sos_tot' Sos:cytosol
-%init: 'egfr_tot' egfr-outside:extracellular(dl!1:cross),egfr-inside:cytosol(dl!1)
-%init: 'Grb2_Sos_tot' :cytosol Grb2(SH3!1),Sos(dom!1)
+#%init: 'egf_tot' egf:extracellular[0]
+#%init: 'egf_tot' egf:extracellular[1]
+#%init: 'egf_tot' egf:extracellular[2]
+#%init: 'egf_tot' egf:extracellular[3]
+%init: 'egf_tot' egf:extracellular[4]
+#%init: 'egfr_tot' egfr-outside:extracellular[0](dl!1:cross),egfr-inside:cytosol(dl!1)
+#%init: 'egfr_tot' egfr-outside:extracellular[1](dl!1:cross),egfr-inside:cytosol(dl!1)
+#%init: 'egfr_tot' egfr-outside:extracellular[2](dl!1:cross),egfr-inside:cytosol(dl!1)
+#%init: 'egfr_tot' egfr-outside:extracellular[3](dl!1:cross),egfr-inside:cytosol(dl!1)
+%init: 'egfr_tot' egfr-outside:extracellular[4](dl!1:cross),egfr-inside:cytosol(dl!1)
+
+#%init: 'Grb2_tot' Grb2:cytosol[4][0]
+#%init: 'Grb2_tot' Grb2:cytosol[4][1]
+#%init: 'Grb2_tot' Grb2:cytosol[4][2]
+#%init: 'Grb2_tot' Grb2:cytosol[4][3]
+%init: 'Grb2_tot' Grb2:cytosol[4][4]
+#%init: 'Shc_tot' Shc:cytosol[4][0](sim~1)
+#%init: 'Shc_tot' Shc:cytosol[4][1](sim~2)
+#%init: 'Shc_tot' Shc:cytosol[4][2](sim~3)
+#%init: 'Shc_tot' Shc:cytosol[4][3](sim~4)
+%init: 'Shc_tot' Shc:cytosol[4][4](sim~5)
+#%init: 'Sos_tot' Sos:cytosol[4][0]
+#%init: 'Sos_tot' Sos:cytosol[4][1]
+#%init: 'Sos_tot' Sos:cytosol[4][2]
+#%init: 'Sos_tot' Sos:cytosol[4][3]
+%init: 'Sos_tot' Sos:cytosol[4][4]
+#%init: 'Grb2_Sos_tot' :cytosol[4][0] Grb2(SH3!1),Sos(dom!1)
+#%init: 'Grb2_Sos_tot' :cytosol[4][1] Grb2(SH3!1),Sos(dom!1)
+#%init: 'Grb2_Sos_tot' :cytosol[4][2] Grb2(SH3!1),Sos(dom!1)
+#%init: 'Grb2_Sos_tot' :cytosol[4][3] Grb2(SH3!1),Sos(dom!1)
+%init: 'Grb2_Sos_tot' :cytosol[4][4] Grb2(SH3!1),Sos(dom!1)
+
+'diffusion1' ->:diffusion1 @ 'diffusionRate1'
+'diffusion2' ->:diffusion2 @ 'diffusionRate2'
+'diffusion3' ->:diffusion3 @ 'diffusionRate3'
+'diffusion4' ->:diffusion4 @ 'diffusionRate4'
+'diffusion5' ->:diffusion5 @ 'diffusionRate5'
 
 # Ligand-receptor binding
-egfr-outside(l,dl!1:cross),egfr-inside:cytosol(dl!1,r),egf(r) -> egfr-outside(l!2,dl!1:cross),egfr-inside(dl!1,r),egf(r!2) @ 'kp1' #ligand-monomer
-egfr-outside(l!2,dl!1:cross),egfr-inside:cytosol(dl!1,r),egf(r!2) -> egfr-outside(l,dl!1:cross),egfr-inside(dl!1,r),egf(r) @ 'km1' #ligand-monomer
+egfr-outside(l,dl!1:cross),egfr-inside(dl!1,r),egf(r) -> egfr-outside(l!2,dl!1:cross),egfr-inside(dl!1,r),egf(r!2) @ 'kp1' #ligand-monomer
+egfr-outside(l!2,dl!1:cross),egfr-inside(dl!1,r),egf(r!2) -> egfr-outside(l,dl!1:cross),egfr-inside(dl!1,r),egf(r) @ 'km1' #ligand-monomer
 
 # Receptor-aggregation
-egfr-outside(l!_,dl!1:cross),egfr-inside:cytosol(dl!1,r),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r) -> \
-  egfr-outside(l!_,dl!1:cross),egfr-inside:cytosol(dl!1,r!3),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r!3) @ 'kp2'
-egfr-outside(l!_,dl!1:cross),egfr-inside:cytosol(dl!1,r!3),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r!3) -> \
-  egfr-outside(l!_,dl!1:cross),egfr-inside:cytosol(dl!1,r),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r) @ 'km2'
+egfr-outside(l!_,dl!1:cross),egfr-inside(dl!1,r),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r) -> \
+  egfr-outside(l!_,dl!1:cross),egfr-inside(dl!1,r!3),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r!3) @ 'kp2'
+egfr-outside(l!_,dl!1:cross),egfr-inside(dl!1,r!3),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r!3) -> \
+  egfr-outside(l!_,dl!1:cross),egfr-inside(dl!1,r),egfr-outside(l!_,dl!2:cross),egfr-inside(dl!2,r) @ 'km2'
 
 # Transphosphorylation of egfr by RTK
-:cytosol egfr-inside(r!_,Y1068~Y) -> egfr-inside(r!_,Y1068~pY) @ 'kp3'
-:cytosol egfr-inside(r!_,Y1148~Y) -> egfr-inside(r!_,Y1148~pY) @ 'kp3'
+egfr-inside(r!_,Y1068~Y) -> egfr-inside(r!_,Y1068~pY) @ 'kp3'
+egfr-inside(r!_,Y1148~Y) -> egfr-inside(r!_,Y1148~pY) @ 'kp3'
 
 # Dephosphorylation
-:cytosol egfr-inside(Y1068~pY) -> egfr-inside(Y1068~Y) @ 'km3'
-:cytosol egfr-inside(Y1148~pY) -> egfr-inside(Y1148~Y) @ 'km3'
+egfr-inside(Y1068~pY) -> egfr-inside(Y1068~Y) @ 'km3'
+egfr-inside(Y1148~pY) -> egfr-inside(Y1148~Y) @ 'km3'
 
 # Shc transphosph
 
-:cytosol egfr-inside(r!_,Y1148~pY!1),Shc(PTB!1,Y317~Y) -> egfr-inside(r!_,Y1148~pY!1),Shc(PTB!1,Y317~pY) @ 'kp14'
-:cytosol Shc(PTB!_,Y317~pY) -> Shc(PTB!_,Y317~Y) @ 'km14'
+egfr-inside(r!_,Y1148~pY!1),Shc(PTB!1,Y317~Y) -> egfr-inside(r!_,Y1148~pY!1),Shc(PTB!1,Y317~pY) @ 'kp14'
+Shc(PTB!_,Y317~pY) -> Shc(PTB!_,Y317~Y) @ 'km14'
 
 # Y1068 activity
-:cytosol egfr-inside(Y1068~pY),Grb2(SH2,SH3) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3) @ 'kp9'
-:cytosol egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1068~pY),Grb2(SH2,SH3) @ 'km9'
-:cytosol egfr-inside(Y1068~pY),Grb2(SH2,SH3!_) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!_) @ 'kp11'
-:cytosol egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!_) -> egfr-inside(Y1068~pY),Grb2(SH2,SH3!_) @ 'km11'
-:cytosol egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) @ 'kp10'
-:cytosol egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) @ 'km10'
+egfr-inside(Y1068~pY),Grb2(SH2,SH3) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3) @ 'kp9'
+egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1068~pY),Grb2(SH2,SH3) @ 'km9'
+egfr-inside(Y1068~pY),Grb2(SH2,SH3!_) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!_) @ 'kp11'
+egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!_) -> egfr-inside(Y1068~pY),Grb2(SH2,SH3!_) @ 'km11'
+egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) @ 'kp10'
+egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) -> egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) @ 'km10'
 
 # Y1148 activity
 
-:cytosol egfr-inside(Y1148~pY),Shc(PTB,Y317~Y) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~Y) @ 'kp13'
-:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~Y) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~Y) @ 'km13'
-:cytosol egfr-inside(Y1148~pY),Shc(PTB,Y317~pY) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY) @ 'kp15'
-:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY) @ 'km15'
-:cytosol egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp18'
-:cytosol egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'km18'
-:cytosol egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'kp20'
-:cytosol egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'km20'
+egfr-inside(Y1148~pY),Shc(PTB,Y317~Y) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~Y) @ 'kp13'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~Y) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~Y) @ 'km13'
+egfr-inside(Y1148~pY),Shc(PTB,Y317~pY) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY) @ 'kp15'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY) @ 'km15'
+egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp18'
+egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'km18'
+egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'kp20'
+egfr-inside(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'km20'
 
-:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) @ 'kp17'
-:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) @ 'km17'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) @ 'kp17'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) @ 'km17'
 
-:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp24'
-:cytosol egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) @ 'km24'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp24'
+egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) @ 'km24'
 
-:cytosol Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp19'
-:cytosol Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km19'
+Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp19'
+Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km19'
 
 # Cytosolic
 
-:cytosol Shc(PTB,Y317~pY),Grb2(SH2,SH3) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp21'
-:cytosol Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3) @ 'km21'
-:cytosol Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) @ 'kp23'
-:cytosol Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) @ 'km23'
-:cytosol Shc(PTB,Y317~pY) -> Shc(PTB,Y317~Y) @ 'km16'
-:cytosol Grb2(SH2,SH3),Sos(dom) -> Grb2(SH2,SH3!1),Sos(dom!1) @ 'kp12'
-:cytosol Grb2(SH2,SH3!1),Sos(dom!1) -> Grb2(SH2,SH3),Sos(dom) @ 'km12'
-:cytosol Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp22'
-:cytosol Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km22'
+Shc(PTB,Y317~pY),Grb2(SH2,SH3) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp21'
+Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3) @ 'km21'
+Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) @ 'kp23'
+Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) @ 'km23'
+Shc(PTB,Y317~pY) -> Shc(PTB,Y317~Y) @ 'km16'
+Grb2(SH2,SH3),Sos(dom) -> Grb2(SH2,SH3!1),Sos(dom!1) @ 'kp12'
+Grb2(SH2,SH3!1),Sos(dom!1) -> Grb2(SH2,SH3),Sos(dom) @ 'km12'
+Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp22'
+Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km22'
 
 
-%obs: 'Dimers' egfr-inside(r!1),egfr-inside(r!1)
-%var: 'Sos_act-1' Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3)
-%var: 'Sos_act-2' egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2)
-%var: 'Sos_act' 'Sos_act-1' + 'Sos_act-2'
-%plot: 'Sos_act'
-%var: 'RP-1' egfr-inside(Y1068~pY?)
-%var: 'RP-2' egfr-inside(Y1148~pY?)
-%var: 'RP' 'RP-1' + 'RP-2'
-%plot: 'RP'
-%obs: 'Shc_Grb' Shc(Y317~pY!1),Grb2(SH2!1)
-%obs: 'Shc_Grb_Sos' Shc(Y317~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2)
-%obs: 'R_Grb2' egfr-inside(Y1068~pY!1),Grb2(SH2!1)
-%obs: 'R_Shc' egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~Y)
-%obs: 'R_ShcP' egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY?)
-%obs: 'ShcP' Shc(Y317~pY?)
-%obs: 'R_G_S' egfr-inside(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2)
-# Strong differences are seen for R_G_S in comparison with path model
-%obs: 'R_S_G_S' egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3)
-
-%obs: 'Efgr_total' egfr-inside
-%obs: 'Shc_total' Shc
-%obs: 'Sos_total' Sos
-%obs: 'Grb2_total' Grb2
-
+#%obs: 'ShcP1' Shc(Y317~pY?,sim~1)
+#%obs: 'ShcP2' Shc(Y317~pY?,sim~2)
+#%obs: 'ShcP3' Shc(Y317~pY?,sim~3)
+#%obs: 'ShcP4' Shc(Y317~pY?,sim~4)
+%obs: 'ShcP5' Shc(Y317~pY?,sim~5)
