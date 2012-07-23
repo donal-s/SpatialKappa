@@ -1,5 +1,6 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 
 import java.util.ArrayList;
@@ -82,8 +83,7 @@ public class Channel {
                     throw new IllegalArgumentException();
                 }
         
-                if (sourceCompartment.getDimensions().length != source.getIndices().length
-                        || targetCompartment.getDimensions().length != target.getIndices().length) {
+                if (!source.isVoxel(sourceCompartment) || !target.isVoxel(targetCompartment)) {
                     throw new IllegalArgumentException();
                 }
                 if (isConcreteLink(source, target)) {
@@ -113,6 +113,7 @@ public class Channel {
         return result.toArray(new Object[result.size()][]);
     }
 
+    // TODO - update for shapes
     private void getCellReferencePairs(List<Location[]> result, Object[][] variableRanges, Location source, Location target, 
             Compartment sourceCompartment, Compartment targetCompartment, Map<String, Integer> variables, int variableIndex) {
         if (variableIndex >= variableRanges.length) {
@@ -208,6 +209,7 @@ public class Channel {
                         for (int index = 0; index < templateTargetLocation.getIndices().length; index++) {
                             CellIndexExpression targetIndex = templateTargetLocation.getIndices()[index];
                             int targetIndexValue = targetIndex.evaluateIndex(variables);
+                            // TODO - shape handling here
                             if (targetIndexValue < 0 || targetIndexValue >= targetCompartment.getDimensions()[index]) {
                                 valid = false;
                                 break;
@@ -311,31 +313,11 @@ public class Channel {
             throw new IllegalStateException("No location pairs defined");
         }
         for (List<Location>[] locationPair : templateLocationPairs) {
-            boolean found = false;
-            
             for (Location location : locationPair[0]) {
-                found = false;
-                for (Compartment compartment : compartments) {
-                    if (location.getName().equals(compartment.getName())) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    throw new IllegalStateException("Compartment '" + location.getName() + "' not found");
-                }
+                getCompartment(compartments, location.getName());
             }            
             for (Location location : locationPair[1]) {
-                found = false;
-                for (Compartment compartment : compartments) {
-                    if (location.getName().equals(compartment.getName())) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    throw new IllegalStateException("Compartment '" + location.getName() + "' not found");
-                }
+                getCompartment(compartments, location.getName());
             }
         }
     }

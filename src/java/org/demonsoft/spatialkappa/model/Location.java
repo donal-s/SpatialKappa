@@ -1,5 +1,6 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,20 +34,16 @@ public class Location implements Serializable {
         return name;
     }
 
+    @Deprecated
     public CellIndexExpression[] getIndices() {
         return indices;
     }
 
     public Compartment getReferencedCompartment(List<Compartment> compartments) {
-        if (compartments == null) {
-            throw new NullPointerException();
+        if (NOT_LOCATED == this) {
+            return null;
         }
-        for (Compartment compartment : compartments) {
-            if (name.equals(compartment.getName())) {
-                return compartment;
-            }
-        }
-        return null;
+        return getCompartment(compartments, name);
     }
 
     public boolean isConcreteLocation() {
@@ -56,6 +53,16 @@ public class Location implements Serializable {
             }
         }
         return true;
+    }
+
+    public boolean isVoxel(Compartment compartment) {
+        if (this == NOT_LOCATED) {
+            throw new IllegalStateException();
+        }
+        if (!compartment.getName().equals(name)) {
+            throw new IllegalArgumentException("Compartment mismatch: " + compartment.getName());
+        }
+        return compartment.getDimensions().length == indices.length;
     }
 
     @Override
@@ -121,10 +128,6 @@ public class Location implements Serializable {
         return equals(location);
     }
     
-    public static boolean doLocationsMatch(Location location1, Location location2, boolean matchNameOnly) {
-        return location1 == null || location1.matches(location2, matchNameOnly);
-    }
-
     public List<Location> getLinkedLocations(List<Compartment> compartments, Channel... channels) {
         Compartment compartment = getReferencedCompartment(compartments);
         if (compartment == null) {

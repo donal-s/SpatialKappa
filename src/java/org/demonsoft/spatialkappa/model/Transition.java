@@ -729,12 +729,6 @@ public class Transition {
         }
     }
     
-    @Override
-    protected Transition clone() {
-        // TODO Check if copies are needed
-        return new Transition(label, leftAgents, channelName, rightAgents, rate);
-    }
-
     public Map<Agent, Agent> getLeftRightAgentMap() {
         Map<Agent, Agent> result = new HashMap<Agent, Agent>();
         for (int index = 0; index < bestIndexMapLeftRight.length; index++) {

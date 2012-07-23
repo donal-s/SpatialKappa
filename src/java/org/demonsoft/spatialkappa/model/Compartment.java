@@ -1,8 +1,5 @@
 package org.demonsoft.spatialkappa.model;
 
-import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.util.List;
 
 public class Compartment {
 
@@ -26,6 +23,8 @@ public class Compartment {
         return name;
     }
 
+    // TODO - remember - only limits when talking about spheres/cylinders/etc
+    @Deprecated
     public int[] getDimensions() {
         return dimensions;
     }
@@ -42,6 +41,7 @@ public class Compartment {
         return builder.toString();
     }
 
+    // TODO shape handling here
     private int getCellCount() {
         int result = 1;
         for (int dimension : dimensions) {
@@ -50,6 +50,7 @@ public class Compartment {
         return result;
     }
 
+    // TODO target for subclasses
     public Location[] getDistributedCellReferences() {
         if (dimensions.length == 0) {
             return new Location[] { new Location(name) };
@@ -73,33 +74,4 @@ public class Compartment {
         return result;
     }
 
-    public Serializable createValueArray() {
-        Serializable result = (Serializable) Array.newInstance(float.class, dimensions);
-        return result;
-    }
-
-    public static Location[] getDistributedCellReferences(List<Compartment> compartments) {
-        if (compartments == null) {
-            throw new NullPointerException();
-        }
-        if (compartments.size() == 0) {
-            throw new IllegalArgumentException();
-        }
-        
-        int totalCellCount = 0;
-        for (Compartment compartment : compartments) {
-            totalCellCount += compartment.getCellCount();
-        }
-
-        Location[] result = new Location[totalCellCount];
-        int resultIndex = 0;
-        
-        for (Compartment compartment : compartments) {
-            Location[] compartmentResult = compartment.getDistributedCellReferences();
-            System.arraycopy(compartmentResult, 0, result, resultIndex, compartmentResult.length);
-            resultIndex += compartmentResult.length;
-        }
-        return result;
-    }
-    
 }

@@ -1,3 +1,4 @@
+### AGENTS
 %agent: Grb2(SH2,SH3,loc~cytosol~extracellular)
 %agent: Shc(PTB,Y317~Y~pY,loc~cytosol~extracellular)
 %agent: Sos(dom,loc~cytosol~extracellular)
@@ -5,6 +6,7 @@
 %agent: egfr-inside(dl,r,Y1068~Y~pY,Y1148~Y~pY,loc~cytosol~extracellular)
 %agent: egfr-outside(l,dl,loc~cytosol~extracellular)
 
+### RULES
 egfr-outside(dl!1,l,loc~extracellular),egfr-inside(dl!1,r,loc~cytosol),egf(r,loc~extracellular) -> egfr-outside(dl!1,l!2,loc~extracellular),egfr-inside(dl!1,r,loc~cytosol),egf(r!2,loc~extracellular) @ 'kp1'
 egfr-outside(dl!1,l!2,loc~extracellular),egfr-inside(dl!1,r,loc~cytosol),egf(r!2,loc~extracellular) -> egfr-outside(dl!1,l,loc~extracellular),egfr-inside(dl!1,r,loc~cytosol),egf(r,loc~extracellular) @ 'km1'
 egfr-outside(dl!1,l!_,loc~extracellular),egfr-inside(dl!1,r,loc~cytosol),egfr-outside(dl!2,l!_,loc~extracellular),egfr-inside(dl!2,r,loc~cytosol) -> egfr-outside(dl!1,l!_,loc~extracellular),egfr-inside(dl!1,r!3,loc~cytosol),egfr-outside(dl!2,l!_,loc~extracellular),egfr-inside(dl!2,r!3,loc~cytosol) @ 'kp2'
@@ -45,6 +47,7 @@ Grb2(SH2,SH3!1,loc~cytosol),Sos(dom!1,loc~cytosol) -> Grb2(SH2,SH3,loc~cytosol),
 Shc(PTB,Y317~pY!2,loc~cytosol),Grb2(SH2!2,SH3,loc~cytosol),Sos(dom,loc~cytosol) -> Shc(PTB,Y317~pY!2,loc~cytosol),Grb2(SH2!2,SH3!3,loc~cytosol),Sos(dom!3,loc~cytosol) @ 'kp22'
 Shc(PTB,Y317~pY!2,loc~cytosol),Grb2(SH2!2,SH3!3,loc~cytosol),Sos(dom!3,loc~cytosol) -> Shc(PTB,Y317~pY!2,loc~cytosol),Grb2(SH2!2,SH3,loc~cytosol),Sos(dom,loc~cytosol) @ 'km22'
 
+### INITIAL VALUES
 %init: 1200000 egf(loc~extracellular)
 %init: 100000 Grb2(loc~cytosol)
 %init: 270000 Shc(loc~cytosol)
@@ -52,6 +55,7 @@ Shc(PTB,Y317~pY!2,loc~cytosol),Grb2(SH2!2,SH3!3,loc~cytosol),Sos(dom!3,loc~cytos
 %init: 180000 egfr-inside(dl!1,loc~cytosol),egfr-outside(dl!1,loc~extracellular)
 %init: 49000 Grb2(SH3!1,loc~cytosol),Sos(dom!1,loc~cytosol)
 
+### VARIABLES
 %var: 'egf_tot' 1200000.0
 %var: 'egfr_tot' 180000.0
 %var: 'Grb2_tot' 100000.0
@@ -66,7 +70,7 @@ Shc(PTB,Y317~pY!2,loc~cytosol),Grb2(SH2!2,SH3!3,loc~cytosol),Sos(dom!3,loc~cytos
 %var: 'km3' 4.505
 %var: 'kp14' 3.0
 %var: 'km14' 0.03
-%var: 'km16' 0.005
+%var: 'km16' 0.0050
 %var: 'kp9' 8.333E-7
 %var: 'km9' 0.05
 %var: 'kp10' 5.556E-6
@@ -114,6 +118,8 @@ Shc(PTB,Y317~pY!2,loc~cytosol),Grb2(SH2!2,SH3!3,loc~cytosol),Sos(dom!3,loc~cytos
 %var: 'Shc_total' Shc
 %var: 'Sos_total' Sos
 %var: 'Grb2_total' Grb2
+
+### PLOTS
 %plot: 'Dimers'
 %plot: 'Sos_act'
 %plot: 'RP'

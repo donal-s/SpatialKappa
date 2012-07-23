@@ -97,7 +97,7 @@ public class LocationTest {
             location.getLinkedLocations(compartments, channelCytosol);
             fail("Unknown location should have failed");
         }
-        catch (IllegalArgumentException e) {
+        catch (IllegalStateException e) {
             // Expected exception
         }
         
@@ -142,9 +142,9 @@ public class LocationTest {
         assertEquals(expected, location.getLinkedLocations(compartments, complexChannel));
 
     }
-	
-	@Test
-	public void testIsRefinement() {
+    
+    @Test
+    public void testIsRefinement() {
         Location compartment1 = new Location("cytosol");
         Location compartment2 = new Location("nucleus");
         Location voxel1 = new Location("cytosol", INDEX_0);
@@ -172,6 +172,45 @@ public class LocationTest {
         assertFalse(voxel1.isRefinement(voxel1));
         assertFalse(voxel1.isRefinement(voxel2));
         assertFalse(voxel1.isRefinement(NOT_LOCATED));
-	}
+    }
+    
+    @Test
+    public void testIsVoxel() {
+        Compartment compartment1 = new Compartment("cytosol", 5, 5);
+        Compartment compartment2 = new Compartment("nucleus");
+        Location compartmentLocation1 = new Location("cytosol");
+        Location compartmentLocation2 = new Location("nucleus");
+        Location voxel1 = new Location("cytosol", INDEX_0, INDEX_1);
+        Location invalidVoxel = new Location("nucleus", INDEX_0);
+        
+        try {
+            compartmentLocation1.isVoxel(null);
+            fail("Null should have failed");
+        }
+        catch (NullPointerException e) {
+            // Expected exception
+        }
+        
+        try {
+            NOT_LOCATED.isVoxel(compartment1);
+            fail("Not located should have failed");
+        }
+        catch (IllegalStateException e) {
+            // Expected exception
+        }
+        
+        try {
+            compartmentLocation2.isVoxel(compartment1);
+            fail("Name mismatch located should have failed");
+        }
+        catch (IllegalArgumentException e) {
+            // Expected exception
+        }
+        
+        assertFalse(compartmentLocation1.isVoxel(compartment1));
+        assertTrue(compartmentLocation2.isVoxel(compartment2));
+        assertTrue(voxel1.isVoxel(compartment1));
+        assertFalse(invalidVoxel.isVoxel(compartment2));
+    }
 	
 }

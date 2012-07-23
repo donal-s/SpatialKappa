@@ -216,7 +216,7 @@ public class AgentTest {
             agent.getLocatedAgents(compartments);
             fail("unknown location should have failed");
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalStateException ex) {
             // Expected exception
         }
         

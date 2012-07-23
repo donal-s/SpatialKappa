@@ -425,6 +425,17 @@ public class SpatialKappaSimulator implements ActionListener, ObservationListene
         }
         catch (Exception e) {
             handleException(e);
+            try {
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    public void run() {
+                        setToolbarMode(kappaFile != null ? ToolbarMode.KAPPA_AND_REPLAY_READY : ToolbarMode.REPLAY_READY);
+                        textStatus.setText("Simulation failed. Check console for error");
+                    }
+                });
+            }
+            catch (Exception e1) {
+                handleException(e);
+            }
         }
     }
 

@@ -124,6 +124,7 @@ public class KappaModel implements IKappaModel {
         perturbations.add(perturbation);
     }
 
+    // TODO shape handling here
     public void addCompartment(String name, List<Integer> dimensions) {
         if (name == null || dimensions == null) {
             throw new NullPointerException();
@@ -445,16 +446,7 @@ public class KappaModel implements IKappaModel {
             }
             
             if (transition.channelName != null) {
-                boolean found = false;
-                for (Channel link : channels) {
-                    if (transition.channelName.equals(link.getName())) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    throw new IllegalStateException("Channel '" + transition.channelName + "' not found");
-                }
+                getChannel(transition.channelName);
             }
         }
         

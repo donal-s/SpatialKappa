@@ -200,7 +200,7 @@ public class ChannelTest {
             channel.getCellReferencePairs(compartments);
             fail("missing compartment should have failed");
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalStateException ex) {
             // Expected exception
         }
         
@@ -211,7 +211,7 @@ public class ChannelTest {
             channel.getCellReferencePairs(compartments);
             fail("missing compartment should have failed");
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalStateException ex) {
             // Expected exception
         }
         
@@ -322,7 +322,7 @@ public class ChannelTest {
             channel2.applyChannel(getList(new Location("a", INDEX_1)), getList(NOT_LOCATED), compartments);
             fail("missing compartment should have failed");
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalStateException ex) {
             // Expected exception
         }
 
@@ -333,7 +333,7 @@ public class ChannelTest {
             channel2.applyChannel(getList(new Location("a", INDEX_1)), getList(NOT_LOCATED), compartments);
             fail("missing compartment should have failed");
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalStateException ex) {
             // Expected exception
         }
 

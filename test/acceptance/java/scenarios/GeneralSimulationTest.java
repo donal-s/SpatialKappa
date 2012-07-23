@@ -1,4 +1,4 @@
-package org.demonsoft.spatialkappa.scenarios;
+package scenarios;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -19,7 +19,7 @@ import org.demonsoft.spatialkappa.tools.TransitionMatchingSimulation;
 import org.junit.Test;
 
 
-public class TransitionMatchingSpatialTest {
+public class GeneralSimulationTest {
 
 
     TransitionMatchingSimulation simulation;
@@ -465,15 +465,9 @@ public class TransitionMatchingSpatialTest {
     
     @Test
     public void testSteadyStateConcentrationGradient() throws Exception {
-        try {
-            checkEventSimulation(STEADY_STATE_CONCENTRATION_GRADIENT_INPUT, new String[] {"val[0]", "val[1]", "val[2]", "val[3]"}, 3000, 50, new float[][] {
-                    {0, 0, 0, 0}, {150, 100, 50, 1}, {150, 100, 50, 1}, 
-            });
-        }
-        catch (AssertionError ex) {
-            // Intermittent failure here
-            System.out.println(simulation.toString());
-        }
+        checkEventSimulation(STEADY_STATE_CONCENTRATION_GRADIENT_INPUT, new String[] {"val[0]", "val[1]", "val[2]", "val[3]"}, 3000, 50, new float[][] {
+                {0, 0, 0, 0}, {150, 150, 150, 0}, {150, 150, 150, 0}, 
+        });
     }
     
     @Test
@@ -608,8 +602,8 @@ public class TransitionMatchingSpatialTest {
         "%agent: A()\n" +
         "%compartment: cytosol [4]\n" + 
         "%channel: intra-cytosol :cytosol [x] -> :cytosol [x+1]\n" + 
-        "'diffusion-all' ->:intra-cytosol @ 0.1\n" + 
-        "'source' -> :cytosol[0] A() @ 5\n" + 
+        "'diffusion-all' ->:intra-cytosol @ 1\n" + 
+        "'source' -> :cytosol[0] A() @ 150\n" + 
         "'sink' :cytosol[3] A() -> @ [inf]\n" + 
         "%obs: 'val[0]' :cytosol[0] A() \n" + 
         "%obs: 'val[1]' :cytosol[1] A() \n" + 

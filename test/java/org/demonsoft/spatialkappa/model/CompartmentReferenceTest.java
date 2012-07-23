@@ -76,7 +76,13 @@ public class CompartmentReferenceTest {
         
         List<Compartment> compartments = new ArrayList<Compartment>();
         compartments.add(new Compartment("label2"));
-        assertNull(reference.getReferencedCompartment(compartments));
+        try {
+            reference.getReferencedCompartment(compartments);
+            fail("Missing compartment should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
         
         Compartment match = new Compartment("label");
         compartments.add(match);

@@ -547,8 +547,7 @@ public class Complex implements Serializable {
             if (location != null) {
                 Compartment compartment = location.getReferencedCompartment(compartments);
                 if (compartment != null) {
-                    if (location.getIndices().length == compartment.getDimensions().length 
-                            && location.isConcreteLocation()) {
+                    if (location.isVoxel(compartment) && location.isConcreteLocation()) {
                         result.add(agent);
                     }
                 }

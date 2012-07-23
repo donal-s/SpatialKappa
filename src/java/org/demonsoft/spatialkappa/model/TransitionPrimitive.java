@@ -1,5 +1,6 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.Utils.getChannel;
 import static org.demonsoft.spatialkappa.model.Utils.getFlatString;
 
 import java.util.ArrayList;
@@ -350,16 +351,7 @@ public abstract class TransitionPrimitive {
                 Complex targetComplex = targetComplexes.get(0);
                 Location oldLocation = targetComplex.agents.get(0).location;
                 
-                Channel channel = null;
-                for (Channel current : channels) {
-                    if (channelName.equals(current.getName())) {
-                        channel = current;
-                    }
-                }
-
-                if (channel == null) {
-                    throw new IllegalStateException("Unknown channel: " + channelName);
-                }
+                Channel channel = getChannel(channels, channelName);
                 
                 List<Location> newLocations = channel.applyChannel(oldLocation, targetLocation, compartments);
                 return newLocations.size();
@@ -370,16 +362,7 @@ public abstract class TransitionPrimitive {
                 Complex targetComplex = targetComplexes.get(0);
                 Location oldLocation = targetComplex.agents.get(0).location;
                 
-                Channel channel = null;
-                for (Channel current : channels) {
-                    if (channelName.equals(current.getName())) {
-                        channel = current;
-                    }
-                }
-
-                if (channel == null) {
-                    throw new IllegalStateException("Unknown channel: " + channelName);
-                }
+                Channel channel = getChannel(channels, channelName);
                 
                 List<Location> newLocations = channel.applyChannel(oldLocation, targetLocation, compartments);
                 Location newLocation;
@@ -474,16 +457,7 @@ public abstract class TransitionPrimitive {
                     }
                 }
                 
-                Channel channel = null;
-                for (Channel current : channels) {
-                    if (channelName.equals(current.getName())) {
-                        channel = current;
-                    }
-                }
-
-                if (channel == null) {
-                    throw new IllegalStateException("Unknown channel: " + channelName);
-                }
+                Channel channel = getChannel(channels, channelName);
                 
                 List<List<Location>> newLocationLists = channel.applyChannel(oldLocations, targetConstraints, compartments);
                 return newLocationLists.size();
@@ -515,16 +489,7 @@ public abstract class TransitionPrimitive {
                     }
                 }
                 
-                Channel channel = null;
-                for (Channel current : channels) {
-                    if (channelName.equals(current.getName())) {
-                        channel = current;
-                    }
-                }
-
-                if (channel == null) {
-                    throw new IllegalStateException("Unknown channel: " + channelName);
-                }
+                Channel channel = getChannel(channels, channelName);
                 
                 List<List<Location>> newLocationLists = channel.applyChannel(oldLocations, targetConstraints, compartments);
                 List<Location> newLocations;

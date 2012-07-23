@@ -1,13 +1,9 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.demonsoft.spatialkappa.model.Compartment;
-import org.demonsoft.spatialkappa.model.Location;
-import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.junit.Test;
 
 public class CompartmentTest {
@@ -76,46 +72,6 @@ public class CompartmentTest {
                 new Location("label", new CellIndexExpression("0"), new CellIndexExpression("1")),
                 new Location("label", new CellIndexExpression("1"), new CellIndexExpression("1")),
                 new Location("label", new CellIndexExpression("2"), new CellIndexExpression("1"))
-        );
-    }
-
-    @Test
-    public void testGetDistributedCellReferences_multipleCompartments() {
-        List<Compartment> compartments = new ArrayList<Compartment>();
-        compartments.add(new Compartment("label"));
-        
-
-        try {
-            Compartment.getDistributedCellReferences(null);
-            fail("null should have failed");
-        }
-        catch (NullPointerException ex) {
-            // Expected exception
-        }
-        try {
-            Compartment.getDistributedCellReferences(new ArrayList<Compartment>());
-            fail("empty should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-
-        
-        checkCompartmentReferences(Compartment.getDistributedCellReferences(compartments), new Location("label"));
-        
-        compartments.add(new Compartment("label2", 3));
-        compartments.add(new Compartment("label3", 3, 2));
-        checkCompartmentReferences(Compartment.getDistributedCellReferences(compartments), 
-                new Location("label"),
-                new Location("label2", new CellIndexExpression("0")),
-                new Location("label2", new CellIndexExpression("1")),
-                new Location("label2", new CellIndexExpression("2")),
-                new Location("label3", new CellIndexExpression("0"), new CellIndexExpression("0")),
-                new Location("label3", new CellIndexExpression("1"), new CellIndexExpression("0")),
-                new Location("label3", new CellIndexExpression("2"), new CellIndexExpression("0")),
-                new Location("label3", new CellIndexExpression("0"), new CellIndexExpression("1")),
-                new Location("label3", new CellIndexExpression("1"), new CellIndexExpression("1")),
-                new Location("label3", new CellIndexExpression("2"), new CellIndexExpression("1"))
         );
     }
 

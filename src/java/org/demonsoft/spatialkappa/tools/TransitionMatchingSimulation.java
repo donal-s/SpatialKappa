@@ -1,5 +1,6 @@
 package org.demonsoft.spatialkappa.tools;
 
+import static org.demonsoft.spatialkappa.model.Utils.getChannel;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 
 import java.util.ArrayList;
@@ -21,7 +22,6 @@ import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.ComplexMapping;
 import org.demonsoft.spatialkappa.model.ComplexMatcher;
 import org.demonsoft.spatialkappa.model.IKappaModel;
-import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
@@ -70,10 +70,6 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     
 //    private final Map<Location, List<Transition>> emptySubstrateTransitionMap = new HashMap<Location, List<Transition>>();
 
-
-    public TransitionMatchingSimulation() {
-        this(new KappaModel());
-    }
 
     public TransitionMatchingSimulation(IKappaModel kappaModel) {
         this.kappaModel = kappaModel;
@@ -833,16 +829,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
                     }
                 }
                 else {
-                    Channel channel = null;
-                    for (Channel current : channels) {
-                        if (current.getName().equals(primitive.channelName)) {
-                            channel = current;
-                            break;
-                        }
-                    }
-                    if (channel == null) {
-                        throw new IllegalArgumentException("Channel not found: " + primitive.channelName);
-                    }
+                    Channel channel = getChannel(channels, primitive.channelName);
                     if (channel.applyChannel(realSourceLocation, realTargetLocation, compartments).size() == 0) {
                         return false;
                     }

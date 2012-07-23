@@ -25,7 +25,7 @@ public class Agent implements Serializable {
         this(name, NOT_LOCATED);
     }
 
-    public Agent(String name, Location location) {
+    private Agent(String name, Location location) {
         if (name == null || location == null) {
             throw new NullPointerException();
         }
@@ -63,7 +63,7 @@ public class Agent implements Serializable {
         updateStateHash();
     }
 
-    void updateStateHash() {
+    public void updateStateHash() {
         StringBuilder builder = new StringBuilder();
         for (String current : orderedSiteNames) {
             AgentSite site = sites.get(current);
@@ -187,7 +187,7 @@ public class Agent implements Serializable {
         return builder.toString();
     }
 
-	public void setLocation(Location location) {
+    public void setLocation(Location location) {
         if (location == null) {
             throw new NullPointerException();
         }
@@ -220,7 +220,7 @@ public class Agent implements Serializable {
             if (compartment == null) {
                 throw new IllegalArgumentException("Unknown location: " + location);
             }
-            if (location.getIndices().length == compartment.getDimensions().length) {
+            if (location.isVoxel(compartment)) {
                 result.add(this.clone());
             }
             else {

@@ -182,7 +182,16 @@ public class Utils {
                 return channel;
             }
         }
-        return null;
+        throw new IllegalStateException("Channel '" + channelName + "' not found");
+    }
+
+    public static Compartment getCompartment(List<Compartment> compartments, String compartmentName) {
+        for (Compartment compartment : compartments) {
+            if (compartmentName.equals(compartment.getName())) {
+                return compartment;
+            }
+        }
+        throw new IllegalStateException("Compartment '" + compartmentName + "' not found");
     }
 
 }
