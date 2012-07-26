@@ -414,6 +414,14 @@ public class SpatialKappaParserTest {
         runParserRule("compartmentDecl", "%compartment: label [1][20]", "(COMPARTMENT label (DIMENSION 1) (DIMENSION 20))");
         runParserRule("compartmentDecl", "%compartment: 0_complex1Label-with-Stuff", "(COMPARTMENT 0_complex1Label-with-Stuff)");
         
+        // Shapes
+        runParserRule("compartmentDecl", "%compartment: label type", 
+                "(COMPARTMENT label (TYPE type))");
+        runParserRule("compartmentDecl", "%compartment: label type [10]", 
+                "(COMPARTMENT label (TYPE type) (DIMENSION 10))");
+        runParserRule("compartmentDecl", "%compartment: label type [10][5] [2][3]", 
+                "(COMPARTMENT label (TYPE type) (DIMENSION 10) (DIMENSION 5) (DIMENSION 2) (DIMENSION 3))");
+        
         // Error cases - TODO have them throw exceptions
         runParserRuleFail("compartmentDecl", "%compartment:");
         runParserRuleFail("compartmentDecl", "%compartment: \'label\'[10]");

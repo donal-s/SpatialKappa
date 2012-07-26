@@ -81,7 +81,7 @@ public class SimulationTest {
     public void testTest2_6_membraneBoundScaffold3D() throws Exception {
          checkEventSimulation("test-2-6-input.ka", new String[] {"AB[1][1][1]", "AB[3][3][3]", "AB[5][5][5]", "AB[7][7][7]"}, 2000, 60, 
                 new float[][] {
-                {0, 0, 0, 0}, {700, 3, 1, 0}, {980, 15, 3, 1},
+                {0, 0, 0, 0}, {430, 15, 4, 1}, {720, 30, 6, 2},
             });
     }
     
@@ -100,7 +100,47 @@ public class SimulationTest {
                     {0, 0, 0}, {50, 75, 25}, {40, 175, 80}, {25, 250, 125},
                 });
     }
+
+    @Test
+    public void testTest3_1_creationOfGeometricPrimitives() throws Exception {
+         checkTimeSimulation("test-3-1-input.ka", new String[] {}, 0, 0, 
+                new float[][] {
+                    {}, 
+                });
+    }
     
+//    @Test
+    public void testTest3_2_locationWithinGeometricPrimitives() throws Exception {
+         checkTimeSimulation("test-3-2-input.ka", new String[] {"AB", "A2B2 centre", "A2B2 not centre"}, 10, 50, 
+                new float[][] {
+                    {0, 0, 0}, {50, 75, 25}, {40, 175, 80}, {25, 250, 125},
+                });
+    }
+    
+//    @Test
+    public void testTest3_3_diffusionWithinGeometricPrimitives() throws Exception {
+         checkTimeSimulation("test-3-3-input.ka", new String[] {"AB", "A2B2 centre", "A2B2 not centre"}, 10, 50, 
+                new float[][] {
+                    {0, 0, 0}, {50, 75, 25}, {40, 175, 80}, {25, 250, 125},
+                });
+    }
+    
+//    @Test
+    public void testTest3_4_diffusionBetweenGeometricPrimitives() throws Exception {
+         checkTimeSimulation("test-3-4-input.ka", new String[] {"AB", "A2B2 centre", "A2B2 not centre"}, 10, 50, 
+                new float[][] {
+                    {0, 0, 0}, {50, 75, 25}, {40, 175, 80}, {25, 250, 125},
+                });
+    }
+    
+//    @Test
+    public void testTest3_5_lateralDiffusionOfTransmembraneProteins() throws Exception {
+         checkTimeSimulation("test-3-5-input.ka", new String[] {"AB", "A2B2 centre", "A2B2 not centre"}, 10, 50, 
+                new float[][] {
+                    {0, 0, 0}, {50, 75, 25}, {40, 175, 80}, {25, 250, 125},
+                });
+    }
+
     private void checkEventSimulation(String inputModelFilename, String[] observableNames, int eventsPerStep, float accuracy, float[][] expectedObservableValues) throws Exception {
         simulation = createSimulation(inputModelFilename);
         

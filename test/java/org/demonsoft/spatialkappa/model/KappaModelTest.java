@@ -558,7 +558,7 @@ public class KappaModelTest {
     @Test
     public void testAddCompartment_notObject() {
         try {
-            model.addCompartment(null, new ArrayList<Integer>());
+            model.addCompartment(null, "type", new ArrayList<Integer>());
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -566,7 +566,7 @@ public class KappaModelTest {
         }
 
         try {
-            model.addCompartment("label", null);
+            model.addCompartment("label", "type", null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -576,14 +576,274 @@ public class KappaModelTest {
         assertNotNull(model.getCompartments());
         assertEquals(0, model.getCompartments().size());
 
-        model.addCompartment("compartment1", new ArrayList<Integer>());
+        model.addCompartment("compartment1", null, new ArrayList<Integer>());
         List<Integer> dimensions = new ArrayList<Integer>();
         dimensions.add(2);
         dimensions.add(3);
-        model.addCompartment("compartment2", dimensions);
+        model.addCompartment("compartment2", null, dimensions);
         assertEquals(2, model.getCompartments().size());
         assertEquals("compartment1", model.getCompartments().get(0).toString());
         assertEquals("compartment2[2][3]", model.getCompartments().get(1).toString());
+    }
+
+    @Test
+    public void testAddCompartment_shapes() {
+        try {
+            model.addCompartment("label", "unknownShape", new ArrayList<Integer>());
+            fail("unknown shape should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+    }
+
+    @Test
+    public void testAddCompartment_openRectangle() {
+        try {
+            model.addCompartment("label", "OpenRectangle", getList(1, 2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "OpenRectangle", getList(1, 2, 3, 4));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "OpenRectangle", getList(10, 8, 5));
+            fail("too thick should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        assertNotNull(model.getCompartments());
+        assertEquals(0, model.getCompartments().size());
+
+        model.addCompartment("compartment1", "OpenRectangle", getList(10, 8, 3));
+        assertEquals(Compartment.OpenRectangle.class, model.getCompartments().get(0).getClass());
+        assertEquals("compartment1 (OpenRectangle) [10][8] [3]", model.getCompartments().get(0).toString());
+    }
+
+    @Test
+    public void testAddCompartment_solidCircle() {
+        try {
+            model.addCompartment("label", "SolidCircle", new ArrayList<Integer>());
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "SolidCircle", getList(1, 2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        assertNotNull(model.getCompartments());
+        assertEquals(0, model.getCompartments().size());
+
+        model.addCompartment("compartment1", "SolidCircle", getList(10));
+        assertEquals(Compartment.SolidCircle.class, model.getCompartments().get(0).getClass());
+        assertEquals("compartment1 (SolidCircle) [10]", model.getCompartments().get(0).toString());
+    }
+
+
+    @Test
+    public void testAddCompartment_openCircle() {
+        try {
+            model.addCompartment("label", "OpenCircle", getList(1));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "OpenCircle", getList(1, 2, 3));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "OpenCircle", getList(10, 8));
+            fail("too thick should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        assertNotNull(model.getCompartments());
+        assertEquals(0, model.getCompartments().size());
+
+        model.addCompartment("compartment1", "OpenCircle", getList(10, 3));
+        assertEquals(Compartment.OpenCircle.class, model.getCompartments().get(0).getClass());
+        assertEquals("compartment1 (OpenCircle) [10] [3]", model.getCompartments().get(0).toString());
+    }
+
+    @Test
+    public void testAddCompartment_openCuboid() {
+        try {
+            model.addCompartment("label", "OpenCuboid", getList(1, 2, 2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "OpenCuboid", getList(10, 20, 30, 40, 4));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "OpenCuboid", getList(10, 5, 8, 3));
+            fail("too thick should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        assertNotNull(model.getCompartments());
+        assertEquals(0, model.getCompartments().size());
+
+        model.addCompartment("compartment1", "OpenCuboid", getList(10, 5, 8, 2));
+        assertEquals(Compartment.OpenCuboid.class, model.getCompartments().get(0).getClass());
+        assertEquals("compartment1 (OpenCuboid) [10][5][8] [2]", model.getCompartments().get(0).toString());
+    }
+
+    @Test
+    public void testAddCompartment_solidSphere() {
+        try {
+            model.addCompartment("label", "SolidSphere", new ArrayList<Integer>());
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "SolidSphere", getList(1, 2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        assertNotNull(model.getCompartments());
+        assertEquals(0, model.getCompartments().size());
+
+        model.addCompartment("compartment1", "SolidSphere", getList(10));
+        assertEquals(Compartment.SolidSphere.class, model.getCompartments().get(0).getClass());
+        assertEquals("compartment1 (SolidSphere) [10]", model.getCompartments().get(0).toString());
+    }
+
+    @Test
+    public void testAddCompartment_openSphere() {
+        try {
+            model.addCompartment("label", "OpenSphere", getList(2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "OpenSphere", getList(10, 20, 4));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "OpenSphere", getList(10, 8));
+            fail("too thick should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        assertNotNull(model.getCompartments());
+        assertEquals(0, model.getCompartments().size());
+
+        model.addCompartment("compartment1", "OpenSphere", getList(10, 2));
+        assertEquals(Compartment.OpenSphere.class, model.getCompartments().get(0).getClass());
+        assertEquals("compartment1 (OpenSphere) [10] [2]", model.getCompartments().get(0).toString());
+    }
+
+    @Test
+    public void testAddCompartment_solidCylinder() {
+        try {
+            model.addCompartment("label", "SolidCylinder", getList(10));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "SolidCylinder", getList(1, 2, 3));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        assertNotNull(model.getCompartments());
+        assertEquals(0, model.getCompartments().size());
+
+        model.addCompartment("compartment1", "SolidCylinder", getList(10, 20));
+        assertEquals(Compartment.SolidCylinder.class, model.getCompartments().get(0).getClass());
+        assertEquals("compartment1 (SolidCylinder) [10][20]", model.getCompartments().get(0).toString());
+    }
+
+    @Test
+    public void testAddCompartment_openCylinder() {
+        try {
+            model.addCompartment("label", "OpenCylinder", getList(2, 20));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "OpenCylinder", getList(10, 20, 20, 4));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            model.addCompartment("label", "OpenCylinder", getList(10, 20, 8));
+            fail("too thick should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        assertNotNull(model.getCompartments());
+        assertEquals(0, model.getCompartments().size());
+
+        model.addCompartment("compartment1", "OpenCylinder", getList(10, 20, 2));
+        assertEquals(Compartment.OpenCylinder.class, model.getCompartments().get(0).getClass());
+        assertEquals("compartment1 (OpenCylinder) [10][20] [2]", model.getCompartments().get(0).toString());
     }
 
     @Test

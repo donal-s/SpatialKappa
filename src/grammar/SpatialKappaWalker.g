@@ -211,9 +211,9 @@ compartmentDecl
   List<Integer> dimensions = new ArrayList<Integer>();
   }
   :
-  ^(COMPARTMENT id (^(DIMENSION INT {dimensions.add(Integer.parseInt($INT.text));}))*)
+  ^(COMPARTMENT name=id (^(TYPE type=id))? (^(DIMENSION INT {dimensions.add(Integer.parseInt($INT.text));}))*)
   {
-    kappaModel.addCompartment($id.result, dimensions);
+    kappaModel.addCompartment($name.result, $type.result, dimensions);
   }
   ;
   

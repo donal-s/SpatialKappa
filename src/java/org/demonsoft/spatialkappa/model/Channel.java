@@ -102,6 +102,7 @@ public class Channel {
         return result.toArray(new Location[result.size()][]);
     }
 
+    // TODO - update for shapes
     private Object[][] getVariableRanges(Location reference, Compartment compartment) {
         List<Object[]> result = new ArrayList<Object[]>();
         for (int index = 0; index < reference.getIndices().length; index++) {

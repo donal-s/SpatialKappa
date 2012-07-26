@@ -17,8 +17,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.junit.Test;
 
 public class LocationTest {
@@ -46,18 +49,33 @@ public class LocationTest {
         assertEquals("name", location.getName());
         assertEquals(0, location.getIndices().length);
         assertEquals("name", location.toString());
+        assertTrue(location.isConcreteLocation());
         
-        location = new Location("name", new CellIndexExpression("2"), new CellIndexExpression("3"));
+        location = new Location("name", INDEX_2, new CellIndexExpression("3"));
         assertEquals("name", location.getName());
-        assertArrayEquals(new CellIndexExpression[] {new CellIndexExpression("2"), new CellIndexExpression("3")}, 
+        assertArrayEquals(new CellIndexExpression[] {INDEX_2, new CellIndexExpression("3")}, 
         		location.getIndices());
         assertEquals("name[2][3]", location.toString());
+        assertTrue(location.isConcreteLocation());
         
-        location = new Location("name", new CellIndexExpression[] {new CellIndexExpression("2"), new CellIndexExpression("3")});
+        location = new Location("name", new CellIndexExpression[] {INDEX_2, new CellIndexExpression("3")});
         assertEquals("name", location.getName());
-        assertArrayEquals(new CellIndexExpression[] {new CellIndexExpression("2"), new CellIndexExpression("3")}, 
+        assertArrayEquals(new CellIndexExpression[] {INDEX_2, new CellIndexExpression("3")}, 
         		location.getIndices());
         assertEquals("name[2][3]", location.toString());
+        assertTrue(location.isConcreteLocation());
+
+        location = new Location("label", INDEX_2, INDEX_X);
+        assertEquals("label", location.getName());
+        assertArrayEquals(new CellIndexExpression[] {INDEX_2, INDEX_X}, location.getIndices());
+        assertEquals("label[2][x]", location.toString());
+        assertFalse(location.isConcreteLocation());
+
+        location = new Location("label", 
+                new CellIndexExpression(INDEX_2, Operator.PLUS, INDEX_2), 
+                new CellIndexExpression("5"));
+        assertEquals("label[(2 + 2)][5]", location.toString());
+        assertTrue(location.isConcreteLocation());
 	}
 
     @Test
@@ -212,5 +230,83 @@ public class LocationTest {
         assertTrue(voxel1.isVoxel(compartment1));
         assertFalse(invalidVoxel.isVoxel(compartment2));
     }
-	
+    
+    @Test
+    public void testGetReferencedCompartment() {
+        Location location = new Location("label");
+        
+        try {
+            location.getReferencedCompartment(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        List<Compartment> compartments = new ArrayList<Compartment>();
+        compartments.add(new Compartment("label2"));
+        try {
+            location.getReferencedCompartment(compartments);
+            fail("Missing compartment should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
+        
+        Compartment match = new Compartment("label");
+        compartments.add(match);
+        assertEquals(match, location.getReferencedCompartment(compartments));
+    }
+    
+    
+    @Test
+    public void testGetConcreteReference() {
+        Location location = new Location("label");
+        Map<String, Integer> variables = new HashMap<String, Integer>();
+        
+        try {
+            location.getConcreteLocation(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        assertEquals(location, location.getConcreteLocation(variables));
+
+        location = new Location("label", new CellIndexExpression("2"));
+        assertEquals(location, location.getConcreteLocation(variables));
+
+
+        location = new Location("label", new CellIndexExpression("2"), new CellIndexExpression(new CellIndexExpression("3"), Operator.PLUS, new CellIndexExpression("1")));
+        Location expectedReference = new Location("label", new CellIndexExpression("2"), new CellIndexExpression("4"));
+        assertEquals(expectedReference, location.getConcreteLocation(variables));
+
+        location = new Location("label", new CellIndexExpression(new VariableReference("x")));
+        try {
+            location.getConcreteLocation(variables);
+            fail("missing variable should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        variables.put("x", 7);
+        expectedReference = new Location("label", new CellIndexExpression("7"));
+        assertEquals(expectedReference, location.getConcreteLocation(variables));
+
+        location = new Location("label", new CellIndexExpression("2"), new CellIndexExpression(new VariableReference("x")));
+        variables.clear();
+        try {
+            location.getConcreteLocation(variables);
+            fail("missing variable should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        variables.put("x", 7);
+        expectedReference = new Location("label", new CellIndexExpression("2"), new CellIndexExpression("7"));
+        assertEquals(expectedReference, location.getConcreteLocation(variables));
+    }
 }

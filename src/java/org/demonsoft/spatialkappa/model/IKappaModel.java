@@ -18,7 +18,7 @@ public interface IKappaModel {
 
     public void addPerturbation(Perturbation perturbation);
 
-    public void addCompartment(String name, List<Integer> dimensions);
+    public void addCompartment(String name, String type, List<Integer> dimensions);
     public void addCompartment(Compartment compartment);
 
     public void addChannel(Channel link);

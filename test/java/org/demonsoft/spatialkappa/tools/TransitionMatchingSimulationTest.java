@@ -81,10 +81,10 @@ public class TransitionMatchingSimulationTest {
         kappaModel.addAgentDeclaration(new AggregateAgent("agent1"));
         kappaModel.addAgentDeclaration(new AggregateAgent("agent2"));
 
-        kappaModel.addCompartment("cytosol", new ArrayList<Integer>());
+        kappaModel.addCompartment("cytosol", null, new ArrayList<Integer>());
         List<Integer> dimensions = new ArrayList<Integer>();
         dimensions.add(1);
-        kappaModel.addCompartment("nucleus", dimensions);
+        kappaModel.addCompartment("nucleus", null, dimensions);
         
         List<Agent> agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
@@ -111,7 +111,7 @@ public class TransitionMatchingSimulationTest {
         kappaModel.addAgentDeclaration(new AggregateAgent("agent1"));
         List<Integer> dimensions = new ArrayList<Integer>();
         dimensions.add(4);
-        kappaModel.addCompartment("cytosol", dimensions);
+        kappaModel.addCompartment("cytosol", null, dimensions);
         
         kappaModel.addVariable(getList(new Agent("agent1")), "observable1", new Location("cytosol"));
         kappaModel.addPlot("observable1");
@@ -134,7 +134,7 @@ public class TransitionMatchingSimulationTest {
         List<Integer> dimensions = new ArrayList<Integer>();
         dimensions.add(3);
         dimensions.add(2);
-        kappaModel.addCompartment("cytosol", dimensions);
+        kappaModel.addCompartment("cytosol", null, dimensions);
         
         kappaModel.addVariable(getList(new Agent("agent1")), "observable1", new Location("cytosol"));
         kappaModel.addPlot("observable1");
@@ -237,10 +237,10 @@ public class TransitionMatchingSimulationTest {
     public void testGetQuantity_singleCellCompartment() {
         kappaModel.addAgentDeclaration(new AggregateAgent("agent1"));
         kappaModel.addAgentDeclaration(new AggregateAgent("agent2"));
-        kappaModel.addCompartment("cytosol", new ArrayList<Integer>());
+        kappaModel.addCompartment("cytosol", null, new ArrayList<Integer>());
         List<Integer> dimensions = new ArrayList<Integer>();
         dimensions.add(1);
-        kappaModel.addCompartment("nucleus", dimensions);
+        kappaModel.addCompartment("nucleus", null, dimensions);
         
         List<Agent> agents = getList(new Agent("agent1"));
         kappaModel.addVariable(agents, "observable1", new Location("cytosol"));
@@ -264,7 +264,7 @@ public class TransitionMatchingSimulationTest {
         kappaModel.addAgentDeclaration(new AggregateAgent("agent1"));
         List<Integer> dimensions = new ArrayList<Integer>();
         dimensions.add(4);
-        kappaModel.addCompartment("cytosol", dimensions);
+        kappaModel.addCompartment("cytosol", null, dimensions);
         
         kappaModel.addVariable(getList(new Agent("agent1")), "observable1", new Location("cytosol"));
         kappaModel.addVariable(getList(new Agent("agent1")), "observable2", new Location("cytosol", new CellIndexExpression("0")));
@@ -285,7 +285,7 @@ public class TransitionMatchingSimulationTest {
         List<Integer> dimensions = new ArrayList<Integer>();
         dimensions.add(3);
         dimensions.add(2);
-        kappaModel.addCompartment("cytosol", dimensions);
+        kappaModel.addCompartment("cytosol", null, dimensions);
         
         kappaModel.addVariable(getList(new Agent("agent1")), "observable1", new Location("cytosol"));
         kappaModel.addVariable(getList(new Agent("agent1")), "observable2", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("0")));

@@ -57,6 +57,7 @@ tokens {
   TIME;
   TRANSITION;
   TRUE;
+  TYPE;
   UNTIL;
   VAR_EXPR;
   VAR_INFINITY;
@@ -195,9 +196,9 @@ agentDeclInterface
 
 compartmentDecl
   :
-  '%compartment:' id ('[' INT ']')*
+  '%compartment:' name=id (type=id)? ('[' INT ']')*
     ->
-      ^(COMPARTMENT id ^(DIMENSION INT)*)
+      ^(COMPARTMENT $name ^(TYPE $type)? ^(DIMENSION INT)*)
   ;
 
 channelDecl

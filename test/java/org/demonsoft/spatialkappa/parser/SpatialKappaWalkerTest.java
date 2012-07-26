@@ -177,11 +177,15 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testCompartmentDecl() throws Exception {
-        checkCompartmentDecl("%compartment: label", "label", new Integer[0]);
-        checkCompartmentDecl("%compartment: label[1]", "label", new Integer[] {1});
-        checkCompartmentDecl("%compartment: label[1][20]", "label", new Integer[] {1, 20});
-        checkCompartmentDecl("%compartment: 0_complex1Label-with-Stuff", "0_complex1Label-with-Stuff", new Integer[0]);
+        checkCompartmentDecl("%compartment: label", "label", null, new Integer[0]);
+        checkCompartmentDecl("%compartment: label[1]", "label", null, new Integer[] {1});
+        checkCompartmentDecl("%compartment: label[1][20]", "label", null, new Integer[] {1, 20});
+        checkCompartmentDecl("%compartment: 0_complex1Label-with-Stuff", "0_complex1Label-with-Stuff", null, new Integer[0]);
 
+        checkCompartmentDecl("%compartment: label type", "label", "type", new Integer[0]);
+        checkCompartmentDecl("%compartment: label type [10]", "label", "type", new Integer[] {10});
+        checkCompartmentDecl("%compartment: label type [10][5] [2][3]", "label", "type", new Integer[] {10, 5, 2, 3});
+        
         try {
             runParserRule("compartmentDecl", "%compartment: label[0]");
             fail("invalid should have failed");
@@ -191,9 +195,9 @@ public class SpatialKappaWalkerTest {
         }
     }
     
-    private void checkCompartmentDecl(String inputText, String name, Integer[] dimensions) throws Exception {
+    private void checkCompartmentDecl(String inputText, String name, String type, Integer[] dimensions) throws Exception {
         reset(mocks);
-        kappaModel.addCompartment(eq(name), eq(Arrays.asList(dimensions)));
+        kappaModel.addCompartment(eq(name), eq(type), eq(Arrays.asList(dimensions)));
         replay(mocks);
         runParserRule("compartmentDecl", inputText);
         verify(mocks);
