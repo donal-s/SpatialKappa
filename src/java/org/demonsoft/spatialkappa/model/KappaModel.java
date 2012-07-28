@@ -1,11 +1,12 @@
 package org.demonsoft.spatialkappa.model;
 
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
-import static org.demonsoft.spatialkappa.model.Utils.propogateLocation;
+import static org.demonsoft.spatialkappa.model.Utils.*;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -132,7 +133,6 @@ public class KappaModel implements IKappaModel {
         perturbations.add(perturbation);
     }
 
-    // TODO shape handling here
     public void addCompartment(String name, String type, List<Integer> dimensions) {
         if (name == null || dimensions == null) {
             throw new NullPointerException();
@@ -443,6 +443,14 @@ public class KappaModel implements IKappaModel {
             }
         }
         
+        Set<String> compartmentNames = new HashSet<String>();
+        for (Compartment compartment : compartments) {
+            if (compartmentNames.contains(compartment.getName())) {
+                throw new IllegalStateException("Duplicate compartment '" + compartment.getName() + "'");
+            }
+            compartmentNames.add(compartment.getName());
+        }
+       
         Set<String> channelNames = new HashSet<String>();
         for (Channel channel : channels) {
             if (channelNames.contains(channel.getName())) {
@@ -531,8 +539,69 @@ public class KappaModel implements IKappaModel {
     		}
     	}
     	
+    	for (InitialValue initialValue : initialValues) {
+    	    checkLocations(initialValue.complexes);
+    	}
+        for (Perturbation perturbation : perturbations) {
+            checkAgentLocations(perturbation.effect.agents);
+        }
+        checkLocations(canonicalComplexes);
+        for (Variable variable : variables.values()) {
+            checkLocations(variable.complex);
+            checkLocations(variable.location);
+        }
+        for (Transition transition : transitions) {
+            checkAgentLocations(transition.leftAgents);
+            checkAgentLocations(transition.rightAgents);
+            checkLocations(transition.leftLocation);
+            checkLocations(transition.rightLocation);
+        }
     }
     
+    private void checkAgentLocations(Collection<Agent> agents) {
+        if (agents == null) {
+            return;
+        }
+        for (Agent agent : agents) {
+            checkLocations(agent);
+        }
+    }
+
+    private void checkLocations(Collection<Complex> complexes) {
+        if (complexes == null) {
+            return;
+        }
+        for (Complex complex : complexes) {
+            checkLocations(complex);
+        }
+    }
+
+    private void checkLocations(Complex complex) {
+        if (complex == null) {
+            return;
+        }
+        for (Agent agent : complex.agents) {
+            checkLocations(agent);
+        }
+    }
+
+    private void checkLocations(Agent agent) {
+        if (agent == null) {
+            return;
+        }
+        checkLocations(agent.location);
+    }
+
+    private void checkLocations(Location location) {
+        if (location == null || location == NOT_LOCATED) {
+            return;
+        }
+        Compartment compartment = getCompartment(compartments, location.getName());
+        if (location.getIndices().length > 0 && !compartment.isValidVoxel(location)) {
+            throw new IllegalStateException("Location " + location + " not valid");
+        }
+    }
+
     public static IKappaModel createModel(File inputFile) throws Exception {
         ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(inputFile));
         CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));

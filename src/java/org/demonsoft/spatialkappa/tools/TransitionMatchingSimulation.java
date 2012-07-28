@@ -38,6 +38,8 @@ import org.demonsoft.spatialkappa.model.VariableExpression;
 
 public class TransitionMatchingSimulation implements Simulation, SimulationState {
 
+    // TODO potential bug - does rerunning simulation also reset perturbations ?
+    
 //    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
 
     private static final List<ComplexMapping> NO_COMPLEX_MAPPINGS = new ArrayList<ComplexMapping>();

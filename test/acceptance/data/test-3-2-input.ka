@@ -1,0 +1,87 @@
+### PSD Project Stage 3 acceptance tests
+### Test 3.2 - Location within geometric primitives
+### Last modified 27-07-2012
+
+%agent: A
+%agent: B
+
+
+### 2D Shapes
+
+%compartment: solidRectangle              [10][5]        # [height][width]
+%compartment: openRectangle OpenRectangle [10][5] [2]    # [height][width] [thickness]
+%compartment: solidCircle   SolidCircle   [10]           # [diameter]
+%compartment: openCircle    OpenCircle    [10] [2]       # [diameter] [thickness]
+
+%init: 5 :solidRectangle [4][3] A
+%init: 500 :solidRectangle B
+
+%obs: 'SolidRectangle A' :solidRectangle[4][3] A
+%obs: 'SolidRectangle B' :solidRectangle[4][3] B
+
+%init: 5 :openRectangle[4][1] A
+%init: 500 :openRectangle B
+
+%obs: 'OpenRectangle A' :openRectangle[4][1] A
+%obs: 'OpenRectangle B' :openRectangle[4][1] B
+
+%init: 5 :solidCircle[5][1] A
+%init: 500 :solidCircle B
+
+%obs: 'SolidCircle A' :solidCircle[5][1] A
+%obs: 'SolidCircle B' :solidCircle[5][1] B
+
+%init: 5 :openCircle[5][1] A
+%init: 500 :openCircle B
+
+%obs: 'OpenCircle A' :openCircle[5][1] A
+%obs: 'OpenCircle B' :openCircle[5][1] B
+
+
+### 3D Shapes
+
+%compartment: solidCuboid                 [10][5][8]     # [height][width][depth]
+%compartment: openCuboid    OpenCuboid    [10][5][8] [2] # [height][width][depth] [thickness]
+%compartment: solidSphere   SolidSphere   [10]           # [diameter]
+%compartment: openSphere    OpenSphere    [10] [2]       # [diameter] [thickness]
+%compartment: solidCylinder SolidCylinder [10][8]        # [diameter][length]
+%compartment: openCylinder  OpenCylinder  [10][8] [2]    # [diameter][length] [thickness]
+
+%init: 5 :solidCuboid[4][3][7] A
+%init: 4000 :solidCuboid B
+
+%obs: 'SolidCuboid A' :solidCuboid[4][3][7] A
+%obs: 'SolidCuboid B' :solidCuboid[4][3][7] B
+
+%init: 5 :openCuboid[4][3][1] A
+%init: 4000 :openCuboid B
+
+%obs: 'OpenCuboid A' :openCuboid[4][3][1] A
+%obs: 'OpenCuboid B' :openCuboid[4][3][1] B
+
+%init: 5 :solidSphere[4][3][5] A
+%init: 4000 :solidSphere B
+
+%obs: 'SolidSphere A' :solidSphere[4][3][5] A
+%obs: 'SolidSphere B' :solidSphere[4][3][5] B
+
+%init: 5 :openSphere[4][5][1] A
+%init: 4000 :openSphere B
+
+%obs: 'OpenSphere A' :openSphere[4][5][1] A
+%obs: 'OpenSphere B' :openSphere[4][5][1] B
+
+%init: 5 :solidCylinder[4][3][5] A
+%init: 4000 :solidCylinder B
+
+%obs: 'SolidCylinder A' :solidCylinder[4][3][5] A
+%obs: 'SolidCylinder B' :solidCylinder[4][3][5] B
+
+%init: 5 :openCylinder[4][5][1] A
+%init: 4000 :openCylinder B
+
+%obs: 'OpenCylinder A' :openCylinder[4][5][1] A
+%obs: 'OpenCylinder B' :openCylinder[4][5][1] B
+
+
+

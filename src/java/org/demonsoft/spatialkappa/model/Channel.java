@@ -77,17 +77,16 @@ public class Channel {
                 Location source = locationPair[0].get(0);
                 Location target = locationPair[1].get(0);
     
-                Compartment sourceCompartment = source.getReferencedCompartment(compartments);
-                Compartment targetCompartment = target.getReferencedCompartment(compartments);
-                if (sourceCompartment == null || targetCompartment == null) {
-                    throw new IllegalArgumentException();
-                }
+                Compartment sourceCompartment = getCompartment(compartments, source.getName());
+                Compartment targetCompartment = getCompartment(compartments, target.getName());
         
                 if (!source.isVoxel(sourceCompartment) || !target.isVoxel(targetCompartment)) {
                     throw new IllegalArgumentException();
                 }
                 if (isConcreteLink(source, target)) {
-                    result.add(new Location[] { source, target });
+                    if (sourceCompartment.isValidVoxel(source) && targetCompartment.isValidVoxel(target)) {
+                        result.add(new Location[] { source, target });
+                    }
                 }
                 else {
                     Object[][] variableRanges = getVariableRanges(source, sourceCompartment);
@@ -102,7 +101,6 @@ public class Channel {
         return result.toArray(new Location[result.size()][]);
     }
 
-    // TODO - update for shapes
     private Object[][] getVariableRanges(Location reference, Compartment compartment) {
         List<Object[]> result = new ArrayList<Object[]>();
         for (int index = 0; index < reference.getIndices().length; index++) {
@@ -114,7 +112,6 @@ public class Channel {
         return result.toArray(new Object[result.size()][]);
     }
 
-    // TODO - update for shapes
     private void getCellReferencePairs(List<Location[]> result, Object[][] variableRanges, Location source, Location target, 
             Compartment sourceCompartment, Compartment targetCompartment, Map<String, Integer> variables, int variableIndex) {
         if (variableIndex >= variableRanges.length) {
@@ -124,7 +121,11 @@ public class Channel {
                     return;
                 }
             }
-            result.add(new Location[] { source.getConcreteLocation(variables), target.getConcreteLocation(variables) });
+            Location concreteSource = source.getConcreteLocation(variables);
+            Location concreteTarget = target.getConcreteLocation(variables);
+            if (sourceCompartment.isValidVoxel(concreteSource) && targetCompartment.isValidVoxel(concreteTarget)) {
+                result.add(new Location[] { concreteSource, concreteTarget });
+            }
             return;
         }
 
@@ -182,35 +183,19 @@ public class Channel {
                         Location sourceLocation = sourceLocations.get(templateIndex);
                         Location targetConstraint = targetConstraints.get(templateIndex);
                         
-                        Compartment sourceCompartment = templateSourceLocation.getReferencedCompartment(compartments);
-                        if (sourceCompartment == null) {
-                            throw new IllegalArgumentException("Unknown compartment: " + templateSourceLocation.getName());
-                        }
-                        Compartment targetCompartment = templateTargetLocation.getReferencedCompartment(compartments);
-                        if (targetCompartment == null) {
-                            throw new IllegalArgumentException("Unknown compartment: " + templateTargetLocation.getName());
-                        }
+                        Compartment targetCompartment = getCompartment(compartments, templateTargetLocation.getName());
             
                         if (sourceLocation.getIndices().length != templateSourceLocation.getIndices().length 
                                 || !sourceLocation.getName().equals(templateSourceLocation.getName())) {
                             continue;
                         }
             
-                        Map<String, Integer> variables = new HashMap<String, Integer>();
-                        for (int index = 0; index < templateSourceLocation.getIndices().length; index++) {
-                            CellIndexExpression sourceIndex = templateSourceLocation.getIndices()[index];
-                            if (sourceIndex.type == Type.VARIABLE_REFERENCE) {
-                                CellIndexExpression inputIndex = sourceLocation.getIndices()[index];
-                                variables.put(sourceIndex.reference.variableName, (int) inputIndex.value);
-                            }
-                        }
+                        Map<String, Integer> variables = getVariables(templateSourceLocation, sourceLocation);
             
-                        
                         List<CellIndexExpression> targetIndices = new ArrayList<CellIndexExpression>();
                         for (int index = 0; index < templateTargetLocation.getIndices().length; index++) {
                             CellIndexExpression targetIndex = templateTargetLocation.getIndices()[index];
                             int targetIndexValue = targetIndex.evaluateIndex(variables);
-                            // TODO - shape handling here
                             if (targetIndexValue < 0 || targetIndexValue >= targetCompartment.getDimensions()[index]) {
                                 valid = false;
                                 break;
@@ -220,8 +205,13 @@ public class Channel {
                         
                         if (valid) {
                             Location targetLocation = new Location(templateTargetLocation.getName(), targetIndices);
-                            if (targetConstraint == null || targetConstraint.equals(targetLocation) || targetConstraint.isRefinement(targetLocation)) {
-                                targetLocations.add(targetLocation);
+                            if (targetCompartment.isValidVoxel(targetLocation)) {
+                                if (targetConstraint == null || targetConstraint.equals(targetLocation) || targetConstraint.isRefinement(targetLocation)) {
+                                    targetLocations.add(targetLocation);
+                                }
+                                else {
+                                    valid = false;
+                                }
                             }
                             else {
                                 valid = false;
@@ -236,6 +226,18 @@ public class Channel {
             }
         }
         return result;
+    }
+
+    private Map<String, Integer> getVariables(Location templateSourceLocation, Location sourceLocation) {
+        Map<String, Integer> variables = new HashMap<String, Integer>();
+        for (int index = 0; index < templateSourceLocation.getIndices().length; index++) {
+            CellIndexExpression sourceIndex = templateSourceLocation.getIndices()[index];
+            if (sourceIndex.type == Type.VARIABLE_REFERENCE) {
+                CellIndexExpression inputIndex = sourceLocation.getIndices()[index];
+                variables.put(sourceIndex.reference.variableName, (int) inputIndex.value);
+            }
+        }
+        return variables;
     }
 
     void permuteLocations(List<Location> locations, List<Location> targetConstraints,
@@ -283,10 +285,7 @@ public class Channel {
     }
 
     boolean isValidSourceLocation(Location template, Location source, List<Compartment> compartments) {
-        Compartment compartment = template.getReferencedCompartment(compartments);
-        if (compartment == null) {
-            throw new IllegalArgumentException("Unknown compartment: " + template.getName());
-        }
+        Compartment compartment = getCompartment(compartments, template.getName());
         if (template.getIndices().length != source.getIndices().length 
                 || !template.getName().equals(source.getName())) {
             return false;
@@ -303,7 +302,7 @@ public class Channel {
                 }
             }
         }
-        return true;
+        return compartment.isValidVoxel(source);
     }
 
     public void validate(List<Compartment> compartments) {

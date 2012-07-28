@@ -1,6 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -216,10 +217,7 @@ public class Agent implements Serializable {
             }
         }
         else {
-            Compartment compartment = location.getReferencedCompartment(compartments);
-            if (compartment == null) {
-                throw new IllegalArgumentException("Unknown location: " + location);
-            }
+            Compartment compartment = getCompartment(compartments, location.getName());
             if (location.isVoxel(compartment)) {
                 result.add(this.clone());
             }

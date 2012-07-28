@@ -1,6 +1,5 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,16 +33,8 @@ public class Location implements Serializable {
         return name;
     }
 
-    @Deprecated
     public CellIndexExpression[] getIndices() {
         return indices;
-    }
-
-    public Compartment getReferencedCompartment(List<Compartment> compartments) {
-        if (NOT_LOCATED == this) {
-            return null;
-        }
-        return getCompartment(compartments, name);
     }
 
     public boolean isConcreteLocation() {
@@ -129,10 +120,6 @@ public class Location implements Serializable {
     }
     
     public List<Location> getLinkedLocations(List<Compartment> compartments, Channel... channels) {
-        Compartment compartment = getReferencedCompartment(compartments);
-        if (compartment == null) {
-            throw new IllegalArgumentException("Unknown compartment: " + name);
-        }
         List<Location> result = new ArrayList<Location>();
         for (Channel channel : channels) {
             result.addAll(channel.applyChannel(this, NOT_LOCATED, compartments));

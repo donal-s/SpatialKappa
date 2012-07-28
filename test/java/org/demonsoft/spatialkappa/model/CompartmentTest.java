@@ -3,8 +3,11 @@ package org.demonsoft.spatialkappa.model;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_2;
+import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.HashMap;
@@ -101,6 +104,20 @@ public class CompartmentTest {
             actual[location.getIndices()[0].evaluateIndex(NO_VARIABLES)]
                     [location.getIndices()[1].evaluateIndex(NO_VARIABLES)] = true;
         }
+        String[] actualStrings = boolean2DArrayToString(actual);
+        assertArrayEquals(expected, actualStrings);
+        
+        actual = new boolean[compartment.dimensions[0]][compartment.dimensions[1]];
+        for (int y=0; y<compartment.dimensions[0]; y++) {
+            for (int x=0; x<compartment.dimensions[1]; x++) {
+                actual[y][x] = compartment.isValidVoxel(new Location(compartment.name, new CellIndexExpression("" + y), new CellIndexExpression("" + x)));
+            }
+        }
+        actualStrings = boolean2DArrayToString(actual);
+        assertArrayEquals(expected, actualStrings);
+    }
+
+    private String[] boolean2DArrayToString(boolean[][] actual) {
         String[] actualStrings = new String[actual.length];
         for (int rowIndex=0; rowIndex<actual.length; rowIndex++) {
             StringBuilder builder = new StringBuilder();
@@ -110,8 +127,7 @@ public class CompartmentTest {
             }
             actualStrings[rowIndex] = builder.toString();
         }
-        
-        assertArrayEquals(expected, actualStrings);
+        return actualStrings;
     }
 
     private void checkCompartmentReferences3D(Location[] distributedCellReferences, Compartment compartment, String[][] expected) {
@@ -125,6 +141,24 @@ public class CompartmentTest {
                     [location.getIndices()[1].evaluateIndex(NO_VARIABLES)]
                     [location.getIndices()[2].evaluateIndex(NO_VARIABLES)] = true;
         }
+        String[][] actualStrings = boolean3DArrayToString(actual);
+        assertArrayEquals(expected, actualStrings);
+        
+        actual = new boolean[compartment.dimensions[0]][compartment.dimensions[1]][compartment.dimensions[2]];
+        for (int y=0; y<compartment.dimensions[0]; y++) {
+            for (int x=0; x<compartment.dimensions[1]; x++) {
+                for (int z=0; z<compartment.dimensions[2]; z++) {
+                    actual[y][x][z] = compartment.isValidVoxel(new Location(compartment.name, 
+                            new CellIndexExpression("" + y), new CellIndexExpression("" + x), 
+                            new CellIndexExpression("" + z)));
+                }
+            }
+        }
+        actualStrings = boolean3DArrayToString(actual);
+        assertArrayEquals(expected, actualStrings);
+    }
+
+    private String[][] boolean3DArrayToString(boolean[][][] actual) {
         String[][] actualStrings = new String[actual.length][];
         for (int sliceIndex=0; sliceIndex<actual.length; sliceIndex++) {
             boolean[][] slice = actual[sliceIndex];
@@ -138,8 +172,7 @@ public class CompartmentTest {
                 actualStrings[sliceIndex][rowIndex] = builder.toString();
             }
         }
-        
-        assertArrayEquals(expected, actualStrings);
+        return actualStrings;
     }
 
     private void checkCompartmentReferences(Location[] actual, Location... expected) {
@@ -364,6 +397,31 @@ public class CompartmentTest {
         );
     }
     
-
+    @Test
+    public void testIsValidVoxel() {
+        Compartment compartment = new Compartment("single");
+        
+        try {
+            compartment.isValidVoxel((Location) null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        assertFalse(compartment.isValidVoxel(new Location("other")));
+        assertFalse(compartment.isValidVoxel(new Location("single", INDEX_0)));
+        assertFalse(compartment.isValidVoxel(new Location("single", INDEX_X)));
+        assertTrue(compartment.isValidVoxel(new Location("single")));
+        
+        compartment = new Compartment("rectangle", 3, 4);
+        assertFalse(compartment.isValidVoxel(new Location("other", INDEX_0, INDEX_1)));
+        assertFalse(compartment.isValidVoxel(new Location("rectangle")));
+        assertFalse(compartment.isValidVoxel(new Location("rectangle", INDEX_0)));
+        assertFalse(compartment.isValidVoxel(new Location("rectangle", INDEX_X, INDEX_0, INDEX_1)));
+        assertFalse(compartment.isValidVoxel(new Location("rectangle", INDEX_0, new CellIndexExpression("4"))));
+        assertTrue(compartment.isValidVoxel(new Location("rectangle", INDEX_X, INDEX_0)));
+        assertTrue(compartment.isValidVoxel(new Location("rectangle", INDEX_1, INDEX_0)));
+    }
 
 }

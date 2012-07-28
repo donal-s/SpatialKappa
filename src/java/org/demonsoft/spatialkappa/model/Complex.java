@@ -2,6 +2,7 @@ package org.demonsoft.spatialkappa.model;
 
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getChannel;
+import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -544,12 +545,10 @@ public class Complex implements Serializable {
         List<Agent> result = new ArrayList<Agent>();
         for (Agent agent : agents) {
             Location location = agent.location;
-            if (location != null) {
-                Compartment compartment = location.getReferencedCompartment(compartments);
-                if (compartment != null) {
-                    if (location.isVoxel(compartment) && location.isConcreteLocation()) {
-                        result.add(agent);
-                    }
+            if (location != NOT_LOCATED) {
+                Compartment compartment = getCompartment(compartments, location.getName());
+                if (location.isVoxel(compartment) && location.isConcreteLocation()) {
+                    result.add(agent);
                 }
             }
         }

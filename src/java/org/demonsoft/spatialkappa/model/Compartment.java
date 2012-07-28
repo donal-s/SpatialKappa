@@ -1,11 +1,15 @@
 package org.demonsoft.spatialkappa.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class Compartment {
 
+    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
+    
     protected final String name;
     protected final int[] dimensions;
     
@@ -26,8 +30,6 @@ public class Compartment {
         return name;
     }
 
-    // TODO - remember - only limits when talking about spheres/cylinders/etc
-    @Deprecated
     public int[] getDimensions() {
         return dimensions;
     }
@@ -85,10 +87,20 @@ public class Compartment {
         private static final int THICKNESS = 2;
         
         private final int thickness;
+        private final int centreStartX;
+        private final int centreEndX;
+        private final int centreStartY;
+        private final int centreEndY;
+
         
         public OpenRectangle(String name, int[] dimensions) {
             super(name, new int[] {dimensions[HEIGHT], dimensions[WIDTH]});
             thickness = dimensions[THICKNESS];
+            centreStartX = thickness;
+            centreEndX = dimensions[WIDTH] - thickness - 1;
+            centreStartY = thickness;
+            centreEndY = dimensions[HEIGHT] - thickness - 1;
+
             if (dimensions.length != 3) {
                 throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
             }
@@ -107,20 +119,22 @@ public class Compartment {
 
         @Override
         public Location[] getDistributedCellReferences() {
-            int centreStartX = thickness;
-            int centreEndX = dimensions[WIDTH] - thickness - 1;
-            int centreStartY = thickness;
-            int centreEndY = dimensions[HEIGHT] - thickness - 1;
-            
             List<Location> result = new ArrayList<Location>();
             for (int x=0; x<dimensions[WIDTH]; x++) {
                 for (int y=0; y<dimensions[HEIGHT]; y++) {
-                    if (!(x >= centreStartX && x <= centreEndX && y >= centreStartY && y <= centreEndY)) {
+                    if (isValidVoxel(y, x)) {
                         result.add(new Location(name, new CellIndexExpression("" + y), new CellIndexExpression("" + x)));
                     }
                 }
             }
             return result.toArray(new Location[result.size()]);
+        }
+        
+        @Override
+        protected boolean isValidVoxel(int... indices) {
+            return super.isValidVoxel(indices) && 
+                    !(indices[WIDTH] >= centreStartX && indices[WIDTH] <= centreEndX &&
+                    indices[HEIGHT] >= centreStartY && indices[HEIGHT] <= centreEndY);
         }
     }
     
@@ -130,11 +144,18 @@ public class Compartment {
 
         private static final int DIAMETER = 0;
         
+        private final float rSquared;
+        private final float centre;
+        
+
+        
         public SolidCircle(String name, int[] dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER]});
             if (dimensions.length != 1) {
                 throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
             }
+            rSquared = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
+            centre = dimensions[DIAMETER] / 2f - 0.5f;
         }
         
         @Override
@@ -146,15 +167,10 @@ public class Compartment {
         
         @Override
         public Location[] getDistributedCellReferences() {
-            float rSquared = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
-            float centre = dimensions[DIAMETER] / 2f - 0.5f;
-            
             List<Location> result = new ArrayList<Location>();
             for (int x=0; x<dimensions[1]; x++) {
                 for (int y=0; y<dimensions[0]; y++) {
-                    float centreX = Math.abs(centre - x);
-                    float centreY = Math.abs(centre - y);
-                    if (centreX*centreX + centreY*centreY <= rSquared) {
+                    if (isValidVoxel(y, x)) {
                         result.add(new Location(name, new CellIndexExpression("" + y), new CellIndexExpression("" + x)));
                     }
                 }
@@ -162,6 +178,12 @@ public class Compartment {
             return result.toArray(new Location[result.size()]);
         }
 
+        @Override
+        protected boolean isValidVoxel(int... indices) {
+            float centreX = Math.abs(centre - indices[1]);
+            float centreY = Math.abs(centre - indices[0]);
+            return centreX*centreX + centreY*centreY <= rSquared;
+        }
     }
     
     public static class OpenCircle extends Compartment {
@@ -172,10 +194,17 @@ public class Compartment {
         private static final int THICKNESS = 1;
         
         private final int thickness;
+        private final float rSquaredOuter;
+        private final float rSquaredInner;
+        private final float centre;
         
         public OpenCircle(String name, int[] dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER]});
             thickness = dimensions[THICKNESS];
+            rSquaredOuter = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
+            rSquaredInner = (dimensions[DIAMETER] - thickness * 2) * (dimensions[DIAMETER] - thickness * 2) / 4f;
+            centre = dimensions[DIAMETER] / 2f - 0.5f;
+
             if (dimensions.length != 2) {
                 throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
             }
@@ -194,17 +223,10 @@ public class Compartment {
         
         @Override
         public Location[] getDistributedCellReferences() {
-            float rSquaredOuter = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
-            float rSquaredInner = (dimensions[DIAMETER] - thickness * 2) * (dimensions[DIAMETER] - thickness * 2) / 4f;
-            float centre = dimensions[DIAMETER] / 2f - 0.5f;
-            
             List<Location> result = new ArrayList<Location>();
             for (int x=0; x<dimensions[1]; x++) {
                 for (int y=0; y<dimensions[0]; y++) {
-                    float centreX = Math.abs(centre - x);
-                    float centreY = Math.abs(centre - y);
-                    float voxelSquared = centreX*centreX + centreY*centreY;
-                    if (voxelSquared <= rSquaredOuter && voxelSquared >= rSquaredInner) {
+                    if (isValidVoxel(y, x)) {
                         result.add(new Location(name, new CellIndexExpression("" + y), new CellIndexExpression("" + x)));
                     }
                 }
@@ -212,6 +234,13 @@ public class Compartment {
             return result.toArray(new Location[result.size()]);
         }
 
+        @Override
+        protected boolean isValidVoxel(int... indices) {
+            float centreX = Math.abs(centre - indices[1]);
+            float centreY = Math.abs(centre - indices[0]);
+            float voxelSquared = centreX*centreX + centreY*centreY;
+            return voxelSquared <= rSquaredOuter && voxelSquared >= rSquaredInner;
+        }
     }
     
     public static class OpenCuboid extends Compartment {
@@ -224,10 +253,24 @@ public class Compartment {
         private static final int THICKNESS = 3;
 
         private final int thickness;
+        private final int centreStartX;
+        private final int centreEndX;
+        private final int centreStartY;
+        private final int centreEndY;
+        private final int centreStartZ;
+        private final int centreEndZ;
+
         
         public OpenCuboid(String name, int[] dimensions) {
             super(name, new int[] {dimensions[HEIGHT], dimensions[WIDTH], dimensions[DEPTH]});
             thickness = dimensions[THICKNESS];
+            centreStartX = thickness;
+            centreEndX = dimensions[WIDTH] - thickness - 1;
+            centreStartY = thickness;
+            centreEndY = dimensions[HEIGHT] - thickness - 1;
+            centreStartZ = thickness;
+            centreEndZ = dimensions[DEPTH] - thickness - 1;
+
             if (dimensions.length != 4) {
                 throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
             }
@@ -248,19 +291,11 @@ public class Compartment {
         
         @Override
         public Location[] getDistributedCellReferences() {
-            int centreStartX = thickness;
-            int centreEndX = dimensions[WIDTH] - thickness - 1;
-            int centreStartY = thickness;
-            int centreEndY = dimensions[HEIGHT] - thickness - 1;
-            int centreStartZ = thickness;
-            int centreEndZ = dimensions[DEPTH] - thickness - 1;
-            
             List<Location> result = new ArrayList<Location>();
             for (int x=0; x<dimensions[WIDTH]; x++) {
                 for (int y=0; y<dimensions[HEIGHT]; y++) {
                     for (int z=0; z<dimensions[DEPTH]; z++) {
-                        if (!(x >= centreStartX && x <= centreEndX && y >= centreStartY && y <= centreEndY
-                                && z >= centreStartZ && z <= centreEndZ)) {
+                        if (isValidVoxel(y, x, z)) {
                             result.add(new Location(name, new CellIndexExpression("" + y), 
                                     new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
                         }
@@ -269,6 +304,14 @@ public class Compartment {
             }
             return result.toArray(new Location[result.size()]);
         }
+        
+        @Override
+        protected boolean isValidVoxel(int... indices) {
+            return super.isValidVoxel(indices) && 
+                    !(indices[WIDTH] >= centreStartX && indices[WIDTH] <= centreEndX && 
+                            indices[HEIGHT] >= centreStartY && indices[HEIGHT] <= centreEndY && 
+                                    indices[DEPTH] >= centreStartZ && indices[DEPTH] <= centreEndZ);
+        }
     }
     
     public static class SolidSphere extends Compartment {
@@ -276,9 +319,14 @@ public class Compartment {
         public static final String NAME = "SolidSphere";
 
         private static final int DIAMETER = 0;
-        
+
+        private final float rSquared;
+        private final float centre;
+
         public SolidSphere(String name, int[] dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER], dimensions[DIAMETER]});
+            rSquared = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
+            centre = dimensions[DIAMETER] / 2f - 0.5f;
             if (dimensions.length != 1) {
                 throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
             }
@@ -293,17 +341,11 @@ public class Compartment {
 
         @Override
         public Location[] getDistributedCellReferences() {
-            float rSquared = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
-            float centre = dimensions[DIAMETER] / 2f - 0.5f;
-            
             List<Location> result = new ArrayList<Location>();
             for (int x=0; x<dimensions[1]; x++) {
                 for (int y=0; y<dimensions[0]; y++) {
                     for (int z=0; z<dimensions[2]; z++) {
-                        float centreX = Math.abs(centre - x);
-                        float centreY = Math.abs(centre - y);
-                        float centreZ = Math.abs(centre - z);
-                        if (centreX*centreX + centreY*centreY + centreZ*centreZ <= rSquared) {
+                        if (isValidVoxel(y, x, z)) {
                             result.add(new Location(name, new CellIndexExpression("" + y), 
                                     new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
                         }
@@ -311,6 +353,14 @@ public class Compartment {
                 }
             }
             return result.toArray(new Location[result.size()]);
+        }
+
+        @Override
+        protected boolean isValidVoxel(int... indices) {
+            float centreX = Math.abs(centre - indices[1]);
+            float centreY = Math.abs(centre - indices[0]);
+            float centreZ = Math.abs(centre - indices[2]);
+            return centreX*centreX + centreY*centreY + centreZ*centreZ <= rSquared;
         }
     }
     
@@ -322,10 +372,16 @@ public class Compartment {
         private static final int THICKNESS = 1;
         
         private final int thickness;
+        private final float rSquaredOuter;
+        private final float rSquaredInner;
+        private final float centre;
         
         public OpenSphere(String name, int[] dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER], dimensions[DIAMETER]});
             thickness = dimensions[THICKNESS];
+            rSquaredOuter = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
+            rSquaredInner = (dimensions[DIAMETER] - thickness * 2) * (dimensions[DIAMETER] - thickness * 2) / 4f;
+            centre = dimensions[DIAMETER] / 2f - 0.5f;
             if (dimensions.length != 2) {
                 throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
             }
@@ -344,19 +400,11 @@ public class Compartment {
 
         @Override
         public Location[] getDistributedCellReferences() {
-            float rSquaredOuter = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
-            float rSquaredInner = (dimensions[DIAMETER] - thickness * 2) * (dimensions[DIAMETER] - thickness * 2) / 4f;
-            float centre = dimensions[DIAMETER] / 2f - 0.5f;
-            
             List<Location> result = new ArrayList<Location>();
             for (int x=0; x<dimensions[1]; x++) {
                 for (int y=0; y<dimensions[0]; y++) {
                     for (int z=0; z<dimensions[2]; z++) {
-                        float centreX = Math.abs(centre - x);
-                        float centreY = Math.abs(centre - y);
-                        float centreZ = Math.abs(centre - z);
-                        float voxelSquared = centreX*centreX + centreY*centreY + centreZ*centreZ;
-                        if (voxelSquared <= rSquaredOuter && voxelSquared >= rSquaredInner) {
+                        if (isValidVoxel(y, x, z)) {
                             result.add(new Location(name, new CellIndexExpression("" + y), 
                                     new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
                         }
@@ -364,6 +412,15 @@ public class Compartment {
                 }
             }
             return result.toArray(new Location[result.size()]);
+        }
+
+        @Override
+        protected boolean isValidVoxel(int... indices) {
+            float centreX = Math.abs(centre - indices[1]);
+            float centreY = Math.abs(centre - indices[0]);
+            float centreZ = Math.abs(centre - indices[2]);
+            float voxelSquared = centreX*centreX + centreY*centreY + centreZ*centreZ;
+            return voxelSquared <= rSquaredOuter && voxelSquared >= rSquaredInner;
         }
     }
     
@@ -374,8 +431,13 @@ public class Compartment {
         private static final int DIAMETER = 0;
         private static final int LENGTH = 1;
         
+        private final float rSquared;
+        private final float centre;
+
         public SolidCylinder(String name, int[] dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER], dimensions[LENGTH]});
+            rSquared = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
+            centre = dimensions[DIAMETER] / 2f - 0.5f;
             if (dimensions.length != 2) {
                 throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
             }
@@ -391,15 +453,10 @@ public class Compartment {
         
         @Override
         public Location[] getDistributedCellReferences() {
-            float rSquared = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
-            float centre = dimensions[DIAMETER] / 2f - 0.5f;
-            
             List<Location> result = new ArrayList<Location>();
             for (int x=0; x<dimensions[1]; x++) {
                 for (int y=0; y<dimensions[0]; y++) {
-                    float centreX = Math.abs(centre - x);
-                    float centreY = Math.abs(centre - y);
-                    if (centreX*centreX + centreY*centreY <= rSquared) {
+                    if (isValidVoxel(y, x)) {
                         for (int z=0; z<dimensions[2]; z++) {
                             result.add(new Location(name, new CellIndexExpression("" + y), 
                                     new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
@@ -410,6 +467,12 @@ public class Compartment {
             return result.toArray(new Location[result.size()]);
         }
 
+        @Override
+        protected boolean isValidVoxel(int... indices) {
+            float centreX = Math.abs(centre - indices[1]);
+            float centreY = Math.abs(centre - indices[0]);
+            return centreX*centreX + centreY*centreY <= rSquared;
+        }
     }
     
     public static class OpenCylinder extends Compartment {
@@ -421,10 +484,24 @@ public class Compartment {
         private static final int THICKNESS = 2;
         
         private final int thickness;
+        private final float rSquaredOuter;
+        private final float rSquaredInner;
+        private final float centre;
+        
+        private final int centreStartZ;
+        private final int centreEndZ;
+
         
         public OpenCylinder(String name, int[] dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER], dimensions[LENGTH]});
             thickness = dimensions[THICKNESS];
+            rSquaredOuter = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
+            rSquaredInner = (dimensions[DIAMETER] - thickness * 2) * (dimensions[DIAMETER] - thickness * 2) / 4f;
+            centre = dimensions[DIAMETER] / 2f - 0.5f;
+            
+            centreStartZ = thickness;
+            centreEndZ = dimensions[LENGTH] - thickness - 1;
+            
             if (dimensions.length != 3) {
                 throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
             }
@@ -444,22 +521,11 @@ public class Compartment {
         
         @Override
         public Location[] getDistributedCellReferences() {
-            float rSquaredOuter = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
-            float rSquaredInner = (dimensions[DIAMETER] - thickness * 2) * (dimensions[DIAMETER] - thickness * 2) / 4f;
-            float centre = dimensions[DIAMETER] / 2f - 0.5f;
-            
-            int centreStartZ = thickness;
-            int centreEndZ = dimensions[2] - thickness - 1;
-
             List<Location> result = new ArrayList<Location>();
             for (int x=0; x<dimensions[1]; x++) {
                 for (int y=0; y<dimensions[0]; y++) {
-                    float centreX = Math.abs(centre - x);
-                    float centreY = Math.abs(centre - y);
-                    float voxelSquared = centreX*centreX + centreY*centreY;
                     for (int z=0; z<dimensions[2]; z++) {
-                        if (voxelSquared <= rSquaredOuter && voxelSquared >= rSquaredInner ||
-                            voxelSquared <= rSquaredOuter && !(z >= centreStartZ && z <= centreEndZ)) {
+                        if (isValidVoxel(y, x, z)) {
                             result.add(new Location(name, new CellIndexExpression("" + y),
                                     new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
                         }
@@ -469,5 +535,39 @@ public class Compartment {
             return result.toArray(new Location[result.size()]);
         }
 
+        @Override
+        protected boolean isValidVoxel(int... indices) {
+            float centreX = Math.abs(centre - indices[1]);
+            float centreY = Math.abs(centre - indices[0]);
+            float voxelSquared = centreX*centreX + centreY*centreY;
+            return super.isValidVoxel(indices) && 
+                    voxelSquared <= rSquaredOuter && (
+                            voxelSquared >= rSquaredInner || 
+                            !(indices[2] >= centreStartZ && indices[2] <= centreEndZ));
+        }
+    }
+
+    public boolean isValidVoxel(Location location) {
+        if (!location.getName().equals(name) || location.getIndices().length != dimensions.length) {
+            return false;
+        }
+        if (!location.isConcreteLocation()) {
+            return true;
+        }
+        int[] indices = new int[dimensions.length];
+        int i = 0;
+        for (CellIndexExpression index : location.getIndices()) {
+            indices[i++] = index.evaluateIndex(NO_VARIABLES);
+        }
+        return isValidVoxel(indices);
+    }
+
+    protected boolean isValidVoxel(int... indices) {
+        for (int i=0; i<indices.length; i++) {
+            if (indices[i] < 0 || indices[i] >= dimensions[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }

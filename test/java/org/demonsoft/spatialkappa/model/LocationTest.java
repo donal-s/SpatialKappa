@@ -9,6 +9,7 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_P
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
 import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y_PLUS_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -108,14 +109,6 @@ public class LocationTest {
             fail("Null should have failed");
         }
         catch (NullPointerException e) {
-            // Expected exception
-        }
-        
-        try {
-            location.getLinkedLocations(compartments, channelCytosol);
-            fail("Unknown location should have failed");
-        }
-        catch (IllegalStateException e) {
             // Expected exception
         }
         
@@ -236,7 +229,7 @@ public class LocationTest {
         Location location = new Location("label");
         
         try {
-            location.getReferencedCompartment(null);
+            getCompartment(null, location.getName());
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -246,7 +239,7 @@ public class LocationTest {
         List<Compartment> compartments = new ArrayList<Compartment>();
         compartments.add(new Compartment("label2"));
         try {
-            location.getReferencedCompartment(compartments);
+            getCompartment(compartments, location.getName());
             fail("Missing compartment should have failed");
         }
         catch (IllegalStateException ex) {
@@ -255,7 +248,7 @@ public class LocationTest {
         
         Compartment match = new Compartment("label");
         compartments.add(match);
-        assertEquals(match, location.getReferencedCompartment(compartments));
+        assertEquals(match, getCompartment(compartments, location.getName()));
     }
     
     

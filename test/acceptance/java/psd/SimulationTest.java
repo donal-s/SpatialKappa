@@ -109,12 +109,24 @@ public class SimulationTest {
                 });
     }
     
-//    @Test
+    @Test
     public void testTest3_2_locationWithinGeometricPrimitives() throws Exception {
-         checkTimeSimulation("test-3-2-input.ka", new String[] {"AB", "A2B2 centre", "A2B2 not centre"}, 10, 50, 
-                new float[][] {
-                    {0, 0, 0}, {50, 75, 25}, {40, 175, 80}, {25, 250, 125},
-                });
+         checkTimeSimulation("test-3-2-input.ka", new String[] {
+                 "SolidRectangle A", "SolidRectangle B",
+                 "OpenRectangle A", "OpenRectangle B",
+                 "SolidCircle A", "SolidCircle B",
+                 "OpenCircle A", "OpenCircle B",
+                 "SolidCuboid A", "SolidCuboid B",
+                 "OpenCuboid A", "OpenCuboid B",
+                 "SolidSphere A", "SolidSphere B",
+                 "OpenSphere A", "OpenSphere B",
+                 "SolidCylinder A", "SolidCylinder B",
+                 "OpenCylinder A", "OpenCylinder B",
+
+                 }, 0, 0, 
+                 new float[][] {
+                     {5, 10, 5, 12, 5, 7, 5, 11, 5, 10, 5, 10, 5, 7, 5, 10, 5, 6, 5, 8},
+                 });
     }
     
 //    @Test
