@@ -130,12 +130,22 @@ public class SimulationTest {
     }
     
     @Test
-    public void testTest3_3_diffusionWithinGeometricPrimitives() throws Exception {
-         checkEventSimulation("test-3-3-input.ka", new String[] {
-                 "A", "A TL", "A B", "A R", "B", "B TL", "B B", "B R", "C", "C TL", "C B", "C R", }, 900, 50, 
+    public void testTest3_3_1_diffusionWithinGeometricPrimitives2D() throws Exception {
+         checkEventSimulation("test-3-3-1-input.ka", new String[] {
+                 "A", "A TL", "A B", "A R", "B", "B TL", "B B", "B R", "C", "C TL", "C B", "C R"}, 900, 50, 
                  new float[][] {
                      {1000, 0, 0, 0, 1000, 0, 0, 0, 1000, 0, 0, 0},
                      {750, 1, 60, 60, 750, 40, 40, 40, 750, 30, 30, 30},
+                 });
+    }
+    
+    @Test
+    public void testTest3_3_2_diffusionWithinGeometricPrimitives3D() throws Exception {
+         checkEventSimulation("test-3-3-2-input.ka", new String[] {
+                 "A", "A F", "A E", "A C", "B", "B F", "B E", "B C"}, 1000, 50, 
+                 new float[][] {
+                     {1000, 0, 0, 0, 1000, 0, 0, 0},
+                     {630, 70, 10, 1, 600, 16, 16, 16},
                  });
     }
     

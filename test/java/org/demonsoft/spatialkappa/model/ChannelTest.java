@@ -436,6 +436,124 @@ public class ChannelTest {
     }
     
 
+
+    @Test
+    public void testApplyChannel_faceNeighbour_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("FaceNeighbour", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 4, 4, 4), new Compartment("b", 4, 4, 4));
+        
+
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_X, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_1, new CellIndexExpression("4"))), getList(NOT_LOCATED), compartments));
+        
+        // Corner voxel
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_0, INDEX_1)), compartments));
+
+        // Inner voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_2)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+    }
+    
+    @Test
+    public void testApplyChannel_neighbour3d_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("Neighbour", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 4, 4, 4), new Compartment("b", 4, 4, 4));
+        
+
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_X, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_1, new CellIndexExpression("4"))), getList(NOT_LOCATED), compartments));
+        
+        // Corner voxel
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_0, INDEX_1)), compartments));
+
+        // Inner voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_2, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_2, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_0, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+    }
+    
+
     @Test
     public void testApplyChannel_hexagonal_intracompartment() {
         Location location = new Location("a");
@@ -818,6 +936,7 @@ public class ChannelTest {
         
         checkCreateChannelComponent("Neighbour");
         checkCreateChannelComponent("EdgeNeighbour");
+        checkCreateChannelComponent("FaceNeighbour");
         checkCreateChannelComponent("Hexagonal");
         
     }

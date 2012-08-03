@@ -1,7 +1,8 @@
 package org.demonsoft.spatialkappa.tools;
 
 import static org.demonsoft.spatialkappa.model.Utils.getChannel;
-import static org.demonsoft.spatialkappa.model.Utils.*;
+import static org.demonsoft.spatialkappa.model.Utils.getComplexes;
+import static org.demonsoft.spatialkappa.model.Utils.getList;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -31,7 +32,6 @@ import org.demonsoft.spatialkappa.model.SimulationState;
 import org.demonsoft.spatialkappa.model.Transition;
 import org.demonsoft.spatialkappa.model.TransitionInstance;
 import org.demonsoft.spatialkappa.model.TransitionPrimitive;
-import org.demonsoft.spatialkappa.model.Utils;
 import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.Variable.Type;
 import org.demonsoft.spatialkappa.model.VariableExpression;

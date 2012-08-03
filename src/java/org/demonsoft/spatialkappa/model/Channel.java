@@ -55,6 +55,9 @@ public class Channel {
         if (NeighbourComponent.NAME.equals(channelType)) {
             return new NeighbourComponent(sourceLocations, targetLocations);
         }
+        if (FaceNeighbourComponent.NAME.equals(channelType)) {
+            return new FaceNeighbourComponent(sourceLocations, targetLocations);
+        }
         throw new IllegalArgumentException("Unknown channel type: " + channelType);
     }
 
@@ -512,25 +515,63 @@ public class Channel {
 
         @Override
         protected List<ChannelComponent> getChannelSubcomponents(List<Compartment> compartments) {
-            List<List<CellIndexExpression>> sourceIndices = new ArrayList<List<CellIndexExpression>>();
-            sourceIndices.add(getList(INDEX_X, INDEX_Y));
-            sourceIndices.add(getList(INDEX_X, INDEX_Y));
-            sourceIndices.add(getList(INDEX_X, INDEX_Y));
-            sourceIndices.add(getList(INDEX_X, INDEX_Y));
-            sourceIndices.add(getList(INDEX_X, INDEX_Y));
-            sourceIndices.add(getList(INDEX_X, INDEX_Y));
-            sourceIndices.add(getList(INDEX_X, INDEX_Y));
-            sourceIndices.add(getList(INDEX_X, INDEX_Y));
+            Compartment compartment = getCompartment(compartments, templateSourceLocations.get(0).getName());
+            int dimensionCount = compartment.dimensions.length;
             
+            
+            List<List<CellIndexExpression>> sourceIndices = new ArrayList<List<CellIndexExpression>>();
             List<List<CellIndexExpression>> targetIndices = new ArrayList<List<CellIndexExpression>>();
-            targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y));
-            targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y));
-            targetIndices.add(getList(INDEX_X, INDEX_Y_MINUS_1));
-            targetIndices.add(getList(INDEX_X, INDEX_Y_PLUS_1));
-            targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_MINUS_1));
-            targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_PLUS_1));
-            targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_PLUS_1));
-            targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_MINUS_1));
+
+            if (dimensionCount == 2) {
+                sourceIndices.add(getList(INDEX_X, INDEX_Y));
+                sourceIndices.add(getList(INDEX_X, INDEX_Y));
+                sourceIndices.add(getList(INDEX_X, INDEX_Y));
+                sourceIndices.add(getList(INDEX_X, INDEX_Y));
+                sourceIndices.add(getList(INDEX_X, INDEX_Y));
+                sourceIndices.add(getList(INDEX_X, INDEX_Y));
+                sourceIndices.add(getList(INDEX_X, INDEX_Y));
+                sourceIndices.add(getList(INDEX_X, INDEX_Y));
+                
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y));
+                targetIndices.add(getList(INDEX_X, INDEX_Y_MINUS_1));
+                targetIndices.add(getList(INDEX_X, INDEX_Y_PLUS_1));
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_MINUS_1));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_PLUS_1));
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_PLUS_1));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_MINUS_1));
+            }
+            else if (dimensionCount == 3) {
+                for (int i=0; i<26; i++) {
+                    sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
+                }
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_MINUS_1, INDEX_Z_MINUS_1));
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_MINUS_1, INDEX_Z));
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_MINUS_1, INDEX_Z_PLUS_1));
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y, INDEX_Z_MINUS_1));
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y, INDEX_Z));
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y, INDEX_Z_PLUS_1));
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_PLUS_1, INDEX_Z_MINUS_1));
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_PLUS_1, INDEX_Z));
+                targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_PLUS_1, INDEX_Z_PLUS_1));
+                targetIndices.add(getList(INDEX_X, INDEX_Y_MINUS_1, INDEX_Z_MINUS_1));
+                targetIndices.add(getList(INDEX_X, INDEX_Y_MINUS_1, INDEX_Z));
+                targetIndices.add(getList(INDEX_X, INDEX_Y_MINUS_1, INDEX_Z_PLUS_1));
+                targetIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z_MINUS_1));
+                targetIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z_PLUS_1));
+                targetIndices.add(getList(INDEX_X, INDEX_Y_PLUS_1, INDEX_Z_MINUS_1));
+                targetIndices.add(getList(INDEX_X, INDEX_Y_PLUS_1, INDEX_Z));
+                targetIndices.add(getList(INDEX_X, INDEX_Y_PLUS_1, INDEX_Z_PLUS_1));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_MINUS_1, INDEX_Z_MINUS_1));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_MINUS_1, INDEX_Z));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_MINUS_1, INDEX_Z_PLUS_1));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y, INDEX_Z_MINUS_1));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y, INDEX_Z));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y, INDEX_Z_PLUS_1));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_PLUS_1, INDEX_Z_MINUS_1));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_PLUS_1, INDEX_Z));
+                targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_PLUS_1, INDEX_Z_PLUS_1));
+            }
             
             List<ChannelComponent> result = new ArrayList<ChannelComponent>();
             
@@ -584,6 +625,53 @@ public class Channel {
                             new CellIndexExpression(INDEX_2, Operator.MULTIPLY, 
                                     new CellIndexExpression(INDEX_X, Operator.MODULUS, INDEX_2)))));
 
+            
+            List<ChannelComponent> result = new ArrayList<ChannelComponent>();
+            
+            for (int index = 0; index < sourceIndices.size(); index++) {
+                List<CellIndexExpression> currentSourceIndices = sourceIndices.get(index);
+                List<CellIndexExpression> currentTargetIndices = targetIndices.get(index);
+                
+                List<Location> currentSourceLocations = new ArrayList<Location>();
+                for (Location location : templateSourceLocations) {
+                    currentSourceLocations.add(new Location(location.getName(), currentSourceIndices));
+                }
+                List<Location> currentTargetLocations = new ArrayList<Location>();
+                for (Location location : templateTargetLocations) {
+                    currentTargetLocations.add(new Location(location.getName(), currentTargetIndices));
+                }
+                result.add(new ChannelComponent(currentSourceLocations, currentTargetLocations));
+            }
+            return result;
+        }
+    }
+    
+    public static class FaceNeighbourComponent extends PredefinedChannelComponent {
+
+        public static final String NAME = "FaceNeighbour";
+        
+        public FaceNeighbourComponent(List<Location> sourceLocations, List<Location> targetLocations) {
+            super(NAME, sourceLocations, targetLocations);
+            // TODO test dimensions
+        }
+        
+        @Override
+        protected List<ChannelComponent> getChannelSubcomponents(List<Compartment> compartments) {
+            List<List<CellIndexExpression>> sourceIndices = new ArrayList<List<CellIndexExpression>>();
+            sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
+            sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
+            sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
+            sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
+            sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
+            sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
+            
+            List<List<CellIndexExpression>> targetIndices = new ArrayList<List<CellIndexExpression>>();
+            targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y, INDEX_Z));
+            targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y, INDEX_Z));
+            targetIndices.add(getList(INDEX_X, INDEX_Y_MINUS_1, INDEX_Z));
+            targetIndices.add(getList(INDEX_X, INDEX_Y_PLUS_1, INDEX_Z));
+            targetIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z_MINUS_1));
+            targetIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z_PLUS_1));
             
             List<ChannelComponent> result = new ArrayList<ChannelComponent>();
             

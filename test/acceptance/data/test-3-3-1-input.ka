@@ -1,12 +1,10 @@
 ### PSD Project Stage 3 acceptance tests
-### Test 3.3 - Diffusion within geometric primitives
-### Last modified 31-07-2012
+### Test 3.3 - Diffusion within geometric primitives 2D
+### Last modified 04-08-2012
 
 %agent: A
 %agent: B
 %agent: C
-
-### 2D Shapes
 
 %compartment: solidRectangle[5][5] # [height][width]
 %init: 1000 :solidRectangle[2][2] A, B, C

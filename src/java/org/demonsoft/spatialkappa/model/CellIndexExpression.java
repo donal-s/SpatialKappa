@@ -2,8 +2,6 @@ package org.demonsoft.spatialkappa.model;
 
 import java.util.Map;
 
-import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
-
 
 /**
  * A more restrictive form of VariableExpression for definining cell links.
@@ -27,6 +25,11 @@ public class CellIndexExpression extends VariableExpression {
             new CellIndexExpression(INDEX_Y, Operator.PLUS, INDEX_1);
     public static CellIndexExpression INDEX_Y_MINUS_1 = 
             new CellIndexExpression(INDEX_Y, Operator.MINUS, INDEX_1);
+    public static CellIndexExpression INDEX_Z = new CellIndexExpression(new VariableReference("y"));
+    public static CellIndexExpression INDEX_Z_PLUS_1 = 
+            new CellIndexExpression(INDEX_Z, Operator.PLUS, INDEX_1);
+    public static CellIndexExpression INDEX_Z_MINUS_1 = 
+            new CellIndexExpression(INDEX_Z, Operator.MINUS, INDEX_1);
 
     public CellIndexExpression(String input) {
         super(input);
