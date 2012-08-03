@@ -214,9 +214,9 @@ channelDecl
 
 channel
   :
-  source=locations FORWARD_TRANSITION target=locations
+  (type=id)? source=locations FORWARD_TRANSITION target=locations
     ->
-      ^(LOCATION_PAIR $source $target)
+      ^(LOCATION_PAIR (^(TYPE $type))? $source $target)
   ;
 
 locations

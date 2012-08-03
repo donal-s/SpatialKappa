@@ -1,10 +1,10 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_2;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_2;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_PLUS_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Transition.DELETED;
 import static org.demonsoft.spatialkappa.model.Transition.UNMAPPED;
@@ -389,13 +389,15 @@ public class TransitionTest {
         
         List<Complex> result = transition.apply(transitionInstance, channels, compartments);
         assertEquals("[[DNA:B]]", result.toString());
+        // TODO test predefined channel types
+
     }
 
     @Test
     public void testApply_channel_multipleAgentRule() {
         List<Compartment> compartments = getList(new Compartment("locA"), new Compartment("locB"), new Compartment("locC"), new Compartment("locD"), new Compartment("locE"));
         Channel channel = new Channel("channel");
-        channel.addLocationPair(getList(new Location("locA"), new Location("locB")), 
+        channel.addChannelComponent(null, getList(new Location("locA"), new Location("locB")), 
                 getList(new Location("locD"), new Location("locE")));
         
         List<Channel> channels = getList(channel);
@@ -437,6 +439,8 @@ public class TransitionTest {
             }
         });
         assertEquals("[[A:locD], [B:locE], [C:locC]]", result.toString());
+        // TODO test predefined channel types
+
     }
 
     @Test
@@ -476,6 +480,8 @@ public class TransitionTest {
         
         List<Complex> result = transition.apply(transitionInstance, channels, compartments);
         assertEquals("[[agent1:B(s!1:channel), agent2:A(s!1:channel)]]", result.toString());
+        // TODO test predefined channel types
+
     }
 
     @Test
@@ -729,9 +735,9 @@ public class TransitionTest {
     public void testGetApplicationCount() {
         List<Compartment> compartments = getList(new Compartment("A"), new Compartment("B"), new Compartment("C"));
         Channel channel = new Channel("channel");
-        channel.addLocationPair(getList(new Location("A")), getList(new Location("B")));
-        channel.addLocationPair(getList(new Location("A")), getList(new Location("C")));
-        channel.addLocationPair(getList(new Location("B")), getList(new Location("C")));
+        channel.addChannelComponent(null, getList(new Location("A")), getList(new Location("B")));
+        channel.addChannelComponent(null, getList(new Location("A")), getList(new Location("C")));
+        channel.addChannelComponent(null, getList(new Location("B")), getList(new Location("C")));
         List<Channel> channels = getList(channel);
 
         // Test compartments - no source constraint - no target constraint
@@ -807,6 +813,9 @@ public class TransitionTest {
        
         complexMappings = getTestComplexMappings(new Agent("DNA", new Location("A", INDEX_2)), leftTemplateAgent);
         assertEquals(0, transition.getApplicationCount(complexMappings, channels, compartments));
+        
+        // TODO test predefined channel types
+
     }
     
     private List<ComplexMapping> getTestComplexMappings(Agent realAgent, Agent templateAgent) {

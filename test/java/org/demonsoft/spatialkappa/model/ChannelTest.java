@@ -1,13 +1,14 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_2;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_MINUS_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y_PLUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_2;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_MINUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_PLUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y_MINUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y_PLUS_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertArrayEquals;
@@ -19,6 +20,8 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.demonsoft.spatialkappa.model.Channel.ChannelComponent;
+import org.demonsoft.spatialkappa.model.Channel.EdgeNeighbourComponent;
 import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.junit.Test;
 
@@ -45,49 +48,26 @@ public class ChannelTest {
         assertEquals("label: ", channel.toString());
     }
     
-    @SuppressWarnings({ "unused" })
     @Test
-    public void testAddLocationPair() {
+    public void testAddChannelComponent() {
         Location reference1 = new Location("a");
         Location reference2 = new Location("b");
         
-        List<List<Location>[]> locations = new ArrayList<List<Location>[]>();
-      
         Channel channel = new Channel("label");
-        
-        try {
-            channel.addLocationPair(getList(reference1), null);
-            fail("mismatched locations list should have failed");
-        }
-        catch (NullPointerException ex) {
-            // Expected exception
-        }
 
-        try {
-            channel.addLocationPair(null, getList(reference1));
-            fail("mismatched locations list should have failed");
-        }
-        catch (NullPointerException ex) {
-            // Expected exception
-        }
-
-        try {
-            channel.addLocationPair(getList(reference1, reference1), getList(reference2));
-            fail("mismatched locations list should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-
-        channel.addLocationPair(getList(reference1), getList(reference2));
+        channel.addChannelComponent(null, getList(reference1), getList(reference2));
         assertEquals("label: [a] -> [b]", channel.toString());
 
-        channel.addLocationPair(getList(reference1), getList(reference1));
+        channel.addChannelComponent(null, getList(reference1), getList(reference1));
         assertEquals("label: ([a] -> [b]) + ([a] -> [a])", channel.toString());
         
         // Multi compartment channels
-        channel.addLocationPair(getList(reference2, reference1), getList(reference1, reference2));
+        channel.addChannelComponent(null, getList(reference2, reference1), getList(reference1, reference2));
         assertEquals("label: ([a] -> [b]) + ([a] -> [a]) + ([b, a] -> [a, b])", channel.toString());
+        
+        // Channel types
+        channel.addChannelComponent("Hexagonal", getList(reference1), getList(reference1));
+        assertEquals("label: ([a] -> [b]) + ([a] -> [a]) + ([b, a] -> [a, b]) + ((Hexagonal) [a] -> [a])", channel.toString());
     }
     
     @SuppressWarnings("unused")
@@ -173,10 +153,12 @@ public class ChannelTest {
             assertEquals("No location pairs defined", ex.getMessage());
         }
 
-        channel.addLocationPair(getList(new Location("known")), getList(new Location("known")));
+        channel.addChannelComponent(null, getList(new Location("known")), getList(new Location("known")));
         channel.validate(compartments);
 
         // TODO compartment link range out of bounds ?
+        
+        // TODO channel type validation
     }
 
     @Test
@@ -280,8 +262,8 @@ public class ChannelTest {
         
         // Multiple components
         channel = new Channel("label");
-        channel.addLocationPair(getList(new Location("a", INDEX_X)), getList(new Location("a", INDEX_X_PLUS_1)));
-        channel.addLocationPair(getList(new Location("a", new CellIndexExpression("3"))), getList(new Location("a", INDEX_0)));
+        channel.addChannelComponent(null, getList(new Location("a", INDEX_X)), getList(new Location("a", INDEX_X_PLUS_1)));
+        channel.addChannelComponent(null, getList(new Location("a", new CellIndexExpression("3"))), getList(new Location("a", INDEX_0)));
         
         assertArrayEquals(new Location[][] {
                 { new Location("a", INDEX_0), new Location("a", INDEX_1) },
@@ -289,6 +271,8 @@ public class ChannelTest {
                 { new Location("a", INDEX_2), new Location("a", new CellIndexExpression("3")) },
                 { new Location("a", new CellIndexExpression("3")), new Location("a", INDEX_0) },
                 }, channel.getCellReferencePairs(compartments));
+        
+        // TODO channel type tests
     }
 
 
@@ -382,9 +366,9 @@ public class ChannelTest {
         assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_0)), getList(NOT_LOCATED), compartments));
         
         channel = new Channel("name");
-        channel.addLocationPair(getList(new Location("a", new CellIndexExpression("100"))), getList(new Location("a", new CellIndexExpression("101"))));
-        channel.addLocationPair(getList(new Location("a", INDEX_X)), getList(new Location("a", INDEX_X_MINUS_1)));
-        channel.addLocationPair(getList(new Location("a", INDEX_X)), getList(new Location("a", INDEX_X_PLUS_1)));
+        channel.addChannelComponent(null, getList(new Location("a", new CellIndexExpression("100"))), getList(new Location("a", new CellIndexExpression("101"))));
+        channel.addChannelComponent(null, getList(new Location("a", INDEX_X)), getList(new Location("a", INDEX_X_MINUS_1)));
+        channel.addChannelComponent(null, getList(new Location("a", INDEX_X)), getList(new Location("a", INDEX_X_PLUS_1)));
         
         compartments.clear();
         compartments.add(new Compartment("a", 4));
@@ -396,8 +380,8 @@ public class ChannelTest {
 
         // Ensure each location pair are processed individually
         channel = new Channel("name");
-        channel.addLocationPair(getList(new Location("a")), getList(new Location("b")));
-        channel.addLocationPair(getList(new Location("b")), getList(new Location("a")));
+        channel.addChannelComponent(null, getList(new Location("a")), getList(new Location("b")));
+        channel.addChannelComponent(null, getList(new Location("b")), getList(new Location("a")));
         compartments.clear();
         compartments.add(new Compartment("a"));
         compartments.add(new Compartment("b"));
@@ -407,12 +391,152 @@ public class ChannelTest {
         assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
     }
     
+
+    @Test
+    public void testApplyChannel_edgeNeighbour_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("EdgeNeighbour", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 4, 4), new Compartment("b", 4, 4));
+        
+
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_X)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, new CellIndexExpression("4"))), getList(NOT_LOCATED), compartments));
+        
+        // Corner voxel
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_1)), compartments));
+
+        // Inner voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+    }
+    
+
+    @Test
+    public void testApplyChannel_hexagonal_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("Hexagonal", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 4, 4), new Compartment("b", 4, 4));
+        
+
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_X)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, new CellIndexExpression("4"))), getList(NOT_LOCATED), compartments));
+        
+        // Corner voxel
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_1)), compartments));
+
+        // Inner voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_0)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+    }
+    
+
+    @Test
+    public void testApplyChannel_neighbour2d_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("Neighbour", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 4, 4), new Compartment("b", 4, 4));
+        
+
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_X)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, new CellIndexExpression("4"))), getList(NOT_LOCATED), compartments));
+        
+        // Corner voxel
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_1)), compartments));
+
+        // Inner voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_0)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testApplyChannel_multipleCompartments() {
         List<Compartment> compartments = getList(new Compartment("a", 4), new Compartment("b", 3));
         Channel channel = new Channel("label");
-        channel.addLocationPair(getList(new Location("a", INDEX_X), new Location("b", INDEX_X)), 
+        channel.addChannelComponent(null, getList(new Location("a", INDEX_X), new Location("b", INDEX_X)), 
                 getList(new Location("a", INDEX_X_PLUS_1), new Location("b", INDEX_X_PLUS_1)));
         
         // Source & constraints mismatch
@@ -458,7 +582,7 @@ public class ChannelTest {
         
         // Variable independent
         channel = new Channel("label");
-        channel.addLocationPair(getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
+        channel.addChannelComponent(null, getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
                 getList(new Location("a", INDEX_X_PLUS_1), new Location("b", INDEX_Y_PLUS_1)));
         
         sourceLocations = getList(new Location("a", INDEX_1), new Location("b", INDEX_1));
@@ -474,7 +598,7 @@ public class ChannelTest {
         
         // Swap locations - allow source reordering
         channel = new Channel("label");
-        channel.addLocationPair(getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
+        channel.addChannelComponent(null, getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
                 getList(new Location("b", INDEX_X), new Location("a", INDEX_Y)));
         
         sourceLocations = getList(new Location("a", INDEX_1), new Location("b", INDEX_0));
@@ -495,9 +619,9 @@ public class ChannelTest {
         
         // Multiple components
         channel = new Channel("label");
-        channel.addLocationPair(getList(new Location("a", INDEX_X), new Location("b", INDEX_X)), 
+        channel.addChannelComponent(null, getList(new Location("a", INDEX_X), new Location("b", INDEX_X)), 
                 getList(new Location("a", INDEX_X_PLUS_1), new Location("b", INDEX_X_PLUS_1)));
-        channel.addLocationPair(getList(new Location("a", INDEX_X), new Location("b", INDEX_X)), 
+        channel.addChannelComponent(null, getList(new Location("a", INDEX_X), new Location("b", INDEX_X)), 
                 getList(new Location("a", INDEX_X_MINUS_1), new Location("b", INDEX_X_MINUS_1)));
 
         sourceLocations = getList(new Location("a", INDEX_1), new Location("b", INDEX_1));
@@ -514,7 +638,7 @@ public class ChannelTest {
         
         // Target constraints
         channel = new Channel("label");
-        channel.addLocationPair(getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
+        channel.addChannelComponent(null, getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
                 getList(new Location("a", INDEX_X_PLUS_1), new Location("b", INDEX_Y_PLUS_1)));
 
         sourceLocations = getList(new Location("a", INDEX_1), new Location("b", INDEX_1));
@@ -539,6 +663,7 @@ public class ChannelTest {
         expected.clear();
         assertEquals(expected, results);
 
+        // TODO channel type tests
     }
     
     // TODO check target locations are unique set
@@ -546,46 +671,53 @@ public class ChannelTest {
     @Test
     public void testIsValidSourceLocations() {
         List<Compartment> compartments = getList(new Compartment("a", 4), new Compartment("b", 2));
-        Channel channel = new Channel("label", new Location("a", INDEX_X), new Location("c", INDEX_X_PLUS_1));
+        ChannelComponent component = new ChannelComponent(getList(new Location("a", INDEX_X)),
+                getList(new Location("c", INDEX_X_PLUS_1)));
 
-        assertTrue(channel.isValidSourceLocations(getList(new Location("a", INDEX_X)), getList(new Location("a", INDEX_1)), compartments));
+        assertTrue(component.isValidSourceLocations(getList(new Location("a", INDEX_X)), getList(new Location("a", INDEX_1)), compartments));
     }
     
     @Test
     public void testIsValidSourceLocation() {
         List<Compartment> compartments = getList(new Compartment("a", 4), new Compartment("b", 2));
-        Channel channel = new Channel("label", new Location("a", INDEX_X), new Location("c", INDEX_X_PLUS_1));
+        ChannelComponent component = new ChannelComponent(getList(new Location("a", INDEX_X)), getList(new Location("c", INDEX_X_PLUS_1)));
 
-        assertTrue(channel.isValidSourceLocation(new Location("a", INDEX_X), new Location("a", INDEX_1), compartments));
+        assertTrue(component.isValidSourceLocation(new Location("a", INDEX_X), new Location("a", INDEX_1), compartments));
     }
     
     @Test
     public void testIsValidLinkChannel() {
         // Single cell compartments
         Channel channel = new Channel("label");
-        channel.addLocationPair(getList(new Location("a")), getList(new Location("b")));
+        channel.addChannelComponent(null, getList(new Location("a")), getList(new Location("b")));
         assertTrue(channel.isValidLinkChannel());
         
         // Single cell-cell link
         channel = new Channel("label");
-        channel.addLocationPair(getList(new Location("a", INDEX_1)), getList(new Location("a", INDEX_2)));
+        channel.addChannelComponent(null, getList(new Location("a", INDEX_1)), getList(new Location("a", INDEX_2)));
         assertTrue(channel.isValidLinkChannel());
 
         // Multiple components
         channel = new Channel("label");
-        channel.addLocationPair(getList(new Location("a")), getList(new Location("b")));
-        channel.addLocationPair(getList(new Location("a", INDEX_1)), getList(new Location("a", INDEX_2)));
+        channel.addChannelComponent(null, getList(new Location("a")), getList(new Location("b")));
+        channel.addChannelComponent(null, getList(new Location("a", INDEX_1)), getList(new Location("a", INDEX_2)));
         assertTrue(channel.isValidLinkChannel());
         
         // Multi agent channel
         channel = new Channel("label");
-        channel.addLocationPair(getList(new Location("a"), new Location("c")), getList(new Location("b"), new Location("d")));
+        channel.addChannelComponent(null, getList(new Location("a"), new Location("c")), getList(new Location("b"), new Location("d")));
         assertFalse(channel.isValidLinkChannel());
+        
+        // Predefined channel type
+        channel = new Channel("label");
+        channel.addChannelComponent("Hexagonal", getList(new Location("a")), getList(new Location("b")));
+        assertTrue(channel.isValidLinkChannel());
     }
     
     @Test
     public void testPermuteLocations() {
-        Channel channel = new Channel("label");
+        ChannelComponent component = new ChannelComponent(
+                getList(new Location("a", INDEX_X)), getList(new Location("c", INDEX_X_PLUS_1)));
 
         List<List<Location>> locationPermutations = new ArrayList<List<Location>>();
         List<List<Location>> targetConstraintPermutations = new ArrayList<List<Location>>();
@@ -593,7 +725,7 @@ public class ChannelTest {
         // Single element
         List<Location> locations = getList(new Location("a"));
         List<Location> targetConstraints = getList(new Location("b"));
-        channel.permuteLocations(locations, targetConstraints, locationPermutations, targetConstraintPermutations);
+        component.permuteLocations(locations, targetConstraints, locationPermutations, targetConstraintPermutations);
         
         List<List<Location>> expectedLocations = new ArrayList<List<Location>>();
         List<List<Location>> expectedTargetConstraints = new ArrayList<List<Location>>();
@@ -609,7 +741,7 @@ public class ChannelTest {
         targetConstraints = getList(new Location("d"), new Location("e"), new Location("f"));
         locationPermutations.clear();
         targetConstraintPermutations.clear();
-        channel.permuteLocations(locations, targetConstraints, locationPermutations, targetConstraintPermutations);
+        component.permuteLocations(locations, targetConstraints, locationPermutations, targetConstraintPermutations);
         
         expectedLocations.clear();
         expectedTargetConstraints.clear();
@@ -629,5 +761,131 @@ public class ChannelTest {
         assertEquals(expectedLocations, locationPermutations);
         assertEquals(expectedTargetConstraints, targetConstraintPermutations);
         
+    }
+    
+    @Test
+    public void testCreateChannelComponent() {
+        Location location1 = new Location("a");
+        Location location2 = new Location("b");
+        
+        Channel channel = new Channel("label");
+        
+        try {
+            channel.createChannelComponent(null, getList(location1), null);
+            fail("mismatched locations list should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            channel.createChannelComponent(null, null, getList(location1));
+            fail("mismatched locations list should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            channel.createChannelComponent(null, getList(location1, location1), getList(location2));
+            fail("mismatched locations list should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            channel.createChannelComponent("Unknown", getList(location1), getList(location2));
+            fail("mismatched locations list should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        ChannelComponent component = channel.createChannelComponent(null, getList(location1), getList(location2));
+        assertEquals("[a] -> [b]", component.toString());
+
+        component = channel.createChannelComponent(null, getList(location1), getList(location1));
+        assertEquals("[a] -> [a]", component.toString());
+        
+        // Multi compartment channels
+        component = channel.createChannelComponent(null, getList(location2, location1), getList(location1, location2));
+        assertEquals("[b, a] -> [a, b]", component.toString());
+    }
+    
+    @Test
+    public void testCreateChannelComponent_channelTypes() {
+        
+        checkCreateChannelComponent("Neighbour");
+        checkCreateChannelComponent("EdgeNeighbour");
+        checkCreateChannelComponent("Hexagonal");
+        
+    }
+    
+    private void checkCreateChannelComponent(String channelType) {
+        Location location1 = new Location("a");
+        Location location2 = new Location("b");
+        Location location3 = new Location("a", INDEX_0);
+        
+        Channel channel = new Channel("label");
+        
+        try {
+            channel.createChannelComponent(channelType, getList(location1), null);
+            fail("mismatched locations list should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            channel.createChannelComponent(channelType, null, getList(location1));
+            fail("mismatched locations list should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            channel.createChannelComponent(channelType, getList(location1, location1), getList(location2));
+            fail("mismatched locations list should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            channel.createChannelComponent(channelType, getList(location3), getList(location2));
+            fail("non compartment locations should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        ChannelComponent component = channel.createChannelComponent(channelType, getList(location1), getList(location2));
+        assertEquals("(" + channelType + ") [a] -> [b]", component.toString());
+
+        component = channel.createChannelComponent(channelType, getList(location1), getList(location1));
+        assertEquals("(" + channelType + ") [a] -> [a]", component.toString());
+        
+        // Multi compartment channels
+        component = channel.createChannelComponent(channelType, getList(location2, location1), getList(location1, location2));
+        assertEquals("(" + channelType + ") [b, a] -> [a, b]", component.toString());
+    }
+    
+    @Test
+    public void testGetChannelSubcomponents_edgeNeighbour() {
+        List<Compartment> compartments = getList(new Compartment("a", 4, 4));
+        
+        Location location = new Location("a");
+
+        EdgeNeighbourComponent component = new EdgeNeighbourComponent(getList(location), getList(location));
+        
+        List<ChannelComponent> expected = getList(
+                new ChannelComponent(getList(new Location("a", INDEX_X, INDEX_Y)), getList(new Location("a", INDEX_X_MINUS_1, INDEX_Y))),
+                new ChannelComponent(getList(new Location("a", INDEX_X, INDEX_Y)), getList(new Location("a", INDEX_X_PLUS_1, INDEX_Y))),
+                new ChannelComponent(getList(new Location("a", INDEX_X, INDEX_Y)), getList(new Location("a", INDEX_X, INDEX_Y_MINUS_1))),
+                new ChannelComponent(getList(new Location("a", INDEX_X, INDEX_Y)), getList(new Location("a", INDEX_X, INDEX_Y_PLUS_1))));
+
+        assertEquals(expected, component.getChannelSubcomponents(compartments));
     }
 }

@@ -20,10 +20,14 @@ public class Perturbation {
         if (simulationState == null) {
             throw new NullPointerException();
         }
-        if (condition.evaluate(simulationState)) {
-            return untilCondition == null || !untilCondition.evaluate(simulationState);
+        return condition.evaluate(simulationState);
+    }
+    
+    public boolean isUntilConditionMet(SimulationState simulationState) {
+        if (simulationState == null) {
+            throw new NullPointerException();
         }
-        return false;
+        return untilCondition == null || untilCondition.evaluate(simulationState);
     }
     
     public void apply(SimulationState simulationState) {

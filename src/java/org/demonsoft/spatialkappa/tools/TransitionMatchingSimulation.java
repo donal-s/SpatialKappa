@@ -1,7 +1,7 @@
 package org.demonsoft.spatialkappa.tools;
 
 import static org.demonsoft.spatialkappa.model.Utils.getChannel;
-import static org.demonsoft.spatialkappa.model.Utils.getList;
+import static org.demonsoft.spatialkappa.model.Utils.*;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -31,6 +31,7 @@ import org.demonsoft.spatialkappa.model.SimulationState;
 import org.demonsoft.spatialkappa.model.Transition;
 import org.demonsoft.spatialkappa.model.TransitionInstance;
 import org.demonsoft.spatialkappa.model.TransitionPrimitive;
+import org.demonsoft.spatialkappa.model.Utils;
 import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.Variable.Type;
 import org.demonsoft.spatialkappa.model.VariableExpression;
@@ -49,8 +50,8 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     private List<Transition> finiteRateTransitions = new ArrayList<Transition>();
     private List<Transition> infiniteRateTransitions = new ArrayList<Transition>();
     private final List<Perturbation> perturbations = new ArrayList<Perturbation>();
-    private final Map<Transition, Boolean> infiniteRateTransitionActivityMap = new HashMap<Transition, Boolean>();
-    private final Map<Transition, Float> finiteRateTransitionActivityMap = new HashMap<Transition, Float>();
+    final Map<Transition, Boolean> infiniteRateTransitionActivityMap = new HashMap<Transition, Boolean>();
+    final Map<Transition, Float> finiteRateTransitionActivityMap = new HashMap<Transition, Float>();
     final Map<Variable, Integer> transitionsFiredMap = new HashMap<Variable, Integer>();
     private final Map<Complex, List<Complex>> complexComponentMap = new HashMap<Complex, List<Complex>>();
     private final Map<Complex, List<Transition>> complexTransitionMap = new HashMap<Complex, List<Transition>>();
@@ -256,7 +257,9 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
             Perturbation perturbation = iter.next();
             if (perturbation.isConditionMet(this)) {
                 perturbation.apply(this);
-                iter.remove();
+                if (perturbation.isUntilConditionMet(this)) {
+                    iter.remove();
+                }   
             }
         }
     }
@@ -475,7 +478,34 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     }
 
     public void addComplexInstances(List<Agent> agents, int amount) {
-        throw new IllegalStateException("Not implemented yet");
+        if (agents == null) {
+            throw new NullPointerException();
+        }
+        
+        if (amount == 0) {
+            return;
+        }
+        
+        List<Complex> complexes = getComplexes(agents);
+        for (Complex complex : complexes) {
+            Complex canonicalComplex = getCanonicalComplex(complex);
+            if (canonicalComplex == null) {
+                if (amount > 0) {
+                    complexStore.put(complex, amount);
+                    increaseTransitionActivities(complex, true);
+                }
+            }
+            else {
+                int quantity = Math.max(0, complexStore.get(canonicalComplex) + amount);
+                complexStore.put(canonicalComplex, quantity);
+                if (amount > 0) {
+                    increaseTransitionActivities(canonicalComplex, false);
+                }
+                else {
+                    reduceTransitionActivities(canonicalComplex);
+                }
+            }
+        }
     }
 
     public void setTransitionRate(String transitionName, VariableExpression rateExpression) {

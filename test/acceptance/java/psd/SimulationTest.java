@@ -129,12 +129,14 @@ public class SimulationTest {
                  });
     }
     
-//    @Test
+    @Test
     public void testTest3_3_diffusionWithinGeometricPrimitives() throws Exception {
-         checkTimeSimulation("test-3-3-input.ka", new String[] {"AB", "A2B2 centre", "A2B2 not centre"}, 10, 50, 
-                new float[][] {
-                    {0, 0, 0}, {50, 75, 25}, {40, 175, 80}, {25, 250, 125},
-                });
+         checkEventSimulation("test-3-3-input.ka", new String[] {
+                 "A", "A TL", "A B", "A R", "B", "B TL", "B B", "B R", "C", "C TL", "C B", "C R", }, 900, 50, 
+                 new float[][] {
+                     {1000, 0, 0, 0, 1000, 0, 0, 0, 1000, 0, 0, 0},
+                     {750, 1, 60, 60, 750, 40, 40, 40, 750, 30, 30, 30},
+                 });
     }
     
 //    @Test

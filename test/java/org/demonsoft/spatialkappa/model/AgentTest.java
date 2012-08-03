@@ -1,7 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

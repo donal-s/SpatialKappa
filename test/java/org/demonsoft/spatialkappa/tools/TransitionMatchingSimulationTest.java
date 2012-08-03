@@ -1,7 +1,7 @@
 package org.demonsoft.spatialkappa.tools;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertEquals;
@@ -30,10 +30,13 @@ import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
+import org.demonsoft.spatialkappa.model.Perturbation;
 import org.demonsoft.spatialkappa.model.Transition;
 import org.demonsoft.spatialkappa.model.TransitionInstance;
 import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.VariableExpression;
+import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
+import org.demonsoft.spatialkappa.tools.TransitionMatchingSimulation.ObservableMapValue;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -493,6 +496,65 @@ public class TransitionMatchingSimulationTest {
         simulation.removeTransitionInstances(transitionInstances, complex);
         assertEquals(expectedInstances, transitionInstances);
     }
+    
+    
+    @Test
+    public void testAddComplexInstances() {
+        try {
+            simulation.addComplexInstances(null, 5);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        kappaModel = new KappaModel();
+        kappaModel.addTransition("A", NOT_LOCATED, getList(new Agent("A")), null, null, null, new VariableExpression(1f));
+        kappaModel.addTransition("B", NOT_LOCATED, getList(new Agent("B")), null, null, null, new VariableExpression(1f));
+        kappaModel.addTransition("C", NOT_LOCATED, getList(new Agent("C")), null, null, null, new VariableExpression(Constant.INFINITY));
+        
+        kappaModel.addVariable(getList(new Agent("A")), "A", NOT_LOCATED);
+        kappaModel.addVariable(getList(new Agent("B")), "B", NOT_LOCATED);
+        kappaModel.addVariable(getList(new Agent("C")), "C", NOT_LOCATED);
+        
+        Transition transitionA = kappaModel.getTransitions().get(0);
+        Transition transitionB = kappaModel.getTransitions().get(1);
+        Transition transitionC = kappaModel.getTransitions().get(2);
+        
+        Variable variableA = kappaModel.getVariables().get("A");
+        Variable variableB = kappaModel.getVariables().get("B");
+        Variable variableC = kappaModel.getVariables().get("C");
+        
+        simulation = new TransitionMatchingSimulation(kappaModel);
+
+        simulation.addComplexInstances(getList(new Agent("A"), new Agent("B"), new Agent("C")), 10);
+        
+        assertEquals((Float) 10f, simulation.finiteRateTransitionActivityMap.get(transitionA));
+        assertEquals((Float) 10f, simulation.finiteRateTransitionActivityMap.get(transitionB));
+        assertEquals(true, simulation.infiniteRateTransitionActivityMap.get(transitionC));
+        assertEquals(10f, simulation.getComplexQuantity(variableA).value, 0.01f);
+        assertEquals(10f, simulation.getComplexQuantity(variableB).value, 0.01f);
+        assertEquals(10f, simulation.getComplexQuantity(variableC).value, 0.01f);
+        
+        simulation.addComplexInstances(getList(new Agent("B")), -8);
+        
+        assertEquals((Float) 10f, simulation.finiteRateTransitionActivityMap.get(transitionA));
+        assertEquals((Float) 2f, simulation.finiteRateTransitionActivityMap.get(transitionB));
+        assertEquals(true, simulation.infiniteRateTransitionActivityMap.get(transitionC));
+        assertEquals(10f, simulation.getComplexQuantity(variableA).value, 0.01f);
+        assertEquals(2f, simulation.getComplexQuantity(variableB).value, 0.01f);
+        assertEquals(10f, simulation.getComplexQuantity(variableC).value, 0.01f);
+        
+        simulation.addComplexInstances(getList(new Agent("A"), new Agent("B"), new Agent("C")), -10);
+        
+        assertEquals((Float) 0f, simulation.finiteRateTransitionActivityMap.get(transitionA));
+        assertEquals((Float) 0f, simulation.finiteRateTransitionActivityMap.get(transitionB));
+        assertEquals(false, simulation.infiniteRateTransitionActivityMap.get(transitionC));
+        assertEquals(0f, simulation.getComplexQuantity(variableA).value, 0.01f);
+        assertEquals(0f, simulation.getComplexQuantity(variableB).value, 0.01f);
+        assertEquals(0f, simulation.getComplexQuantity(variableC).value, 0.01f);
+    }
+    
     
     @Test
     public void testGetTotalTransitionActivity() {

@@ -1,12 +1,12 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_2;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_MINUS_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_2;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_MINUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_PLUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertEquals;
@@ -444,11 +444,11 @@ public class ComplexTest {
         channels.clear();
         // Ensure more than the first pair get processed
         Channel channel = new Channel("horiz");
-        channel.addLocationPair(getList(new Location("loc2", new CellIndexExpression("100"), INDEX_0)), 
+        channel.addChannelComponent(null, getList(new Location("loc2", new CellIndexExpression("100"), INDEX_0)), 
                 getList(new Location("loc2", new CellIndexExpression("101"), INDEX_0)));
-        channel.addLocationPair(getList(new Location("loc2", INDEX_X, INDEX_Y)), 
+        channel.addChannelComponent(null, getList(new Location("loc2", INDEX_X, INDEX_Y)), 
                 getList(new Location("loc2", INDEX_X_MINUS_1, INDEX_Y)));
-        channel.addLocationPair(getList(new Location("loc2", INDEX_X, INDEX_Y)), 
+        channel.addChannelComponent(null, getList(new Location("loc2", INDEX_X, INDEX_Y)), 
                 getList(new Location("loc2", INDEX_X_PLUS_1, INDEX_Y)));
         channels.add(channel);
         
@@ -474,6 +474,8 @@ public class ComplexTest {
                 ));
                
         checkMappingInstances(complex, compartments, channels, expected);
+        
+        // TODO test predefined channel types
 
     }
     

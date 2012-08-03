@@ -473,6 +473,47 @@ public class SpatialKappaParserTest {
                 "(LOCATION cytosol (INDEX (CELL_INDEX_EXPR - (CELL_INDEX_EXPR u) (CELL_INDEX_EXPR 1))) (INDEX (CELL_INDEX_EXPR v)) (INDEX (CELL_INDEX_EXPR 0)))))" +
                 ")");
                 
+        // Predefined types
+        runParserRule("channelDecl", "%channel: label type :compartment1 -> :compartment2", 
+            "(CHANNEL label (LOCATION_PAIR (TYPE type) (LOCATIONS (LOCATION compartment1)) (LOCATIONS (LOCATION compartment2))))");
+        runParserRule("channelDecl", "%channel: label type :compartment1[x] -> :compartment2[x+1]", 
+            "(CHANNEL label (LOCATION_PAIR (TYPE type) (LOCATIONS (LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x)))) " +
+            "(LOCATIONS (LOCATION compartment2 (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1)))))))");
+            
+        runParserRule("channelDecl", "%channel: label (type :compartment1[x] -> :compartment2[x+1])", 
+            "(CHANNEL label (LOCATION_PAIR (TYPE type) (LOCATIONS (LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x)))) " +
+            "(LOCATIONS (LOCATION compartment2 (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1)))))))");
+            
+        runParserRule("channelDecl", "%channel: label (type :compartment1 -> :compartment2) + " +
+                "(:compartment1[x] -> :compartment2[x - 1])", 
+                "(CHANNEL label " +
+                "(LOCATION_PAIR (TYPE type) (LOCATIONS (LOCATION compartment1)) " +
+                "(LOCATIONS (LOCATION compartment2))) " +
+                "(LOCATION_PAIR (LOCATIONS (LOCATION compartment1 (INDEX (CELL_INDEX_EXPR x)))) " +
+                "(LOCATIONS (LOCATION compartment2 (INDEX (CELL_INDEX_EXPR - (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1))))))" +
+                ")");
+                
+        runParserRule("channelDecl", "%channel: diffusion" +
+                "        (type :membrane [x][y], :cytosol [u][v][0] -> :membrane [x+1][y], :cytosol [u+1][v][0]) + \\\n" + 
+                "        (type :membrane [x][y], :cytosol [u][v][0] -> :membrane [x -1][y], :cytosol [u -1][v][0])", 
+                "(CHANNEL diffusion " +
+                "(LOCATION_PAIR (TYPE type) " +
+                "(LOCATIONS " +
+                "(LOCATION membrane (INDEX (CELL_INDEX_EXPR x)) (INDEX (CELL_INDEX_EXPR y))) " +
+                "(LOCATION cytosol (INDEX (CELL_INDEX_EXPR u)) (INDEX (CELL_INDEX_EXPR v)) (INDEX (CELL_INDEX_EXPR 0)))) " +
+                "(LOCATIONS " +
+                "(LOCATION membrane (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1))) (INDEX (CELL_INDEX_EXPR y))) " +
+                "(LOCATION cytosol (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR u) (CELL_INDEX_EXPR 1))) (INDEX (CELL_INDEX_EXPR v)) (INDEX (CELL_INDEX_EXPR 0))))) " +
+                "(LOCATION_PAIR (TYPE type) " +
+                "(LOCATIONS " +
+                "(LOCATION membrane (INDEX (CELL_INDEX_EXPR x)) (INDEX (CELL_INDEX_EXPR y))) " +
+                "(LOCATION cytosol (INDEX (CELL_INDEX_EXPR u)) (INDEX (CELL_INDEX_EXPR v)) (INDEX (CELL_INDEX_EXPR 0)))) " +
+                "(LOCATIONS " +
+                "(LOCATION membrane (INDEX (CELL_INDEX_EXPR - (CELL_INDEX_EXPR x) (CELL_INDEX_EXPR 1))) (INDEX (CELL_INDEX_EXPR y))) " +
+                "(LOCATION cytosol (INDEX (CELL_INDEX_EXPR - (CELL_INDEX_EXPR u) (CELL_INDEX_EXPR 1))) (INDEX (CELL_INDEX_EXPR v)) (INDEX (CELL_INDEX_EXPR 0)))))" +
+                ")");
+        
+        
         // TODO handle x-1 as x - 1
         
         runParserRuleFail("channelDecl", "%channel: label compartment1 -> compartment2");

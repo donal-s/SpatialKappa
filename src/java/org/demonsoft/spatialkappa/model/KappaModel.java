@@ -1,7 +1,8 @@
 package org.demonsoft.spatialkappa.model;
 
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
-import static org.demonsoft.spatialkappa.model.Utils.*;
+import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
+import static org.demonsoft.spatialkappa.model.Utils.propogateLocation;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,14 +18,6 @@ import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
-import org.demonsoft.spatialkappa.model.Compartment.OpenCircle;
-import org.demonsoft.spatialkappa.model.Compartment.OpenCuboid;
-import org.demonsoft.spatialkappa.model.Compartment.OpenCylinder;
-import org.demonsoft.spatialkappa.model.Compartment.OpenRectangle;
-import org.demonsoft.spatialkappa.model.Compartment.OpenSphere;
-import org.demonsoft.spatialkappa.model.Compartment.SolidCircle;
-import org.demonsoft.spatialkappa.model.Compartment.SolidCylinder;
-import org.demonsoft.spatialkappa.model.Compartment.SolidSphere;
 import org.demonsoft.spatialkappa.model.Complex.MappingInstance;
 import org.demonsoft.spatialkappa.model.Variable.Type;
 import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
@@ -134,43 +127,7 @@ public class KappaModel implements IKappaModel {
     }
 
     public void addCompartment(String name, String type, List<Integer> dimensions) {
-        if (name == null || dimensions == null) {
-            throw new NullPointerException();
-        }
-        int[] dimArray = new int[dimensions.size()];
-        for (int index = 0; index < dimensions.size(); index++) {
-            dimArray[index] = dimensions.get(index);
-        }
-        if (null == type) {
-            addCompartment(new Compartment(name, dimArray));
-        }
-        else if (OpenRectangle.NAME.equals(type)) {
-            addCompartment(new OpenRectangle(name, dimArray));
-        }
-        else if (SolidCircle.NAME.equals(type)) {
-            addCompartment(new SolidCircle(name, dimArray));
-        }
-        else if (OpenCircle.NAME.equals(type)) {
-            addCompartment(new OpenCircle(name, dimArray));
-        }
-        else if (OpenCuboid.NAME.equals(type)) {
-            addCompartment(new OpenCuboid(name, dimArray));
-        }
-        else if (SolidSphere.NAME.equals(type)) {
-            addCompartment(new SolidSphere(name, dimArray));
-        }
-        else if (OpenSphere.NAME.equals(type)) {
-            addCompartment(new OpenSphere(name, dimArray));
-        }
-        else if (SolidCylinder.NAME.equals(type)) {
-            addCompartment(new SolidCylinder(name, dimArray));
-        }
-        else if (OpenCylinder.NAME.equals(type)) {
-            addCompartment(new OpenCylinder(name, dimArray));
-        }
-        else {
-            throw new IllegalArgumentException("Unknown shape: " + type);
-        }
+        addCompartment(Compartment.createCompartment(name, type, dimensions));
     }
 
     public void addCompartment(Compartment compartment) {

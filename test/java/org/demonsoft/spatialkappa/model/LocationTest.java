@@ -1,13 +1,13 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_2;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_MINUS_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X_PLUS_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_Y_PLUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_2;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_MINUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_PLUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y_PLUS_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
@@ -89,11 +89,11 @@ public class LocationTest {
         compartments.add(new Compartment("cytosol", 3, 3));
         compartments.add(new Compartment("membrane", 3));
         Channel channelCytosol = new Channel("cCytosol");
-        channelCytosol.addLocationPair(
+        channelCytosol.addChannelComponent(null, 
                 getList(new Location("cytosol", INDEX_X, INDEX_Y)), 
                 getList(new Location("cytosol", INDEX_X_PLUS_1, INDEX_Y))
         );
-        channelCytosol.addLocationPair(
+        channelCytosol.addChannelComponent(null,
                 getList(new Location("cytosol", INDEX_X, INDEX_Y)),
                 getList(new Location("cytosol", INDEX_X, INDEX_Y_PLUS_1))
         );
@@ -138,11 +138,11 @@ public class LocationTest {
         
         Channel complexChannel = new Channel("horiz");
         // Ensure more than the first pair get processed
-        complexChannel.addLocationPair(getList(new Location("cytosol", new CellIndexExpression("100"), INDEX_0)), 
+        complexChannel.addChannelComponent(null, getList(new Location("cytosol", new CellIndexExpression("100"), INDEX_0)), 
                 getList(new Location("cytosol", new CellIndexExpression("101"), INDEX_0)));
-        complexChannel.addLocationPair(getList(new Location("cytosol", INDEX_X, INDEX_Y)), 
+        complexChannel.addChannelComponent(null, getList(new Location("cytosol", INDEX_X, INDEX_Y)), 
                 getList(new Location("cytosol", INDEX_X_MINUS_1, INDEX_Y)));
-        complexChannel.addLocationPair(getList(new Location("cytosol", INDEX_X, INDEX_Y)), 
+        complexChannel.addChannelComponent(null, getList(new Location("cytosol", INDEX_X, INDEX_Y)), 
                 getList(new Location("cytosol", INDEX_X_PLUS_1, INDEX_Y)));
         
         location = new Location("cytosol", INDEX_0, INDEX_0);
@@ -151,6 +151,8 @@ public class LocationTest {
         expected.add(new Location("cytosol", INDEX_1, INDEX_0));
 
         assertEquals(expected, location.getLinkedLocations(compartments, complexChannel));
+
+        // TODO test predefined channel types
 
     }
     

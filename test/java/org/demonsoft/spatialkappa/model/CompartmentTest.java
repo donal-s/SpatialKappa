@@ -1,15 +1,17 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_2;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_2;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
+import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -423,5 +425,264 @@ public class CompartmentTest {
         assertTrue(compartment.isValidVoxel(new Location("rectangle", INDEX_X, INDEX_0)));
         assertTrue(compartment.isValidVoxel(new Location("rectangle", INDEX_1, INDEX_0)));
     }
+
+
+    @Test
+    public void testCreateCompartment() {
+        try {
+            Compartment.createCompartment(null, "type", new ArrayList<Integer>());
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "type", null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "unknownShape", new ArrayList<Integer>());
+            fail("unknown shape should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Compartment compartment = Compartment.createCompartment("compartment1", null, new ArrayList<Integer>());
+        assertEquals("compartment1", compartment.toString());
+        compartment = Compartment.createCompartment("compartment2", null, getList(2, 3));
+        assertEquals("compartment2[2][3]", compartment.toString());
+    }
+
+    @Test
+    public void testCreateCompartment_openRectangle() {
+        try {
+            Compartment.createCompartment("label", "OpenRectangle", getList(1, 2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenRectangle", getList(1, 2, 3, 4));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenRectangle", getList(10, 8, 5));
+            fail("too thick should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Compartment compartment = Compartment.createCompartment("compartment1", "OpenRectangle", getList(10, 8, 3));
+        assertEquals(Compartment.OpenRectangle.class, compartment.getClass());
+        assertEquals("compartment1 (OpenRectangle) [10][8] [3]", compartment.toString());
+    }
+
+    @Test
+    public void testCreateCompartment_solidCircle() {
+        try {
+            Compartment.createCompartment("label", "SolidCircle", new ArrayList<Integer>());
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "SolidCircle", getList(1, 2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Compartment compartment = Compartment.createCompartment("compartment1", "SolidCircle", getList(10));
+        assertEquals(Compartment.SolidCircle.class, compartment.getClass());
+        assertEquals("compartment1 (SolidCircle) [10]", compartment.toString());
+    }
+
+
+    @Test
+    public void testCreateCompartment_openCircle() {
+        try {
+            Compartment.createCompartment("label", "OpenCircle", getList(1));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenCircle", getList(1, 2, 3));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenCircle", getList(10, 8));
+            fail("too thick should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Compartment compartment = Compartment.createCompartment("compartment1", "OpenCircle", getList(10, 3));
+        assertEquals(Compartment.OpenCircle.class, compartment.getClass());
+        assertEquals("compartment1 (OpenCircle) [10] [3]", compartment.toString());
+    }
+
+    @Test
+    public void testCreateCompartment_openCuboid() {
+        try {
+            Compartment.createCompartment("label", "OpenCuboid", getList(1, 2, 2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenCuboid", getList(10, 20, 30, 40, 4));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenCuboid", getList(10, 5, 8, 3));
+            fail("too thick should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Compartment compartment = Compartment.createCompartment("compartment1", "OpenCuboid", getList(10, 5, 8, 2));
+        assertEquals(Compartment.OpenCuboid.class, compartment.getClass());
+        assertEquals("compartment1 (OpenCuboid) [10][5][8] [2]", compartment.toString());
+    }
+
+    @Test
+    public void testCreateCompartment_solidSphere() {
+        try {
+            Compartment.createCompartment("label", "SolidSphere", new ArrayList<Integer>());
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "SolidSphere", getList(1, 2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Compartment compartment = Compartment.createCompartment("compartment1", "SolidSphere", getList(10));
+        assertEquals(Compartment.SolidSphere.class, compartment.getClass());
+        assertEquals("compartment1 (SolidSphere) [10]", compartment.toString());
+    }
+
+    @Test
+    public void testCreateCompartment_openSphere() {
+        try {
+            Compartment.createCompartment("label", "OpenSphere", getList(2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenSphere", getList(10, 20, 4));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenSphere", getList(10, 8));
+            fail("too thick should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Compartment compartment = Compartment.createCompartment("compartment1", "OpenSphere", getList(10, 2));
+        assertEquals(Compartment.OpenSphere.class, compartment.getClass());
+        assertEquals("compartment1 (OpenSphere) [10] [2]", compartment.toString());
+    }
+
+    @Test
+    public void testCreateCompartment_solidCylinder() {
+        try {
+            Compartment.createCompartment("label", "SolidCylinder", getList(10));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "SolidCylinder", getList(1, 2, 3));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Compartment compartment = Compartment.createCompartment("compartment1", "SolidCylinder", getList(10, 20));
+        assertEquals(Compartment.SolidCylinder.class, compartment.getClass());
+        assertEquals("compartment1 (SolidCylinder) [10][20]", compartment.toString());
+    }
+
+    @Test
+    public void testCreateCompartment_openCylinder() {
+        try {
+            Compartment.createCompartment("label", "OpenCylinder", getList(2, 20));
+            fail("wrong dimension count should have failed");
+        }
+        catch (ArrayIndexOutOfBoundsException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenCylinder", getList(10, 20, 20, 4));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenCylinder", getList(10, 20, 8));
+            fail("too thick should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Compartment compartment = Compartment.createCompartment("compartment1", "OpenCylinder", getList(10, 20, 2));
+        assertEquals(Compartment.OpenCylinder.class, compartment.getClass());
+        assertEquals("compartment1 (OpenCylinder) [10][20] [2]", compartment.toString());
+    }
+
 
 }

@@ -570,4 +570,45 @@ public class Compartment {
         }
         return true;
     }
+    
+    
+    public static Compartment createCompartment(String name, String type, List<Integer> dimensions) {
+        if (name == null || dimensions == null) {
+            throw new NullPointerException();
+        }
+        int[] dimArray = new int[dimensions.size()];
+        for (int index = 0; index < dimensions.size(); index++) {
+            dimArray[index] = dimensions.get(index);
+        }
+        if (null == type) {
+            return new Compartment(name, dimArray);
+        }
+        else if (OpenRectangle.NAME.equals(type)) {
+            return new OpenRectangle(name, dimArray);
+        }
+        else if (SolidCircle.NAME.equals(type)) {
+            return new SolidCircle(name, dimArray);
+        }
+        else if (OpenCircle.NAME.equals(type)) {
+            return new OpenCircle(name, dimArray);
+        }
+        else if (OpenCuboid.NAME.equals(type)) {
+            return new OpenCuboid(name, dimArray);
+        }
+        else if (SolidSphere.NAME.equals(type)) {
+            return new SolidSphere(name, dimArray);
+        }
+        else if (OpenSphere.NAME.equals(type)) {
+            return new OpenSphere(name, dimArray);
+        }
+        else if (SolidCylinder.NAME.equals(type)) {
+            return new SolidCylinder(name, dimArray);
+        }
+        else if (OpenCylinder.NAME.equals(type)) {
+            return new OpenCylinder(name, dimArray);
+        }
+        else {
+            throw new IllegalArgumentException("Unknown shape: " + type);
+        }
+    }
 }

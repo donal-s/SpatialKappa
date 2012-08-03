@@ -222,17 +222,17 @@ channelDecl
   Channel channel = null;
   }
   :
-  ^(CHANNEL (linkName=id { channel = new Channel($linkName.text); }) (channel {channel.addLocationPair($channel.source, $channel.target);})+)
+  ^(CHANNEL (linkName=id { channel = new Channel($linkName.text); }) (channel {channel.addChannelComponent($channel.channelType, $channel.source, $channel.target);})+)
   {
     kappaModel.addChannel(channel);
   }
   ;
 
-channel returns [List<Location> source, List<Location> target]
+channel returns [String channelType, List<Location> source, List<Location> target]
   :
-  ^(LOCATION_PAIR sourceLocations=locations targetLocations=locations)
+  ^(LOCATION_PAIR (^(TYPE type=id))? sourceLocations=locations targetLocations=locations)
   {
-    $source = $sourceLocations.locations; $target = $targetLocations.locations;
+    $channelType = $type.result; $source = $sourceLocations.locations; $target = $targetLocations.locations;
   }
   ;
 

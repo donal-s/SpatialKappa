@@ -1,7 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getComplexes;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
@@ -167,7 +167,7 @@ public class TransitionPrimitiveTest {
     public void testApply_MoveAgents_multipleAgentChannel() {
         List<Compartment> compartments = getList(new Compartment("source1"), new Compartment("source2"), new Compartment("target1"), new Compartment("target2"));
         Channel channel = new Channel("channel");
-        channel.addLocationPair(
+        channel.addChannelComponent(null,
                 getList(new Location("source1"), new Location("source2")),
                 getList(new Location("target1"), new Location("target2"))               
         );
@@ -183,6 +183,7 @@ public class TransitionPrimitiveTest {
         checkApplyMoveAgents(leftAgents, targetConstraints, "channel",  realSourceAgents, channels, compartments,
                 new String[] { "[agent1:target1]", "[agent2:target2]" });
 
+        // TODO test predefined channel types
 
     }
 

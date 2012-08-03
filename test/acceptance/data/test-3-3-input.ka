@@ -1,0 +1,35 @@
+### PSD Project Stage 3 acceptance tests
+### Test 3.3 - Diffusion within geometric primitives
+### Last modified 31-07-2012
+
+%agent: A
+%agent: B
+%agent: C
+
+### 2D Shapes
+
+%compartment: solidRectangle[5][5] # [height][width]
+%init: 1000 :solidRectangle[2][2] A, B, C
+
+%channel: edge EdgeNeighbour :solidRectangle -> :solidRectangle
+%channel: hexagonal Hexagonal :solidRectangle -> :solidRectangle
+%channel: neighbour Neighbour :solidRectangle -> :solidRectangle
+
+A ->:edge A @ 6.0
+B ->:hexagonal B @ 4.0
+C ->:neighbour C @ 3.0
+
+%obs: 'A'    A:solidRectangle[2][2]
+%obs: 'A TL' A:solidRectangle[1][1]
+%obs: 'A B'  A:solidRectangle[3][2]
+%obs: 'A R'  A:solidRectangle[2][3]
+
+%obs: 'B'    B:solidRectangle[2][2]
+%obs: 'B TL' B:solidRectangle[1][1]
+%obs: 'B B'  B:solidRectangle[3][2]
+%obs: 'B R'  B:solidRectangle[2][3]
+
+%obs: 'C'    C:solidRectangle[2][2]
+%obs: 'C TL' C:solidRectangle[1][1]
+%obs: 'C B'  C:solidRectangle[3][2]
+%obs: 'C R'  C:solidRectangle[2][3]

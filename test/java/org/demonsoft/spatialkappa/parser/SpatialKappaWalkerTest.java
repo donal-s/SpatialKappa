@@ -1,7 +1,7 @@
 package org.demonsoft.spatialkappa.parser;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_0;
-import static org.demonsoft.spatialkappa.model.CellIndexExpressionTest.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -217,7 +217,17 @@ public class SpatialKappaWalkerTest {
                 "        (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x -1][y], :cytosol [u -1][v][0])", 
                 "diffusion: ([membrane[x][y], cytosol[u][v][0]] -> [membrane[(x + 1)][y], cytosol[(u + 1)][v][0]]) + " + 
                 "([membrane[x][y], cytosol[u][v][0]] -> [membrane[(x - 1)][y], cytosol[(u - 1)][v][0]])");
-     }
+
+        // Predefined channel types
+        checkChannelDecl("%channel: label Hexagonal :compartment1 -> :compartment2", 
+                "label: (Hexagonal) [compartment1] -> [compartment2]");
+        checkChannelDecl("%channel: label (Hexagonal :compartment1 -> :compartment2) + " +
+                "(:compartment1[x] -> :compartment2[x - 1])", 
+                "label: ((Hexagonal) [compartment1] -> [compartment2]) + ([compartment1[x]] -> [compartment2[(x - 1)]])");
+        checkChannelDecl("%channel: diffusion (Hexagonal :membrane, :cytosol -> :membrane, :cytosol)", 
+                "diffusion: (Hexagonal) [membrane, cytosol] -> [membrane, cytosol]");
+
+    }
     
     private void checkChannelDecl(String inputText, String linkText) throws Exception {
         Capture<Channel> channel = new Capture<Channel>();
