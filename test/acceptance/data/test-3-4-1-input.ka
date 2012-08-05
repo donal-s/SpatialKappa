@@ -1,0 +1,41 @@
+### PSD Project Stage 3 acceptance tests
+### Test 3.4 - Non-omnidirectional diffusion within geometric primitives 2D
+### Last modified 04-08-2012
+
+%agent: A
+%agent: B
+%agent: C
+%agent: D
+
+%compartment: solidRectangle[5][5] # [height][width]
+%init: 1000 :solidRectangle[1][1] A, B, C, D
+
+%channel: radial Radial :solidRectangle -> :solidRectangle
+%channel: radialIn RadialIn :solidRectangle -> :solidRectangle
+%channel: radialOut RadialOut :solidRectangle -> :solidRectangle
+%channel: lateral Lateral :solidRectangle -> :solidRectangle
+
+A ->:radial    A @ 3.0
+B ->:radialIn  B @ 12.0
+C ->:radialOut C @ 4.0
+D ->:lateral   D @ 6.0
+
+%obs: 'A'    A:solidRectangle[1][1]
+%obs: 'A O'  A:solidRectangle[0][0] # Further out from centre
+%obs: 'A I'  A:solidRectangle[2][2] # Closer in to centre
+%obs: 'A L'  A:solidRectangle[1][2] # Lateral
+
+%obs: 'B'    B:solidRectangle[1][1]
+%obs: 'B O'  B:solidRectangle[0][0] # Further out from centre
+%obs: 'B I'  B:solidRectangle[2][2] # Closer in to centre
+%obs: 'B L'  B:solidRectangle[1][2] # Lateral
+
+%obs: 'C'    C:solidRectangle[1][1]
+%obs: 'C O'  C:solidRectangle[0][0] # Further out from centre
+%obs: 'C I'  C:solidRectangle[2][2] # Closer in to centre
+%obs: 'C L'  C:solidRectangle[1][2] # Lateral
+
+%obs: 'D'    D:solidRectangle[1][1]
+%obs: 'D O'  D:solidRectangle[0][0] # Further out from centre
+%obs: 'D I'  D:solidRectangle[2][2] # Closer in to centre
+%obs: 'D L'  D:solidRectangle[1][2] # Lateral

@@ -59,6 +59,24 @@ public class CellIndexExpression extends VariableExpression {
             throw new IllegalStateException("Unknown expression");
         }
     }
+    
+    public CellIndexExpression getDeltaIndex(int delta) {
+        if (delta == 0) {
+            return this;
+        }
+        switch (type) {
+        case BINARY_EXPRESSION:
+        case VARIABLE_REFERENCE:
+            Operator oper = (delta < 0) ? Operator.MINUS : Operator.PLUS;
+            return new CellIndexExpression(this, oper, new CellIndexExpression("" + Math.abs(delta)));
+            
+        case NUMBER:
+            return new CellIndexExpression("" + (((int) value) + delta));
+            
+        default:
+            throw new IllegalStateException("Unknown expression");
+        }
+    }
 
     public int evaluateIndex(Map<String, Integer> variables) {
         if (variables == null) {

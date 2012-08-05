@@ -1,8 +1,17 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_2;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_MINUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_PLUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y_MINUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y_PLUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Z;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Z_MINUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Z_PLUS_1;
 import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
-import static org.demonsoft.spatialkappa.model.CellIndexExpression.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,6 +66,18 @@ public class Channel {
         }
         if (FaceNeighbourComponent.NAME.equals(channelType)) {
             return new FaceNeighbourComponent(sourceLocations, targetLocations);
+        }
+        if (RadialComponent.NAME.equals(channelType)) {
+            return new RadialComponent(sourceLocations, targetLocations);
+        }
+        if (RadialOutComponent.NAME.equals(channelType)) {
+            return new RadialOutComponent(sourceLocations, targetLocations);
+        }
+        if (RadialInComponent.NAME.equals(channelType)) {
+            return new RadialInComponent(sourceLocations, targetLocations);
+        }
+        if (LateralComponent.NAME.equals(channelType)) {
+            return new LateralComponent(sourceLocations, targetLocations);
         }
         throw new IllegalArgumentException("Unknown channel type: " + channelType);
     }
@@ -398,7 +419,7 @@ public class Channel {
             return true;
         }
 
-        boolean isValidSourceLocation(Location template, Location source, List<Compartment> compartments) {
+        protected boolean isValidSourceLocation(Location template, Location source, List<Compartment> compartments) {
             Compartment compartment = getCompartment(compartments, template.getName());
             if (template.getIndices().length != source.getIndices().length 
                     || !template.getName().equals(source.getName())) {
@@ -692,4 +713,729 @@ public class Channel {
             return result;
         }
     }
+
+    public static class RadialComponent extends PredefinedChannelComponent {
+
+        public static final String NAME = "Radial";
+        
+        public RadialComponent(List<Location> sourceLocations, List<Location> targetLocations) {
+            super(NAME, sourceLocations, targetLocations);
+            // TODO test dimensions
+            // TODO constrain to single location at a time
+        }
+        
+        @Override
+        public List<List<Location>> applyChannel(List<Location> sourceLocations, List<Location> targetConstraints,
+                List<Compartment> compartments) {
+            
+            List<List<Location>> result = new ArrayList<List<Location>>();
+            
+            if (isValidSourceLocations(templateSourceLocations, sourceLocations, compartments)) {
+
+                // TODO constrain to single location at a time
+                for (int templateIndex=0; templateIndex<templateSourceLocations.size(); templateIndex++) {
+                    Location templateSourceLocation = templateSourceLocations.get(templateIndex);
+                    Location templateTargetLocation = templateTargetLocations.get(templateIndex);
+                    Location sourceLocation = sourceLocations.get(templateIndex);
+                    Location targetConstraint = targetConstraints.get(templateIndex);
+                    
+                    Compartment sourceCompartment = getCompartment(compartments, templateSourceLocation.getName());
+                    Compartment targetCompartment = getCompartment(compartments, templateTargetLocation.getName());
+        
+                    if (sourceLocation.getIndices().length != sourceCompartment.getDimensions().length 
+                            || !sourceLocation.getName().equals(templateSourceLocation.getName())) {
+                        continue;
+                    }
+        
+                    List<Location> newLocations = null;
+                    if (sourceCompartment.getDimensions().length == 2) {
+                        newLocations = getRadialLocations2D(sourceLocation, sourceCompartment);
+                    }
+                    else {
+                        newLocations = getRadialLocations3D(sourceLocation, sourceCompartment);
+                    }
+                    
+                    for (Location location : newLocations) {
+                        if (targetCompartment.isValidVoxel(location)) {
+                            if (targetConstraint == null || targetConstraint.equals(location) || targetConstraint.isRefinement(location)) {
+                                result.add(getList(location));
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        
+        private List<Location> getRadialLocations2D(Location location, Compartment compartment) {
+            int doubleDeltaY = ((int) location.getIndices()[0].value) * 2 - compartment.dimensions[0] + 1;
+            int doubleDeltaX = ((int) location.getIndices()[1].value) * 2 - compartment.dimensions[1] + 1;
+            
+            CellIndexExpression newIndexX = null;
+            CellIndexExpression newIndexY = null;
+            
+            List<Location> result = new ArrayList<Location>();
+            
+            // Direction out 
+            
+            if (Math.abs(doubleDeltaX) > Math.abs(doubleDeltaY)) {
+                newIndexY = location.getIndices()[0];
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? 1 : -1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            else if (Math.abs(doubleDeltaX) < Math.abs(doubleDeltaY)) {
+                newIndexX = location.getIndices()[1];
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? 1 : -1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            else if (doubleDeltaX != 0) {
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? 1 : -1);
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? 1 : -1);
+                result.add(new Location(location.getName(), newIndexY, location.getIndices()[1]));
+                result.add(new Location(location.getName(), location.getIndices()[0], newIndexX));
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            else {
+                newIndexX = location.getIndices()[1].getDeltaIndex(-1);
+                newIndexY = location.getIndices()[0].getDeltaIndex(-1);
+                CellIndexExpression newIndexX2 = location.getIndices()[1].getDeltaIndex(1);
+                CellIndexExpression newIndexY2 = location.getIndices()[0].getDeltaIndex(1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+                result.add(new Location(location.getName(), newIndexY, location.getIndices()[1]));
+                result.add(new Location(location.getName(), newIndexY, newIndexX2));
+                result.add(new Location(location.getName(), location.getIndices()[0], newIndexX));
+                result.add(new Location(location.getName(), location.getIndices()[0], newIndexX2));
+                result.add(new Location(location.getName(), newIndexY2, newIndexX));
+                result.add(new Location(location.getName(), newIndexY2, location.getIndices()[1]));
+                result.add(new Location(location.getName(), newIndexY2, newIndexX2));
+            }
+
+            // Direction in 
+            
+            if (Math.abs(doubleDeltaX) > Math.abs(doubleDeltaY)) {
+                newIndexY = location.getIndices()[0];
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? -1 : 1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            else if (Math.abs(doubleDeltaX) < Math.abs(doubleDeltaY)) {
+                newIndexX = location.getIndices()[1];
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? -1 : 1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            else if (doubleDeltaX != 0) {
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? -1 : 1);
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? -1 : 1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            return result;
+        }
+
+        private List<Location> getRadialLocations3D(Location location, Compartment compartment) {
+            int doubleDeltaY = ((int) location.getIndices()[0].value) * 2 - compartment.dimensions[0] + 1;
+            int doubleDeltaX = ((int) location.getIndices()[1].value) * 2 - compartment.dimensions[1] + 1;
+            int doubleDeltaZ = ((int) location.getIndices()[2].value) * 2 - compartment.dimensions[2] + 1;
+            
+            // Direction out 
+
+            List<Location> result = new ArrayList<Location>();
+            int doubleDeltaMax = Math.max(Math.abs(doubleDeltaX), Math.max(Math.abs(doubleDeltaY), Math.abs(doubleDeltaZ)));
+            if (doubleDeltaMax == 0) {
+                CellIndexExpression[] xIndices = new CellIndexExpression[] {
+                        location.getIndices()[1].getDeltaIndex(-1),
+                        location.getIndices()[1],
+                        location.getIndices()[1].getDeltaIndex(1),
+                };
+                CellIndexExpression[] yIndices = new CellIndexExpression[] {
+                        location.getIndices()[0].getDeltaIndex(-1),
+                        location.getIndices()[0],
+                        location.getIndices()[0].getDeltaIndex(1),
+                };
+                CellIndexExpression[] zIndices = new CellIndexExpression[] {
+                        location.getIndices()[2].getDeltaIndex(-1),
+                        location.getIndices()[2],
+                        location.getIndices()[2].getDeltaIndex(1),
+                };
+                
+                for (CellIndexExpression yIndex : yIndices) {
+                    for (CellIndexExpression xIndex : xIndices) {
+                        for (CellIndexExpression zIndex : zIndices) {
+                            if (xIndex != location.getIndices()[1] || yIndex != location.getIndices()[0] || zIndex != location.getIndices()[2]) {
+                                result.add(new Location(location.getName(), yIndex, xIndex, zIndex));
+                            }
+                        }
+                    }
+                }
+                
+                return result;
+            }
+
+            CellIndexExpression newIndexX = null;
+            CellIndexExpression newIndexY = null;
+            CellIndexExpression newIndexZ = null;
+            
+            if (Math.abs(doubleDeltaX) == doubleDeltaMax) {
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? 1 : -1);
+            }
+            if (Math.abs(doubleDeltaY) == doubleDeltaMax) {
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? 1 : -1);
+            }
+            if (Math.abs(doubleDeltaZ) == doubleDeltaMax) {
+                newIndexZ = location.getIndices()[2].getDeltaIndex((doubleDeltaY > 0) ? 1 : -1);
+            }
+            
+            if (newIndexY != null) {
+                if (newIndexX != null) {
+                    if (newIndexZ != null) {
+                        result.add(new Location(location.getName(), newIndexY, newIndexX, newIndexZ));
+                    }
+                    result.add(new Location(location.getName(), newIndexY, newIndexX, location.getIndices()[2]));
+                }
+                if (newIndexZ != null) {
+                    result.add(new Location(location.getName(), newIndexY, location.getIndices()[1], newIndexZ));
+                }
+                result.add(new Location(location.getName(), newIndexY, location.getIndices()[1], location.getIndices()[2]));
+            }
+            if (newIndexX != null) {
+                if (newIndexZ != null) {
+                    result.add(new Location(location.getName(), location.getIndices()[0], newIndexX, newIndexZ));
+                }
+                result.add(new Location(location.getName(), location.getIndices()[0], newIndexX, location.getIndices()[2]));
+            }
+            if (newIndexZ != null) {
+                result.add(new Location(location.getName(), location.getIndices()[0], location.getIndices()[1], newIndexZ));
+            }
+            
+            // Direction in 
+            
+            newIndexX = location.getIndices()[1];
+            newIndexY = location.getIndices()[0];
+            newIndexZ = location.getIndices()[2];
+            
+            if (Math.abs(doubleDeltaX) == doubleDeltaMax) {
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? -1 : 1);
+            }
+            if (Math.abs(doubleDeltaY) == doubleDeltaMax) {
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? -1 : 1);
+            }
+            if (Math.abs(doubleDeltaZ) == doubleDeltaMax) {
+                newIndexZ = location.getIndices()[2].getDeltaIndex((doubleDeltaY > 0) ? -1 : 1);
+            }
+            result.add(new Location(location.getName(), newIndexY, newIndexX, newIndexZ));
+
+            
+            return result;
+        }
+
+        @Override
+        protected boolean isValidSourceLocation(Location template, Location source, List<Compartment> compartments) {
+            Compartment compartment = getCompartment(compartments, template.getName());
+            if (compartment.getDimensions().length != source.getIndices().length 
+                    || !template.getName().equals(source.getName())) {
+                return false;
+            }
+            for (int index = 0; index < source.getIndices().length; index++) {
+                CellIndexExpression sourceIndex = source.getIndices()[index];
+                if (!sourceIndex.isFixed()) {
+                    return false;
+                }
+            }
+            return compartment.isValidVoxel(source);
+        }
+
+        @Override
+        protected List<ChannelComponent> getChannelSubcomponents(List<Compartment> compartments) {
+            return null;
+        }
+        
+    }
+
+    public static class RadialOutComponent extends PredefinedChannelComponent {
+
+        public static final String NAME = "RadialOut";
+        
+        public RadialOutComponent(List<Location> sourceLocations, List<Location> targetLocations) {
+            super(NAME, sourceLocations, targetLocations);
+            // TODO test dimensions
+        }
+        
+        @Override
+        public List<List<Location>> applyChannel(List<Location> sourceLocations, List<Location> targetConstraints,
+                List<Compartment> compartments) {
+            
+            List<List<Location>> result = new ArrayList<List<Location>>();
+            
+            if (isValidSourceLocations(templateSourceLocations, sourceLocations, compartments)) {
+
+                // TODO constrain to single location at a time
+                for (int templateIndex=0; templateIndex<templateSourceLocations.size(); templateIndex++) {
+                    Location templateSourceLocation = templateSourceLocations.get(templateIndex);
+                    Location templateTargetLocation = templateTargetLocations.get(templateIndex);
+                    Location sourceLocation = sourceLocations.get(templateIndex);
+                    Location targetConstraint = targetConstraints.get(templateIndex);
+                    
+                    Compartment sourceCompartment = getCompartment(compartments, templateSourceLocation.getName());
+                    Compartment targetCompartment = getCompartment(compartments, templateTargetLocation.getName());
+        
+                    if (sourceLocation.getIndices().length != sourceCompartment.getDimensions().length 
+                            || !sourceLocation.getName().equals(templateSourceLocation.getName())) {
+                        continue;
+                    }
+        
+                    List<Location> newLocations = null;
+                    if (sourceCompartment.getDimensions().length == 2) {
+                        newLocations = getRadialLocations2D(sourceLocation, sourceCompartment);
+                    }
+                    else {
+                        newLocations = getRadialLocations3D(sourceLocation, sourceCompartment);
+                    }
+                    
+                    for (Location location : newLocations) {
+                        if (targetCompartment.isValidVoxel(location)) {
+                            if (targetConstraint == null || targetConstraint.equals(location) || targetConstraint.isRefinement(location)) {
+                                result.add(getList(location));
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        
+        private List<Location> getRadialLocations2D(Location location, Compartment compartment) {
+            int doubleDeltaY = ((int) location.getIndices()[0].value) * 2 - compartment.dimensions[0] + 1;
+            int doubleDeltaX = ((int) location.getIndices()[1].value) * 2 - compartment.dimensions[1] + 1;
+            
+            CellIndexExpression newIndexX = null;
+            CellIndexExpression newIndexY = null;
+            
+            List<Location> result = new ArrayList<Location>();
+            
+            // Direction out 
+            
+            if (Math.abs(doubleDeltaX) > Math.abs(doubleDeltaY)) {
+                newIndexY = location.getIndices()[0];
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? 1 : -1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            else if (Math.abs(doubleDeltaX) < Math.abs(doubleDeltaY)) {
+                newIndexX = location.getIndices()[1];
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? 1 : -1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            else if (doubleDeltaX != 0) {
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? 1 : -1);
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? 1 : -1);
+                result.add(new Location(location.getName(), newIndexY, location.getIndices()[1]));
+                result.add(new Location(location.getName(), location.getIndices()[0], newIndexX));
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            else {
+                newIndexX = location.getIndices()[1].getDeltaIndex(-1);
+                newIndexY = location.getIndices()[0].getDeltaIndex(-1);
+                CellIndexExpression newIndexX2 = location.getIndices()[1].getDeltaIndex(1);
+                CellIndexExpression newIndexY2 = location.getIndices()[0].getDeltaIndex(1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+                result.add(new Location(location.getName(), newIndexY, location.getIndices()[1]));
+                result.add(new Location(location.getName(), newIndexY, newIndexX2));
+                result.add(new Location(location.getName(), location.getIndices()[0], newIndexX));
+                result.add(new Location(location.getName(), location.getIndices()[0], newIndexX2));
+                result.add(new Location(location.getName(), newIndexY2, newIndexX));
+                result.add(new Location(location.getName(), newIndexY2, location.getIndices()[1]));
+                result.add(new Location(location.getName(), newIndexY2, newIndexX2));
+            }
+
+            return result;
+        }
+
+        private List<Location> getRadialLocations3D(Location location, Compartment compartment) {
+            int doubleDeltaY = ((int) location.getIndices()[0].value) * 2 - compartment.dimensions[0] + 1;
+            int doubleDeltaX = ((int) location.getIndices()[1].value) * 2 - compartment.dimensions[1] + 1;
+            int doubleDeltaZ = ((int) location.getIndices()[2].value) * 2 - compartment.dimensions[2] + 1;
+            
+            List<Location> result = new ArrayList<Location>();
+            int doubleDeltaMax = Math.max(Math.abs(doubleDeltaX), Math.max(Math.abs(doubleDeltaY), Math.abs(doubleDeltaZ)));
+            if (doubleDeltaMax == 0) {
+                CellIndexExpression[] xIndices = new CellIndexExpression[] {
+                        location.getIndices()[1].getDeltaIndex(-1),
+                        location.getIndices()[1],
+                        location.getIndices()[1].getDeltaIndex(1),
+                };
+                CellIndexExpression[] yIndices = new CellIndexExpression[] {
+                        location.getIndices()[0].getDeltaIndex(-1),
+                        location.getIndices()[0],
+                        location.getIndices()[0].getDeltaIndex(1),
+                };
+                CellIndexExpression[] zIndices = new CellIndexExpression[] {
+                        location.getIndices()[2].getDeltaIndex(-1),
+                        location.getIndices()[2],
+                        location.getIndices()[2].getDeltaIndex(1),
+                };
+                
+                for (CellIndexExpression yIndex : yIndices) {
+                    for (CellIndexExpression xIndex : xIndices) {
+                        for (CellIndexExpression zIndex : zIndices) {
+                            if (xIndex != location.getIndices()[1] || yIndex != location.getIndices()[0] || zIndex != location.getIndices()[2]) {
+                                result.add(new Location(location.getName(), yIndex, xIndex, zIndex));
+                            }
+                        }
+                    }
+                }
+                
+                return result;
+            }
+
+            CellIndexExpression newIndexX = null;
+            CellIndexExpression newIndexY = null;
+            CellIndexExpression newIndexZ = null;
+            
+            if (Math.abs(doubleDeltaX) == doubleDeltaMax) {
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? 1 : -1);
+            }
+            if (Math.abs(doubleDeltaY) == doubleDeltaMax) {
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? 1 : -1);
+            }
+            if (Math.abs(doubleDeltaZ) == doubleDeltaMax) {
+                newIndexZ = location.getIndices()[2].getDeltaIndex((doubleDeltaY > 0) ? 1 : -1);
+            }
+            
+            if (newIndexY != null) {
+                if (newIndexX != null) {
+                    if (newIndexZ != null) {
+                        result.add(new Location(location.getName(), newIndexY, newIndexX, newIndexZ));
+                    }
+                    result.add(new Location(location.getName(), newIndexY, newIndexX, location.getIndices()[2]));
+                }
+                if (newIndexZ != null) {
+                    result.add(new Location(location.getName(), newIndexY, location.getIndices()[1], newIndexZ));
+                }
+                result.add(new Location(location.getName(), newIndexY, location.getIndices()[1], location.getIndices()[2]));
+            }
+            if (newIndexX != null) {
+                if (newIndexZ != null) {
+                    result.add(new Location(location.getName(), location.getIndices()[0], newIndexX, newIndexZ));
+                }
+                result.add(new Location(location.getName(), location.getIndices()[0], newIndexX, location.getIndices()[2]));
+            }
+            if (newIndexZ != null) {
+                result.add(new Location(location.getName(), location.getIndices()[0], location.getIndices()[1], newIndexZ));
+            }
+            return result;
+        }
+
+        @Override
+        protected boolean isValidSourceLocation(Location template, Location source, List<Compartment> compartments) {
+            Compartment compartment = getCompartment(compartments, template.getName());
+            if (compartment.getDimensions().length != source.getIndices().length 
+                    || !template.getName().equals(source.getName())) {
+                return false;
+            }
+            for (int index = 0; index < source.getIndices().length; index++) {
+                CellIndexExpression sourceIndex = source.getIndices()[index];
+                if (!sourceIndex.isFixed()) {
+                    return false;
+                }
+            }
+            return compartment.isValidVoxel(source);
+        }
+
+        @Override
+        protected List<ChannelComponent> getChannelSubcomponents(List<Compartment> compartments) {
+            return null;
+        }
+    }
+
+    public static class RadialInComponent extends PredefinedChannelComponent {
+
+        public static final String NAME = "RadialIn";
+        
+        public RadialInComponent(List<Location> sourceLocations, List<Location> targetLocations) {
+            super(NAME, sourceLocations, targetLocations);
+            // TODO test dimensions
+        }
+        
+        @Override
+        public List<List<Location>> applyChannel(List<Location> sourceLocations, List<Location> targetConstraints,
+                List<Compartment> compartments) {
+            
+            List<List<Location>> result = new ArrayList<List<Location>>();
+            
+            if (isValidSourceLocations(templateSourceLocations, sourceLocations, compartments)) {
+
+                // TODO constrain to single location at a time
+                for (int templateIndex=0; templateIndex<templateSourceLocations.size(); templateIndex++) {
+                    Location templateSourceLocation = templateSourceLocations.get(templateIndex);
+                    Location templateTargetLocation = templateTargetLocations.get(templateIndex);
+                    Location sourceLocation = sourceLocations.get(templateIndex);
+                    Location targetConstraint = targetConstraints.get(templateIndex);
+                    
+                    Compartment sourceCompartment = getCompartment(compartments, templateSourceLocation.getName());
+                    Compartment targetCompartment = getCompartment(compartments, templateTargetLocation.getName());
+        
+                    if (sourceLocation.getIndices().length != sourceCompartment.getDimensions().length 
+                            || !sourceLocation.getName().equals(templateSourceLocation.getName())) {
+                        continue;
+                    }
+        
+                    List<Location> newLocations = null;
+                    if (sourceCompartment.getDimensions().length == 2) {
+                        newLocations = getRadialLocations2D(sourceLocation, sourceCompartment);
+                    }
+                    else {
+                        newLocations = getRadialLocations3D(sourceLocation, sourceCompartment);
+                    }
+                    
+                    for (Location location : newLocations) {
+                        if (targetCompartment.isValidVoxel(location)) {
+                            if (targetConstraint == null || targetConstraint.equals(location) || targetConstraint.isRefinement(location)) {
+                                result.add(getList(location));
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        
+        private List<Location> getRadialLocations2D(Location location, Compartment compartment) {
+            int doubleDeltaY = ((int) location.getIndices()[0].value) * 2 - compartment.dimensions[0] + 1;
+            int doubleDeltaX = ((int) location.getIndices()[1].value) * 2 - compartment.dimensions[1] + 1;
+            
+            CellIndexExpression newIndexX = null;
+            CellIndexExpression newIndexY = null;
+            
+            List<Location> result = new ArrayList<Location>();
+            
+            if (Math.abs(doubleDeltaX) > Math.abs(doubleDeltaY)) {
+                newIndexY = location.getIndices()[0];
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? -1 : 1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            else if (Math.abs(doubleDeltaX) < Math.abs(doubleDeltaY)) {
+                newIndexX = location.getIndices()[1];
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? -1 : 1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            else if (doubleDeltaX != 0) {
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? -1 : 1);
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? -1 : 1);
+                result.add(new Location(location.getName(), newIndexY, newIndexX));
+            }
+            return result;
+        }
+
+        private List<Location> getRadialLocations3D(Location location, Compartment compartment) {
+            int doubleDeltaY = ((int) location.getIndices()[0].value) * 2 - compartment.dimensions[0] + 1;
+            int doubleDeltaX = ((int) location.getIndices()[1].value) * 2 - compartment.dimensions[1] + 1;
+            int doubleDeltaZ = ((int) location.getIndices()[2].value) * 2 - compartment.dimensions[2] + 1;
+            
+            List<Location> result = new ArrayList<Location>();
+            int doubleDeltaMax = Math.max(Math.abs(doubleDeltaX), Math.max(Math.abs(doubleDeltaY), Math.abs(doubleDeltaZ)));
+            if (doubleDeltaMax == 0) {
+                return result;
+            }
+
+            CellIndexExpression newIndexX = location.getIndices()[1];
+            CellIndexExpression newIndexY = location.getIndices()[0];
+            CellIndexExpression newIndexZ = location.getIndices()[2];
+            
+            if (Math.abs(doubleDeltaX) == doubleDeltaMax) {
+                newIndexX = location.getIndices()[1].getDeltaIndex((doubleDeltaX > 0) ? -1 : 1);
+            }
+            if (Math.abs(doubleDeltaY) == doubleDeltaMax) {
+                newIndexY = location.getIndices()[0].getDeltaIndex((doubleDeltaY > 0) ? -1 : 1);
+            }
+            if (Math.abs(doubleDeltaZ) == doubleDeltaMax) {
+                newIndexZ = location.getIndices()[2].getDeltaIndex((doubleDeltaY > 0) ? -1 : 1);
+            }
+            result.add(new Location(location.getName(), newIndexY, newIndexX, newIndexZ));
+            return result;
+        }
+
+        @Override
+        protected boolean isValidSourceLocation(Location template, Location source, List<Compartment> compartments) {
+            Compartment compartment = getCompartment(compartments, template.getName());
+            if (compartment.getDimensions().length != source.getIndices().length 
+                    || !template.getName().equals(source.getName())) {
+                return false;
+            }
+            for (int index = 0; index < source.getIndices().length; index++) {
+                CellIndexExpression sourceIndex = source.getIndices()[index];
+                if (!sourceIndex.isFixed()) {
+                    return false;
+                }
+            }
+            return compartment.isValidVoxel(source);
+        }
+
+        @Override
+        protected List<ChannelComponent> getChannelSubcomponents(List<Compartment> compartments) {
+            return null;
+        }
+    }
+
+    public static class LateralComponent extends PredefinedChannelComponent {
+
+        public static final String NAME = "Lateral";
+        
+        public LateralComponent(List<Location> sourceLocations, List<Location> targetLocations) {
+            super(NAME, sourceLocations, targetLocations);
+            // TODO test dimensions
+        }
+        
+        @Override
+        public List<List<Location>> applyChannel(List<Location> sourceLocations, List<Location> targetConstraints,
+                List<Compartment> compartments) {
+            
+            List<List<Location>> result = new ArrayList<List<Location>>();
+            
+            if (isValidSourceLocations(templateSourceLocations, sourceLocations, compartments)) {
+
+                // TODO constrain to single location at a time
+                for (int templateIndex=0; templateIndex<templateSourceLocations.size(); templateIndex++) {
+                    Location templateSourceLocation = templateSourceLocations.get(templateIndex);
+                    Location templateTargetLocation = templateTargetLocations.get(templateIndex);
+                    Location sourceLocation = sourceLocations.get(templateIndex);
+                    Location targetConstraint = targetConstraints.get(templateIndex);
+                    
+                    Compartment sourceCompartment = getCompartment(compartments, templateSourceLocation.getName());
+                    Compartment targetCompartment = getCompartment(compartments, templateTargetLocation.getName());
+        
+                    if (sourceLocation.getIndices().length != sourceCompartment.getDimensions().length 
+                            || !sourceLocation.getName().equals(templateSourceLocation.getName())) {
+                        continue;
+                    }
+        
+                    List<Location> newLocations = null;
+                    if (sourceCompartment.getDimensions().length == 2) {
+                        newLocations = getLateralLocations2D(sourceLocation, sourceCompartment);
+                    }
+                    else {
+                        newLocations = getLateralLocations3D(sourceLocation, sourceCompartment);
+                    }
+                    
+                    for (Location location : newLocations) {
+                        if (targetCompartment.isValidVoxel(location)) {
+                            if (targetConstraint == null || targetConstraint.equals(location) || targetConstraint.isRefinement(location)) {
+                                result.add(getList(location));
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+        
+        private List<Location> getLateralLocations2D(Location location, Compartment compartment) {
+            float distanceToCentre = getDistanceToCentre(location, compartment);
+            
+            CellIndexExpression newIndexX = location.getIndices()[1].getDeltaIndex(-1);
+            CellIndexExpression newIndexY = location.getIndices()[0].getDeltaIndex(-1);
+            CellIndexExpression newIndexX2 = location.getIndices()[1].getDeltaIndex(1);
+            CellIndexExpression newIndexY2 = location.getIndices()[0].getDeltaIndex(1);
+
+            List<Location> result = new ArrayList<Location>();
+            Location current = new Location(location.getName(), newIndexY, newIndexX);
+            if (Math.abs(distanceToCentre - getDistanceToCentre(current, compartment)) < 0.5f) {
+                result.add(current);
+            }
+            current = new Location(location.getName(), newIndexY, location.getIndices()[1]);
+            if (Math.abs(distanceToCentre - getDistanceToCentre(current, compartment)) < 0.5f) {
+                result.add(current);
+            }
+            current = new Location(location.getName(), newIndexY, newIndexX2);
+            if (Math.abs(distanceToCentre - getDistanceToCentre(current, compartment)) < 0.5f) {
+                result.add(current);
+            }
+            current = new Location(location.getName(), location.getIndices()[0], newIndexX);
+            if (Math.abs(distanceToCentre - getDistanceToCentre(current, compartment)) < 0.5f) {
+                result.add(current);
+            }
+            current = new Location(location.getName(), location.getIndices()[0], newIndexX2);
+            if (Math.abs(distanceToCentre - getDistanceToCentre(current, compartment)) < 0.5f) {
+                result.add(current);
+            }
+            current = new Location(location.getName(), newIndexY2, newIndexX);
+            if (Math.abs(distanceToCentre - getDistanceToCentre(current, compartment)) < 0.5f) {
+                result.add(current);
+            }
+            current = new Location(location.getName(), newIndexY2, location.getIndices()[1]);
+            if (Math.abs(distanceToCentre - getDistanceToCentre(current, compartment)) < 0.5f) {
+                result.add(current);
+            }
+            current = new Location(location.getName(), newIndexY2, newIndexX2);
+            if (Math.abs(distanceToCentre - getDistanceToCentre(current, compartment)) < 0.5f) {
+                result.add(current);
+            }
+            return result;
+        }
+
+        private List<Location> getLateralLocations3D(Location location, Compartment compartment) {
+            float distanceToCentre = getDistanceToCentre(location, compartment);
+            
+            CellIndexExpression[] xIndices = new CellIndexExpression[] {
+                    location.getIndices()[1].getDeltaIndex(-1),
+                    location.getIndices()[1],
+                    location.getIndices()[1].getDeltaIndex(1),
+            };
+            CellIndexExpression[] yIndices = new CellIndexExpression[] {
+                    location.getIndices()[0].getDeltaIndex(-1),
+                    location.getIndices()[0],
+                    location.getIndices()[0].getDeltaIndex(1),
+            };
+            CellIndexExpression[] zIndices = new CellIndexExpression[] {
+                    location.getIndices()[2].getDeltaIndex(-1),
+                    location.getIndices()[2],
+                    location.getIndices()[2].getDeltaIndex(1),
+            };
+            
+            List<Location> result = new ArrayList<Location>();
+            for (CellIndexExpression yIndex : yIndices) {
+                for (CellIndexExpression xIndex : xIndices) {
+                    for (CellIndexExpression zIndex : zIndices) {
+                        if (xIndex != location.getIndices()[1] || yIndex != location.getIndices()[0] || zIndex != location.getIndices()[2]) {
+                            Location current = new Location(location.getName(), yIndex, xIndex, zIndex);
+                            if (Math.abs(distanceToCentre - getDistanceToCentre(current, compartment)) < 0.5f) {
+                                result.add(current);
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
+        private float getDistanceToCentre(Location location, Compartment compartment) {
+            if (compartment.getDimensions().length == 2) {
+                float doubleDeltaY = location.getIndices()[0].value - compartment.dimensions[0]/2f + 0.5f;
+                float doubleDeltaX = location.getIndices()[1].value - compartment.dimensions[1]/2f + 0.5f;
+                return (float) Math.sqrt(doubleDeltaX*doubleDeltaX + doubleDeltaY*doubleDeltaY);
+            }
+            float doubleDeltaY = location.getIndices()[0].value - compartment.dimensions[0]/2f + 0.5f;
+            float doubleDeltaX = location.getIndices()[1].value - compartment.dimensions[1]/2f + 0.5f;
+            float doubleDeltaZ = location.getIndices()[2].value - compartment.dimensions[2]/2f + 0.5f;
+            return (float) Math.sqrt(doubleDeltaX*doubleDeltaX + doubleDeltaY*doubleDeltaY + doubleDeltaZ*doubleDeltaZ);
+        }
+        
+        @Override
+        protected boolean isValidSourceLocation(Location template, Location source, List<Compartment> compartments) {
+            Compartment compartment = getCompartment(compartments, template.getName());
+            if (compartment.getDimensions().length != source.getIndices().length 
+                    || !template.getName().equals(source.getName())) {
+                return false;
+            }
+            for (int index = 0; index < source.getIndices().length; index++) {
+                CellIndexExpression sourceIndex = source.getIndices()[index];
+                if (!sourceIndex.isFixed()) {
+                    return false;
+                }
+            }
+            return compartment.isValidVoxel(source);
+        }
+
+        @Override
+        protected List<ChannelComponent> getChannelSubcomponents(List<Compartment> compartments) {
+            return null;
+        }
+    }
+
 }

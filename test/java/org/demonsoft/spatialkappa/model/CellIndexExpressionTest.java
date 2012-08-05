@@ -92,6 +92,19 @@ public class CellIndexExpressionTest {
     }
     
     @Test
+    public void testGetDeltaIndex() {
+        CellIndexExpression expr = new CellIndexExpression(new VariableReference("x"));
+        assertEquals("(x + 1)", expr.getDeltaIndex(1).toString());
+        assertSame(expr, expr.getDeltaIndex(0));
+        assertEquals("(x - 2)", expr.getDeltaIndex(-2).toString());
+        
+        expr = new CellIndexExpression("3");
+        assertEquals("4", expr.getDeltaIndex(1).toString());
+        assertSame(expr, expr.getDeltaIndex(0));
+        assertEquals("1", expr.getDeltaIndex(-2).toString());
+    }
+    
+    @Test
     public void testEvaluateIndex() {
         VariableReference refX = new VariableReference("x");
         VariableReference refY = new VariableReference("y");

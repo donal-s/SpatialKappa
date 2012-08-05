@@ -27,6 +27,8 @@ import org.junit.Test;
 
 public class ChannelTest {
 
+    public static CellIndexExpression INDEX_3 = new CellIndexExpression("3");
+
     @SuppressWarnings({ "unused" })
     @Test
     public void testChannel() {
@@ -649,6 +651,435 @@ public class ChannelTest {
         
     }
 
+    @Test
+    public void testApplyChannel_radial2d_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("Radial", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 5, 5), new Compartment("b", 4, 4));
+        
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_X)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, new CellIndexExpression("54"))), getList(NOT_LOCATED), compartments));
+        
+        // Central voxel
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_3)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(new Location("a", INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(new Location("a", INDEX_1, INDEX_1)), compartments));
+
+        // Midway voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+        // Outer voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(NOT_LOCATED), compartments));
+    }
+
+    @Test
+    public void testApplyChannel_radialOut2d_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("RadialOut", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 5, 5), new Compartment("b", 4, 4));
+        
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_X)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, new CellIndexExpression("54"))), getList(NOT_LOCATED), compartments));
+        
+        // Central voxel
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_3)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(new Location("a", INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(new Location("a", INDEX_1, INDEX_1)), compartments));
+
+        // Midway voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+        // Outer voxel
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(NOT_LOCATED), compartments));
+    }
+
+
+    @Test
+    public void testApplyChannel_lateral2d_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("Lateral", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 5, 5), new Compartment("b", 4, 4));
+        
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_X)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, new CellIndexExpression("54"))), getList(NOT_LOCATED), compartments));
+        
+        // Central voxel
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(NOT_LOCATED), compartments));
+
+        // Midway voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+        // Outer voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_0)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_1)), compartments));
+    }
+
+    @Test
+    public void testApplyChannel_lateral3d_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("Lateral", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 5, 5, 5), new Compartment("b", 4, 4, 4));
+        
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_X)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0, new CellIndexExpression("5"))), getList(NOT_LOCATED), compartments));
+        
+        // Central voxel
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(NOT_LOCATED), compartments));
+
+        // Midway voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_2, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_0, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2, INDEX_0)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+        // Outer voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_2, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2, INDEX_0)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(new Location("a", INDEX_1, INDEX_0, INDEX_1)), compartments));
+    }
+
+    @Test
+    public void testApplyChannel_radialIn3d_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("RadialIn", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 5, 5, 5), new Compartment("b", 4, 4, 4));
+        
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_X)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0, new CellIndexExpression("5"))), getList(NOT_LOCATED), compartments));
+        
+        // Central voxel
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(NOT_LOCATED), compartments));
+
+        // Midway voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+        // Outer voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), compartments));
+    }
+
+
+    @Test
+    public void testApplyChannel_radialOut3d_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("RadialOut", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 5, 5, 5), new Compartment("b", 4, 4, 4));
+        
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_X)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0, new CellIndexExpression("5"))), getList(NOT_LOCATED), compartments));
+        
+        // Central voxel
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_3, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_3, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_3, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_3, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_3, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_3, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_1, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_2, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_2, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_3, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_3, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_3, INDEX_3)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), compartments));
+
+        // Midway voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+        // Outer voxel
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(NOT_LOCATED), compartments));
+    }
+
+    @Test
+    public void testApplyChannel_radial3d_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("Radial", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 5, 5, 5), new Compartment("b", 4, 4, 4));
+        
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_X)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0, new CellIndexExpression("5"))), getList(NOT_LOCATED), compartments));
+        
+        // Central voxel
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_2, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_3, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_3, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_3, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_1, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_3, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_3, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_3, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_1, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_2, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_2, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_2, INDEX_3)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_3, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_3, INDEX_2)));
+        expected.add(getList(new Location("a", INDEX_3, INDEX_3, INDEX_3)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)), getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), compartments));
+
+        // Midway voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_0, INDEX_1, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_0, INDEX_1)));
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2, INDEX_2)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+        // Outer voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_0)), getList(NOT_LOCATED), compartments));
+    }
+
+    @Test
+    public void testApplyChannel_radialIn2d_intracompartment() {
+        Location location = new Location("a");
+        Channel channel = new Channel("label");
+        channel.addChannelComponent("RadialIn", getList(location), getList(location));
+        List<Compartment> compartments = getList(new Compartment("a", 5, 5), new Compartment("b", 4, 4));
+        
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+
+        // Invalid input locations
+        assertEquals(expected, channel.applyChannel(getList(new Location("b", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a")), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_X)), getList(NOT_LOCATED), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_0, new CellIndexExpression("54"))), getList(NOT_LOCATED), compartments));
+        
+        // Central voxel
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_2, INDEX_2)), getList(NOT_LOCATED), compartments));
+
+        // Midway voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_2, INDEX_2)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_1)), getList(NOT_LOCATED), compartments));
+        
+        // Outer voxel
+        expected.clear();
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(NOT_LOCATED), compartments));
+        
+        // Check target location constraints
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(new Location("a")), compartments));
+        
+        expected.clear();
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(new Location("b")), compartments));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(new Location("a", INDEX_0, INDEX_0)), compartments));
+        
+        expected.add(getList(new Location("a", INDEX_1, INDEX_1)));
+        assertEquals(expected, channel.applyChannel(getList(new Location("a", INDEX_1, INDEX_0)), getList(new Location("a", INDEX_1, INDEX_1)), compartments));
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testApplyChannel_multipleCompartments() {
@@ -933,12 +1364,14 @@ public class ChannelTest {
     
     @Test
     public void testCreateChannelComponent_channelTypes() {
-        
         checkCreateChannelComponent("Neighbour");
         checkCreateChannelComponent("EdgeNeighbour");
         checkCreateChannelComponent("FaceNeighbour");
         checkCreateChannelComponent("Hexagonal");
-        
+        checkCreateChannelComponent("Radial");
+        checkCreateChannelComponent("RadialOut");
+        checkCreateChannelComponent("RadialIn");
+        checkCreateChannelComponent("Lateral");
     }
     
     private void checkCreateChannelComponent(String channelType) {

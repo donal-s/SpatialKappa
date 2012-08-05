@@ -149,11 +149,23 @@ public class SimulationTest {
                  });
     }
     
-//    @Test
-    public void testTest3_4_diffusionBetweenGeometricPrimitives() throws Exception {
-         checkTimeSimulation("test-3-4-input.ka", new String[] {"AB", "A2B2 centre", "A2B2 not centre"}, 10, 50, 
+    @Test
+    public void testTest3_4_1_directedDiffusionWithinGeometricPrimitives2D() throws Exception {
+        checkEventSimulation("test-3-4-1-input.ka", new String[] {
+                 "A", "A O", "A I", "A L", "B", "B O", "B I", "B L", "C", "C O", "C I", "C L", "D", "D O", "D I", "D L"}, 2000, 50, 
                 new float[][] {
-                    {0, 0, 0}, {50, 75, 25}, {40, 175, 80}, {25, 250, 125},
+                    {1000, 0, 0, 0, 1000, 0, 0, 0, 1000, 0, 0, 0, 1000, 0, 0, 0},
+                    {600, 80, 80, 0, 580, 0, 420, 0, 580, 150, 0, 0, 600, 0, 0, 160},
+                });
+    }
+    
+    @Test
+    public void testTest3_4_2_directedDiffusionWithinGeometricPrimitives3D() throws Exception {
+        checkEventSimulation("test-3-4-2-input.ka", new String[] {
+                 "A", "A O", "A I", "A L", "B", "B O", "B I", "B L", "C", "C O", "C I", "C L", "D", "D O", "D I", "D L"}, 2000, 50, 
+                new float[][] {
+                    {1000, 0, 0, 0, 1000, 0, 0, 0, 1000, 0, 0, 0, 1000, 0, 0, 0},
+                    {600, 60, 20, 0, 580, 0, 420, 0, 580, 60, 0, 0, 600, 0, 0, 65},
                 });
     }
     
