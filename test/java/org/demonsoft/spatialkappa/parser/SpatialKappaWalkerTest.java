@@ -383,7 +383,7 @@ public class SpatialKappaWalkerTest {
         checkVarDecl("%var: 'label' [tan] 'n'", "[tan] ('n')", "label");
         checkVarDecl("%var: 'label' [sqrt] 'n'", "[sqrt] ('n')", "label");
         checkVarDecl("%var: 'label' [exp] 'n'", "[exp] ('n')", "label");
-        checkVarDecl("%var: 'label' [mod] 'n' 2", "([mod] 'n' 2.0)", "label");
+        checkVarDecl("%var: 'label' 'n' [mod] 2", "('n' [mod] 2.0)", "label");
         checkVarDecl("%var: 'label' 'n' ^ 2", "('n' ^ 2.0)", "label");
     }
 
@@ -401,7 +401,7 @@ public class SpatialKappaWalkerTest {
     public void testModDecl() throws Exception {
         checkModDecl("%mod: ([T]>10) && ('v1'/'v2') < 1 do $ADD 'n' C(x1~p)", "(([T] > 10.0) && (('v1' / 'v2') < 1.0)) do $ADD 'n' [C(x1~p)]");
         checkModDecl("%mod: ([log][E]>10) || [true] do $SNAPSHOT until [false]", "(([log] ([E]) > 10.0) || [true]) do $SNAPSHOT until [false]");
-        checkModDecl("%mod: ([mod] [T] 100)=0 do $DEL [inf] C() until [T]>1000", "(([mod] [T] 100.0) = 0.0) do $DEL [inf] [C] until ([T] > 1000.0)");
+        checkModDecl("%mod: ([T] [mod] 100)=0 do $DEL [inf] C() until [T]>1000", "(([T] [mod] 100.0) = 0.0) do $DEL [inf] [C] until ([T] > 1000.0)");
         checkModDecl("%mod: [not][false] do 'rule_name' := [inf]", "[not] [false] do 'rule_name' := [inf]");
     }
     

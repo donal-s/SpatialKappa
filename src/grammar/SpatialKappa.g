@@ -313,9 +313,6 @@ varAlgebraAtom
   | operator_unary varAlgebraAtom
     ->
       ^(VAR_EXPR operator_unary varAlgebraAtom)
-  | operator_binary_prefix a=varAlgebraAtom b=varAlgebraAtom
-    ->
-      ^(VAR_EXPR operator_binary_prefix $a $b)
   ;
   
 modDecl
@@ -461,15 +458,11 @@ operator_unary
   | '[' 'exp' ']' -> EXP
   ;
 
-operator_binary_prefix
-  :
-  '[' 'mod' ']' -> MODULUS
-  ;
-
 operator_mult
   :
   '*'
   | '/'
+  | '[' 'mod' ']' -> MODULUS
   ;
 
 operator_add

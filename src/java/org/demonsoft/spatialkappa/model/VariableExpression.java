@@ -273,10 +273,6 @@ public class VariableExpression implements Serializable {
     public String toString() {
         switch (type) {
         case BINARY_EXPRESSION:
-            if (operator == Operator.MODULUS) {
-                // Kappa uses prefix notation here
-                return "(" + operator + " " + lhsExpression + " " + rhsExpression + ")";
-            }
             return "(" + lhsExpression + " " + operator + " " + rhsExpression + ")";
             
         case CONSTANT:

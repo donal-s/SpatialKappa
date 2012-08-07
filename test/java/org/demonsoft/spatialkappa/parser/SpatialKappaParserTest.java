@@ -300,7 +300,7 @@ public class SpatialKappaParserTest {
         runParserRule("varDecl", "%var: 'label' [exp] 'n'", 
                 "(VARIABLE (VAR_EXPR EXP (VAR_EXPR n)) label)");
 
-        runParserRule("varDecl", "%var: 'label' [mod] 'n' 2", 
+        runParserRule("varDecl", "%var: 'label' 'n' [mod] 2", 
                 "(VARIABLE (VAR_EXPR MODULUS (VAR_EXPR n) (VAR_EXPR 2)) label)");
 
         // TODO - handle the rest of the grammar as needed
@@ -340,7 +340,7 @@ public class SpatialKappaParserTest {
                 " (CONDITION (BOOL_EXPR OR (BOOL_EXPR > (VAR_EXPR LOG (VAR_EXPR EVENTS)) (VAR_EXPR 10)) (BOOL_EXPR TRUE)))" +
                 " (EFFECT SNAPSHOT)" +
                 " (UNTIL (BOOL_EXPR FALSE)))");
-        runParserRule("modDecl", "%mod: ([mod] [T] 100)=0 do $DEL [inf] C() until [T]>1000", 
+        runParserRule("modDecl", "%mod: ([T] [mod] 100)=0 do $DEL [inf] C() until [T]>1000", 
                 "(PERTURBATION" +
                 " (CONDITION (BOOL_EXPR = (VAR_EXPR MODULUS (VAR_EXPR TIME) (VAR_EXPR 100)) (VAR_EXPR 0)))" +
                 " (EFFECT REMOVE (VAR_EXPR VAR_INFINITY) (AGENTS (AGENT C)))" +
