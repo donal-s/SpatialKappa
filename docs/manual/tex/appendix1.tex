@@ -61,14 +61,14 @@ agentDeclInterface :
   id state*
 
 \newbnf{compartmentDecl :}
-  \newbnf{'\%compartment:' id ('[' INT ']')*}
+  \newbnf{'\%compartment:' name=id (type=id)? ('[' INT ']')*}
 
 \newbnf{channelDecl :}
   \newbnf{'\%channel:' linkName=id channel}
   \newbnf{| '\%channel:' linkName=id '(' channel ')' ('+' '(' channel ')')*}
 
 \newbnf{channel :}
-  \newbnf{source=locations FORWARD_TRANSITION target=locations}
+  \newbnf{(type=id)? source=locations FORWARD_TRANSITION target=locations}
 
 \newbnf{locations :}
   \newbnf{location (',' location)*}
@@ -108,7 +108,6 @@ varAlgebraAtom :
   | '[' 'T' ']'
   | '[' 'E' ']'
   | operator_unary varAlgebraAtom
-  | operator_binary_prefix a=varAlgebraAtom b=varAlgebraAtom
   
 modDecl :
   '\%mod:' booleanExpression 'do' effect until?
@@ -171,11 +170,8 @@ operator_unary :
   | '[' 'sqrt' ']'
   | '[' 'exp' ']'
 
-operator_binary_prefix :
-  '[' 'mod' ']'
-
 operator_mult :
-  '*' | '/'
+  '*' | '/' | '[' 'mod' ']'
 
 operator_add :
   '+' | '-'

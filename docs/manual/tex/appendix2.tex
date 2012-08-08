@@ -48,6 +48,18 @@ There are 2 variants here, 4-way linked and 8-way linked.
     (:mesh [x][y] -> :mesh [x+1][y -1]) + (:mesh [x][y] -> :mesh [x -1][y+1])
 \end{kappasource}
 
+These can also be specified using channel types as follows
+
+\begin{kappasource}
+%compartment: mesh [n][m] # Replace n and m with dimensions of mesh
+
+# 4-way diffusion
+%channel: intra-mesh EdgeNeighbour :mesh -> :mesh
+
+# or 8-way diffusion
+%channel: intra-mesh Neighbour :mesh -> :mesh
+\end{kappasource}
+
 \subsubsection{Hexagonal mesh}
 
 Again, 2 variants depending on what overall shape is required. The first form has a simpler representation of intra-compartment links, but the overall structure is rhomboid, whereas the second produces an overall rectangular shape at the expense of more complicated link statements.
@@ -71,6 +83,15 @@ The second variant demonstrates handling of alternate odd-even linkage depending
     (:mesh [x][y] -> :mesh [x -1][(y -1)+(2*((x -1)%2))])
 
 # The above statement alternates [x+1][y+1] and [x+1][y-1] as x increases
+\end{kappasource}
+
+Variant 2 can also be specified using channel types as follows
+
+\begin{kappasource}
+%compartment: mesh [n][m] # Replace n and m with dimensions of mesh
+
+# Variant 2 - rectangular mesh
+%channel: intra-mesh Hexagonal :mesh -> :mesh
 \end{kappasource}
 
 

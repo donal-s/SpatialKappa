@@ -3,6 +3,6 @@ package org.demonsoft.spatialkappa.tools;
 public class Version {
 
     public static final String VERSION = "2.0.2";
-    public static final String BUILD_NUMBER = "20120713";
+    public static final String BUILD_NUMBER = "20120808";
     
 }

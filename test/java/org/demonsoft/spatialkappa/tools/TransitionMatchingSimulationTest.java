@@ -30,13 +30,11 @@ import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
-import org.demonsoft.spatialkappa.model.Perturbation;
 import org.demonsoft.spatialkappa.model.Transition;
 import org.demonsoft.spatialkappa.model.TransitionInstance;
 import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.VariableExpression;
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
-import org.demonsoft.spatialkappa.tools.TransitionMatchingSimulation.ObservableMapValue;
 import org.junit.Before;
 import org.junit.Test;
 

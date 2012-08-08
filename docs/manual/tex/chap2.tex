@@ -4,7 +4,7 @@ Note on terminology. In the following 'voxel' means a subunit of a defined compa
 
 \section{Existing Kappa language}
 
-The current Kappa language consists of the following constructs, as described in the KaSim documentation \citep{KaSimManual2012}. A more formal description of the language grammar (including the spatial extensions) is given in Appendix \ref{chap:spatialGrammar}.
+The current Kappa language consists of the following constructs, as described in the KaSim 2.01 documentation \citep{KaSimManual2012}. A more formal description of the language grammar (including the spatial extensions) is given in Appendix \ref{chap:spatialGrammar}.
 
 \bigskip 
 \textbf{Comments}:
@@ -60,7 +60,11 @@ The spatial Kappa language requires some encoding of the following concepts to b
 \begin{itemize}
  \item A description of \textbf{compartments} and their \textbf{dimensions}. A model may have multiple compartments each containing reacting species. The dimensions are necessary to define the shape of a compartment, be it a single cell, a 1 dimensional linear array of voxels, a 2 dimensional grid of some form, or a 3 dimensional lattice structure. Relative differences in size of different compartments can be specified, e.g. the reacting volume of a nucleus relative to the surrounding cytosol. Relative differences in shape can also be specified, for example the thin layer of cytosol next to the inner surface of the plasma membrane versus the rest of the cytosol.
 
+ \item Predefined compartment shapes. To concisely create more accurate models, predefined compartment shapes in 2 and 3 dimensions can be chosen, these include open and closed circles, spheres and cylinders. 
+
  \item A description of \textbf{channels}, both intra-compartment and inter-compartment. The intra-compartment channel specification should be rich enough to allow description of multiple structures, e.g. in 1D linear arrays or circles, in 2D square or hexagonal meshes, cylinders or tori, in 3D cubes, filled cylinders, spheres, etc.
+
+ \item Predefined channels. Commonly used inter and intra-compartment channels can be easily specified by name.
 
  \item A means of \textbf{locating species} within compartments, e.g. all DNA would reside within the nucleus, or cell receptors would be limited to the plasma membrane. Note that a multi-agent species need not be confined to a single voxel, but may span neighbouring, connected voxels.
 
@@ -89,7 +93,7 @@ A full BNF description of the extended Kappa grammar is given in Appendix \ref{c
 
 Compartments are defined as single voxels or regular multidimensional arrays of voxels as follows
 \begin{bnfsource}
-'\%compartment:' id ('[' INT ']')*
+'\%compartment:' name=id ('[' INT ']')*
 \end{bnfsource}
 For example
 \begin{kappasource}
@@ -128,6 +132,71 @@ For example
 \end{kappasource}
 
 In all situations where locations are used, it is only legal to refer to the compartment as a whole by omitting the cell indices, or refer to a single voxel, by fully defining the correct number of cell indices to match the dimensions of the compartment. Also, variable names are only permitted in locations within channel definitions, described below.
+
+\subsubsection{Predefined compartment types}
+
+Commonly used non-rectangular compartments can also be concisely defined. These include both solid and hollow (open) shapes in 2 and 3 dimensions. The available predefined compartment types are
+
+\medskip 
+
+\begin{tabular}{|c|cccc|}
+\hline
+Name & \multicolumn{4}{|c|}{Parameters}\\ 
+\hline
+\multicolumn{5}{|c|}{2D}\\
+\hline
+OpenRectangle & height & width & thickness & \\
+SolidCircle & diameter &  &  & \\
+OpenCircle & diameter & thickness &  & \\
+\hline
+\multicolumn{5}{|c|}{3D}\\
+\hline
+OpenCuboid & height & width & depth & thickness\\
+SolidSphere & diameter &  &  &  \\
+OpenSphere & diameter & thickness &  & \\
+SolidCylinder & diameter & length & & \\
+OpenCylinder & diameter & length & thickness & \\
+\hline
+\end{tabular} 
+
+\medskip 
+
+This allows the creation of a voxellated approximation of the shape specified, which can then be used for simulation. For the open compartment types, thickness specifies how thick in voxels the compartment reaction volume is.
+
+\begin{figure}[h!]
+ \centering
+ \includegraphics[scale=0.2]{./images/compartmentTypes.png}
+ % compartmentTypes.png: 1042x202 pixel, 51dpi, 52.10x10.10 cm, bb=0 0 1477 286
+ \caption{2D compartment types (open and solid)}
+ \label{fig:compartmentTypes}
+\end{figure}
+
+
+
+The syntax to specify these compartments is
+\begin{bnfsource}
+'\%compartment:' name=id type=id ('[' INT ']')*
+\end{bnfsource}
+For example
+\begin{kappasource}
+### 2D Shapes
+
+%compartment: solidRectangle              [10][5]        # [height][width]
+%compartment: openRectangle OpenRectangle [10][5] [2]    # [height][width] [thickness]
+%compartment: solidCircle   SolidCircle   [10]           # [diameter]
+%compartment: openCircle    OpenCircle    [10] [2]       # [diameter] [thickness]
+
+### 3D Shapes
+
+%compartment: solidCuboid                 [10][5][8]     # [height][width][depth]
+%compartment: openCuboid    OpenCuboid    [10][5][8] [2] # [height][width][depth] [thickness]
+%compartment: solidSphere   SolidSphere   [10]           # [diameter]
+%compartment: openSphere    OpenSphere    [10] [2]       # [diameter] [thickness]
+%compartment: solidCylinder SolidCylinder [10][8]        # [diameter][length]
+%compartment: openCylinder  OpenCylinder  [10][8] [2]    # [diameter][length] [thickness]
+\end{kappasource}
+
+
 
 \subsection{Channels}
 
@@ -180,6 +249,94 @@ Here, variables x,y represent locations in the membrane, and u,v represent locat
 
 Further examples of compartment and channel specifications for common structures are given in Appendix
  \ref{sec:spatialPatterns}.
+
+\subsubsection{Predefined channel types}
+
+Commonly used 2D and 3D channel types can be concisely defined. 
+
+\medskip 
+
+\begin{tabular}{|c|l|}
+\hline
+Name & \multicolumn{1}{|c|}{Each voxel connected to}\\ 
+\hline
+\multicolumn{2}{|c|}{2D}\\
+\hline
+EdgeNeighbour & 4 neighbours which share an edge in grid \\
+Hexagonal & 6 neighbours which share an edge in hexagonal grid \\
+Neighbour & 8 neighbours which share an edge or corner in grid \\
+\hline
+\multicolumn{2}{|c|}{3D}\\
+\hline
+FaceNeighbour & 6 neighbours which share a face in grid\\
+Neighbour & 26 neighbours which share a face, edge or corner in grid \\
+\hline
+\end{tabular} 
+
+\medskip 
+
+\begin{figure}[h!]
+ \centering
+ \includegraphics[scale=0.2]{./images/channelTypes.png}
+ % channelTypes.png: 1042x202 pixel, 51dpi, 52.10x10.10 cm, bb=0 0 1477 286
+ \caption{2D channel types: EdgeNeighbour, Hexagonal and Neighbour}
+ \label{fig:channelTypes}
+\end{figure}
+
+There are also predefined directional channel types usable in both 2D and 3D compartments
+
+
+%channel: radial Radial :solidRectangle -> :solidRectangle
+%channel: radialIn RadialIn :solidRectangle -> :solidRectangle
+%channel: radialOut RadialOut :solidRectangle -> :solidRectangle
+%channel: lateral Lateral :solidRectangle -> :solidRectangle
+
+\medskip 
+
+\begin{tabular}{|c|l|}
+\hline
+Name & \multicolumn{1}{|c|}{Each voxel connected to}\\ 
+\hline
+Radial & neighbours both directly towards and away from compartment centre  \\
+RadialIn & neighbours both directly towards compartment centre \\
+RadialOut & neighbours both directly away from compartment centre \\
+Lateral & neighbours at same distance from compartment centre \\
+\hline
+\end{tabular} 
+
+\medskip 
+
+\begin{figure}[h!]
+ \centering
+ \includegraphics[scale=0.2]{./images/directedChannelTypes.png}
+ % directedChannelTypes.png: 1042x202 pixel, 51dpi, 52.10x10.10 cm, bb=0 0 1477 286
+ \caption{Directed channel types: Radial and Lateral}
+ \label{fig:directedChannelTypes}
+\end{figure}
+
+The syntax to use a predefined channel type is
+
+\begin{bnfsource}
+'\%channel:' id channel
+| '\%channel:' id '(' channel ')' ('+' '(' channel ')')*
+\end{bnfsource}
+where
+\begin{bnfsource}
+channel :
+  type=id source=locations '->' target=locations
+\end{bnfsource}
+Where \verb|locations| is as described above. For example
+\begin{kappasource}
+\%compartment: 2dArray [10][200]    # 10x200 voxels in size 
+\%compartment: solidRectangle[5][5] # [height][width]
+
+\%channel: radial Radial :solidRectangle -> :solidRectangle
+\%channel: radialIn RadialIn :solidRectangle -> :solidRectangle
+\%channel: radialOut RadialOut :solidRectangle -> :solidRectangle
+\%channel: lateral Lateral :solidRectangle -> :solidRectangle
+\end{kappasource}
+
+NOTE - these currently work only for intra-compartment channels
 
 \subsection{Locating agents}
 
