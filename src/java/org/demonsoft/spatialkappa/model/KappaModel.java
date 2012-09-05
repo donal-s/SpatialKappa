@@ -1,5 +1,6 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.Location.FIXED_LOCATION;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 import static org.demonsoft.spatialkappa.model.Utils.propogateLocation;
@@ -212,6 +213,10 @@ public class KappaModel implements IKappaModel {
     private void addDefaultAgentSites(Agent agent) {
         AggregateAgent aggregateAgent = agentDeclarationMap.get(agent.name);
 
+        if (aggregateAgent == null) {
+            throw new IllegalStateException("Agent '" + agent.name + "' not found");
+        }
+        
         for (AggregateSite aggregateSite : aggregateAgent.getSites()) {
             String siteName = aggregateSite.getName();
             if (agent.getSite(siteName) == null) {
@@ -414,7 +419,7 @@ public class KappaModel implements IKappaModel {
                 throw new IllegalStateException("Duplicate channel '" + channel.getName() + "'");
             }
             channelNames.add(channel.getName());
-            channel.validate(compartments);
+            channel.validate(compartments); // TODO validate inter compartment predefined channels
         }
        
         for (InitialValue initialValue : initialValues) {
@@ -500,27 +505,27 @@ public class KappaModel implements IKappaModel {
     	    checkLocations(initialValue.complexes);
     	}
         for (Perturbation perturbation : perturbations) {
-            checkAgentLocations(perturbation.effect.agents);
+            checkAgentLocations(perturbation.effect.agents, false);
         }
         checkLocations(canonicalComplexes);
         for (Variable variable : variables.values()) {
             checkLocations(variable.complex);
-            checkLocations(variable.location);
+            checkLocations(variable.location, false);
         }
         for (Transition transition : transitions) {
-            checkAgentLocations(transition.leftAgents);
-            checkAgentLocations(transition.rightAgents);
-            checkLocations(transition.leftLocation);
-            checkLocations(transition.rightLocation);
+            checkAgentLocations(transition.leftAgents, false);
+            checkAgentLocations(transition.rightAgents, true);
+            checkLocations(transition.leftLocation, false);
+            checkLocations(transition.rightLocation, false);
         }
     }
     
-    private void checkAgentLocations(Collection<Agent> agents) {
+    private void checkAgentLocations(Collection<Agent> agents, boolean allowFixed) {
         if (agents == null) {
             return;
         }
         for (Agent agent : agents) {
-            checkLocations(agent);
+            checkLocations(agent, allowFixed);
         }
     }
 
@@ -538,19 +543,19 @@ public class KappaModel implements IKappaModel {
             return;
         }
         for (Agent agent : complex.agents) {
-            checkLocations(agent);
+            checkLocations(agent, false);
         }
     }
 
-    private void checkLocations(Agent agent) {
+    private void checkLocations(Agent agent, boolean allowFixed) {
         if (agent == null) {
             return;
         }
-        checkLocations(agent.location);
+        checkLocations(agent.location, allowFixed);
     }
 
-    private void checkLocations(Location location) {
-        if (location == null || location == NOT_LOCATED) {
+    private void checkLocations(Location location, boolean allowFixed) {
+        if (location == null || location == NOT_LOCATED || (allowFixed && location == FIXED_LOCATION)) {
             return;
         }
         Compartment compartment = getCompartment(compartments, location.getName());
@@ -614,6 +619,10 @@ public class KappaModel implements IKappaModel {
         }
 
         public void stop() {
+            throw new IllegalStateException("Should not be called");
+        }
+
+        public void snapshot() {
             throw new IllegalStateException("Should not be called");
         }
         

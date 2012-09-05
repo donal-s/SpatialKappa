@@ -4,6 +4,8 @@ import static org.demonsoft.spatialkappa.model.Utils.getChannel;
 import static org.demonsoft.spatialkappa.model.Utils.getComplexes;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -15,6 +17,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentLink;
 import org.demonsoft.spatialkappa.model.Channel;
@@ -64,7 +67,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     private boolean noTransitionsPossible = false;
     private float time = 0;
     private long startTime;
-    private int eventCount = 0;
+    int eventCount = 0;
     
     private final IKappaModel kappaModel;
     private final List<ObservationListener> observationListeners = new ArrayList<ObservationListener>();
@@ -111,6 +114,36 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     public void stop() {
         stop = true;
     }
+
+    public void snapshot() {
+        File snapshotFile = createSnapshotFile();
+        String output = getCurrentModelInitSection();
+        try {
+            FileUtils.writeStringToFile(snapshotFile, output);
+        }
+        catch (IOException ex) {
+            throw new IllegalStateException("Problem creating snapshot", ex);
+        }
+    }
+
+    private File createSnapshotFile() {
+        String filePrefix = "snap_" + eventCount;
+        String fileSuffix = ".ka";
+        
+        File file = new File(filePrefix + fileSuffix);
+        if (!file.exists()) {
+            return file;
+        }
+        int counter = 2;
+        while (true) {
+            file = new File(filePrefix + "_" + counter + fileSuffix);
+            if (!file.exists()) {
+                return file;
+            }
+            counter++;
+        }
+    }
+
 
     public void runByEvent(int steps, int eventsPerStep) {
         startTime = Calendar.getInstance().getTimeInMillis();
@@ -566,30 +599,14 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
 
         builder.append("Final all counts:" + "\n");
         
-        List<Complex> complexes = new ArrayList<Complex>(complexStore.keySet());
-        Collections.sort(complexes, new Comparator<Complex>() {
-            public int compare(Complex o1, Complex o2) {
-                return o1.toString().compareTo(o2.toString());
-            }
-        });
-    
-        for (Complex complex : complexes) {
-            builder.append(complexStore.get(complex) + "\t" + complex + "\n");
+        for (Complex complex : getActiveComplexes()) {
+            int count = complexStore.get(complex);
+            builder.append(count + "\t" + complex + "\n");
         }
         
         builder.append("\nKappa Init Section Format:\n");
         
-        for (Complex complex : complexes) {
-            builder.append("%init:");
-            builder.append(" " + complexStore.get(complex) + " ");
-            builder.append(complex.agents.get(0).toString());
-            for (int index = 1; index < complex.agents.size(); index++) {
-                builder.append(",").append(complex.agents.get(index).toString());
-            }
-
-            builder.append("\n");
-        }
-            
+        builder.append(getCurrentModelInitSection());
         
         builder.append("\nFinal count per agent:" + "\n");
         for (Map.Entry<String, Integer> entry : getCountsPerAgent().entrySet()) {
@@ -598,6 +615,41 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         return builder.toString();
     }
 
+
+    private String getCurrentModelInitSection() {
+        StringBuilder builder = new StringBuilder();
+
+        for (Complex complex : getActiveComplexes()) {
+            int count = complexStore.get(complex);
+            builder.append("%init:");
+            builder.append(" " + count + " ");
+            builder.append(complex.agents.get(0).toString());
+            for (int index = 1; index < complex.agents.size(); index++) {
+                builder.append(",").append(complex.agents.get(index).toString());
+            }
+            
+            builder.append("\n");
+        }
+        return builder.toString();
+    }
+
+    private List<Complex> getActiveComplexes() {
+        List<Complex> complexes = new ArrayList<Complex>(complexStore.keySet());
+        ListIterator<Complex> iter = complexes.listIterator();
+        while (iter.hasNext()) {
+            Complex complex = iter.next();
+            int count = complexStore.get(complex);
+            if (count == 0) {
+                iter.remove();
+            }
+        }
+        Collections.sort(complexes, new Comparator<Complex>() {
+            public int compare(Complex o1, Complex o2) {
+                return o1.toString().compareTo(o2.toString());
+            }
+        });
+        return complexes;
+    }
 
     private boolean applyTransition(Transition transition, boolean incrementTime) {
 

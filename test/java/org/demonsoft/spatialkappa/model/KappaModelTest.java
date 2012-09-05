@@ -109,12 +109,12 @@ public class KappaModelTest {
         model.addInitialValue(agents, "7", otherLocation);
 
         checkFixedLocatedInitialValues(new Object[][] { 
-                { "[agent1:cytosol[0]]", 1 }, 
-                { "[agent1:cytosol[1]]", 1 }, 
-                { "[agent1:cytosol[2]]", 1 }, 
-                { "[agent1:nucleus[0]]", 0 }, 
-                { "[agent1:nucleus[1]]", 0 }, 
-                { "[agent1:nucleus[2]]", 0 }, 
+                { "[agent1:cytosol[0]()]", 1 }, 
+                { "[agent1:cytosol[1]()]", 1 }, 
+                { "[agent1:cytosol[2]()]", 1 }, 
+                { "[agent1:nucleus[0]()]", 0 }, 
+                { "[agent1:nucleus[1]()]", 0 }, 
+                { "[agent1:nucleus[2]()]", 0 }, 
                 { "[agent1:cytosol[2](x!1), agent2:cytosol[2](x!1)]", 5 }, 
                 { "[agent3:cytosol[2](x!2), agent4:cytosol[2](x!2)]", 5 }, 
                 { "[agent3:nucleus[2](x!7), agent4:nucleus[2](x!7)]", 7 } });
@@ -145,7 +145,7 @@ public class KappaModelTest {
         model.addInitialValue(agents, "5", location);
         
         checkFixedLocatedInitialValues(new Object[][] { 
-                { "[agent1:cytosol[2]]", 3 }, 
+                { "[agent1:cytosol[2]()]", 3 }, 
                 { "[agent1:cytosol[2](x!1), agent2:nucleus[2](x!1)]", 5 }, 
                 { "[agent3:cytosol[2](x!2), agent4:cytosol[2](x!2)]", 5 } });
         checkAggregateAgents(new AggregateAgent("agent1", new AggregateSite("x", null, "1")), 
@@ -207,7 +207,7 @@ public class KappaModelTest {
         model.addInitialValue(agents, "7", otherLocation);
 
         checkFixedLocatedInitialValues(new Object[][] { 
-                { "[agent1:cytosol[2]]", 3 }, 
+                { "[agent1:cytosol[2]()]", 3 }, 
                 { "[agent1:cytosol[2](x!1), agent2:cytosol[2](x!1)]", 5 }, 
                 { "[agent3:cytosol[2](x!2), agent4:cytosol[2](x!2)]", 5 }, 
                 { "[agent3:nucleus[2](x!7), agent4:nucleus[2](x!7)]", 7 } });
@@ -227,7 +227,7 @@ public class KappaModelTest {
         model.addAgentDeclaration(new AggregateAgent("agent2"));
         model.addInitialValue(Utils.getList(new Agent("agent1")), "3", NOT_LOCATED);
 
-        checkFixedLocatedInitialValues(new Object[][] { { "[agent1]", 3 } });
+        checkFixedLocatedInitialValues(new Object[][] { { "[agent1()]", 3 } });
         
         // add compartment
         model.addCompartment(new Compartment("cytosol", 3));
@@ -237,12 +237,12 @@ public class KappaModelTest {
         model.addInitialValue(Utils.getList(new Agent("agent2")), "10", new Location("cytosol", INDEX_1));
 
         checkFixedLocatedInitialValues(new Object[][] { 
-                { "[agent1:cytosol[0]]", 1 }, 
-                { "[agent1:cytosol[1]]", 1 }, 
-                { "[agent1:cytosol[2]]", 1 }, 
-                { "[agent2:cytosol[0]]", 2 }, 
-                { "[agent2:cytosol[1]]", 12 }, 
-                { "[agent2:cytosol[2]]", 1 }, 
+                { "[agent1:cytosol[0]()]", 1 }, 
+                { "[agent1:cytosol[1]()]", 1 }, 
+                { "[agent1:cytosol[2]()]", 1 }, 
+                { "[agent2:cytosol[0]()]", 2 }, 
+                { "[agent2:cytosol[1]()]", 12 }, 
+                { "[agent2:cytosol[2]()]", 1 }, 
                 });
     }
     
@@ -422,13 +422,13 @@ public class KappaModelTest {
 
         model.addVariable(agents1, "label", NOT_LOCATED);
 
-        checkVariables(model, "'label' ([agent1])");
+        checkVariables(model, "'label' ([agent1()])");
         checkOrderedVariableNames(model, "label");
         checkAggregateAgents(new AggregateAgent("agent1"));
 
         model.addVariable(getList(new Agent("agent1"), new Agent("agent2")), "label2", NOT_LOCATED);
 
-        checkVariables(model, "'label' ([agent1])", "'label2' ([agent1, agent2])");
+        checkVariables(model, "'label' ([agent1()])", "'label2' ([agent1(), agent2()])");
         checkOrderedVariableNames(model, "label", "label2");
         checkAggregateAgents(new AggregateAgent("agent1"), new AggregateAgent("agent2"));
     }
@@ -442,7 +442,7 @@ public class KappaModelTest {
 
         model.addVariable(new VariableExpression(100f), "B");
 
-        checkVariables(model, "'A' ([agent1, agent2])", "'B' (100.0)", "'C' ([agent1])");
+        checkVariables(model, "'A' ([agent1(), agent2()])", "'B' (100.0)", "'C' ([agent1()])");
         checkOrderedVariableNames(model, "C", "A", "B");
     }
 
@@ -468,15 +468,15 @@ public class KappaModelTest {
 
         model.addVariable(agents1, "label", location);
 
-        checkVariables(model, "'label' cytosol[2] ([agent1:cytosol[2]])");
+        checkVariables(model, "'label' cytosol[2] ([agent1:cytosol[2]()])");
         checkOrderedVariableNames(model, "label");
         checkAggregateAgents(new AggregateAgent("agent1"));
 
         model.addVariable(getList(new Agent("agent1", new Location("cytosol", INDEX_0)), 
                 new Agent("agent2")), "label2", location);
 
-        checkVariables(model, "'label' cytosol[2] ([agent1:cytosol[2]])", 
-                "'label2' cytosol[2] ([agent1:cytosol[0], agent2:cytosol[2]])");
+        checkVariables(model, "'label' cytosol[2] ([agent1:cytosol[2]()])", 
+                "'label2' cytosol[2] ([agent1:cytosol[0](), agent2:cytosol[2]()])");
         checkOrderedVariableNames(model, "label", "label2");
         checkAggregateAgents(new AggregateAgent("agent1"), new AggregateAgent("agent2"));
     }

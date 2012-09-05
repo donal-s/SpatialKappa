@@ -166,25 +166,22 @@ public class Agent implements Serializable {
         	builder.append(':').append(location.toString());
         }
         
-        if (orderedSiteNames.size() > 0 || siteSuffix.length() > 0) {
-	        builder.append("(");
-	
-	        if (orderedSiteNames.size() > 0) {
-	            builder.append(sites.get(orderedSiteNames.get(0)).toString(basicKappaOnly));
-	            for (int index = 1; index < orderedSiteNames.size(); index++) {
-	                builder.append(",").append(sites.get(orderedSiteNames.get(index)).toString(basicKappaOnly));
-	            }
-	        }
-	        
-	        if (siteSuffix.length() > 0) {
-	            if (orderedSiteNames.size() > 0) {
-	                builder.append(",");
-	            }
-	            builder.append(siteSuffix);
-	        }
-	        
-	        builder.append(")");
+        builder.append("(");
+        if (orderedSiteNames.size() > 0) {
+            builder.append(sites.get(orderedSiteNames.get(0)).toString(basicKappaOnly));
+            for (int index = 1; index < orderedSiteNames.size(); index++) {
+                builder.append(",").append(sites.get(orderedSiteNames.get(index)).toString(basicKappaOnly));
+            }
         }
+        
+        if (siteSuffix.length() > 0) {
+            if (orderedSiteNames.size() > 0) {
+                builder.append(",");
+            }
+            builder.append(siteSuffix);
+        }
+	        
+        builder.append(")");
         return builder.toString();
     }
 

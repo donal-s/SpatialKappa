@@ -67,6 +67,9 @@ public class PerturbationEffect {
             if ("$STOP".equals(event)) {
                 state.stop();
             }
+            else if ("$SNAPSHOT".equals(event)) {
+                state.snapshot();
+            }
             break;
 
         default:

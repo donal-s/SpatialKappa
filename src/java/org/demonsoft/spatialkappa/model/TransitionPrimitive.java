@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
 public abstract class TransitionPrimitive {
     public enum Type {
         DELETE_LINK, DELETE_AGENT, CREATE_COMPLEX, MERGE_COMPLEXES, CREATE_AGENT, CREATE_LINK, CHANGE_STATE, MOVE_COMPLEX, MOVE_AGENTS
@@ -384,82 +385,12 @@ public abstract class TransitionPrimitive {
 
     public static TransitionPrimitive getMoveAgents(List<Agent> leftAgents, List<Location> targetLocations, String channelName) {
         return new TransitionPrimitive(Type.MOVE_AGENTS, leftAgents, targetLocations, channelName) {
-
-            class ChannelConstraint {
-                @SuppressWarnings("hiding")
-                public final Location sourceLocation;
-                public final Location targetConstraint;
-                
-                public ChannelConstraint(Location sourceLocation, Location targetConstraint) {
-                    this.sourceLocation = sourceLocation;
-                    this.targetConstraint = targetConstraint;
-                }
-
-                @Override
-                public int hashCode() {
-                    final int prime = 31;
-                    int result = 1;
-                    result = prime * result + ((sourceLocation == null) ? 0 : sourceLocation.hashCode());
-                    result = prime * result + ((targetConstraint == null) ? 0 : targetConstraint.hashCode());
-                    return result;
-                }
-
-                @Override
-                public boolean equals(Object obj) {
-                    if (this == obj)
-                        return true;
-                    if (obj == null)
-                        return false;
-                    if (getClass() != obj.getClass())
-                        return false;
-                    ChannelConstraint other = (ChannelConstraint) obj;
-                    if (sourceLocation == null) {
-                        if (other.sourceLocation != null)
-                            return false;
-                    }
-                    else if (!sourceLocation.equals(other.sourceLocation))
-                        return false;
-                    if (targetConstraint == null) {
-                        if (other.targetConstraint != null)
-                            return false;
-                    }
-                    else if (!targetConstraint.equals(other.targetConstraint))
-                        return false;
-                    return true;
-                }
-                
-                
-            }
-            
             @Override
             public int getApplicationCount(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels,
                     List<Compartment> compartments) {
 
-                List<Location> oldLocations = new ArrayList<Location>();
-                List<Location> targetConstraints = new ArrayList<Location>();
-                List<ChannelConstraint> channelConstraints = new ArrayList<ChannelConstraint>();
-                
-                for (int index=0; index<sourceAgents.size(); index++) {
-                    @SuppressWarnings("hiding")
-                    Agent sourceAgent = sourceAgents.get(index);
-                    Location targetConstraint = targetLocations.get(index);
-                    Agent realAgent = transformMap.get(sourceAgent);
-                    Location oldLocation = realAgent.location;
-                    
-                    if (!oldLocation.equals(sourceAgent.location) && !sourceAgent.location.isRefinement(oldLocation)) {
-                        return 0;
-                    }
-                    ChannelConstraint channelConstraint = new ChannelConstraint(oldLocation, targetConstraint);
-                    if (!channelConstraints.contains(channelConstraint)) {
-                        channelConstraints.add(channelConstraint);
-                        oldLocations.add(oldLocation);
-                        targetConstraints.add(targetConstraint);
-                    }
-                }
-                
-                Channel channel = getChannel(channels, channelName);
-                
-                List<List<Location>> newLocationLists = channel.applyChannel(oldLocations, targetConstraints, compartments);
+                List<ChannelConstraint> channelConstraints = getChannelConstraints(transformMap);
+                List<List<Location>> newLocationLists = getPossibleChannelApplications(channelConstraints, channels, compartments);
                 return newLocationLists.size();
             }
             
@@ -467,31 +398,8 @@ public abstract class TransitionPrimitive {
             public boolean apply(Map<Agent, Agent> transformMap, List<Complex> targetComplexes, List<Channel> channels,
                     List<Compartment> compartments) {
 
-                List<Location> oldLocations = new ArrayList<Location>();
-                List<Location> targetConstraints = new ArrayList<Location>();
-                List<ChannelConstraint> channelConstraints = new ArrayList<ChannelConstraint>();
-                
-                for (int index=0; index<sourceAgents.size(); index++) {
-                    @SuppressWarnings("hiding")
-                    Agent sourceAgent = sourceAgents.get(index);
-                    Location targetConstraint = targetLocations.get(index);
-                    Agent realAgent = transformMap.get(sourceAgent);
-                    Location oldLocation = realAgent.location;
-                    
-                    if (!oldLocation.equals(sourceAgent.location) && !sourceAgent.location.isRefinement(oldLocation)) {
-                        return false;
-                    }
-                    ChannelConstraint channelConstraint = new ChannelConstraint(oldLocation, targetConstraint);
-                    if (!channelConstraints.contains(channelConstraint)) {
-                        channelConstraints.add(channelConstraint);
-                        oldLocations.add(oldLocation);
-                        targetConstraints.add(targetConstraint);
-                    }
-                }
-                
-                Channel channel = getChannel(channels, channelName);
-                
-                List<List<Location>> newLocationLists = channel.applyChannel(oldLocations, targetConstraints, compartments);
+                List<ChannelConstraint> channelConstraints = getChannelConstraints(transformMap);
+                List<List<Location>> newLocationLists = getPossibleChannelApplications(channelConstraints, channels, compartments);
                 List<Location> newLocations;
                 if (newLocationLists.size() == 0) {
                     return false;
@@ -525,7 +433,42 @@ public abstract class TransitionPrimitive {
                 }
                 return true;
             }
+
+            private List<List<Location>> getPossibleChannelApplications(List<ChannelConstraint> channelConstraints, List<Channel> channels,
+                    List<Compartment> compartments) {
+                
+                Channel channel = getChannel(channels, channelName);
+                if (channelConstraints.size() == 0) {
+                    return new ArrayList<List<Location>>(); // TODO constant
+                }
+                return channel.applyChannel(channelConstraints, compartments);
+            }
+            
+            private List<ChannelConstraint> getChannelConstraints(Map<Agent, Agent> transformMap) {
+                List<ChannelConstraint> result = new ArrayList<ChannelConstraint>();
+                
+                for (int index=0; index<sourceAgents.size(); index++) {
+                    @SuppressWarnings("hiding")
+                    Agent sourceAgent = sourceAgents.get(index);
+                    Location targetConstraint = targetLocations.get(index);
+                    Agent realAgent = transformMap.get(sourceAgent);
+                    Location oldLocation = realAgent.location;
+                    
+                    if (!oldLocation.equals(sourceAgent.location) && !sourceAgent.location.isRefinement(oldLocation)) {
+                        return new ArrayList<ChannelConstraint>(); // TODO constant
+                    }
+                    ChannelConstraint channelConstraint = new ChannelConstraint(oldLocation, targetConstraint);
+                    if (!result.contains(channelConstraint)) {
+                        result.add(channelConstraint);
+                    }
+                }
+                
+                return result;
+            }
         };
+        
+        
+        // TODO additional constraints for linked agents
     }
 
     @SuppressWarnings("unused")

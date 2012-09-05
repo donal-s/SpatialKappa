@@ -24,6 +24,7 @@ tokens {
   EVENTS;
   EXP;
   FALSE;
+  FIXED;
   ID;
   INDEX;
   INIT;
@@ -228,6 +229,10 @@ locations
 
 location
   :
+  ':' 'fixed'
+    ->
+      ^(LOCATION FIXED)
+  |
   ':' sourceCompartment=id compartmentIndexExpr*
     ->
       ^(LOCATION $sourceCompartment compartmentIndexExpr*)

@@ -80,7 +80,7 @@ public class VariableTest {
         assertNull(variable.expression);
         assertSame(location, variable.location);
         assertSame(complex, variable.complex);
-        assertEquals("'label' cytosol[2] ([agent1])", variable.toString());
+        assertEquals("'label' cytosol[2] ([agent1()])", variable.toString());
         assertSame(Type.KAPPA_EXPRESSION, variable.type);
  
         variable = new Variable(complex, Location.NOT_LOCATED, "label");
@@ -88,7 +88,7 @@ public class VariableTest {
         assertNull(variable.expression);
         assertSame(Location.NOT_LOCATED, variable.location);
         assertSame(complex, variable.complex);
-        assertEquals("'label' ([agent1])", variable.toString());
+        assertEquals("'label' ([agent1()])", variable.toString());
         assertSame(Type.KAPPA_EXPRESSION, variable.type);
     }
 

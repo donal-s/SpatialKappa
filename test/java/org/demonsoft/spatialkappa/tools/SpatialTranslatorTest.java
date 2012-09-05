@@ -503,8 +503,8 @@ public class SpatialTranslatorTest {
         "### VARIABLES\n" + 
         "%var: 'green count' 800.0\n" + 
         "%var: 'constant' 12.0\n" + 
-        "%var: 'all A not plotted' A\n" + 
-        "%var: 'all A plotted' A\n" + 
+        "%var: 'all A not plotted' A()\n" + 
+        "%var: 'all A plotted' A()\n" + 
         "%var: 'all red' A(state~red)\n" + 
         "%var: 'cytosol blue' A(state~blue,loc~cytosol)\n" + 
         "%var: 'red[0]' A(state~red,loc~cytosol,loc_index_1~0)\n" + 

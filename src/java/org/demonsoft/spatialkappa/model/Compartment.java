@@ -8,6 +8,9 @@ import java.util.Map;
 
 public class Compartment {
 
+    // TODO getOriginLocation(Location centreLocation)
+    // TODO getCentreLocation(Location originLocation)
+    
     private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
     
     protected final String name;
@@ -93,7 +96,7 @@ public class Compartment {
         private final int centreEndY;
 
         
-        public OpenRectangle(String name, int[] dimensions) {
+        public OpenRectangle(String name, int... dimensions) {
             super(name, new int[] {dimensions[HEIGHT], dimensions[WIDTH]});
             thickness = dimensions[THICKNESS];
             centreStartX = thickness;
@@ -136,6 +139,11 @@ public class Compartment {
                     !(indices[WIDTH] >= centreStartX && indices[WIDTH] <= centreEndX &&
                     indices[HEIGHT] >= centreStartY && indices[HEIGHT] <= centreEndY);
         }
+        
+        @Override
+        public int getThickness() {
+            return thickness;
+        }
     }
     
     public static class SolidCircle extends Compartment {
@@ -149,7 +157,7 @@ public class Compartment {
         
 
         
-        public SolidCircle(String name, int[] dimensions) {
+        public SolidCircle(String name, int... dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER]});
             if (dimensions.length != 1) {
                 throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
@@ -198,7 +206,7 @@ public class Compartment {
         private final float rSquaredInner;
         private final float centre;
         
-        public OpenCircle(String name, int[] dimensions) {
+        public OpenCircle(String name, int... dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER]});
             thickness = dimensions[THICKNESS];
             rSquaredOuter = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
@@ -241,6 +249,11 @@ public class Compartment {
             float voxelSquared = centreX*centreX + centreY*centreY;
             return voxelSquared <= rSquaredOuter && voxelSquared >= rSquaredInner;
         }
+        
+        @Override
+        public int getThickness() {
+            return thickness;
+        }
     }
     
     public static class OpenCuboid extends Compartment {
@@ -261,7 +274,7 @@ public class Compartment {
         private final int centreEndZ;
 
         
-        public OpenCuboid(String name, int[] dimensions) {
+        public OpenCuboid(String name, int... dimensions) {
             super(name, new int[] {dimensions[HEIGHT], dimensions[WIDTH], dimensions[DEPTH]});
             thickness = dimensions[THICKNESS];
             centreStartX = thickness;
@@ -312,6 +325,11 @@ public class Compartment {
                             indices[HEIGHT] >= centreStartY && indices[HEIGHT] <= centreEndY && 
                                     indices[DEPTH] >= centreStartZ && indices[DEPTH] <= centreEndZ);
         }
+        
+        @Override
+        public int getThickness() {
+            return thickness;
+        }
     }
     
     public static class SolidSphere extends Compartment {
@@ -323,7 +341,7 @@ public class Compartment {
         private final float rSquared;
         private final float centre;
 
-        public SolidSphere(String name, int[] dimensions) {
+        public SolidSphere(String name, int... dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER], dimensions[DIAMETER]});
             rSquared = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
             centre = dimensions[DIAMETER] / 2f - 0.5f;
@@ -376,7 +394,7 @@ public class Compartment {
         private final float rSquaredInner;
         private final float centre;
         
-        public OpenSphere(String name, int[] dimensions) {
+        public OpenSphere(String name, int... dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER], dimensions[DIAMETER]});
             thickness = dimensions[THICKNESS];
             rSquaredOuter = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
@@ -422,6 +440,11 @@ public class Compartment {
             float voxelSquared = centreX*centreX + centreY*centreY + centreZ*centreZ;
             return voxelSquared <= rSquaredOuter && voxelSquared >= rSquaredInner;
         }
+        
+        @Override
+        public int getThickness() {
+            return thickness;
+        }
     }
     
     public static class SolidCylinder extends Compartment {
@@ -434,7 +457,7 @@ public class Compartment {
         private final float rSquared;
         private final float centre;
 
-        public SolidCylinder(String name, int[] dimensions) {
+        public SolidCylinder(String name, int... dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER], dimensions[LENGTH]});
             rSquared = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
             centre = dimensions[DIAMETER] / 2f - 0.5f;
@@ -492,7 +515,7 @@ public class Compartment {
         private final int centreEndZ;
 
         
-        public OpenCylinder(String name, int[] dimensions) {
+        public OpenCylinder(String name, int... dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER], dimensions[LENGTH]});
             thickness = dimensions[THICKNESS];
             rSquaredOuter = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
@@ -544,6 +567,11 @@ public class Compartment {
                     voxelSquared <= rSquaredOuter && (
                             voxelSquared >= rSquaredInner || 
                             !(indices[2] >= centreStartZ && indices[2] <= centreEndZ));
+        }
+        
+        @Override
+        public int getThickness() {
+            return thickness;
         }
     }
 
@@ -610,5 +638,33 @@ public class Compartment {
         else {
             throw new IllegalArgumentException("Unknown shape: " + type);
         }
+    }
+
+    public int getThickness() {
+        return 0;
+    }
+
+    public Location getCentreLocation(Location location) {
+        float[] centre = new float[dimensions.length];
+        for (int index=0; index < dimensions.length; index++) {
+            centre[index] = dimensions[index] / 2f;
+        }
+        List<CellIndexExpression> indices = new ArrayList<CellIndexExpression>();
+        for (int index=0; index < dimensions.length; index++) {
+            indices.add(new CellIndexExpression("" + (location.getIndices()[index].value - centre[index])));
+        }
+        return new Location(name, indices);
+    }
+
+    public Location getOriginLocation(Location location) {
+        float[] centre = new float[dimensions.length];
+        for (int index=0; index < dimensions.length; index++) {
+            centre[index] = dimensions[index] / 2f;
+        }
+        List<CellIndexExpression> indices = new ArrayList<CellIndexExpression>();
+        for (int index=0; index < dimensions.length; index++) {
+            indices.add(new CellIndexExpression("" + (location.getIndices()[index].value + centre[index])));
+        }
+        return new Location(name, indices);
     }
 }

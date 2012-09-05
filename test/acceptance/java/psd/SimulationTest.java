@@ -36,8 +36,21 @@ public class SimulationTest {
     }
     
     @Test
-    public void testTest2_2_diffusionAcrossPartiallyPermeableMembrane() throws Exception {
-        checkEventSimulation("test-2-2-input.ka", 
+    public void testTest2_2_1_diffusionAcrossPartiallyPermeableMembrane() throws Exception {
+        checkEventSimulation("test-2-2-1-input.ka", 
+                new String[] {"dimer in [0]", "dimer in [1]", "dimer embedded", "A in [0]", "A in [1]", "B in [0]", "B in [1]"}, 800, 100, 
+                new float[][] {
+                {1000, 0, 0, 2000, 0, 2000, 0}, 
+                {730, 0, 270, 1460, 540, 2000, 0}, 
+                {570, 0, 430, 1140, 860, 2000, 0}, 
+                {530, 0, 470, 1060, 940, 2000, 0}, 
+                {500, 0, 500, 1000, 1000, 2000, 0}, 
+                });
+    }
+    
+    @Test
+    public void testTest2_2_2_diffusionAcrossPartiallyPermeableMembrane_fixedNotation() throws Exception {
+        checkEventSimulation("test-2-2-2-input.ka", 
                 new String[] {"dimer in [0]", "dimer in [1]", "dimer embedded", "A in [0]", "A in [1]", "B in [0]", "B in [1]"}, 800, 100, 
                 new float[][] {
                 {1000, 0, 0, 2000, 0, 2000, 0}, 
@@ -169,9 +182,30 @@ public class SimulationTest {
                 });
     }
     
+    @Test
+    public void testTest3_5_1_diffusionBetweenGeometricPrimitives2D() throws Exception {
+        checkEventSimulation("test-3-5-1-input.ka", new String[] {
+                "A layer1", "A layer2", "A layer3", "A layer4"}, 2000, 10, 
+                new float[][] {
+                {100, 0, 0, 0},
+                {0, 0, 0, 100},
+                });
+    }
+    
+    @Test
+    public void testTest3_5_2_diffusionBetweenGeometricPrimitives2D_predefinedChannels() throws Exception {
+        checkEventSimulation("test-3-5-2-input.ka", new String[] {
+                "B inner", "B outer"}, 50, 0, 
+                new float[][] {
+                {100, 0},
+                {50, 50},
+                {0, 100},
+                });
+    }
+    
 //    @Test
-    public void testTest3_5_lateralDiffusionOfTransmembraneProteins() throws Exception {
-         checkTimeSimulation("test-3-5-input.ka", new String[] {"AB", "A2B2 centre", "A2B2 not centre"}, 10, 50, 
+    public void testTest3_6_lateralDiffusionOfTransmembraneProteins() throws Exception {
+         checkTimeSimulation("test-3-6-input.ka", new String[] {"AB", "A2B2 centre", "A2B2 not centre"}, 10, 50, 
                 new float[][] {
                     {0, 0, 0}, {50, 75, 25}, {40, 175, 80}, {25, 250, 125},
                 });

@@ -1,7 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
-import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
-import static org.demonsoft.spatialkappa.model.Utils.*;
+import static org.demonsoft.spatialkappa.model.Utils.equal;
+import static org.demonsoft.spatialkappa.model.Utils.getList;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -327,15 +327,9 @@ public class Transition {
         for (int index = 0; index < indexMapLeftRight.length; index++) {
             if (indexMapLeftRight[index] != DELETED) {
                 Agent leftAgent = leftSideAgents.get(index);
-                
                 Agent rightAgent = rightSideAgents.get(indexMapLeftRight[index]);
-                Location sourceLocation = leftAgent.location;
-                Location targetLocation = rightAgent.location;
-                
-                if (NOT_LOCATED == sourceLocation || NOT_LOCATED == targetLocation || !targetLocation.equals(sourceLocation)) {
-                    movedAgents.add(leftAgent);
-                    targetLocations.add(targetLocation);
-                }
+                movedAgents.add(leftAgent);
+                targetLocations.add(rightAgent.location);
             }
         }
         primitives.add(TransitionPrimitive.getMoveAgents(movedAgents, targetLocations, channelName));

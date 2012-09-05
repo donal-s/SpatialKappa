@@ -11,6 +11,7 @@ public class Location implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final Location NOT_LOCATED = new Location("##NOT LOCATED##");
+    public static final Location FIXED_LOCATION = new Location("fixed");
     
     private final String name;
     private final CellIndexExpression[] indices;

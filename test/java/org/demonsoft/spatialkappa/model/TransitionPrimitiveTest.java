@@ -30,15 +30,15 @@ public class TransitionPrimitiveTest {
         AgentLink agentLink = new AgentLink(sourceSite, targetSite);
         String state = "u";
 
-        assertEquals("CHANGE_STATE(source, sourceSite~s!1, u)", TransitionPrimitive.getChangeState(sourceAgent, sourceSite, state).toString());
-        assertEquals("CREATE_AGENT(source, target)", TransitionPrimitive.getCreateAgent(sourceAgent, targetAgent).toString());
-        assertEquals("CREATE_COMPLEX([source])", TransitionPrimitive.getCreateComplex(complex).toString());
+        assertEquals("CHANGE_STATE(source(), sourceSite~s!1, u)", TransitionPrimitive.getChangeState(sourceAgent, sourceSite, state).toString());
+        assertEquals("CREATE_AGENT(source(), target())", TransitionPrimitive.getCreateAgent(sourceAgent, targetAgent).toString());
+        assertEquals("CREATE_COMPLEX([source()])", TransitionPrimitive.getCreateComplex(complex).toString());
         assertEquals("CREATE_LINK(null [sourceSite~s!1] -> null [targetSite~t!1])", TransitionPrimitive.getCreateLink(sourceSite, targetSite, null).toString());
-        assertEquals("DELETE_AGENT(source)", TransitionPrimitive.getDeleteAgent(sourceAgent).toString());
+        assertEquals("DELETE_AGENT(source())", TransitionPrimitive.getDeleteAgent(sourceAgent).toString());
         assertEquals("DELETE_LINK(sourceSite~s!1->targetSite~t!1)", TransitionPrimitive.getDeleteLink(agentLink).toString());
-        assertEquals("MERGE_COMPLEXES(source, target)", TransitionPrimitive.getMergeComplexes(sourceAgent, targetAgent).toString());
+        assertEquals("MERGE_COMPLEXES(source(), target())", TransitionPrimitive.getMergeComplexes(sourceAgent, targetAgent).toString());
         assertEquals("MOVE_COMPLEX(source, target, channel)", TransitionPrimitive.getMoveComplex(new Location("source"), new Location("target"), "channel").toString());
-        assertEquals("MOVE_AGENTS([source], [target], channel)", TransitionPrimitive.getMoveAgents(getList(sourceAgent), getList(new Location("target")), "channel").toString());
+        assertEquals("MOVE_AGENTS([source()], [target], channel)", TransitionPrimitive.getMoveAgents(getList(sourceAgent), getList(new Location("target")), "channel").toString());
     }
 
     @SuppressWarnings("unused")
@@ -106,26 +106,26 @@ public class TransitionPrimitiveTest {
 
         Agent leftAgent = new Agent("agent", new Location("source"));
         checkApplyMoveAgents(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
-                new String[] { "[agent:target]" });
+                new String[] { "[agent:target()]" });
 
         // Single agent - source location specified - target constraint
         realSourceAgent = new Agent("agent", new Location("source"));
         realSourceComplex = new Complex(realSourceAgent);
         checkApplyMoveAgents(leftAgent, new Location("target"), "channel",  realSourceAgent, channels, compartments,
-                new String[] { "[agent:target]" });
+                new String[] { "[agent:target()]" });
         
         // Single agent - source location inferred from channel - no target constraint
         realSourceAgent = new Agent("agent", new Location("source"));
         realSourceComplex = new Complex(realSourceAgent);
         leftAgent = new Agent("agent");
         checkApplyMoveAgents(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
-                new String[] { "[agent:target]" });
+                new String[] { "[agent:target()]" });
 
         // Single agent - source location inferred from channel - target constraint
         realSourceAgent = new Agent("agent", new Location("source"));
         realSourceComplex = new Complex(realSourceAgent);
         checkApplyMoveAgents(leftAgent, new Location("target"), "channel",  realSourceAgent, channels, compartments,
-                new String[] { "[agent:target]" });
+                new String[] { "[agent:target()]" });
 
         
         // Co-located complex - source location inferred from channel - no target constraint
@@ -164,6 +164,27 @@ public class TransitionPrimitiveTest {
 
 
     @Test
+    public void testApply_MoveAgents_singleAgentOfComplexMovement() {
+        List<Compartment> compartments = getList(new Compartment("A"), new Compartment("B"));
+        List<Channel> channels = getList(new Channel("channel", new Location("A"), new Location("B")));
+
+        Agent leftTemplateAgent1 = new Agent("agent1", new Location("A")); 
+        Agent leftTemplateAgent2 = new Agent("agent2", new Location("A")); 
+
+        Agent leftRealAgent1 = new Agent("agent1", new Location("A")); 
+        Agent leftRealAgent2 = new Agent("agent2", new Location("A"));
+        getComplexes(getList(leftRealAgent1, leftRealAgent2));
+
+        Map<Agent, Agent> transformMap = new HashMap<Agent, Agent>();
+        transformMap.put(leftTemplateAgent1, leftRealAgent1);
+        transformMap.put(leftTemplateAgent2, leftRealAgent2);
+        checkApplyPrimitive(TransitionPrimitive.getMoveAgents(getList(leftTemplateAgent1, leftTemplateAgent2), 
+                getList(new Location("B"), new Location("A")), "channel"), 
+                transformMap, null, channels, compartments, new String[] { "[agent1:B()]", "[agent2:A()]"});
+    }
+
+
+    @Test
     public void testApply_MoveAgents_multipleAgentChannel() {
         List<Compartment> compartments = getList(new Compartment("source1"), new Compartment("source2"), new Compartment("target1"), new Compartment("target2"));
         Channel channel = new Channel("channel");
@@ -181,7 +202,7 @@ public class TransitionPrimitiveTest {
         List<Location> targetConstraints = getList(NOT_LOCATED, NOT_LOCATED);
         getComplexes(leftAgents);
         checkApplyMoveAgents(leftAgents, targetConstraints, "channel",  realSourceAgents, channels, compartments,
-                new String[] { "[agent1:target1]", "[agent2:target2]" });
+                new String[] { "[agent1:target1()]", "[agent2:target2()]" });
 
         // TODO test predefined channel types
 
@@ -302,7 +323,7 @@ public class TransitionPrimitiveTest {
         
         primitive.apply(transformMap, targetComplexes, channels, compartments);
 
-        assertEquals(expectedComplexes.length, targetComplexes.size());
+        assertEquals(targetComplexes.toString(), expectedComplexes.length, targetComplexes.size());
         List<String> expected = Arrays.asList(expectedComplexes);
         for (Complex actual : targetComplexes) {
             assertTrue("Missing complex: " + actual.toString() + " in " + expected, expected.contains(actual.toString()));

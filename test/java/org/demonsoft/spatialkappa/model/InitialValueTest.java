@@ -61,7 +61,7 @@ public class InitialValueTest {
         }
 
         InitialValue initialValue = new InitialValue(complexes, 5, location);
-        assertEquals("[[A:cytosol[2]], [B:cytosol(x!1), C:nucleus(y!1)]]", initialValue.complexes.toString());
+        assertEquals("[[A:cytosol[2]()], [B:cytosol(x!1), C:nucleus(y!1)]]", initialValue.complexes.toString());
         assertEquals(5, initialValue.quantity);
         assertNull(initialValue.reference);
 
@@ -69,7 +69,7 @@ public class InitialValueTest {
                 new Agent("B", new Location("cytosol"), new AgentSite("x", null, "1")), 
                 new Agent("C", new Location("nucleus"), new AgentSite("y", null, "1"))));
         initialValue = new InitialValue(complexes, 5, NOT_LOCATED);
-        assertEquals("[[A], [B:cytosol(x!1), C:nucleus(y!1)]]", initialValue.complexes.toString());
+        assertEquals("[[A()], [B:cytosol(x!1), C:nucleus(y!1)]]", initialValue.complexes.toString());
         assertEquals(5, initialValue.quantity);
         assertNull(initialValue.reference);
     }
@@ -113,7 +113,7 @@ public class InitialValueTest {
         }
 
         InitialValue initialValue = new InitialValue(complexes, reference, location);
-        assertEquals("[[A:cytosol[2]], [B:cytosol(x!1), C:nucleus(y!1)]]", initialValue.complexes.toString());
+        assertEquals("[[A:cytosol[2]()], [B:cytosol(x!1), C:nucleus(y!1)]]", initialValue.complexes.toString());
         assertEquals(0, initialValue.quantity);
         assertSame(reference, initialValue.reference);
 
@@ -121,7 +121,7 @@ public class InitialValueTest {
                 new Agent("B", new Location("cytosol"), new AgentSite("x", null, "1")), 
                 new Agent("C", new Location("nucleus"), new AgentSite("y", null, "1"))));
         initialValue = new InitialValue(complexes, reference, NOT_LOCATED);
-        assertEquals("[[A], [B:cytosol(x!1), C:nucleus(y!1)]]", initialValue.complexes.toString());
+        assertEquals("[[A()], [B:cytosol(x!1), C:nucleus(y!1)]]", initialValue.complexes.toString());
         assertEquals(0, initialValue.quantity);
         assertSame(reference, initialValue.reference);
     }

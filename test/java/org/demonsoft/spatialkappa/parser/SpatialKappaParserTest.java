@@ -153,11 +153,13 @@ public class SpatialKappaParserTest {
 
     @Test
     public void testLocation() throws Exception {
-        runParserRule("location", "label", 
+        runParserRule("location", ":label", 
                 "(LOCATION label)");
-        runParserRule("location", "label[1]", 
+        runParserRule("location", ":fixed", 
+                "(LOCATION FIXED)");
+        runParserRule("location", ":label[1]", 
                 "(LOCATION label (INDEX (CELL_INDEX_EXPR 1)))");
-        runParserRule("location", "label[1][20+x]", 
+        runParserRule("location", ":label[1][20+x]", 
                 "(LOCATION label (INDEX (CELL_INDEX_EXPR 1)) (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR 20) (CELL_INDEX_EXPR x))))");
     }
 

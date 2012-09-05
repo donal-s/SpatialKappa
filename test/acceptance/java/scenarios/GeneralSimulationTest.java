@@ -125,7 +125,7 @@ public class GeneralSimulationTest {
     
     @Test
     public void testDeleteObservableNoSitesCase() throws Exception {
-        checkEventSimulation(DELETE_COMPLEX_INPUT_NO_SITES, new String[] {"[A]"}, 2000, 50, new float[][] {
+        checkEventSimulation(DELETE_COMPLEX_INPUT_NO_SITES, new String[] {"[A()]"}, 2000, 50, new float[][] {
                 {10000}, {8000}, {6000}, {4000}, {2000}, {0}
         });
     }

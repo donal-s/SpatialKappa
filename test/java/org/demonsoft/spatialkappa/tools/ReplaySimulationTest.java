@@ -23,28 +23,39 @@ public class ReplaySimulationTest {
 
     @Test
     public void testNoCompartmentSimulation() {
-        ReplaySimulation simulation = new ReplaySimulation(new StringReader(NO_COMPARTMENT_INPUT), 0);
-        checkObservationEquals(NO_COMPARTMENT_OUTPUT[0], simulation.getCurrentObservation());
-        for (int index = 1; index < NO_COMPARTMENT_OUTPUT.length; index++) {
-            checkObservationEquals(NO_COMPARTMENT_OUTPUT[index], simulation.readObservation());
-        }
+        checkSimulation(NO_COMPARTMENT_INPUT, NO_COMPARTMENT_OUTPUT);
+    }
+
+    @Test
+    public void testNoHashSimulation() {
+        checkSimulation(NO_HASH_INPUT, NO_HASH_OUTPUT);
+    }
+
+    @Test
+    public void testTimeOnlySimulation() {
+        checkSimulation(TIME_ONLY_INPUT, TIME_ONLY_OUTPUT);
+    }
+
+    @Test
+    public void testEventOnlySimulation() {
+        checkSimulation(EVENT_ONLY_INPUT, EVENT_ONLY_OUTPUT);
     }
 
     @Test
     public void testCompartmentSimulation() {
-        ReplaySimulation simulation = new ReplaySimulation(new StringReader(COMPARTMENT_INPUT), 0);
-        checkObservationEquals(COMPARTMENT_OUTPUT[0], simulation.getCurrentObservation());
-        for (int index = 1; index < COMPARTMENT_OUTPUT.length; index++) {
-            checkObservationEquals(COMPARTMENT_OUTPUT[index], simulation.readObservation());
-        }
+        checkSimulation(COMPARTMENT_INPUT, COMPARTMENT_OUTPUT);
     }
     
     @Test
     public void testBadNumberSimulation() {
-        ReplaySimulation simulation = new ReplaySimulation(new StringReader(BAD_NUMBER_INPUT), 0);
-        checkObservationEquals(BAD_NUMBER_OUTPUT[0], simulation.getCurrentObservation());
-        for (int index = 1; index < BAD_NUMBER_OUTPUT.length; index++) {
-            checkObservationEquals(BAD_NUMBER_OUTPUT[index], simulation.readObservation());
+        checkSimulation(BAD_NUMBER_INPUT, BAD_NUMBER_OUTPUT);
+    }
+    
+    private void checkSimulation(String simulationInput, Observation[] simulationOutput) {
+        ReplaySimulation simulation = new ReplaySimulation(new StringReader(simulationInput), 0);
+        checkObservationEquals(simulationOutput[0], simulation.getCurrentObservation());
+        for (int index = 1; index < simulationOutput.length; index++) {
+            checkObservationEquals(simulationOutput[index], simulation.readObservation());
         }
     }
     
@@ -85,14 +96,14 @@ public class ReplaySimulationTest {
 
     
     private static final String NO_COMPARTMENT_INPUT = 
-        "# time E 'Red_cytosol' 'Green_cytosol'\n" + 
-        " 0.000000E+00 0    0.000000E+00 0.000000E+00\n" + 
-        " 2.335532E+00 1000 1.000000E+01 1.500000E+01\n" + 
-        " 4.426644E+00 2000 5.000000E+01 2.500000E+01\n" + 
-        " 6.025634E+00 3000 9.000000E+01 3.500000E+01\n" + 
-        " 7.619085E+00 4000 13.000000E+01 4.500000E+01\n" + 
-        "";
-    
+            "# time E 'Red_cytosol' 'Green_cytosol'\n" + 
+            " 0.000000E+00 0    0.000000E+00 0.000000E+00\n" + 
+            " 2.335532E+00 1000 1.000000E+01 1.500000E+01\n" + 
+            " 4.426644E+00 2000 5.000000E+01 2.500000E+01\n" + 
+            " 6.025634E+00 3000 9.000000E+01 3.500000E+01\n" + 
+            " 7.619085E+00 4000 13.000000E+01 4.500000E+01\n" + 
+            "";
+        
     private static final Observation[] NO_COMPARTMENT_OUTPUT = {
         new Observation(0, 0, Utils.getList("Red_cytosol", "Green_cytosol"),
                 getObservationElementMap(new Object[][] {
@@ -125,6 +136,101 @@ public class ReplaySimulationTest {
                 }), 
                 true, 0, 0),
     };
+
+    private static final String TIME_ONLY_INPUT = 
+            "# time 'Red_cytosol' 'Green_cytosol'\n" + 
+            " 0.000000E+00 0.000000E+00 0.000000E+00\n" + 
+            " 2.335532E+00 1.000000E+01 1.500000E+01\n" + 
+            " 4.426644E+00 5.000000E+01 2.500000E+01\n" + 
+            " 6.025634E+00 9.000000E+01 3.500000E+01\n" + 
+            " 7.619085E+00 13.000000E+01 4.500000E+01\n" + 
+            "";
+        
+    private static final Observation[] TIME_ONLY_OUTPUT = {
+        new Observation(0, 0, Utils.getList("Red_cytosol", "Green_cytosol"),
+                getObservationElementMap(new Object[][] {
+                        {"Red_cytosol", new ObservationElement(0)},
+                        {"Green_cytosol", new ObservationElement(0)}
+                }), 
+                false, 0, 0),
+        new Observation(2.335532E+00f, 0, Utils.getList("Red_cytosol", "Green_cytosol"),
+                getObservationElementMap(new Object[][] {
+                        {"Red_cytosol", new ObservationElement(10)},
+                        {"Green_cytosol", new ObservationElement(15)}
+                }), 
+                false, 0, 0),
+        new Observation(4.426644E+00f, 0, Utils.getList("Red_cytosol", "Green_cytosol"),
+                getObservationElementMap(new Object[][] {
+                        {"Red_cytosol", new ObservationElement(50)},
+                        {"Green_cytosol", new ObservationElement(25)}
+                }), 
+                false, 0, 0),
+        new Observation(6.025634E+00f, 0, Utils.getList("Red_cytosol", "Green_cytosol"),
+                getObservationElementMap(new Object[][] {
+                        {"Red_cytosol", new ObservationElement(90)},
+                        {"Green_cytosol", new ObservationElement(35)}
+                }), 
+                false, 0, 0),
+        new Observation(7.619085E+00f, 0, Utils.getList("Red_cytosol", "Green_cytosol"),
+                getObservationElementMap(new Object[][] {
+                        {"Red_cytosol", new ObservationElement(130)},
+                        {"Green_cytosol", new ObservationElement(45)}
+                }), 
+                true, 0, 0),
+    };
+
+    private static final String EVENT_ONLY_INPUT = 
+            "# E 'Red_cytosol' 'Green_cytosol'\n" + 
+            " 0    0.000000E+00 0.000000E+00\n" + 
+            " 1000 1.000000E+01 1.500000E+01\n" + 
+            " 2000 5.000000E+01 2.500000E+01\n" + 
+            " 3000 9.000000E+01 3.500000E+01\n" + 
+            " 4000 13.000000E+01 4.500000E+01\n" + 
+            "";
+        
+    private static final Observation[] EVENT_ONLY_OUTPUT = {
+        new Observation(0, 0, Utils.getList("Red_cytosol", "Green_cytosol"),
+                getObservationElementMap(new Object[][] {
+                        {"Red_cytosol", new ObservationElement(0)},
+                        {"Green_cytosol", new ObservationElement(0)}
+                }), 
+                false, 0, 0),
+        new Observation(0, 1000, Utils.getList("Red_cytosol", "Green_cytosol"),
+                getObservationElementMap(new Object[][] {
+                        {"Red_cytosol", new ObservationElement(10)},
+                        {"Green_cytosol", new ObservationElement(15)}
+                }), 
+                false, 0, 0),
+        new Observation(0, 2000, Utils.getList("Red_cytosol", "Green_cytosol"),
+                getObservationElementMap(new Object[][] {
+                        {"Red_cytosol", new ObservationElement(50)},
+                        {"Green_cytosol", new ObservationElement(25)}
+                }), 
+                false, 0, 0),
+        new Observation(0, 3000, Utils.getList("Red_cytosol", "Green_cytosol"),
+                getObservationElementMap(new Object[][] {
+                        {"Red_cytosol", new ObservationElement(90)},
+                        {"Green_cytosol", new ObservationElement(35)}
+                }), 
+                false, 0, 0),
+        new Observation(0, 4000, Utils.getList("Red_cytosol", "Green_cytosol"),
+                getObservationElementMap(new Object[][] {
+                        {"Red_cytosol", new ObservationElement(130)},
+                        {"Green_cytosol", new ObservationElement(45)}
+                }), 
+                true, 0, 0),
+    };
+
+    private static final String NO_HASH_INPUT = 
+            " time E 'Red_cytosol' 'Green_cytosol'\n" + 
+            " 0.000000E+00 0    0.000000E+00 0.000000E+00\n" + 
+            " 2.335532E+00 1000 1.000000E+01 1.500000E+01\n" + 
+            " 4.426644E+00 2000 5.000000E+01 2.500000E+01\n" + 
+            " 6.025634E+00 3000 9.000000E+01 3.500000E+01\n" + 
+            " 7.619085E+00 4000 13.000000E+01 4.500000E+01\n" + 
+            "";
+            
+    private static final Observation[] NO_HASH_OUTPUT = NO_COMPARTMENT_OUTPUT;
 
     private static final String COMPARTMENT_INPUT = 
         "# time E 'Red_cytosol_:loc~cytosol,loc_index_1~0,loc_index_2~0'" +

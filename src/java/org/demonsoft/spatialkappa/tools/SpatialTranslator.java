@@ -24,6 +24,7 @@ import org.demonsoft.spatialkappa.model.AgentSite;
 import org.demonsoft.spatialkappa.model.AggregateAgent;
 import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.Channel;
+import org.demonsoft.spatialkappa.model.ChannelConstraint;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.Complex;
 import org.demonsoft.spatialkappa.model.Complex.MappingInstance;
@@ -468,17 +469,17 @@ public class SpatialTranslator {
     }
 
     String[][] getLinkStateSuffixPairs(Channel link, List<Compartment> compartments) {
-        Location[][] references = link.getCellReferencePairs(compartments);
-        String[][] result = new String[references.length][2];
+        List<ChannelConstraint> references = link.getCellReferencePairs(compartments);
+        String[][] result = new String[references.size()][2];
         int maxDimensions = 0;
         for (Compartment compartment : compartments) {
             if (compartment.getDimensions() != null && compartment.getDimensions().length > maxDimensions) {
                 maxDimensions = compartment.getDimensions().length;
             }
         }
-        for (int index = 0; index < references.length; index++) {
-            result[index][0] = getKappaString(references[index][0], maxDimensions);
-            result[index][1] = getKappaString(references[index][1], maxDimensions);
+        for (int index = 0; index < references.size(); index++) {
+            result[index][0] = getKappaString(references.get(index).sourceLocation, maxDimensions);
+            result[index][1] = getKappaString(references.get(index).targetConstraint, maxDimensions);
         }
         return result;
     }

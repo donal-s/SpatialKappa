@@ -252,6 +252,11 @@ location returns [Location result]
   List<CellIndexExpression> dimensions = new ArrayList<CellIndexExpression>();
   }
   :
+  ^(LOCATION FIXED)
+  {
+    $result = Location.FIXED_LOCATION;
+  }
+  |
   ^(LOCATION name=id (compartmentIndexExpr {dimensions.add($compartmentIndexExpr.result);})*)
   {
     $result = new Location($name.result, dimensions);

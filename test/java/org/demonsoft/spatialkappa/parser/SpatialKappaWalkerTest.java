@@ -11,6 +11,7 @@ import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
@@ -205,27 +206,27 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testChannelDecl() throws Exception {
-        checkChannelDecl("%channel: label :compartment1 -> :compartment2", "label: [compartment1] -> [compartment2]");
-        checkChannelDecl("%channel: label :compartment1[x] -> :compartment2[2][x+1]", "label: [compartment1[x]] -> [compartment2[2][(x + 1)]]");
+        checkChannelDecl("%channel: label :compartment1 -> :compartment2", "label: [[compartment1 -> compartment2]]");
+        checkChannelDecl("%channel: label :compartment1[x] -> :compartment2[2][x+1]", "label: [[compartment1[x] -> compartment2[2][(x + 1)]]]");
         checkChannelDecl("%channel: label (:compartment1[x] -> :compartment2[x+1]) + " +
                 "(:compartment1[x] -> :compartment2[x - 1])", 
-                "label: ([compartment1[x]] -> [compartment2[(x + 1)]]) + ([compartment1[x]] -> [compartment2[(x - 1)]])");
+                "label: ([[compartment1[x] -> compartment2[(x + 1)]]]) + ([[compartment1[x] -> compartment2[(x - 1)]]])");
 
         // Multi agent channels
         checkChannelDecl("%channel: diffusion" +
                 "        (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x+1][y], :cytosol [u+1][v][0]) + \\\n" + 
                 "        (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x -1][y], :cytosol [u -1][v][0])", 
-                "diffusion: ([membrane[x][y], cytosol[u][v][0]] -> [membrane[(x + 1)][y], cytosol[(u + 1)][v][0]]) + " + 
-                "([membrane[x][y], cytosol[u][v][0]] -> [membrane[(x - 1)][y], cytosol[(u - 1)][v][0]])");
+                "diffusion: ([[membrane[x][y] -> membrane[(x + 1)][y]], [cytosol[u][v][0] -> cytosol[(u + 1)][v][0]]]) + " +
+                "([[membrane[x][y] -> membrane[(x - 1)][y]], [cytosol[u][v][0] -> cytosol[(u - 1)][v][0]]])");
 
         // Predefined channel types
         checkChannelDecl("%channel: label Hexagonal :compartment1 -> :compartment2", 
-                "label: (Hexagonal) [compartment1] -> [compartment2]");
+                "label: (Hexagonal) [[compartment1 -> compartment2]]");
         checkChannelDecl("%channel: label (Hexagonal :compartment1 -> :compartment2) + " +
                 "(:compartment1[x] -> :compartment2[x - 1])", 
-                "label: ((Hexagonal) [compartment1] -> [compartment2]) + ([compartment1[x]] -> [compartment2[(x - 1)]])");
+                "label: ((Hexagonal) [[compartment1 -> compartment2]]) + ([[compartment1[x] -> compartment2[(x - 1)]]])");
         checkChannelDecl("%channel: diffusion (Hexagonal :membrane, :cytosol -> :membrane, :cytosol)", 
-                "diffusion: (Hexagonal) [membrane, cytosol] -> [membrane, cytosol]");
+                "diffusion: (Hexagonal) [[membrane -> membrane], [cytosol -> cytosol]]");
 
     }
     
@@ -401,7 +402,7 @@ public class SpatialKappaWalkerTest {
     public void testModDecl() throws Exception {
         checkModDecl("%mod: ([T]>10) && ('v1'/'v2') < 1 do $ADD 'n' C(x1~p)", "(([T] > 10.0) && (('v1' / 'v2') < 1.0)) do $ADD 'n' [C(x1~p)]");
         checkModDecl("%mod: ([log][E]>10) || [true] do $SNAPSHOT until [false]", "(([log] ([E]) > 10.0) || [true]) do $SNAPSHOT until [false]");
-        checkModDecl("%mod: ([T] [mod] 100)=0 do $DEL [inf] C() until [T]>1000", "(([T] [mod] 100.0) = 0.0) do $DEL [inf] [C] until ([T] > 1000.0)");
+        checkModDecl("%mod: ([T] [mod] 100)=0 do $DEL [inf] C() until [T]>1000", "(([T] [mod] 100.0) = 0.0) do $DEL [inf] [C()] until ([T] > 1000.0)");
         checkModDecl("%mod: [not][false] do 'rule_name' := [inf]", "[not] [false] do 'rule_name' := [inf]");
     }
     
@@ -436,8 +437,8 @@ public class SpatialKappaWalkerTest {
     public void testEffect() throws Exception {
         checkEffect("$SNAPSHOT", "$SNAPSHOT");
         checkEffect("$STOP", "$STOP");
-        checkEffect("$ADD 'n' + 1 C()", "$ADD ('n' + 1.0) [C]");
-        checkEffect("$DEL [inf] C(), C(x1~p)", "$DEL [inf] [C, C(x1~p)]");
+        checkEffect("$ADD 'n' + 1 C()", "$ADD ('n' + 1.0) [C()]");
+        checkEffect("$DEL [inf] C(), C(x1~p)", "$DEL [inf] [C(), C(x1~p)]");
         checkEffect("'rule' := 'n' + 1", "'rule' := ('n' + 1.0)");
     }
     
@@ -515,16 +516,16 @@ public class SpatialKappaWalkerTest {
 
 	@Test
     public void testAgent() throws Exception {
-        checkAgent("A", "A");
-        checkAgent("A", "A()");
-        checkAgent("A:cytosol", "A:cytosol");
-        checkAgent("A:cytosol", "A:cytosol()");
-        checkAgent("A:cytosol[0][1]", "A:cytosol[0][1]");
-        checkAgent("A:cytosol[0][1]", "A:cytosol[0][1]()");
+        checkAgent("A()", "A");
+        checkAgent("A()", "A()");
+        checkAgent("A:cytosol()", "A:cytosol");
+        checkAgent("A:cytosol()", "A:cytosol()");
+        checkAgent("A:cytosol[0][1]()", "A:cytosol[0][1]");
+        checkAgent("A:cytosol[0][1]()", "A:cytosol[0][1]()");
         checkAgent("A(l!1,x~a)", "A(x~a,l!1)");
-        checkAgent("A_new", "A_new()");
-        checkAgent("A-new", "A-new()");
-        checkAgent("EBOX-CLK-BMAL1", "EBOX-CLK-BMAL1()");
+        checkAgent("A_new()", "A_new()");
+        checkAgent("A-new()", "A-new()");
+        checkAgent("EBOX-CLK-BMAL1()", "EBOX-CLK-BMAL1()");
         checkAgent("Predator(loc~domain,loc_index_1~0,loc_index_2~0)", "Predator(loc~domain,loc_index_1~0,loc_index_2~0)");
     }
     
@@ -546,9 +547,10 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testLocation() throws Exception {
-        checkLocation("label", (Location) runParserRule("location", "label"));
-        checkLocation("label[1]", (Location) runParserRule("location", "label[1]"));
-        checkLocation("label[1][(20 + x)]", (Location) runParserRule("location", "label[1][20+x]"));
+        assertSame(Location.FIXED_LOCATION, runParserRule("location", ":fixed"));
+        checkLocation("label", (Location) runParserRule("location", ":label"));
+        checkLocation("label[1]", (Location) runParserRule("location", ":label[1]"));
+        checkLocation("label[1][(20 + x)]", (Location) runParserRule("location", ":label[1][20+x]"));
     }
     
     private void checkLocation(String expected, Location actual) {

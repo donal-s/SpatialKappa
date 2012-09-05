@@ -10,6 +10,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
 import org.demonsoft.spatialkappa.model.AggregateAgent;
@@ -397,7 +400,7 @@ public class TransitionMatchingSimulationTest {
         // Single component match
         
         transition = new Transition(null, sourceAgents, null, targetAgents, 1f);
-        Complex component = getComplexByString("[agent]", transition.sourceComplexes);
+        Complex component = getComplexByString("[agent()]", transition.sourceComplexes);
         
         newComponentComplexMappings = getList(new ComplexMapping(component, complex, agentMap));
         result = simulation.getNewTransitionInstances(transition, newComponentComplexMappings, allComponentComplexMappings, 
@@ -410,7 +413,7 @@ public class TransitionMatchingSimulationTest {
         targetAgents = getList(new Agent("agent"), new Agent("agent2"));
         transition = new Transition(null, sourceAgents, null, targetAgents, 1f);
         
-        component = getComplexByString("[agent]", transition.sourceComplexes);
+        component = getComplexByString("[agent()]", transition.sourceComplexes);
         newComponentComplexMappings = getList(new ComplexMapping(component, complex, agentMap));
         result = simulation.getNewTransitionInstances(transition, newComponentComplexMappings, allComponentComplexMappings, 
                 complexCounts, channels, compartments);
@@ -420,7 +423,7 @@ public class TransitionMatchingSimulationTest {
         allComponentComplexMappings.put(component, newComponentComplexMappings);
         Complex complex2 = new Complex(new Agent("agent2"));
         complexCounts.put(complex2, 1);
-        Complex component2 = getComplexByString("[agent2]", transition.sourceComplexes);
+        Complex component2 = getComplexByString("[agent2()]", transition.sourceComplexes);
         newComponentComplexMappings = getList(new ComplexMapping(component2, complex2, agentMap));
         result = simulation.getNewTransitionInstances(transition, newComponentComplexMappings, allComponentComplexMappings, 
                 complexCounts, channels, compartments);
@@ -822,6 +825,45 @@ public class TransitionMatchingSimulationTest {
         complexMappings.add(complexMappingA);
         assertTrue(simulation.isTransitionMappingComponentCompatible(transition, complexMappings, complexMappingA, channels, compartments));
     }
+    
+    @Test
+    public void testSnapshot() throws IOException {
+        File expectedFile = new File("snap_444.ka");
+        assertFalse(expectedFile.exists());
+        
+        kappaModel.addCompartment(new Compartment("location", 5, 4));
+        kappaModel.addAgentDeclaration(new AggregateAgent("A"));
+        kappaModel.addInitialValue(getList(new Agent("A")), "7", new Location("location", INDEX_0, INDEX_1));
+        simulation = new TransitionMatchingSimulation(kappaModel);
+        simulation.eventCount = 444;
+        
+        simulation.snapshot();
+        assertTrue("Snapshot not created", expectedFile.exists());
+        try {
+            String output = FileUtils.readFileToString(expectedFile);
+            assertEquals("%init: 7 A:location[0][1]()\n", output);
+
+            kappaModel.addAgentDeclaration(new AggregateAgent("B"));
+            kappaModel.addInitialValue(getList(new Agent("B")), "9", new Location("location", INDEX_1, INDEX_0));
+            simulation = new TransitionMatchingSimulation(kappaModel);
+            simulation.eventCount = 444;
+            
+            simulation.snapshot();
+            File expectedFile2 = new File("snap_444_2.ka");
+            assertTrue("Snapshot not created", expectedFile2.exists());
+            try {
+                output = FileUtils.readFileToString(expectedFile2);
+                assertEquals("%init: 7 A:location[0][1]()\n%init: 9 B:location[1][0]()\n", output);
+            }
+            finally {
+                expectedFile2.delete();
+            }
+        }
+        finally {
+            expectedFile.delete();
+        }
+    }
+    
     
     // TODO locations in transition
 }

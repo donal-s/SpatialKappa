@@ -95,8 +95,8 @@ public class TransitionTest {
         assertEquals("channel", transition.channelName);
         assertSame(rate, transition.getRate());
         assertFalse(transition.isInfiniteRate(new HashMap<String, Variable>()));
-        assertEquals("'label' : [[agent1(interface1~state1!link1,interface2~state2!link1)], [agent3:left]]" +
-                " ->:channel [[agent2], [agent4:right]] @ 0.01", transition.toString());
+        assertEquals("'label' : [[agent1(interface1~state1!link1,interface2~state2!link1)], [agent3:left()]]" +
+                " ->:channel [[agent2()], [agent4:right()]] @ 0.01", transition.toString());
         assertNull(transition.leftLocation);
         assertNull(transition.rightLocation);
 
@@ -122,8 +122,8 @@ public class TransitionTest {
         assertEquals(null, transition.channelName);
         assertSame(rate, transition.getRate());
         assertFalse(transition.isInfiniteRate(new HashMap<String, Variable>()));
-        assertEquals("'label' : [[agent1(interface1~state1!link1,interface2~state2!link1)], [agent3:left]]" +
-                " -> [[agent2], [agent4:right]] @ 0.01", transition.toString());
+        assertEquals("'label' : [[agent1(interface1~state1!link1,interface2~state2!link1)], [agent3:left()]]" +
+                " -> [[agent2()], [agent4:right()]] @ 0.01", transition.toString());
         assertNull(transition.leftLocation);
         assertNull(transition.rightLocation);
 
@@ -349,7 +349,8 @@ public class TransitionTest {
         Transition transition = new Transition("test", leftAgents, "channel", rightAgents, 10.0f);
                 
         TransitionPrimitive[] expected = new TransitionPrimitive[] {
-                TransitionPrimitive.getMoveAgents(getList(leftAgents.get(0), leftAgents.get(1)), getList(new Location("locB"), new Location("locB")), "channel"),
+                TransitionPrimitive.getMoveAgents(leftAgents, 
+                        getList(new Location("locB"), new Location("locB"), new Location("locA")), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
@@ -388,7 +389,7 @@ public class TransitionTest {
         TransitionInstance transitionInstance = new TransitionInstance(sourceComplexMappings, 1);
         
         List<Complex> result = transition.apply(transitionInstance, channels, compartments);
-        assertEquals("[[DNA:B]]", result.toString());
+        assertEquals("[[DNA:B()]]", result.toString());
         // TODO test predefined channel types
 
     }
@@ -407,7 +408,7 @@ public class TransitionTest {
         Transition transition = new Transition("test", leftTemplateAgents, "channel", rightTemplateAgents, 10.0f);
 
         TransitionPrimitive[] expected = new TransitionPrimitive[] {
-                TransitionPrimitive.getMoveAgents(getList(leftTemplateAgents.get(0), leftTemplateAgents.get(1)), getList(new Location("locD"), new Location("locE")), "channel"),
+                TransitionPrimitive.getMoveAgents(leftTemplateAgents, getList(new Location("locD"), new Location("locE"), new Location("locC")), "channel"),
         };
         checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
         
@@ -438,7 +439,7 @@ public class TransitionTest {
                 return o1.toString().compareTo(o2.toString());
             }
         });
-        assertEquals("[[A:locD], [B:locE], [C:locC]]", result.toString());
+        assertEquals("[[A:locD()], [B:locE()], [C:locC()]]", result.toString());
         // TODO test predefined channel types
 
     }
@@ -452,16 +453,17 @@ public class TransitionTest {
         Agent leftTemplateAgent2 = new Agent("agent2", new Location("A"), new AgentSite("s", null, "1")); 
         Agent rightTemplateAgent1 = new Agent("agent1", new Location("B"), new AgentSite("s", null, "1", "channel")); 
         Agent rightTemplateAgent2 = new Agent("agent2", new Location("A"), new AgentSite("s", null, "1")); 
-        Transition transition = new Transition("test", Utils.getList(leftTemplateAgent1, leftTemplateAgent2), 
-                "channel", Utils.getList(rightTemplateAgent1, rightTemplateAgent2), 10.0f);
+        Transition transition = new Transition("test", getList(leftTemplateAgent1, leftTemplateAgent2), 
+                "channel", getList(rightTemplateAgent1, rightTemplateAgent2), 10.0f);
         Complex leftTemplateComplex = transition.sourceComplexes.get(0);        
         
-        TransitionPrimitive[] expected = new TransitionPrimitive[] {
+        List<TransitionPrimitive> expected = getList(
                 TransitionPrimitive.getDeleteLink(leftTemplateComplex.agentLinks.get(0)),
-                TransitionPrimitive.getMoveAgents(getList(leftTemplateAgent1), getList(new Location("B")), "channel"),
+                TransitionPrimitive.getMoveAgents(getList(leftTemplateAgent1, leftTemplateAgent2), 
+                        getList(new Location("B"), new Location("A")), "channel"),
                 TransitionPrimitive.getCreateLink(leftTemplateAgent1.getSite("s"), leftTemplateAgent2.getSite("s"), "channel")
-        };
-        checkPrimitives(Arrays.asList(expected), transition.bestPrimitives);
+        );
+        checkPrimitives(expected, transition.bestPrimitives);
         
         Map<Agent, Agent> expectedAgentMap = new HashMap<Agent, Agent>();
         expectedAgentMap.put(leftTemplateAgent1, rightTemplateAgent1);
@@ -826,7 +828,7 @@ public class TransitionTest {
     }
     
     @Test
-    public void testcreatePrimitivesDeleteAgents() {
+    public void testCreatePrimitivesDeleteAgents() {
         List<Agent> leftAgents = getList(
                 new Agent("A", new AgentSite("s1", null, "_")), 
                 new Agent("B", new AgentSite("s5", null, "_")), 
@@ -847,6 +849,43 @@ public class TransitionTest {
         checkSetByString("[s1!_->occupied, s2?->any, s3!1->s4!1]", deletedLinks);
     }
     
+    @Test
+    public void testCreatePrimitivesMoveAgents() {
+        // Agent1(d!1:domainLink),Agent2(d!1) ->:diffusion Agent1(d!1:domainLink),Agent2(d!1) @ 1.0
+        List<Agent> leftAgents = getList(
+                new Agent("Agent1", new AgentSite("d", null, "1", "domainLink")),
+                new Agent("Agent2", new AgentSite("d", null, "1")));
+        
+        List<Agent> rightAgents = getList(
+                new Agent("Agent1", new AgentSite("d", null, "1", "domainLink")),
+                new Agent("Agent2", new AgentSite("d", null, "1")));
+        
+        getComplexes(leftAgents);
+        int[] indexMapLeftRight = new int[] { 0, 1 };
+        List<TransitionPrimitive> primitives = new ArrayList<TransitionPrimitive>();
+
+        Transition transition = new Transition(null, getList(new Agent("a1")), "diffusion", getList(new Agent("b1")), 0.1f);
+
+        transition.createPrimitivesMoveAgents(leftAgents, rightAgents, indexMapLeftRight, primitives);
+        
+        checkSetByString("[MOVE_AGENTS([Agent1(d!1:domainLink), Agent2(d!1)], [##NOT LOCATED##, ##NOT LOCATED##], diffusion)]", primitives);
+        
+        // Agent1:domain1(d!1:domainLink),Agent2(d!1) ->:diffusion Agent1:domain1(d!1:domainLink),Agent2(d!1) @ 1.0
+        Location domain1Location = new Location("domain1");
+        leftAgents = getList(
+                new Agent("Agent1", domain1Location, new AgentSite("d", null, "1", "domainLink")),
+                new Agent("Agent2", new AgentSite("d", null, "1")));
+        
+        rightAgents = getList(
+                new Agent("Agent1", domain1Location, new AgentSite("d", null, "1", "domainLink")),
+                new Agent("Agent2", new AgentSite("d", null, "1")));
+        
+        primitives.clear();
+        transition.createPrimitivesMoveAgents(leftAgents, rightAgents, indexMapLeftRight, primitives);
+        
+        checkSetByString("[MOVE_AGENTS([Agent1:domain1(d!1:domainLink), Agent2(d!1)], [domain1, ##NOT LOCATED##], diffusion)]", primitives);
+    }
+    
     private <T> void checkSetByString(String expected, Collection<T> actual) {
         List<T> actualList = new ArrayList<T>(actual);
         Collections.sort(actualList, new Comparator<T>() {
@@ -856,9 +895,9 @@ public class TransitionTest {
         });
         assertEquals(expected, actualList.toString());
     }
-
+    
     @Test
-    public void testcreatePrimitivesDeleteLinks() {
+    public void testCreatePrimitivesDeleteLinks() {
         List<Agent> leftAgents = getList(
                 new Agent("A", new AgentSite("s1", null, "_"), new AgentSite("s2", null, "2")), 
                 new Agent("B", new AgentSite("s3", null, "_"), new AgentSite("s4", null, "2")), 
@@ -913,7 +952,7 @@ public class TransitionTest {
     }
 
     @Test
-    public void testcreatePrimitivesAddLinks() {
+    public void testCreatePrimitivesAddLinks() {
         List<Agent> leftAgents = getList(
                 new Agent("A", new AgentSite("s1", null, null), new AgentSite("s2", null, "2")), 
                 new Agent("B", new AgentSite("s3", null, "_"), new AgentSite("s4", null, null)), 

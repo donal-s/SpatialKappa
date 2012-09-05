@@ -66,11 +66,13 @@ public class CompartmentTest {
         assertEquals("label", compartment.getName());
         assertArrayEquals(new int[0], compartment.getDimensions());
         assertEquals("label", compartment.toString());
+        assertEquals(0, compartment.getThickness());
 
         compartment = new Compartment("label", 2, 3, 5);
         assertEquals("label", compartment.getName());
         assertArrayEquals(new int[] {2, 3, 5}, compartment.getDimensions());
         assertEquals("label[2][3][5]", compartment.toString());
+        assertEquals(0, compartment.getThickness());
     }
     
     @Test
@@ -488,6 +490,7 @@ public class CompartmentTest {
         Compartment compartment = Compartment.createCompartment("compartment1", "OpenRectangle", getList(10, 8, 3));
         assertEquals(Compartment.OpenRectangle.class, compartment.getClass());
         assertEquals("compartment1 (OpenRectangle) [10][8] [3]", compartment.toString());
+        assertEquals(3, compartment.getThickness());
     }
 
     @Test
@@ -511,6 +514,7 @@ public class CompartmentTest {
         Compartment compartment = Compartment.createCompartment("compartment1", "SolidCircle", getList(10));
         assertEquals(Compartment.SolidCircle.class, compartment.getClass());
         assertEquals("compartment1 (SolidCircle) [10]", compartment.toString());
+        assertEquals(0, compartment.getThickness());
     }
 
 
@@ -543,6 +547,7 @@ public class CompartmentTest {
         Compartment compartment = Compartment.createCompartment("compartment1", "OpenCircle", getList(10, 3));
         assertEquals(Compartment.OpenCircle.class, compartment.getClass());
         assertEquals("compartment1 (OpenCircle) [10] [3]", compartment.toString());
+        assertEquals(3, compartment.getThickness());
     }
 
     @Test
@@ -574,6 +579,7 @@ public class CompartmentTest {
         Compartment compartment = Compartment.createCompartment("compartment1", "OpenCuboid", getList(10, 5, 8, 2));
         assertEquals(Compartment.OpenCuboid.class, compartment.getClass());
         assertEquals("compartment1 (OpenCuboid) [10][5][8] [2]", compartment.toString());
+        assertEquals(2, compartment.getThickness());
     }
 
     @Test
@@ -597,6 +603,7 @@ public class CompartmentTest {
         Compartment compartment = Compartment.createCompartment("compartment1", "SolidSphere", getList(10));
         assertEquals(Compartment.SolidSphere.class, compartment.getClass());
         assertEquals("compartment1 (SolidSphere) [10]", compartment.toString());
+        assertEquals(0, compartment.getThickness());
     }
 
     @Test
@@ -628,6 +635,7 @@ public class CompartmentTest {
         Compartment compartment = Compartment.createCompartment("compartment1", "OpenSphere", getList(10, 2));
         assertEquals(Compartment.OpenSphere.class, compartment.getClass());
         assertEquals("compartment1 (OpenSphere) [10] [2]", compartment.toString());
+        assertEquals(2, compartment.getThickness());
     }
 
     @Test
@@ -651,6 +659,7 @@ public class CompartmentTest {
         Compartment compartment = Compartment.createCompartment("compartment1", "SolidCylinder", getList(10, 20));
         assertEquals(Compartment.SolidCylinder.class, compartment.getClass());
         assertEquals("compartment1 (SolidCylinder) [10][20]", compartment.toString());
+        assertEquals(0, compartment.getThickness());
     }
 
     @Test
@@ -682,6 +691,7 @@ public class CompartmentTest {
         Compartment compartment = Compartment.createCompartment("compartment1", "OpenCylinder", getList(10, 20, 2));
         assertEquals(Compartment.OpenCylinder.class, compartment.getClass());
         assertEquals("compartment1 (OpenCylinder) [10][20] [2]", compartment.toString());
+        assertEquals(2, compartment.getThickness());
     }
 
 

@@ -42,7 +42,7 @@ public class AgentTest {
         Agent agent = new Agent("name");
         assertEquals("name", agent.name);
         assertSame(NOT_LOCATED, agent.location);
-        assertEquals("name", agent.toString());
+        assertEquals("name()", agent.toString());
         assertEquals("", agent.getStateHash());
         assertTrue(agent.getSites().isEmpty());
         
@@ -50,7 +50,7 @@ public class AgentTest {
         agent = new Agent("name", location);
         assertEquals("name", agent.name);
         assertSame(location, agent.location);
-        assertEquals("name:location", agent.toString());
+        assertEquals("name:location()", agent.toString());
     }
 
     @SuppressWarnings("unused")
@@ -331,7 +331,7 @@ public class AgentTest {
         }
         
         Agent agent = new Agent("name");
-        assertEquals("name", agent.toString());
+        assertEquals("name()", agent.toString());
         assertEquals("name(suffix)", agent.toString("suffix", true));
 
         Set<AgentSite> sites = new HashSet<AgentSite>();

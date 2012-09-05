@@ -114,10 +114,10 @@ Shc(PTB,Y317~pY!2,loc~cytosol),Grb2(SH2!2,SH3!3,loc~cytosol),Sos(dom!3,loc~cytos
 %var: 'ShcP' Shc(Y317~pY?)
 %var: 'R_G_S' Grb2(SH2!1,SH3!2),Sos(dom!2),egfr-inside(Y1068~pY!1)
 %var: 'R_S_G_S' Grb2(SH2!2,SH3!3),Shc(PTB!1,Y317~pY!2),Sos(dom!3),egfr-inside(Y1148~pY!1)
-%var: 'Efgr_total' egfr-inside
-%var: 'Shc_total' Shc
-%var: 'Sos_total' Sos
-%var: 'Grb2_total' Grb2
+%var: 'Efgr_total' egfr-inside()
+%var: 'Shc_total' Shc()
+%var: 'Sos_total' Sos()
+%var: 'Grb2_total' Grb2()
 
 ### PLOTS
 %plot: 'Dimers'
