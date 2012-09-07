@@ -59,7 +59,6 @@ public class InitialValue {
     public Map<Complex, Integer> getFixedLocatedComplexMap(List<Compartment> compartments, List<Channel> channels) {
         Map<Complex, Integer> result = new HashMap<Complex, Integer>();
         
-        
         for (Complex complex : complexes) {
             List<Complex> resultComplexes = new ArrayList<Complex>();
 
@@ -67,6 +66,7 @@ public class InitialValue {
             if (mappings.size() == 0) {
                 throw new IllegalStateException("Initial value invalid: " + complex);
             }
+            
             for (MappingInstance mapping : mappings) {
                 Complex locatedComplex = new Complex(mapping.locatedAgents);
                 resultComplexes.add(locatedComplex);

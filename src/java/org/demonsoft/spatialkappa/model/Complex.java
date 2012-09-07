@@ -334,6 +334,13 @@ public class Complex implements Serializable {
                 throw new IllegalStateException("Mismatched links: " + toString());
             }
         }
+        
+        for (Agent current : agents) {
+            if (this != current.getComplex()) {
+                throw new IllegalStateException("Mismatched agents: " + this);
+            }
+        }
+
     }
 
     public AgentLink getAgentLink(Agent agent, String siteName) {
@@ -523,7 +530,9 @@ public class Complex implements Serializable {
                 
                 for (Location targetLocation : targetLocations) {
                     MappingInstance newMapping = new MappingInstance();
-                    newMapping.mapping.putAll(oldMapping.mapping);
+                    for (Map.Entry<Agent, Agent> entry : oldMapping.mapping.entrySet()) {
+                        newMapping.mapping.put(entry.getKey(), entry.getValue().clone());
+                    }
                     Agent locatedTargetAgent = new Agent(templateTargetAgent.name, targetLocation, templateTargetAgent.getSites());
                     newMapping.mapping.put(templateTargetAgent, locatedTargetAgent);
                     

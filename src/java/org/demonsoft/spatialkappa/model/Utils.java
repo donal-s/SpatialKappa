@@ -34,14 +34,6 @@ public class Utils {
         return builder.toString();
     }
 
-    public static List<Agent> getAgents(List<Complex> complexes) {
-        List<Agent> result = new ArrayList<Agent>();
-        for (Complex complex : complexes) {
-            result.addAll(complex.agents);
-        }
-        return result;
-    }
-
     public static List<Complex> getComplexes(List<Agent> agents) {
         if (agents == null) {
             throw new NullPointerException();
@@ -197,6 +189,18 @@ public class Utils {
     }
 
     public static Map<Agent, Agent> createCloneAgentMap(Map<Agent, Agent> originalMap) {
+        // TODO temporary check
+        for (Map.Entry<Agent, Agent> entry : originalMap.entrySet()) {
+            Complex expected = entry.getValue().getComplex();
+            for (Agent current : expected.agents) {
+                if (expected != current.getComplex()) {
+                    throw new IllegalStateException("Mismatched agents: " + originalMap);
+                }
+            }
+        }
+        
+
+        
         Map<Agent, Agent> result = new HashMap<Agent, Agent>();
         List<Agent> templateAgents = new ArrayList<Agent>(originalMap.keySet());
         while (!templateAgents.isEmpty()) {

@@ -24,6 +24,7 @@ import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
 import org.demonsoft.spatialkappa.model.AggregateAgent;
+import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Channel;
 import org.demonsoft.spatialkappa.model.Compartment;
@@ -42,6 +43,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TransitionMatchingSimulationTest {
+
+    public static CellIndexExpression INDEX_10 = new CellIndexExpression("10");
+    public static CellIndexExpression INDEX_20 = new CellIndexExpression("20");
 
     private KappaModel kappaModel = new KappaModel();
     private TransitionMatchingSimulation simulation;
@@ -861,6 +865,44 @@ public class TransitionMatchingSimulationTest {
         }
         finally {
             expectedFile.delete();
+        }
+    }
+    
+    @Test
+    public void testRaceConditionFailure() {
+        
+        // This model setup caused an intermittent NullPointerException
+        // Maintained here as a regression test
+        
+        for (int index=0; index < 10; index++) {
+            kappaModel = new KappaModel();
+            kappaModel.addCompartment(new Compartment.SolidSphere("cytosol", 2));
+            kappaModel.addCompartment(new Compartment.OpenSphere("membrane", 4, 1));
+            kappaModel.addAgentDeclaration(new AggregateAgent("A1", new AggregateSite("d", (String) null, null)));
+            kappaModel.addInitialValue(getList(
+                    new Agent("A1", new Location("membrane", INDEX_0, INDEX_1, INDEX_1), new AgentSite("d", null, "1")),
+                    new Agent("A1", new Location("cytosol"), new AgentSite("d", null, "1", "domainLink"))), 
+                    "1", NOT_LOCATED);
+            
+            Channel channel = new Channel("diffusion");
+            channel.addChannelComponent("Neighbour", getList(new Location("membrane")),
+                    getList(new Location("membrane")));
+            kappaModel.addChannel(channel);
+            
+            channel = new Channel("domainLink");
+            channel.addChannelComponent("Neighbour", getList(new Location("cytosol")), getList(new Location("membrane")));
+            channel.addChannelComponent("Neighbour", getList(new Location("membrane")), getList(new Location("cytosol")));
+            kappaModel.addChannel(channel);
+            
+            kappaModel.addTransition(null, NOT_LOCATED, getList(
+                    new Agent("A1", new Location("membrane"), new AgentSite("d", null, "1")),
+                    new Agent("A1", new AgentSite("d", null, "1", "domainLink"))),
+                    "diffusion", NOT_LOCATED, getList(
+                            new Agent("A1", new Location("membrane"), new AgentSite("d", null, "1")),
+                            new Agent("A1", new AgentSite("d", null, "1", "domainLink"))),
+                            new VariableExpression(1f));
+            
+            simulation = new TransitionMatchingSimulation(kappaModel);
         }
     }
     

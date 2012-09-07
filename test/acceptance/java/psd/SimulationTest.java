@@ -207,15 +207,15 @@ public class SimulationTest {
     public void testTest3_6_1_lateralDiffusionOfTransmembraneProteins() throws Exception {
          checkEventSimulation("test-3-6-1-input.ka", new String[] {"A top", "A not top"}, 2000, 50, 
                 new float[][] {
-                    {1000, 0}, {230, 770}, {200, 800}, 
+                    {1000, 0}, {340, 660}, {200, 800}, 
                 });
     }
 
-//    @Test
+    @Test
     public void testTest3_6_2_lateralDiffusionOfTransmembraneProteins_allowMotionlessAgents() throws Exception {
          checkEventSimulation("test-3-6-2-input.ka", new String[] {"A top", "A not top"}, 2000, 50, 
                 new float[][] {
-                    {1000, 0}, {230, 770}, {200, 800}, 
+                    {1000, 0}, {230, 770}, {150, 850}, 
                 });
     }
 

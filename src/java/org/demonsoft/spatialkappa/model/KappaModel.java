@@ -187,7 +187,9 @@ public class KappaModel implements IKappaModel {
             if (initialValue.reference != null) {
                 initialValue.quantity = variables.get(initialValue.reference.variableName).expression.evaluate(this);
             }
+
             Map<Complex, Integer> currentResult = initialValue.getFixedLocatedComplexMap(compartments, channels);
+            
             for (Map.Entry<Complex, Integer> current : currentResult.entrySet()) {
                 addInitialLocatedValue(result, current.getKey(), current.getValue());
             }

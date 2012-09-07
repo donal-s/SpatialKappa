@@ -1156,6 +1156,47 @@ public class ChannelComponentTest {
         // TODO channel type tests
     }
     
+    @Test
+    public void testApplyChannel_multipleCompartments_motionlessAgents() {
+        List<Compartment> compartments = getList(new Compartment("inner", 1, 1), 
+                new Compartment.OpenRectangle("outer", 3, 3, 1));
+        ChannelComponent component = new NeighbourComponent(getList(new Location("inner"), new Location("outer")), 
+                getList(new Location("inner"), new Location("outer")));
+        
+        // No match
+        List<List<Location>> results = component.applyChannel(getList(
+                new ChannelConstraint(new Location("inner", INDEX_0, INDEX_0), NOT_LOCATED),
+                new ChannelConstraint(new Location("outer", INDEX_0, INDEX_1), NOT_LOCATED)), compartments);
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_2)));
+        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_0)));
+        assertEquals(expected, results);
+    }
+    
+    @Test
+    public void testRemoveMotionlessResults() {
+        List<ChannelConstraint> originalConstraints = getList(
+                new ChannelConstraint(new Location("inner", INDEX_0, INDEX_0), NOT_LOCATED),
+                new ChannelConstraint(new Location("outer", INDEX_0, INDEX_1), NOT_LOCATED));
+        List<List<Location>> newLocations = new ArrayList<List<Location>>();
+        newLocations.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_0)));
+        newLocations.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_1)));
+        newLocations.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_2)));
+        newLocations.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_0)));
+        newLocations.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_2)));
+
+        ChannelComponent.removeMotionlessResults(originalConstraints, newLocations);
+
+        List<List<Location>> expected = new ArrayList<List<Location>>();
+        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_0)));
+        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_2)));
+        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_0)));
+        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_2)));
+        assertEquals(expected, newLocations);
+    }
+    
     // TODO check target locations are unique set
     
     @Test
@@ -1292,6 +1333,7 @@ public class ChannelComponentTest {
         EdgeNeighbourComponent component = new EdgeNeighbourComponent(getList(location), getList(location));
         
         List<ChannelComponent> expected = getList(
+                new ChannelComponent(ChannelComponent.SUBCOMPONENT, getList(new Location("a", INDEX_X, INDEX_Y)), getList(new Location("a", INDEX_X, INDEX_Y))),
                 new ChannelComponent(ChannelComponent.SUBCOMPONENT, getList(new Location("a", INDEX_X, INDEX_Y)), getList(new Location("a", INDEX_X_MINUS_1, INDEX_Y))),
                 new ChannelComponent(ChannelComponent.SUBCOMPONENT, getList(new Location("a", INDEX_X, INDEX_Y)), getList(new Location("a", INDEX_X_PLUS_1, INDEX_Y))),
                 new ChannelComponent(ChannelComponent.SUBCOMPONENT, getList(new Location("a", INDEX_X, INDEX_Y)), getList(new Location("a", INDEX_X, INDEX_Y_MINUS_1))),

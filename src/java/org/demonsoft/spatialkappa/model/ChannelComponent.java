@@ -16,6 +16,7 @@ import static org.demonsoft.spatialkappa.model.Utils.getList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import org.demonsoft.spatialkappa.model.Compartment.OpenCircle;
@@ -193,8 +194,32 @@ public class ChannelComponent {
                 }
             }
         }
+        
+        removeMotionlessResults(constraints, result);
         return result;
     }
+    
+    static void removeMotionlessResults(List<ChannelConstraint> originalConstraints, List<List<Location>> newLocations) {
+        ListIterator<List<Location>> iter = newLocations.listIterator();
+        while (iter.hasNext()) {
+            List<Location> currentLocations = iter.next();
+            boolean different = false;
+            for (int index=0; index < originalConstraints.size(); index++) {
+                ChannelConstraint originalConstraint = originalConstraints.get(index);
+                Location currentLocation = currentLocations.get(index);
+                
+                if (!originalConstraint.sourceLocation.equals(currentLocation)) {
+                    different = true;
+                    break;
+                }
+            }
+            
+            if (!different) {
+                iter.remove();
+            }
+        }
+    }
+
     
     public List<ChannelConstraint> getCellReferencePairs(List<Compartment> compartments) {
         List<ChannelConstraint> result = new ArrayList<ChannelConstraint>();
@@ -375,6 +400,7 @@ public class ChannelComponent {
             for (ChannelComponent component : channelSubcomponents) {
                 result.addAll(component.applyChannel(constraints, compartments));
             }
+            removeMotionlessResults(constraints, result);
             return result;
         }
 
@@ -398,8 +424,10 @@ public class ChannelComponent {
             sourceIndices.add(getList(INDEX_X, INDEX_Y));
             sourceIndices.add(getList(INDEX_X, INDEX_Y));
             sourceIndices.add(getList(INDEX_X, INDEX_Y));
+            sourceIndices.add(getList(INDEX_X, INDEX_Y));
             
             List<List<CellIndexExpression>> targetIndices = new ArrayList<List<CellIndexExpression>>();
+            targetIndices.add(getList(INDEX_X, INDEX_Y));
             targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y));
             targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y));
             targetIndices.add(getList(INDEX_X, INDEX_Y_MINUS_1));
@@ -449,7 +477,9 @@ public class ChannelComponent {
                 sourceIndices.add(getList(INDEX_X, INDEX_Y));
                 sourceIndices.add(getList(INDEX_X, INDEX_Y));
                 sourceIndices.add(getList(INDEX_X, INDEX_Y));
+                sourceIndices.add(getList(INDEX_X, INDEX_Y));
                 
+                targetIndices.add(getList(INDEX_X, INDEX_Y));
                 targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y));
                 targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y));
                 targetIndices.add(getList(INDEX_X, INDEX_Y_MINUS_1));
@@ -460,9 +490,10 @@ public class ChannelComponent {
                 targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_MINUS_1));
             }
             else if (dimensionCount == 3) {
-                for (int i=0; i<26; i++) {
+                for (int i=0; i<27; i++) {
                     sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
                 }
+                targetIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
                 targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_MINUS_1, INDEX_Z_MINUS_1));
                 targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_MINUS_1, INDEX_Z));
                 targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y_MINUS_1, INDEX_Z_PLUS_1));
@@ -544,8 +575,10 @@ public class ChannelComponent {
             sourceIndices.add(getList(INDEX_X, INDEX_Y));
             sourceIndices.add(getList(INDEX_X, INDEX_Y));
             sourceIndices.add(getList(INDEX_X, INDEX_Y));
+            sourceIndices.add(getList(INDEX_X, INDEX_Y));
             
             List<List<CellIndexExpression>> targetIndices = new ArrayList<List<CellIndexExpression>>();
+            targetIndices.add(getList(INDEX_X, INDEX_Y));
             targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y));
             targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y));
             targetIndices.add(getList(INDEX_X, INDEX_Y_MINUS_1));
@@ -596,8 +629,10 @@ public class ChannelComponent {
             sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
             sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
             sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
+            sourceIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
             
             List<List<CellIndexExpression>> targetIndices = new ArrayList<List<CellIndexExpression>>();
+            targetIndices.add(getList(INDEX_X, INDEX_Y, INDEX_Z));
             targetIndices.add(getList(INDEX_X_MINUS_1, INDEX_Y, INDEX_Z));
             targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y, INDEX_Z));
             targetIndices.add(getList(INDEX_X, INDEX_Y_MINUS_1, INDEX_Z));
@@ -677,6 +712,7 @@ public class ChannelComponent {
                     }
                 }
             }
+            removeMotionlessResults(constraints, result);
             return result;
         }
         
@@ -688,6 +724,7 @@ public class ChannelComponent {
             CellIndexExpression newIndexY = null;
             
             List<Location> result = new ArrayList<Location>();
+            result.add(location);
             
             // Direction out 
             
@@ -751,6 +788,8 @@ public class ChannelComponent {
             // Direction out 
 
             List<Location> result = new ArrayList<Location>();
+            result.add(location);
+
             int doubleDeltaMax = Math.max(Math.abs(doubleDeltaX), Math.max(Math.abs(doubleDeltaY), Math.abs(doubleDeltaZ)));
             if (doubleDeltaMax == 0) {
                 CellIndexExpression[] xIndices = new CellIndexExpression[] {
@@ -915,6 +954,7 @@ public class ChannelComponent {
                     }
                 }
             }
+            removeMotionlessResults(constraints, result);
             return result;
         }
         
@@ -926,6 +966,7 @@ public class ChannelComponent {
             CellIndexExpression newIndexY = null;
             
             List<Location> result = new ArrayList<Location>();
+            result.add(location);
             
             // Direction out 
             
@@ -970,6 +1011,8 @@ public class ChannelComponent {
             int doubleDeltaZ = ((int) location.getIndices()[2].value) * 2 - compartment.dimensions[2] + 1;
             
             List<Location> result = new ArrayList<Location>();
+            result.add(location);
+
             int doubleDeltaMax = Math.max(Math.abs(doubleDeltaX), Math.max(Math.abs(doubleDeltaY), Math.abs(doubleDeltaZ)));
             if (doubleDeltaMax == 0) {
                 CellIndexExpression[] xIndices = new CellIndexExpression[] {
@@ -1114,6 +1157,7 @@ public class ChannelComponent {
                     }
                 }
             }
+            removeMotionlessResults(constraints, result);
             return result;
         }
         
@@ -1125,6 +1169,7 @@ public class ChannelComponent {
             CellIndexExpression newIndexY = null;
             
             List<Location> result = new ArrayList<Location>();
+            result.add(location);
             
             if (Math.abs(doubleDeltaX) > Math.abs(doubleDeltaY)) {
                 newIndexY = location.getIndices()[0];
@@ -1150,6 +1195,8 @@ public class ChannelComponent {
             int doubleDeltaZ = ((int) location.getIndices()[2].value) * 2 - compartment.dimensions[2] + 1;
             
             List<Location> result = new ArrayList<Location>();
+            result.add(location);
+
             int doubleDeltaMax = Math.max(Math.abs(doubleDeltaX), Math.max(Math.abs(doubleDeltaY), Math.abs(doubleDeltaZ)));
             if (doubleDeltaMax == 0) {
                 return result;
@@ -1247,6 +1294,7 @@ public class ChannelComponent {
                     }
                 }
             }
+            removeMotionlessResults(constraints, result);
             return result;
         }
         
@@ -1259,6 +1307,8 @@ public class ChannelComponent {
             CellIndexExpression newIndexY2 = location.getIndices()[0].getDeltaIndex(1);
 
             List<Location> result = new ArrayList<Location>();
+            result.add(location);
+            
             Location current = new Location(location.getName(), newIndexY, newIndexX);
             if (Math.abs(distanceToCentre - getDistanceToCentre(current, compartment)) < 0.5f) {
                 result.add(current);
@@ -1314,6 +1364,8 @@ public class ChannelComponent {
             };
             
             List<Location> result = new ArrayList<Location>();
+            result.add(location);
+
             for (CellIndexExpression yIndex : yIndices) {
                 for (CellIndexExpression xIndex : xIndices) {
                     for (CellIndexExpression zIndex : zIndices) {

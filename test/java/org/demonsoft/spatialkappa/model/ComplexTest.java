@@ -558,7 +558,6 @@ public class ComplexTest {
         complex = new Complex(agents);
         
         checkMappingInstancesByString(complex, compartments, channels, new ArrayList<String>());
-        
     }
     
     private void checkMappingInstances(Complex complex, List<Compartment> compartments, List<Channel> channels,
