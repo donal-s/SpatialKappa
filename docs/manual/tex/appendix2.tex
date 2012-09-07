@@ -4,7 +4,7 @@
 \section{Spatial Kappa patterns}
 \label{sec:spatialPatterns}
 
-The following are generic shapes, with their equivalent Spatial Kappa representations. These are intended to be copied during model development.
+The following are generic shapes, with their equivalent Spatial Kappa representations. These are intended to be copied during model development. Explicitly specified models are shown first to demonstrate the syntax, then more concise versions are shown where possible.
 
 
 \subsection{1 dimensional patterns}
@@ -125,6 +125,12 @@ By connecting together the top and bottom edges of a mesh as described above, we
 # Replace n-1 as above 
 \end{kappasource}
 
+The predefined compartment \verb|OpenCylinder| allows creation of a cylinder with closed ends
+
+\begin{kappasource}
+\%compartment: openCylinder  OpenCylinder  [10][8] [2]    # [diameter][length] [thickness]
+\end{kappasource}
+
 \newpage
 \section{Sample Spatial Kappa models}
 
@@ -153,6 +159,29 @@ This model shows simple diffusion from a point for three distinct species.
     (:cytosol [x][y] -> :cytosol [x -1][(y -1)+(2*((x -1)%2))])
 
 'diffusion' ->:6way @ 0.4
+
+%init: 10000 :cytosol[10][10] A
+%init: 10000 :cytosol[10][14] B
+%init: 10000 :cytosol[14][14] C
+
+%obs: 'Red' A
+%obs: 'Green' B
+%obs: 'Blue' C
+\end{kappasource}
+
+A more concise version would be
+
+\begin{kappasource}
+%agent: A()
+%agent: B()
+%agent: C()
+
+%compartment: cytosol [30][30]
+
+# 6-way diffusion
+%channel: 6way Hexagonal :cytosol -> :cytosol
+
+'diffusion' :cytosol ->:6way :cytosol @ 0.4
 
 %init: 10000 :cytosol[10][10] A
 %init: 10000 :cytosol[10][14] B

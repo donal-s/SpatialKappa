@@ -336,7 +336,17 @@ Where \verb|locations| is as described above. For example
 \%channel: lateral Lateral :solidRectangle -> :solidRectangle
 \end{kappasource}
 
-NOTE - these currently work only for intra-compartment channels
+\subsubsection{Using predefined channel types between compartments}
+
+It is possible to use predefined channel types (usually 'Neighbour') to describe movement between compartments. For this to be valid, the compartments must have compatible geometry. Compatible compartments are treated as being nested one inside the other and the channel then specifies the diffusion (or agent linkage) across the boundary between the two compartments. The compartments must fit together exactly, with no overlapping voxels or gaps. For example, a circle may only be nested inside a larger open circle whose dimensions (diameter and thickness) allow the smaller circle to fit exactly inside.
+
+\begin{kappasource}
+\%compartment: cytosol   SolidCircle   [3]           # [diameter]
+\%compartment: membrane  OpenCircle    [7] [2]       # [diameter] [thickness]
+
+\%channel: domainLink Neighbour (:cytosol -> :membrane) + (:membrane -> :cytosol)
+\end{kappasource}
+
 
 \subsection{Locating agents}
 
@@ -426,6 +436,19 @@ To describe movement of species which span more than one voxel, use the multi ag
                A_m:membrane(s!2,t,d!1:domainLink),A_c(d!1), {\textbackslash}
                B_m:membrane(s!2,t,d!3:domainLink),B_c(d!3) @ 0.5
 \end{kappasource}
+
+\subsubsection{Fixed location constraints}
+
+It is necessary in some models to distinguish between species which can diffuse freely within all voxels of a compartment, and species which are fixed to a single voxel. The predefined location \verb|:fixed|, used on the right hand side of a transition rule, allows this. For example, in the model below, agent \verb|A()| can diffuse freely, while agent \verb|B()| must remain static. 
+
+\begin{kappasource}
+\%compartment: cytosol [5][5][5]
+
+\%channel: diffusion Neighbour :cytosol -> :cytosol
+
+'diffusion A' :cytosol A(),B() ->:diffusion :cytosol A(),B:fixed() @ 1.0
+\end{kappasource}
+
 
 
 \bigskip For example models demonstrating the use of the language extensions, refer to Appendix \ref{chap:resources}.

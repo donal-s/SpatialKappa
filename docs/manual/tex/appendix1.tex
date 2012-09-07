@@ -74,7 +74,8 @@ agentDeclInterface :
   \newbnf{location (',' location)*}
 
 \newbnf{location :}
-  \newbnf{':' sourceCompartment=id compartmentIndexExpr*}
+  \newbnf{':' 'fixed'}
+  \newbnf{| ':' sourceCompartment=id compartmentIndexExpr*}
 
 \newbnf{compartmentIndexExpr :}
   \newbnf{'[' cellIndexExpr ']'}

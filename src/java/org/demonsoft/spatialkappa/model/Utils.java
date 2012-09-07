@@ -189,18 +189,6 @@ public class Utils {
     }
 
     public static Map<Agent, Agent> createCloneAgentMap(Map<Agent, Agent> originalMap) {
-        // TODO temporary check
-        for (Map.Entry<Agent, Agent> entry : originalMap.entrySet()) {
-            Complex expected = entry.getValue().getComplex();
-            for (Agent current : expected.agents) {
-                if (expected != current.getComplex()) {
-                    throw new IllegalStateException("Mismatched agents: " + originalMap);
-                }
-            }
-        }
-        
-
-        
         Map<Agent, Agent> result = new HashMap<Agent, Agent>();
         List<Agent> templateAgents = new ArrayList<Agent>(originalMap.keySet());
         while (!templateAgents.isEmpty()) {
