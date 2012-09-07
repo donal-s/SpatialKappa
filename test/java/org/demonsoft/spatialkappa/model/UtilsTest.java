@@ -1,13 +1,23 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
@@ -160,5 +170,174 @@ public class UtilsTest {
         assertEquals(expected, result);
     }
 
+
+    @SuppressWarnings("unused")
+    @Test
+    public void testCreateCloneAgentMap() {
+        List<Agent> leftAgents = new ArrayList<Agent>();
+        List<Agent> rightAgents = new ArrayList<Agent>();
+        leftAgents.add(new Agent("agent1", new AgentSite("x", "s", null)));
+        rightAgents.add(new Agent("agent1", new AgentSite("x", "t", null)));
+
+        // Test empty case
+        Map<Agent, Agent> originalMap = new HashMap<Agent, Agent>();
+        Map<Agent, Agent> resultMap = Utils.createCloneAgentMap(originalMap);
+        assertEquals(0, resultMap.size());
+
+        // Test different template complexes, original complexes
+        Agent templateSourceAgent = new Agent("source");
+        Agent templateTargetAgent = new Agent("target");
+        new Complex(templateSourceAgent);
+        new Complex(templateTargetAgent);
+
+        Agent realSourceAgent = new Agent("source");
+        Agent realTargetAgent = new Agent("target");
+        new Complex(realSourceAgent);
+        new Complex(realTargetAgent);
+
+        originalMap.clear();
+        originalMap.put(templateSourceAgent, realSourceAgent);
+        originalMap.put(templateTargetAgent, realTargetAgent);
+
+        resultMap = Utils.createCloneAgentMap(originalMap);
+        checkCloneMap(originalMap, resultMap);
+
+        // Test same template complexes, original complexes
+        new Complex(templateSourceAgent, templateTargetAgent);
+        realSourceAgent = new Agent("source");
+        realTargetAgent = new Agent("target");
+        new Complex(realSourceAgent, realTargetAgent);
+
+        originalMap.clear();
+        originalMap.put(templateSourceAgent, realSourceAgent);
+        originalMap.put(templateTargetAgent, realTargetAgent);
+
+        resultMap = Utils.createCloneAgentMap(originalMap);
+        checkCloneMap(originalMap, resultMap);
+
+        // Test same template complexes, original complexes, linked agents
+        realSourceAgent = new Agent("source", new AgentSite("x", null, "1"));
+        realTargetAgent = new Agent("target", new AgentSite("y", null, "1"));
+        new Complex(realSourceAgent, realTargetAgent);
+
+        originalMap.clear();
+        originalMap.put(templateSourceAgent, realSourceAgent);
+        originalMap.put(templateTargetAgent, realTargetAgent);
+
+        resultMap = Utils.createCloneAgentMap(originalMap);
+        checkCloneMap(originalMap, resultMap);
+        
+        // Test problem case - multiple domains
+        templateSourceAgent = new Agent("source", new Location("cytosol"), new AgentSite("x", null, "1", "domainLink"));
+        templateTargetAgent = new Agent("target", new Location("membrane"), new AgentSite("y", null, "1"));
+        new Complex(templateSourceAgent, templateTargetAgent);
+        
+        realSourceAgent = new Agent("source", new Location("cytosol", INDEX_1), new AgentSite("x", null, "1", "domainLink"));
+        realTargetAgent = new Agent("target", new Location("membrane", INDEX_0), new AgentSite("y", null, "1"));
+        new Complex(realSourceAgent, realTargetAgent);
+
+        originalMap.clear();
+        originalMap.put(templateTargetAgent, realTargetAgent);
+        originalMap.put(templateSourceAgent, realSourceAgent);
+        
+        resultMap = Utils.createCloneAgentMap(originalMap);
+        checkCloneMap(originalMap, resultMap);
+    }
+    
+
+    private void checkCloneMap(Map<Agent, Agent> originalMap, Map<Agent, Agent> resultMap) {
+        assertEquals(originalMap.size(), resultMap.size());
+
+        for (Map.Entry<Agent, Agent> originalEntry : originalMap.entrySet()) {
+            Agent templateAgent = originalEntry.getKey();
+            Agent originalAgent = originalEntry.getValue();
+
+            assertTrue(resultMap.containsKey(templateAgent));
+            Agent cloneAgent = resultMap.get(templateAgent);
+            assertEquals(originalAgent.getComplex().toString(), cloneAgent.getComplex().toString());
+            assertNotSame(cloneAgent, originalAgent);
+            assertNotSame(cloneAgent.getComplex(), originalAgent.getComplex());
+        }
+
+        // Unlinked template agents should each have unique cloned complex
+        for (Map.Entry<Agent, Agent> originalEntry : originalMap.entrySet()) {
+            Agent templateAgent = originalEntry.getKey();
+            for (Map.Entry<Agent, Agent> originalOtherEntry : originalMap.entrySet()) {
+                Agent templateOtherAgent = originalOtherEntry.getKey();
+                if (templateAgent != templateOtherAgent) {
+                    if (templateAgent.getComplex() == templateOtherAgent.getComplex()) {
+                        assertSame(resultMap.get(templateAgent).getComplex(), resultMap.get(templateOtherAgent).getComplex());
+                    }
+                    else {
+                        assertNotSame(resultMap.get(templateAgent).getComplex(), resultMap.get(templateOtherAgent).getComplex());
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testIsValidComplexes_basic() {
+        List<Compartment> compartments = getList(new Compartment("A", 2, 3), new Compartment("B", 2, 3));
+        Channel channel = new Channel("dl", new Location("A", INDEX_X, INDEX_Y), new Location("B", INDEX_X, INDEX_Y));
+        List<Channel> channels = getList(channel);
+        
+        List<Agent> agents = getList(new Agent("a"));
+        Utils.getComplexes(agents);
+        assertTrue(Utils.isValidComplexes(agents, channels, compartments));
+        
+        // Unlinked
+        
+        agents = getList(new Agent("a"), new Agent("b"));
+        Utils.getComplexes(agents);
+        assertTrue(Utils.isValidComplexes(agents, channels, compartments));
+        
+        agents = getList(new Agent("a", new Location("A", INDEX_1, INDEX_1)), new Agent("b", new Location("A", INDEX_1, INDEX_1)));
+        Utils.getComplexes(agents);
+        assertTrue(Utils.isValidComplexes(agents, channels, compartments));
+        
+        agents = getList(new Agent("a", new Location("A", INDEX_1, INDEX_1)), new Agent("b", new Location("B", INDEX_0, INDEX_1)));
+        Utils.getComplexes(agents);
+        assertTrue(Utils.isValidComplexes(agents, channels, compartments));
+        
+        // Co located
+        
+        agents = getList(new Agent("a", new Location("A", INDEX_1, INDEX_1), new AgentSite("s", null, "1")), 
+                new Agent("b", new Location("A", INDEX_1, INDEX_1), new AgentSite("s", null, "1")));
+        Utils.getComplexes(agents);
+        assertTrue(Utils.isValidComplexes(agents, channels, compartments));
+        
+        agents = getList(new Agent("a", new Location("A", INDEX_1, INDEX_1), new AgentSite("s", null, "1")), 
+                new Agent("b", new Location("A", INDEX_0, INDEX_1), new AgentSite("s", null, "1")));
+        Utils.getComplexes(agents);
+        assertFalse(Utils.isValidComplexes(agents, channels, compartments));
+        
+        agents = getList(new Agent("a", new Location("A", INDEX_1, INDEX_1), new AgentSite("s", null, "1")), 
+                new Agent("b", new Location("B", INDEX_1, INDEX_1), new AgentSite("s", null, "1")));
+        Utils.getComplexes(agents);
+        assertFalse(Utils.isValidComplexes(agents, channels, compartments));
+        
+        // Channel linked
+        
+        agents = getList(new Agent("a", new Location("A", INDEX_1, INDEX_1), new AgentSite("s", null, "1", "dl")), 
+                new Agent("b", new Location("A", INDEX_1, INDEX_1), new AgentSite("s", null, "1")));
+        Utils.getComplexes(agents);
+        assertFalse(Utils.isValidComplexes(agents, channels, compartments));
+        
+        agents = getList(new Agent("a", new Location("A", INDEX_1, INDEX_1), new AgentSite("s", null, "1", "dl")), 
+                new Agent("b", new Location("A", INDEX_0, INDEX_1), new AgentSite("s", null, "1")));
+        Utils.getComplexes(agents);
+        assertFalse(Utils.isValidComplexes(agents, channels, compartments));
+        
+        agents = getList(new Agent("a", new Location("A", INDEX_1, INDEX_1), new AgentSite("s", null, "1", "dl")), 
+                new Agent("b", new Location("B", INDEX_1, INDEX_1), new AgentSite("s", null, "1")));
+        Utils.getComplexes(agents);
+        assertTrue(Utils.isValidComplexes(agents, channels, compartments));
+        
+        agents = getList(new Agent("a", new Location("A", INDEX_1, INDEX_1), new AgentSite("s", null, "1", "dl")), 
+                new Agent("b", new Location("B", INDEX_0, INDEX_1), new AgentSite("s", null, "1")));
+        Utils.getComplexes(agents);
+        assertFalse(Utils.isValidComplexes(agents, channels, compartments));
+    }
 
 }

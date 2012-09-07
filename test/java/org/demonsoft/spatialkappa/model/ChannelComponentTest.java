@@ -326,6 +326,49 @@ public class ChannelComponentTest {
     }
     
 
+    @Test
+    public void testApplyChannel_edgeNeighbour_intercompartment() {
+        ChannelComponent component = new EdgeNeighbourComponent(getList(new Location("inner")), getList(new Location("outer")));
+        List<Compartment> compartments = getList(new OpenCircle("outer", 7, 2), new SolidCircle("inner", 3));
+        List<Location> expected = new ArrayList<Location>();
+
+        // Invalid input locations
+        assertEquals(expected, component.applyChannel(new Location("outer", INDEX_0, INDEX_3), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("inner"), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_X), NOT_LOCATED, compartments));
+        
+        // Inner voxel
+        expected.clear();
+        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        
+        // Edge voxel
+        expected.add(new Location("outer", INDEX_1, INDEX_3));
+        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_1), NOT_LOCATED, compartments));
+        
+        // Corner voxel
+        expected.clear();
+        expected.add(new Location("outer", INDEX_1, INDEX_2));
+        expected.add(new Location("outer", INDEX_2, INDEX_1));
+        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_0), NOT_LOCATED, compartments));
+        
+        // Check target location constraints
+        expected.clear();
+        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_0), new Location("inner"), compartments));
+        
+        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_0), compartments));
+        
+        expected.add(new Location("outer", INDEX_1, INDEX_2));
+        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_2), compartments));
+        
+        expected.clear();
+        expected.add(new Location("outer", INDEX_1, INDEX_2));
+        expected.add(new Location("outer", INDEX_2, INDEX_1));
+        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_0), new Location("outer"), compartments));
+    }
+    
+
 
 
     @Test

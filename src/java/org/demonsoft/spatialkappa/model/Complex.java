@@ -450,6 +450,10 @@ public class Complex implements Serializable {
             List<AgentLink> processedTemplateLinks = getInternalLinks(remainingTemplateLinks, fixedTemplateAgents);
             remainingTemplateLinks.removeAll(processedTemplateLinks);
             
+            if (!isInternalLinksValid(processedTemplateLinks, compartments, channels)) {
+                return new ArrayList<MappingInstance>();
+            }
+            
             MappingInstance mappingInstance = new MappingInstance();
             for (Agent agent : fixedTemplateAgents) {
                 mappingInstance.mapping.put(agent, agent.clone());
@@ -463,9 +467,14 @@ public class Complex implements Serializable {
             remainingTemplateAgents.remove(templateTargetAgent);
             List<AgentLink> processedTemplateLinks = getInternalLinks(remainingTemplateLinks, fixedTemplateAgents);
             remainingTemplateLinks.removeAll(processedTemplateLinks);
+
+            if (!isInternalLinksValid(processedTemplateLinks, compartments, channels)) {
+                return new ArrayList<MappingInstance>();
+            }
             
             List<Agent> locatedTargetAgents = templateTargetAgent.getLocatedAgents(compartments);
             for (Agent locatedTargetAgent : locatedTargetAgents) {
+
                 MappingInstance mapping = new MappingInstance();
                 mapping.mapping.put(templateTargetAgent, locatedTargetAgent);
                 mappings.add(mapping);
@@ -529,6 +538,30 @@ public class Complex implements Serializable {
         return mappings;
     }
 
+    private boolean isInternalLinksValid(List<AgentLink> links, List<Compartment> compartments, List<Channel> channels) {
+        for (AgentLink link : links) {
+            Agent sourceAgent = link.sourceSite.agent;
+            Agent targetAgent = link.targetSite.agent;
+
+            if (sourceAgent != null && targetAgent != null) {
+                String channelName = (link.sourceSite.getChannel() != null) ? link.sourceSite.getChannel() : link.targetSite.getChannel();
+                if (channelName == null) {
+                    if (!Utils.equal(sourceAgent.location, targetAgent.location)) {
+                        return false;
+                    }
+                }
+                else {
+                    Channel channel = getChannel(channels, channelName);
+                    List<Location> targetLocations = getPossibleLocations(sourceAgent.location, targetAgent.location, channel, compartments);
+                    if (!targetLocations.contains(targetAgent.location)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    
     private void reorderLocatedMappings(List<MappingInstance> mappings, List<Agent> templateAgents) {
         for (MappingInstance mapping : mappings) {
             mapping.locatedAgents.clear();

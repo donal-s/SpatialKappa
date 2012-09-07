@@ -131,14 +131,17 @@ public class KappaModelTest {
         Location otherLocation = new Location("nucleus", INDEX_2);
         model.addCompartment(new Compartment("cytosol", 3));
         model.addCompartment(new Compartment("nucleus", 3));
-
+        
+        Channel channel = new Channel("dl", new Location("cytosol", INDEX_X), new Location("nucleus", INDEX_X));
+        model.addChannel(channel);
+        
         model.addAgentDeclaration(new AggregateAgent("agent1"));
         model.addAgentDeclaration(new AggregateAgent("agent2"));
         model.addAgentDeclaration(new AggregateAgent("agent3"));
         model.addAgentDeclaration(new AggregateAgent("agent4"));
         model.addInitialValue(agents, "3", location);
 
-        agents = Utils.getList(new Agent("agent1", new AgentSite("x", null, "1")), 
+        agents = Utils.getList(new Agent("agent1", new AgentSite("x", null, "1", "dl")), 
                 new Agent("agent2", otherLocation, new AgentSite("x", null, "1")), 
                 new Agent("agent3", new AgentSite("x", null, "2")), 
                 new Agent("agent4", location, new AgentSite("x", null, "2")));
@@ -146,7 +149,7 @@ public class KappaModelTest {
         
         checkFixedLocatedInitialValues(new Object[][] { 
                 { "[agent1:cytosol[2]()]", 3 }, 
-                { "[agent1:cytosol[2](x!1), agent2:nucleus[2](x!1)]", 5 }, 
+                { "[agent1:cytosol[2](x!1:dl), agent2:nucleus[2](x!1)]", 5 }, 
                 { "[agent3:cytosol[2](x!2), agent4:cytosol[2](x!2)]", 5 } });
         checkAggregateAgents(new AggregateAgent("agent1", new AggregateSite("x", null, "1")), 
                 new AggregateAgent("agent2", new AggregateSite("x", null, "1")),

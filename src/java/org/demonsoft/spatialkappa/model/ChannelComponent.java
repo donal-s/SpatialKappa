@@ -60,6 +60,17 @@ public class ChannelComponent {
         }
     }
     
+    ChannelComponent(String channelType, List<ChannelConstraint> constraints) {
+        if (constraints == null) {
+            throw new NullPointerException();
+        }
+        if (constraints.size() == 0) {
+            throw new IllegalArgumentException();
+        }
+        this.channelType = channelType;
+        templateConstraints.addAll(constraints);
+    }
+    
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -480,20 +491,38 @@ public class ChannelComponent {
                 targetIndices.add(getList(INDEX_X_PLUS_1, INDEX_Y_PLUS_1, INDEX_Z_PLUS_1));
             }
             
-            List<ChannelComponent> result = new ArrayList<ChannelComponent>();
+            // TODO add unmoving
             
-            for (int index = 0; index < sourceIndices.size(); index++) {
-                List<CellIndexExpression> currentSourceIndices = sourceIndices.get(index);
-                List<CellIndexExpression> currentTargetIndices = targetIndices.get(index);
+            List<List<ChannelConstraint>> allConstraints = new ArrayList<List<ChannelConstraint>>();
+            for (ChannelConstraint templateConstraint : templateConstraints) {
+                List<List<ChannelConstraint>> newConstraints = new ArrayList<List<ChannelConstraint>>();
                 
-                List<Location> currentSourceLocations = new ArrayList<Location>();
-                List<Location> currentTargetLocations = new ArrayList<Location>();
-                for (ChannelConstraint constraint : templateConstraints) {
-                    currentSourceLocations.add(new Location(constraint.sourceLocation.getName(), currentSourceIndices));
-                    currentTargetLocations.add(new Location(constraint.targetConstraint.getName(), currentTargetIndices));
+                for (int index = 0; index < sourceIndices.size(); index++) {
+                    List<CellIndexExpression> currentSourceIndices = sourceIndices.get(index);
+                    List<CellIndexExpression> currentTargetIndices = targetIndices.get(index);
+                    ChannelConstraint currentConstraint = new ChannelConstraint(
+                            new Location(templateConstraint.sourceLocation.getName(), currentSourceIndices),
+                            new Location(templateConstraint.targetConstraint.getName(), currentTargetIndices));
+                    
+                    if (allConstraints.size() == 0) {
+                        newConstraints.add(getList(currentConstraint));
+                    }
+                    else {
+                        for (List<ChannelConstraint> previousAllConstraints : allConstraints) {
+                            List<ChannelConstraint> currentAllConstraints = new ArrayList<ChannelConstraint>(previousAllConstraints);
+                            currentAllConstraints.add(currentConstraint);
+                            newConstraints.add(currentAllConstraints);
+                        }
+                    }
                 }
-                result.add(new ChannelComponent(SUBCOMPONENT, currentSourceLocations, currentTargetLocations));
+                allConstraints = newConstraints;
             }
+
+            List<ChannelComponent> result = new ArrayList<ChannelComponent>();
+            for (List<ChannelConstraint> constraints : allConstraints) {
+                result.add(new ChannelComponent(SUBCOMPONENT, constraints));
+            }
+            
             return result;
         }
     }

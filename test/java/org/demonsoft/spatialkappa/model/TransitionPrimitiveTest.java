@@ -174,6 +174,7 @@ public class TransitionPrimitiveTest {
         Agent leftRealAgent1 = new Agent("agent1", new Location("A")); 
         Agent leftRealAgent2 = new Agent("agent2", new Location("A"));
         getComplexes(getList(leftRealAgent1, leftRealAgent2));
+        getComplexes(getList(leftTemplateAgent1, leftTemplateAgent2));
 
         Map<Agent, Agent> transformMap = new HashMap<Agent, Agent>();
         transformMap.put(leftTemplateAgent1, leftRealAgent1);

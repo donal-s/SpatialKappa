@@ -5,8 +5,10 @@ import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Stack;
 
 public class Utils {
@@ -192,6 +194,70 @@ public class Utils {
             }
         }
         throw new IllegalStateException("Compartment '" + compartmentName + "' not found");
+    }
+
+    public static Map<Agent, Agent> createCloneAgentMap(Map<Agent, Agent> originalMap) {
+        Map<Agent, Agent> result = new HashMap<Agent, Agent>();
+        List<Agent> templateAgents = new ArrayList<Agent>(originalMap.keySet());
+        while (!templateAgents.isEmpty()) {
+            Agent agent = templateAgents.get(0);
+            Map<Agent, Agent> linkedMapEntries = getLinkedMapEntries(originalMap, agent);
+
+            Complex complex = originalMap.get(agent).getComplex();
+            Complex cloneComplex = complex.clone();
+            for (Map.Entry<Agent, Agent> entry : linkedMapEntries.entrySet()) {
+                int agentIndex = complex.agents.indexOf(entry.getValue());
+                if (agentIndex >= 0) {
+                    result.put(entry.getKey(), cloneComplex.agents.get(agentIndex));
+                }
+            }
+
+            templateAgents.removeAll(linkedMapEntries.keySet());
+        }
+
+        return result;
+    }
+
+    private static Map<Agent, Agent> getLinkedMapEntries(Map<Agent, Agent> originalMap, Agent agent) {
+        Map<Agent, Agent> result = new HashMap<Agent, Agent>();
+        for (Map.Entry<Agent, Agent> entry : originalMap.entrySet()) {
+            if (entry.getKey() == agent || entry.getKey().getComplex() == agent.getComplex()) {
+                result.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return result;
+    }
+
+    public static boolean isValidComplexes(Collection<Agent> agents, List<Channel> channels,
+            List<Compartment> compartments) {
+        
+        List<Agent> remainingAgents = new ArrayList<Agent>(agents);
+        
+        while (remainingAgents.size() > 0) {
+            Agent currentAgent = remainingAgents.get(0);
+            remainingAgents.remove(currentAgent);
+            
+            for (AgentLink currentLink : currentAgent.getLinks()) {
+                Agent otherAgent = currentLink.getLinkedAgent(currentAgent);
+                if (currentLink.getChannel() == null) {
+                    if (otherAgent != null && !equal(currentAgent.location, otherAgent.location)) {
+                        return false;
+                    }
+                }
+                else {
+                    Channel channel = getChannel(channels, currentLink.getChannel());
+                    List<Location> possibleLocations = channel.applyChannel(currentAgent.location, NOT_LOCATED, compartments);
+                    if (!possibleLocations.contains(otherAgent.location)) {
+                        possibleLocations = channel.applyChannel(otherAgent.location, NOT_LOCATED, compartments);
+                        if (!possibleLocations.contains(currentAgent.location)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
 }

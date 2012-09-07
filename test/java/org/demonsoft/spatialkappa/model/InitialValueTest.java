@@ -23,6 +23,12 @@ import org.junit.Test;
 
 public class InitialValueTest {
 
+    public static CellIndexExpression INDEX_10 = new CellIndexExpression("10");
+    public static CellIndexExpression INDEX_13 = new CellIndexExpression("13");
+    public static CellIndexExpression INDEX_20 = new CellIndexExpression("20");
+    public static CellIndexExpression INDEX_23 = new CellIndexExpression("23");
+
+    
     @SuppressWarnings("unused")
     @Test
     public void testInitialValue_value() {
@@ -216,7 +222,34 @@ public class InitialValueTest {
                 new Location("cytosol", INDEX_X, INDEX_Y, INDEX_0), new Location("membrane", INDEX_X, INDEX_Y)));
         
         
-        InitialValue initialValue = new InitialValue(getComplexes(getList(new Agent("A", new Location("cytosol"), new AgentSite("d", null, "1", "domainLink")), 
+        InitialValue initialValue = new InitialValue(getComplexes(getList(new Agent("A", new Location("cytosol", INDEX_0, INDEX_1, INDEX_0), new AgentSite("d", null, "1", "domainLink")), 
+                new Agent("B", new AgentSite("d", null, "1")))), 100, NOT_LOCATED);
+
+        checkFixedLocatedComplexMap(initialValue, compartments, channels, new Object[][] { 
+                { new Complex(new Agent("A", new Location("cytosol", INDEX_0, INDEX_1, INDEX_0), 
+                        new AgentSite("d", null, "1", "domainLink")), 
+                        new Agent("B", new Location("membrane", INDEX_0, INDEX_1), new AgentSite("d", null, "1"))), 100 }, 
+                });
+        
+        initialValue = new InitialValue(getComplexes(getList(new Agent("A", new Location("cytosol", INDEX_0, INDEX_1, INDEX_0), new AgentSite("d", null, "1", "domainLink")), 
+                new Agent("B", new Location("membrane"), new AgentSite("d", null, "1")))), 100, NOT_LOCATED);
+
+        checkFixedLocatedComplexMap(initialValue, compartments, channels, new Object[][] { 
+                { new Complex(new Agent("A", new Location("cytosol", INDEX_0, INDEX_1, INDEX_0), 
+                        new AgentSite("d", null, "1", "domainLink")), 
+                        new Agent("B", new Location("membrane", INDEX_0, INDEX_1), new AgentSite("d", null, "1"))), 100 }, 
+                });
+        
+        initialValue = new InitialValue(getComplexes(getList(new Agent("A", new Location("cytosol", INDEX_0, INDEX_1, INDEX_0), new AgentSite("d", null, "1", "domainLink")), 
+                new Agent("B", new Location("membrane", INDEX_0, INDEX_1), new AgentSite("d", null, "1")))), 100, NOT_LOCATED);
+
+        checkFixedLocatedComplexMap(initialValue, compartments, channels, new Object[][] { 
+                { new Complex(new Agent("A", new Location("cytosol", INDEX_0, INDEX_1, INDEX_0), 
+                        new AgentSite("d", null, "1", "domainLink")), 
+                        new Agent("B", new Location("membrane", INDEX_0, INDEX_1), new AgentSite("d", null, "1"))), 100 }, 
+                });
+        
+        initialValue = new InitialValue(getComplexes(getList(new Agent("A", new Location("cytosol"), new AgentSite("d", null, "1", "domainLink")), 
                 new Agent("B", new AgentSite("d", null, "1")))), 900, NOT_LOCATED);
 
         checkFixedLocatedComplexMap(initialValue, compartments, channels, new Object[][] { 
@@ -247,6 +280,80 @@ public class InitialValueTest {
                 { new Complex(new Agent("A", new Location("cytosol", INDEX_2, INDEX_2, INDEX_0), 
                         new AgentSite("d", null, "1", "domainLink")), 
                         new Agent("B", new Location("membrane", INDEX_2, INDEX_2), new AgentSite("d", null, "1"))), 100 }, 
+                });
+        
+        initialValue = new InitialValue(getComplexes(getList(new Agent("A", new Location("cytosol", INDEX_1, INDEX_2, INDEX_0), new AgentSite("d", null, "1", "domainLink")), 
+                new Agent("B", new Location("membrane", INDEX_2, INDEX_2), new AgentSite("d", null, "1")))), 900, NOT_LOCATED);
+        try {
+            initialValue.getFixedLocatedComplexMap(compartments, channels);
+            fail("Invalid locations should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
+        
+        initialValue = new InitialValue(getComplexes(getList(new Agent("A", new Location("cytosol"), new AgentSite("d", null, "1", "domainLink")), 
+                new Agent("B", new Location("cytosol"), new AgentSite("d", null, "1")))), 900, NOT_LOCATED);
+        try {
+            initialValue.getFixedLocatedComplexMap(compartments, channels);
+            fail("Invalid locations should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
+        
+        initialValue = new InitialValue(getComplexes(getList(new Agent("A", new Location("cytosol", INDEX_1, INDEX_2, INDEX_0), new AgentSite("d", null, "1", "domainLink")), 
+                new Agent("B", new Location("cytosol"), new AgentSite("d", null, "1")))), 900, NOT_LOCATED);
+        try {
+            initialValue.getFixedLocatedComplexMap(compartments, channels);
+            fail("Invalid locations should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
+        
+    }
+
+    @Test
+    public void testGetFixedLocatedComplexMap_multiCompartmentAgents_nestedCircles() {
+        List<Compartment> compartments = getList(new Compartment.SolidCircle("cytosol", 21), new Compartment.OpenCircle("membrane", 25, 2));
+        Channel channel = new Channel("domainLink");
+        channel.addChannelComponent("Neighbour", getList(new Location("cytosol")), getList(new Location("membrane")));
+        channel.addChannelComponent("Neighbour", getList(new Location("membrane")), getList(new Location("cytosol")));
+        List<Channel> channels = getList(channel);
+        
+        InitialValue initialValue = new InitialValue(getComplexes(getList(new Agent("A", new Location("cytosol", INDEX_10, INDEX_20), new AgentSite("d", null, "1", "domainLink")), 
+                new Agent("B", new AgentSite("d", null, "1")))), 100, NOT_LOCATED);
+
+        checkFixedLocatedComplexMapByString(initialValue, compartments, channels, new Object[][] { 
+                { "[A:cytosol[10][20](d!1:domainLink), B:membrane[13][23](d!1)]", 33 }, 
+                { "[A:cytosol[10][20](d!1:domainLink), B:membrane[12][23](d!1)]", 34 }, 
+                { "[A:cytosol[10][20](d!1:domainLink), B:membrane[11][23](d!1)]", 33 }, 
+                });
+        
+    }
+
+    @Test
+    public void testGetFixedLocatedComplexMap_multiCompartmentAgents_nestedSpheres() {
+        List<Compartment> compartments = getList(new Compartment.SolidSphere("cytosol", 21), new Compartment.OpenSphere("membrane", 25, 2));
+        Channel channel = new Channel("domainLink");
+        channel.addChannelComponent("Neighbour", getList(new Location("cytosol")), getList(new Location("membrane")));
+        channel.addChannelComponent("Neighbour", getList(new Location("membrane")), getList(new Location("cytosol")));
+        List<Channel> channels = getList(channel);
+        
+        InitialValue initialValue = new InitialValue(getComplexes(getList(new Agent("A", new Location("cytosol", INDEX_10, INDEX_10, INDEX_20), new AgentSite("d", null, "1", "domainLink")), 
+                new Agent("B", new AgentSite("d", null, "1")))), 90, NOT_LOCATED);
+
+        checkFixedLocatedComplexMapByString(initialValue, compartments, channels, new Object[][] { 
+                { "[A:cytosol[10][10][20](d!1:domainLink), B:membrane[13][13][23](d!1)]", 10 }, 
+                { "[A:cytosol[10][10][20](d!1:domainLink), B:membrane[12][13][23](d!1)]", 10 }, 
+                { "[A:cytosol[10][10][20](d!1:domainLink), B:membrane[11][13][23](d!1)]", 10 }, 
+                { "[A:cytosol[10][10][20](d!1:domainLink), B:membrane[13][12][23](d!1)]", 10 }, 
+                { "[A:cytosol[10][10][20](d!1:domainLink), B:membrane[12][12][23](d!1)]", 10 }, 
+                { "[A:cytosol[10][10][20](d!1:domainLink), B:membrane[11][12][23](d!1)]", 10 }, 
+                { "[A:cytosol[10][10][20](d!1:domainLink), B:membrane[13][11][23](d!1)]", 10 }, 
+                { "[A:cytosol[10][10][20](d!1:domainLink), B:membrane[12][11][23](d!1)]", 10 }, 
+                { "[A:cytosol[10][10][20](d!1:domainLink), B:membrane[11][11][23](d!1)]", 10 }, 
                 });
     }
 
@@ -300,11 +407,22 @@ public class InitialValueTest {
     
     private void checkFixedLocatedComplexMap(InitialValue initialValue, List<Compartment> compartments, 
             List<Channel> channels, Object[][] expectedQuantities) {
+        
+        Object[][] expectedStringQuantities = new Object[expectedQuantities.length][2];
+        for (int index=0; index<expectedQuantities.length; index++) {
+            expectedStringQuantities[index][0] = expectedQuantities[index][0].toString();
+            expectedStringQuantities[index][1] = expectedQuantities[index][1];
+        }
+        checkFixedLocatedComplexMapByString(initialValue, compartments, channels, expectedStringQuantities);
+    }
+    
+    private void checkFixedLocatedComplexMapByString(InitialValue initialValue, List<Compartment> compartments, 
+            List<Channel> channels, Object[][] expectedQuantities) {
         Map<Complex, Integer> quantityMap = initialValue.getFixedLocatedComplexMap(compartments, channels);
         assertEquals(expectedQuantities.length, quantityMap.size());
         
         for (Object[] expected : expectedQuantities) {
-            String complexString = expected[0].toString();
+            String complexString = (String) expected[0];
             boolean found = false;
             for (Map.Entry<Complex, Integer> entry : quantityMap.entrySet()) {
                 if (complexString.equals(entry.getKey().toString())) {

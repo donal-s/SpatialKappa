@@ -25,8 +25,8 @@
 %var: 'all dimer' A(s!_)
 %var: 'dimer AB' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1)
 %var: 'dimer BA' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~0)
-%var: 'same voxel dimer AB' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1)
-%var: 'same voxel dimer BA' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~0)
+%var: 'same voxel dimer AB' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1)
+%var: 'same voxel dimer BA' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0)
 
 ### PLOTS
 %plot: 'all monomer A'

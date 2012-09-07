@@ -12,7 +12,6 @@ import static org.demonsoft.spatialkappa.model.Utils.getComplexes;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -643,96 +642,6 @@ public class TransitionTest {
         transition.bestPrimitives = null;
         transition.createTransitionMap(leftAgents, rightAgents);
     }
-
-    @SuppressWarnings("unused")
-    @Test
-    public void testCreateCloneMap() {
-        List<Agent> leftAgents = new ArrayList<Agent>();
-        List<Agent> rightAgents = new ArrayList<Agent>();
-        leftAgents.add(new Agent("agent1", new AgentSite("x", "s", null)));
-        rightAgents.add(new Agent("agent1", new AgentSite("x", "t", null)));
-        Transition transition = new Transition(null, leftAgents, null, rightAgents, 0.1f);
-
-        // Test empty case
-        Map<Agent, Agent> originalMap = new HashMap<Agent, Agent>();
-        Map<Agent, Agent> resultMap = transition.createCloneMap(originalMap);
-        assertEquals(0, resultMap.size());
-
-        // Test different template complexes, original complexes
-        Agent templateSourceAgent = new Agent("source");
-        Agent templateTargetAgent = new Agent("target");
-        new Complex(templateSourceAgent);
-        new Complex(templateTargetAgent);
-
-        Agent realSourceAgent = new Agent("source");
-        Agent realTargetAgent = new Agent("target");
-        new Complex(realSourceAgent);
-        new Complex(realTargetAgent);
-
-        originalMap.clear();
-        originalMap.put(templateSourceAgent, realSourceAgent);
-        originalMap.put(templateTargetAgent, realTargetAgent);
-
-        resultMap = transition.createCloneMap(originalMap);
-        checkCloneMap(originalMap, resultMap);
-
-        // Test same template complexes, original complexes
-        new Complex(templateSourceAgent, templateTargetAgent);
-        realSourceAgent = new Agent("source");
-        realTargetAgent = new Agent("target");
-        new Complex(realSourceAgent, realTargetAgent);
-
-        originalMap.clear();
-        originalMap.put(templateSourceAgent, realSourceAgent);
-        originalMap.put(templateTargetAgent, realTargetAgent);
-
-        resultMap = transition.createCloneMap(originalMap);
-        checkCloneMap(originalMap, resultMap);
-
-        // Test same template complexes, original complexes, linked agents
-        realSourceAgent = new Agent("source", new AgentSite("x", null, "1"));
-        realTargetAgent = new Agent("target", new AgentSite("y", null, "1"));
-        new Complex(realSourceAgent, realTargetAgent);
-
-        originalMap.clear();
-        originalMap.put(templateSourceAgent, realSourceAgent);
-        originalMap.put(templateTargetAgent, realTargetAgent);
-
-        resultMap = transition.createCloneMap(originalMap);
-        checkCloneMap(originalMap, resultMap);
-    }
-
-    private void checkCloneMap(Map<Agent, Agent> originalMap, Map<Agent, Agent> resultMap) {
-        assertEquals(originalMap.size(), resultMap.size());
-
-        for (Map.Entry<Agent, Agent> originalEntry : originalMap.entrySet()) {
-            Agent templateAgent = originalEntry.getKey();
-            Agent originalAgent = originalEntry.getValue();
-
-            assertTrue(resultMap.containsKey(templateAgent));
-            Agent cloneAgent = resultMap.get(templateAgent);
-            assertEquals(originalAgent.getComplex().toString(), cloneAgent.getComplex().toString());
-            assertNotSame(cloneAgent, originalAgent);
-            assertNotSame(cloneAgent.getComplex(), originalAgent.getComplex());
-        }
-
-        // Unlinked template agents should each have unique cloned complex
-        for (Map.Entry<Agent, Agent> originalEntry : originalMap.entrySet()) {
-            Agent templateAgent = originalEntry.getKey();
-            for (Map.Entry<Agent, Agent> originalOtherEntry : originalMap.entrySet()) {
-                Agent templateOtherAgent = originalOtherEntry.getKey();
-                if (templateAgent != templateOtherAgent) {
-                    if (templateAgent.getComplex() == templateOtherAgent.getComplex()) {
-                        assertSame(resultMap.get(templateAgent).getComplex(), resultMap.get(templateOtherAgent).getComplex());
-                    }
-                    else {
-                        assertNotSame(resultMap.get(templateAgent).getComplex(), resultMap.get(templateOtherAgent).getComplex());
-                    }
-                }
-            }
-        }
-    }
-
     @Test
     public void testGetApplicationCount() {
         List<Compartment> compartments = getList(new Compartment("A"), new Compartment("B"), new Compartment("C"));

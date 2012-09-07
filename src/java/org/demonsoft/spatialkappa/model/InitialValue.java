@@ -64,6 +64,9 @@ public class InitialValue {
             List<Complex> resultComplexes = new ArrayList<Complex>();
 
             List<MappingInstance> mappings = complex.getMappingInstances(compartments, channels);
+            if (mappings.size() == 0) {
+                throw new IllegalStateException("Initial value invalid: " + complex);
+            }
             for (MappingInstance mapping : mappings) {
                 Complex locatedComplex = new Complex(mapping.locatedAgents);
                 resultComplexes.add(locatedComplex);

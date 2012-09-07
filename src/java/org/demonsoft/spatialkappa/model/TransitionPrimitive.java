@@ -400,38 +400,56 @@ public abstract class TransitionPrimitive {
 
                 List<ChannelConstraint> channelConstraints = getChannelConstraints(transformMap);
                 List<List<Location>> newLocationLists = getPossibleChannelApplications(channelConstraints, channels, compartments);
-                List<Location> newLocations;
-                if (newLocationLists.size() == 0) {
-                    return false;
-                }
-                else if (newLocationLists.size() == 1) {
-                    newLocations = newLocationLists.get(0);
-                }
-                else {
-                    int item = (int) (newLocationLists.size() * Math.random());
-                    newLocations =  newLocationLists.get(item);
-                }
-
-                Set<Agent> movedAgents = new HashSet<Agent>();
-                for (int index=0; index<sourceAgents.size(); index++) {
-                    @SuppressWarnings("hiding")
-                    Agent sourceAgent = sourceAgents.get(index);
-                    Location targetConstraint = targetLocations.get(index);
-                    Agent realAgent = transformMap.get(sourceAgent);
-                    if (!movedAgents.contains(realAgent)) {
-                        Location oldLocation = realAgent.location;
-                        ChannelConstraint channelConstraint = new ChannelConstraint(oldLocation, targetConstraint);
-                        
-                        Location newLocation = newLocations.get(channelConstraints.indexOf(channelConstraint));
-                        for (Agent agent : Utils.getLinkedColocatedAgents(realAgent)) {
-                            if (!movedAgents.contains(agent)) {
-                                agent.setLocation(newLocation);
-                                movedAgents.add(agent);
+                
+                while (true) {
+                    List<Location> newLocations;
+                    if (newLocationLists.size() == 0) {
+                        return false;
+                    }
+                    else if (newLocationLists.size() == 1) {
+                        newLocations = newLocationLists.get(0);
+                    }
+                    else {
+                        int item = (int) (newLocationLists.size() * Math.random());
+                        newLocations =  newLocationLists.get(item);
+                    }
+    
+                    Map<Agent, Agent> cloneTransformMap = Utils.createCloneAgentMap(transformMap);
+                    Set<Agent> movedAgents = new HashSet<Agent>();
+                    for (int index=0; index<sourceAgents.size(); index++) {
+                        @SuppressWarnings("hiding")
+                        Agent sourceAgent = sourceAgents.get(index);
+                        Location targetConstraint = targetLocations.get(index);
+                        Agent realAgent = cloneTransformMap.get(sourceAgent);
+                        if (!movedAgents.contains(realAgent)) {
+                            Location oldLocation = realAgent.location;
+                            ChannelConstraint channelConstraint = new ChannelConstraint(oldLocation, targetConstraint);
+                            
+                            Location newLocation = newLocations.get(channelConstraints.indexOf(channelConstraint));
+                            for (Agent agent : Utils.getLinkedColocatedAgents(realAgent)) {
+                                if (!movedAgents.contains(agent)) {
+                                    agent.setLocation(newLocation);
+                                    movedAgents.add(agent);
+                                }
                             }
                         }
                     }
+                    if (Utils.isValidComplexes(cloneTransformMap.values(), channels, compartments)) {
+                        for (Agent key : transformMap.keySet()) {
+                            Complex cloneComplex = cloneTransformMap.get(key).getComplex();
+                            Complex originalComplex = transformMap.get(key).getComplex();
+                            for (int index=0; index < cloneComplex.agents.size(); index++) {
+                                Agent cloneAgent = cloneComplex.agents.get(index);
+                                Agent originalAgent = originalComplex.agents.get(index);
+                                
+                                originalAgent.setLocation(cloneAgent.location);
+                                // TODO performance improvement - hit each complex only once
+                            }
+                        }
+                        return true;
+                    }
+                    newLocationLists.remove(newLocations);
                 }
-                return true;
             }
 
             private List<List<Location>> getPossibleChannelApplications(List<ChannelConstraint> channelConstraints, List<Channel> channels,

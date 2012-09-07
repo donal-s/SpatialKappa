@@ -479,6 +479,88 @@ public class ComplexTest {
 
     }
     
+    
+    @Test
+    public void testGetMappingInstances_nestedCompartmentComplexes() throws Exception {
+        
+        Channel channel = new Channel("domainLink");
+        channel.addChannelComponent("EdgeNeighbour", getList(new Location("inner")), getList(new Location("outer")));
+        channel.addChannelComponent("EdgeNeighbour", getList(new Location("outer")), getList(new Location("inner")));
+        List<Channel> channels = getList(channel);
+        
+        List<Compartment> compartments = getList(new Compartment.SolidCircle("inner", 3), 
+                new Compartment.OpenCircle("outer", 7, 2));
+
+        List<Agent> agents = getList(new Agent("A", new Location("inner"), new AgentSite("s", null, "1", "domainLink")), 
+                new Agent("B", new Location("outer"), new AgentSite("s", null, "1")));
+        Complex complex = new Complex(agents);
+        
+        List<String> expected = getList(
+                "[A:inner[0][0](s!1:domainLink), B:outer[1][2](s!1)]",
+                "[A:inner[0][0](s!1:domainLink), B:outer[2][1](s!1)]",
+                "[A:inner[1][0](s!1:domainLink), B:outer[3][1](s!1)]",
+                "[A:inner[2][0](s!1:domainLink), B:outer[5][2](s!1)]",
+                "[A:inner[2][0](s!1:domainLink), B:outer[4][1](s!1)]",
+                "[A:inner[0][1](s!1:domainLink), B:outer[1][3](s!1)]",
+                "[A:inner[2][1](s!1:domainLink), B:outer[5][3](s!1)]",
+                "[A:inner[0][2](s!1:domainLink), B:outer[1][4](s!1)]",
+                "[A:inner[0][2](s!1:domainLink), B:outer[2][5](s!1)]",
+                "[A:inner[1][2](s!1:domainLink), B:outer[3][5](s!1)]",
+                "[A:inner[2][2](s!1:domainLink), B:outer[5][4](s!1)]",
+                "[A:inner[2][2](s!1:domainLink), B:outer[4][5](s!1)]");
+               
+        checkMappingInstancesByString(complex, compartments, channels, expected);
+        
+        // Corner
+        
+        agents = getList(new Agent("A", new Location("inner", INDEX_0, INDEX_0), new AgentSite("s", null, "1", "domainLink")), 
+                new Agent("B", new Location("outer"), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        expected = getList(
+                "[A:inner[0][0](s!1:domainLink), B:outer[1][2](s!1)]",
+                "[A:inner[0][0](s!1:domainLink), B:outer[2][1](s!1)]");
+               
+        checkMappingInstancesByString(complex, compartments, channels, expected);
+        
+        // Edge
+        
+        agents = getList(new Agent("A", new Location("inner", INDEX_0, INDEX_1), new AgentSite("s", null, "1", "domainLink")), 
+                new Agent("B", new Location("outer"), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        expected = getList("[A:inner[0][1](s!1:domainLink), B:outer[1][3](s!1)]");
+               
+        checkMappingInstancesByString(complex, compartments, channels, expected);
+        
+        // Centre
+        
+        agents = getList(new Agent("A", new Location("inner", INDEX_1, INDEX_1), new AgentSite("s", null, "1", "domainLink")), 
+                new Agent("B", new Location("outer"), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        checkMappingInstancesByString(complex, compartments, channels, new ArrayList<String>());
+        
+        // Outer compartment located
+        
+        agents = getList(new Agent("A", new Location("inner"), new AgentSite("s", null, "1", "domainLink")), 
+                new Agent("B", new Location("outer", INDEX_1, INDEX_2), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        expected = getList("[A:inner[0][0](s!1:domainLink), B:outer[1][2](s!1)]");
+               
+        checkMappingInstancesByString(complex, compartments, channels, expected);
+        
+        // Invalid location
+        
+        agents = getList(new Agent("A", new Location("inner", INDEX_0, INDEX_0), new AgentSite("s", null, "1", "domainLink")), 
+                new Agent("B", new Location("outer", INDEX_0, INDEX_2), new AgentSite("s", null, "1")));
+        complex = new Complex(agents);
+        
+        checkMappingInstancesByString(complex, compartments, channels, new ArrayList<String>());
+        
+    }
+    
     private void checkMappingInstances(Complex complex, List<Compartment> compartments, List<Channel> channels,
             List<List<Agent>> expected) {
         List<MappingInstance> result = complex.getMappingInstances(compartments, channels);
@@ -489,6 +571,18 @@ public class ComplexTest {
             List<Agent> actualAgents = result.get(index).locatedAgents;
             
             assertEquals(expectedAgents.toString(), actualAgents.toString());
+        }
+    }
+
+    private void checkMappingInstancesByString(Complex complex, List<Compartment> compartments, List<Channel> channels,
+            List<String> expected) {
+        List<MappingInstance> result = complex.getMappingInstances(compartments, channels);
+        assertEquals(expected.size(), result.size());
+        
+        for (int index=0; index < expected.size(); index++) {
+            List<Agent> actualAgents = result.get(index).locatedAgents;
+            
+            assertEquals(expected.get(index), actualAgents.toString());
         }
     }
 

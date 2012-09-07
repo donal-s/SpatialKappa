@@ -25,7 +25,7 @@ public class CellIndexExpression extends VariableExpression {
             new CellIndexExpression(INDEX_Y, Operator.PLUS, INDEX_1);
     public static CellIndexExpression INDEX_Y_MINUS_1 = 
             new CellIndexExpression(INDEX_Y, Operator.MINUS, INDEX_1);
-    public static CellIndexExpression INDEX_Z = new CellIndexExpression(new VariableReference("y"));
+    public static CellIndexExpression INDEX_Z = new CellIndexExpression(new VariableReference("z"));
     public static CellIndexExpression INDEX_Z_PLUS_1 = 
             new CellIndexExpression(INDEX_Z, Operator.PLUS, INDEX_1);
     public static CellIndexExpression INDEX_Z_MINUS_1 = 

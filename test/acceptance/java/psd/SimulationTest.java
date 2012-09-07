@@ -203,11 +203,19 @@ public class SimulationTest {
                 });
     }
     
-//    @Test
-    public void testTest3_6_lateralDiffusionOfTransmembraneProteins() throws Exception {
-         checkTimeSimulation("test-3-6-input.ka", new String[] {"AB", "A2B2 centre", "A2B2 not centre"}, 10, 50, 
+    @Test
+    public void testTest3_6_1_lateralDiffusionOfTransmembraneProteins() throws Exception {
+         checkEventSimulation("test-3-6-1-input.ka", new String[] {"A top", "A not top"}, 2000, 50, 
                 new float[][] {
-                    {0, 0, 0}, {50, 75, 25}, {40, 175, 80}, {25, 250, 125},
+                    {1000, 0}, {230, 770}, {200, 800}, 
+                });
+    }
+
+//    @Test
+    public void testTest3_6_2_lateralDiffusionOfTransmembraneProteins_allowMotionlessAgents() throws Exception {
+         checkEventSimulation("test-3-6-2-input.ka", new String[] {"A top", "A not top"}, 2000, 50, 
+                new float[][] {
+                    {1000, 0}, {230, 770}, {200, 800}, 
                 });
     }
 

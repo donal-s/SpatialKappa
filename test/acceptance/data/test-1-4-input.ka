@@ -3,14 +3,16 @@
 
 %compartment: cytosol [2]
 
-%init: 1000 A:cytosol[0](s!1),B:cytosol[1](s!1)
+%channel: cl (:cytosol[0] -> :cytosol[1]) + (:cytosol[1] -> :cytosol[0]) 
+
+%init: 1000 A:cytosol[0](s!1:cl),B:cytosol[1](s!1)
 
 %obs: 'all monomer A' A(s) # Expect none
 %obs: 'all monomer B' B(s) # Expect none
 
 %obs: 'all dimer' A(s!_)
-%obs: 'dimer AB' A:cytosol[0](s!1),B:cytosol[1](s!1) 
-%obs: 'dimer BA' A:cytosol[1](s!1),B:cytosol[0](s!1) # Expect none
+%obs: 'dimer AB' A:cytosol[0](s!1:cl),B:cytosol[1](s!1) 
+%obs: 'dimer BA' A:cytosol[1](s!1:cl),B:cytosol[0](s!1) # Expect none
 
 %obs: 'same voxel dimer AB' :cytosol A(s!1),B(s!1) # Expect none
 %obs: 'same voxel dimer BA' :cytosol A(s!1),B(s!1) # Expect none

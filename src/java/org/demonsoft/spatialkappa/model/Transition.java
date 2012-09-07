@@ -634,38 +634,6 @@ public class Transition {
 
 
 
-    Map<Agent, Agent> createCloneMap(Map<Agent, Agent> originalMap) {
-        Map<Agent, Agent> result = new HashMap<Agent, Agent>();
-        List<Agent> templateAgents = new ArrayList<Agent>(originalMap.keySet());
-        while (!templateAgents.isEmpty()) {
-            Agent agent = templateAgents.get(0);
-            Map<Agent, Agent> linkedMapEntries = getLinkedMapEntries(originalMap, agent);
-
-            Complex complex = originalMap.get(agent).getComplex();
-            Complex cloneComplex = complex.clone();
-            for (Map.Entry<Agent, Agent> entry : linkedMapEntries.entrySet()) {
-                int agentIndex = complex.agents.indexOf(entry.getValue());
-                if (agentIndex >= 0) {
-                    result.put(entry.getKey(), cloneComplex.agents.get(agentIndex));
-                }
-            }
-
-            templateAgents.removeAll(linkedMapEntries.keySet());
-        }
-
-        return result;
-    }
-
-    private Map<Agent, Agent> getLinkedMapEntries(Map<Agent, Agent> originalMap, Agent agent) {
-        Map<Agent, Agent> result = new HashMap<Agent, Agent>();
-        for (Map.Entry<Agent, Agent> entry : originalMap.entrySet()) {
-            if (entry.getKey() == agent || entry.getKey().getComplex() == agent.getComplex()) {
-                result.put(entry.getKey(), entry.getValue());
-            }
-        }
-        return result;
-    }
-
     public List<Complex> apply(TransitionInstance transitionInstance, List<Channel> channels, List<Compartment> compartments) {
         boolean transportComplexesOnly = false;
         List<Complex> complexes = new ArrayList<Complex>();
@@ -681,7 +649,7 @@ public class Transition {
         }
 
         if (!transportComplexesOnly) {
-            transformMap = createCloneMap(transformMap);
+            transformMap = Utils.createCloneAgentMap(transformMap);
     
             for (Agent agent : transformMap.values()) {
                 if (!complexes.contains(agent.getComplex())) {
@@ -749,7 +717,7 @@ public class Transition {
         }
 
         if (!transportComplexesOnly) {
-            transformMap = createCloneMap(transformMap);
+            transformMap = Utils.createCloneAgentMap(transformMap);
     
             for (Agent agent : transformMap.values()) {
                 if (!complexes.contains(agent.getComplex())) {
