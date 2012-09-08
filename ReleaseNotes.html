@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Spatial Kappa Translator Release Notes v2.0.1</title>
+</head>
+<body>
+<h3 style="text-align: center;">Spatial Kappa Translator Release Notes v2.0.5</h3>
+<p style="text-align: center;">08-09-2012</p>
+
+<p style="text-align: center;">Copyright &copy; 2012 DemonSoft Ltd
+&lt;<a href="http://www.demonsoft.org/">http://www.demonsoft.co.uk/</a>&gt;</p>
+
+<h4>Summary of additions for v2.0.5</h4>
+
+<p>Added variable transition rates based on the composition of the complexes selected for the transition.</p>
+
+<h4>Summary of additions for v2.0.4</h4>
+
+<p>Can now use selected predefined compartments and channels, in 2 and 3D.</p>
+
+<h4>Summary of additions for v2.0.3</h4>
+
+<p>Interim release.</p>
+
+<h4>Summary of additions for v2.0.2</h4>
+
+<p>Interim release.</p>
+
+<h4>Summary of additions for v2.0.1</h4>
+
+<p>%channel: declarations are now more consistent and logical. Can be composed of multiple forward only 
+expressions. No need to have multiple declarations using the same channel name.</p>
+
+<h4>Summary of additions for v2.0.0</h4>
+
+<p>%link: declarations are now %channel: declarations.</p>
+<p>Channel and compartments names are now ids rather than labels, so no need to use single quotes.</p>
+<p>%init:, %obs:, %var: declarations and transform rules can now specify location. Agents can also specify location.</p>
+<p>Agent links can specify channel to define multi-voxel complexes.</p>
+
+<p>An issues and bug tracker will appear eventually. For now, please
+email any bug reports or feature requests to <a
+	href="mailto:spatialkappa@demonsoft.org">spatialkappa@demonsoft.org</a>.</p>
+
+<h4>Known issues</h4>
+
+<p>Validation of invalid models not catching all errors cleanly - requires some extension.</p>
+<p>Transform rules limited to single merged complex (on left or right).</p>
+<p>Issue handling the transform rule A() -> B() @ 1.0</p>
+<p>When specifying channel locations ensure there is a space before the '-' operator, eg. cytosol[x][y -1].</p>
+
+</body>
+</html>
+
+
+
+
+

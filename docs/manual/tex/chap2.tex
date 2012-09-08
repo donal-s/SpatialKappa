@@ -1,15 +1,12 @@
 \chapter{Kappa Language Extensions}
 
-Note on terminology. In the following 'cell' can mean either a living cell, or a cell within a defined compartment. Hopefully the meaning in each situation will be clear from the context. Current Kappa rules are referred to as 'transform' rules as they cause some form of transformation of their substrates, be it change of agent state, agent creation or deletion, agent binding or unbinding. Species is mostly used to refer to a particular agent or complex in the model.
-
-Also this document uses the terms 'language' and 'calculus' interchangeably, for example $\kappa$-calculus and Kappa language. Generally the term calculus is used when referring to the formal definition, and language where referring to models defined in Kappa, as they are represented in the Kappa language syntax.
+Note on terminology. In the following 'voxel' means a subunit of a defined compartment. Species is mostly used to refer to a particular agent or complex in the model.
 
 \section{Existing Kappa language}
 
-TO BE UPDATED - can handle most KaSim grammar now.
+The current Kappa language consists of the following constructs, as described in the KaSim 2.01 documentation \citep{KaSimManual2012}. A more formal description of the language grammar (including the spatial extensions) is given in Appendix \ref{chap:spatialGrammar}.
 
-The current Kappa language consists of the following constructs, as described in the Simplx documentation \citep{krivine2009}. A more formal description of the language grammar (including the spatial extensions) is given in appendix \ref{chap:spatialGrammar}.
-
+\bigskip 
 \textbf{Comments}:
 
 \begin{kappasource}
@@ -19,12 +16,13 @@ The current Kappa language consists of the following constructs, as described in
 \textbf{Agents}:
 
 \begin{kappasource}
+AgentName
 AgentName()
 AgentName(stateWithValue~stateValue, stateWithNoValue, unboundSite, boundSite!1)
 \end{kappasource} 
 
 
-\textbf{Transform rules}:
+\textbf{Non-spatial transition rules}:
 
 \begin{kappasource}
 'state change' A(state~old) -> A(state~new) @ 0.1
@@ -32,15 +30,14 @@ AgentName(stateWithValue~stateValue, stateWithNoValue, unboundSite, boundSite!1)
 'unbinding'    A(bindsite!1),B(bindsite!1) -> A(bindsite),B(bindsite) @ 0.1
 'creation'     -> A() @ 0.1
 'degradation'  A() -> @ 0.1
-'reversible reaction'  A(state~old) <-> A(state~new) @ 0.1,0.2
 A(state~old) -> A(state~new) @ 0.1 # Unnamed transform rule
 \end{kappasource} 
 
 \textbf{Initial species values}:
 
 \begin{kappasource}
-\%init 1000 * (A(state~old),C())            # 1000 of each of A(..) and C()
-\%init 2000 * (A(bindsite!1),B(bindsite!1)) # 2000 of the bound complex A(..),B(..)
+\%init 1000 A(state~old),C()            # 1000 of each of A(..) and C()
+\%init 2000 A(bindsite!1),B(bindsite!1) # 2000 of the bound complex A(..),B(..)
 \end{kappasource} 
 
 \textbf{Observables and named variables}: Variables can be referenced in perturbation calculations, but do not show in outputs as observations.
@@ -54,24 +51,6 @@ A(state~old) -> A(state~new) @ 0.1 # Unnamed transform rule
 \%var 'Named variable' B()
 \end{kappasource} 
 
-\textbf{Perturbations}: These only fire a single time, after which they are disregarded for the rest of a simulation.
-
-\begin{kappasource}
-# When simulation time exceeds 5 seconds, change the rate of transform rule
-#   named 'unbinding' to 10.0
-\%mod: \$T > 5 do ’unbinding’:= 10.0
-
-# When the species value mapped to observable 'mRNA' drops below 50
-#   set the rate of transform named 'transcribe' to 0.5
-\%mod: 'mRNA' < 50 do 'transcribe' := 0.5
-\end{kappasource} 
-
-\textbf{Currently unused}: There are some Kappa syntax elements not directly relevant to the spatial extensions, and will not appear in the extended grammar. One is a representation of causal flows, which uses the keyword \verb|%causal|.
-
-\begin{kappasource}
-\%causal: ’C@s2’ 
-\%causal: {’A..B’,’C@s1’} => ’C@s2’ 
-\end{kappasource} 
 
 
 \section{Concepts to encapsulate}
@@ -79,15 +58,21 @@ A(state~old) -> A(state~new) @ 0.1 # Unnamed transform rule
 The spatial Kappa language requires some encoding of the following concepts to be useful.
 
 \begin{itemize}
- \item A description of \textbf{compartments} and their \textbf{dimensions}. A model may have multiple compartments each containing reacting species. The dimensions are necessary to define the shape of a compartment, be it a single cell, a 1 dimensional linear array of cells, a 2 dimensional grid of some form, or a 3 dimensional lattice structure. Relative differences in size of different compartments can be specified, e.g. the reacting volume of a nucleus relative to the surrounding cytosol. Relative differences in shape can also be specified, for example the thin layer of cytosol next to the inner surface of the plasma membrane versus the rest of the cytosol.
+ \item A description of \textbf{compartments} and their \textbf{dimensions}. A model may have multiple compartments each containing reacting species. The dimensions are necessary to define the shape of a compartment, be it a single cell, a 1 dimensional linear array of voxels, a 2 dimensional grid of some form, or a 3 dimensional lattice structure. Relative differences in size of different compartments can be specified, e.g. the reacting volume of a nucleus relative to the surrounding cytosol. Relative differences in shape can also be specified, for example the thin layer of cytosol next to the inner surface of the plasma membrane versus the rest of the cytosol.
 
- \item A description of \textbf{linkage}, both intra-compartment and inter-compartment. The intra-compartment linkage specification should be rich enough to allow description of multiple structures, e.g. in 1D linear arrays or circles, in 2D square or hexagonal meshes, cylinders or tori, in 3D cubes, filled cylinders, spheres, etc.
+ \item Predefined compartment shapes. To concisely create more accurate models, predefined compartment shapes in 2 and 3 dimensions can be chosen, these include open and closed circles, spheres and cylinders. 
 
- \item A means of \textbf{locating species} within compartments, e.g. all DNA would reside within the nucleus, or cell receptors would be limited to the plasma membrane.
+ \item A description of \textbf{channels}, both intra-compartment and inter-compartment. The intra-compartment channel specification should be rich enough to allow description of multiple structures, e.g. in 1D linear arrays or circles, in 2D square or hexagonal meshes, cylinders or tori, in 3D cubes, filled cylinders, spheres, etc.
 
- \item A means of \textbf{locating transform rules} within compartments, e.g. DNA transcription is isolated to the nucleus. The language should also allow the same transform rule to be specified with different rates depending on the location of the reacting species.
+ \item Predefined channels. Commonly used inter and intra-compartment channels can be easily specified by name.
 
- \item A description of the \textbf{transport} (active or diffusive) of species within a compartment or between compartments along previously described linkage structures. The rates of transport should be general to all species, or species specific.
+ \item A means of \textbf{locating species} within compartments, e.g. all DNA would reside within the nucleus, or cell receptors would be limited to the plasma membrane. Note that a multi-agent species need not be confined to a single voxel, but may span neighbouring, connected voxels.
+
+ \item A means of \textbf{locating transition rules} within compartments, e.g. DNA transcription is isolated to the nucleus. The language should also allow the same transform rule to be specified with different rates depending on the location of the reacting species.
+
+ \item A description of the \textbf{transport} (active or diffusive) of species within a compartment or between compartments along previously described channel structures. The rates of transport should be general to all species, or species specific. Note that transport of multi-voxel species should also be possible.
+
+ \item \textbf{Variable rates of diffusion} depending on the size of species diffusing. There should be a means of describing how diffusion rates change as overall species size increases or species composition changes.
 
 \end{itemize}
 
@@ -95,7 +80,7 @@ The spatial Kappa language requires some encoding of the following concepts to b
 \textbf{Additional concepts}
 
 \begin{itemize}
- \item \textbf{Granularity} within compartments. It would be useful to be able to specify locations at the level of compartments or single cells within a compartment. This would allow the model to represent, for example, a signal cascade being initiated as one point in the cytosol, and the resulting signal molecules being diffused through the cytosol. 
+ \item \textbf{Granularity} within compartments. It would be useful to be able to specify locations at the level of compartments or single voxels within a compartment. This would allow the model to represent, for example, a signal cascade being initiated as one point in the cytosol, and the resulting signal molecules being diffused through the cytosol. 
 
  \item \textbf{Backwards compatibility} with basic Kappa. Given the quantity of existing models, the extended language should allow the existing models to work as before without modification. The user should have the choice of not using the spatial aspects of the extended language with no rework penalty.
 
@@ -104,181 +89,435 @@ The spatial Kappa language requires some encoding of the following concepts to b
 
 \section{New language constructs}
 
-A full BNF description of the extended Kappa grammar is given in appendix \ref{chap:spatialGrammar}.
+A full BNF description of the extended Kappa grammar is given in Appendix \ref{chap:spatialGrammar}. The new constructs are identifiable as new rule types (\verb|%channel| and \verb|%compartment|), and location or channel identifiers in existing rule types prefixed with `\verb|:|'.
 
-\subsection{Compartments and cells}
+\subsection{Compartments and voxels}
 
-Compartments are defined as single cells or regular multidimensional arrays of cells as follows
+Compartments are defined as single voxels or regular multidimensional arrays of voxels as follows
 \begin{bnfsource}
-'\%compartment:' LABEL ('[' INT ']')*
+'\%compartment:' name=id ('[' INT ']')*
 \end{bnfsource}
 For example
 \begin{kappasource}
-\%compartment: 'Single cell' 
-\%compartment: '1d array' [10]       # 10 cells in size 
-\%compartment: '2d array' [10][5]    # 10x5 cells in size 
-\%compartment: '3d array' [10][5][4] # 10x5x4 cells in size 
+\%compartment: SingleCell 
+\%compartment: 1dArray' [10]       # 10 voxels in size 
+\%compartment: 2dArray' [10][5]    # 10x5 voxels in size 
+\%compartment: 3dArray' [10][5][4] # 10x5x4 voxels in size 
 \end{kappasource}
 
-Compartments or individual cells within a compartment can be referenced using the following syntax
+Compartments or individual voxels within a compartment can be referenced using the following location syntax
 \begin{bnfsource}
-LABEL ( '[' mathExpr ']' )*
+':' id ( '[' cellIndexExpr ']' )*
 \end{bnfsource}
 where
 \begin{bnfsource}
-mathExpr :
-  mathAtom OPERATOR mathAtom
-  | mathAtom
+cellIndexExpr :
+  cellIndexAtom operator_cell_index cellIndexAtom
+  | cellIndexAtom
   
-mathAtom :
-  '(' mathExpr ')'
+cellIndexAtom :
+  '(' cellIndexExpr ')'
   | INT
-  | VARIABLE_NAME
+  | id
   
-OPERATOR :
+operator_cell_index :
   '+' | '-' | '*' | '/' | '\%'
 \end{bnfsource}
 For example
 \begin{kappasource}
-'my compartment'                     # the compartment as a whole
-'my compartment' [0][0][0]           # the first cell in a 3d array compartment
-'my compartment' [4]                 # the fifth cell in a 1d linear arrays
+:myCompartment                     # the compartment as a whole
+:myCompartment [0][0][0]           # the first voxel in a 3d array compartment
+:myCompartment [4]                 # the fifth voxel in a 1d linear arrays
 
-'my compartment' [x][y][z]           # variable name usage described in
-'my compartment' [x*2][y-1][z+(x*3)] #   compartment links section below
+:myCompartment [x][y][z]           # variable name usage described in
+:myCompartment [x*2][y -1][z+(x*3)] #   channel section below
 \end{kappasource}
 
-In all situations where compartment references are used, it is only legal to refer to the compartment as a whole by omitting the cell indices, or refer to a single cell, by fully defining the correct number of cell indices to match the dimensions of the compartment. Also, variable names are only permitted in compartment references within compartment link definitions, described below.
+In all situations where locations are used, it is only legal to refer to the compartment as a whole by omitting the cell indices, or refer to a single voxel, by fully defining the correct number of cell indices to match the dimensions of the compartment. Also, variable names are only permitted in locations within channel definitions, described below.
 
-\subsection{Compartment links}
+\subsubsection{Predefined compartment types}
 
-The structure of a compartment is further defined by how cells within the compartment are linked to each other and to connected compartments. This linkage is defined as follows
+Commonly used non-rectangular compartments can also be concisely defined. These include both solid and hollow (open) shapes in 2 and 3 dimensions. The available predefined compartment types are
+
+\medskip 
+
+\begin{tabular}{|c|cccc|}
+\hline
+Name & \multicolumn{4}{|c|}{Parameters}\\ 
+\hline
+\multicolumn{5}{|c|}{2D}\\
+\hline
+OpenRectangle & height & width & thickness & \\
+SolidCircle & diameter &  &  & \\
+OpenCircle & diameter & thickness &  & \\
+\hline
+\multicolumn{5}{|c|}{3D}\\
+\hline
+OpenCuboid & height & width & depth & thickness\\
+SolidSphere & diameter &  &  &  \\
+OpenSphere & diameter & thickness &  & \\
+SolidCylinder & diameter & length & & \\
+OpenCylinder & diameter & length & thickness & \\
+\hline
+\end{tabular} 
+
+\medskip 
+
+This allows the creation of a voxellated approximation of the shape specified, which can then be used for simulation. For the open compartment types, thickness specifies how thick in voxels the compartment reaction volume is.
+
+\begin{figure}[h!]
+ \centering
+ \includegraphics[scale=0.2]{./images/compartmentTypes.png}
+ % compartmentTypes.png: 1042x202 pixel, 51dpi, 52.10x10.10 cm, bb=0 0 1477 286
+ \caption{2D compartment types (open and solid)}
+ \label{fig:compartmentTypes}
+\end{figure}
+
+
+
+The syntax to specify these compartments is
 \begin{bnfsource}
-'\%link:' LABEL compartmentReferenceExpr ('<->' | '<-' | '->') compartmentReferenceExpr
+'\%compartment:' name=id type=id ('[' INT ']')*
 \end{bnfsource}
-Where \verb|compartmentReferenceExpr| is as described above. For example
+For example
 \begin{kappasource}
-\%compartment: '2d array' [10][200]    # 10x200 cells in size 
+### 2D Shapes
 
-# Link all cells to their horizontally adjacent neighbours
-\%link: 'meshlinks' '2d array'[x][y] <-> '2d array'[x+1][y]
+%compartment: solidRectangle              [10][5]        # [height][width]
+%compartment: openRectangle OpenRectangle [10][5] [2]    # [height][width] [thickness]
+%compartment: solidCircle   SolidCircle   [10]           # [diameter]
+%compartment: openCircle    OpenCircle    [10] [2]       # [diameter] [thickness]
 
-# Link all cells to their vertically adjacent neighbours
-\%link: 'meshlinks' '2d array'[x][y] <-> '2d array'[x][y+1]
+### 3D Shapes
 
-# Wrap around the cells on the left and right edges to create a cylinder
-\%link: 'meshlinks' '2d array'[0][y] <-> '2d array'[9][y]
+%compartment: solidCuboid                 [10][5][8]     # [height][width][depth]
+%compartment: openCuboid    OpenCuboid    [10][5][8] [2] # [height][width][depth] [thickness]
+%compartment: solidSphere   SolidSphere   [10]           # [diameter]
+%compartment: openSphere    OpenSphere    [10] [2]       # [diameter] [thickness]
+%compartment: solidCylinder SolidCylinder [10][8]        # [diameter][length]
+%compartment: openCylinder  OpenCylinder  [10][8] [2]    # [diameter][length] [thickness]
+\end{kappasource}
 
-# Wrap around the cells on the top and bottom edges to create a torus
-\%link: 'meshlinks' '2d array'[x][0] <-> '2d array'[x][199]
+
+
+\subsection{Channels}
+
+The structure of a compartment is further defined by how voxels within the compartment are linked to each other and to connected compartments. The channels are then used in defining both static links between agents, and movement of agents through the geometry of the model. These channels are defined as follows
+\begin{bnfsource}
+'\%channel:' id channel
+| '\%channel:' id '(' channel ')' ('+' '(' channel ')')*
+\end{bnfsource}
+where
+\begin{bnfsource}
+channel :
+  source=locations '->' target=locations
+
+locations :
+  location (',' location)*
+\end{bnfsource}
+Where \verb|location| is as described above. For example
+\begin{kappasource}
+\%compartment: 2dArray [10][200]    # 10x200 voxels in size 
+
+# Link all voxels to their horizontally adjacent neighbours
+# Link all voxels to their vertically adjacent neighbours
+# Wrap around the voxels on the left and right edges to create a cylinder
+# Wrap around the voxels on the top and bottom edges to create a torus
+\%channel: meshlinks {\textbackslash}
+    (:2dArray[x][y] -> :2dArray[x+1][y]) + (:2dArray[x][y] -> :2dArray[x -1][y]) +{\textbackslash}
+    (:2dArray[x][y] -> :2dArray[x][y+1]) + (:2dArray[x][y] -> :2dArray[x][y -1]) +{\textbackslash}
+    (:2dArray[0][y] -> :2dArray[9][y])   + (:2dArray[9][y] -> :2dArray[0][y]) +{\textbackslash}
+    (:2dArray[x][0] -> :2dArray[x][199]) + (:2dArray[x][199] -> :2dArray[x][0])
 \end{kappasource}
 
 The above code defines a thin torus composed of a 2d mesh.
 
-Compartment references on the left hand side of the link definitions above may contain either constant values or single variable names, not complex expressions. The variable names are used to define the dimensions which will be iterated through to produce links. Compartment references on the right hand side allow constant values or complex expressions involving the variables defined on the left hand side of the expression. It is invalid for the right hand expression to use variables not defined on the left. If setting the values of variables references valid cells on both the left and right, then those cells are deemed to be linked. References which refer to cells outside the dimensions of the compartment are ignored, and no link is created. The references in a link expression can refer to the same compartment, or two different compartments. The modulus operator \verb|%| is useful in defining regular, repeating linkage patterns within the compartment, for example the 2D hexagonal mesh described in appendix \ref{sec:spatialPatterns}.
+Locations on the left hand side of the channel definitions above may contain either constant values or single variable names, not complex expressions. The variable names are used to define the dimensions which will be iterated through to produce links. Locations on the right hand side allow constant values or complex expressions involving the variables defined on the left hand side of the expression. It is invalid for the right hand expression to use variables not defined on the left. If setting the values of variables references valid voxels on both the left and right, then those voxels are deemed to be linked. References which refer to voxels outside the dimensions of the compartment are ignored, and no link is created. The references in a channel expression can refer to the same compartment, or two different compartments. The modulus operator \verb|%| is useful in defining regular, repeating linkage patterns within the compartment, for example the 2D hexagonal mesh described in Appendix \ref{sec:spatialPatterns}.
 
-Multiple link definitions can use the same label (like \verb|meshlinks| in the example above), in which case references to that label elsewhere in the model acts on the union of all the link definitions. This allows complex linkage definitions, for example compartments constructed in the form of a circle or sphere, to be referenced concisely in transport rules.
+Channels can make use of multiple source voxels simultaneously. For example if a model was to represent the movement of transmembrane proteins laterally along the surface of a membrane, then the channel used to describe the lateral motion would need to include simultaneous movement in two compartments (cytosol and membrane). This is represented as follows:
 
-Further examples of compartment and link specifications for common structures are given in appendix
+\begin{kappasource}
+\%compartment: membrane [5][5]
+\%compartment: cytosol [5][5][5]
+
+\%channel: diffusion {\textbackslash}
+    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x+1][y], :cytosol [u+1][v][0]) + {\textbackslash}
+    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x -1][y], :cytosol [u -1][v][0]) + {\textbackslash}
+    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y+1], :cytosol [u][v+1][0]) + {\textbackslash}
+    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y -1], :cytosol [u][v -1][0])
+\end{kappasource}
+
+Here, variables x,y represent locations in the membrane, and u,v represent locations in the cytosol. The definition updates the locations in these two compartments in unison.
+
+Further examples of compartment and channel specifications for common structures are given in Appendix
  \ref{sec:spatialPatterns}.
 
-\subsection{Transport rules}
+\subsubsection{Predefined channel types}
 
-These rules define the rate at which species move from one compartment (or cell) to another.
+Commonly used 2D and 3D channel types can be concisely defined. 
+
+\medskip 
+
+\begin{tabular}{|c|l|}
+\hline
+Name & \multicolumn{1}{|c|}{Each voxel connected to}\\ 
+\hline
+\multicolumn{2}{|c|}{2D}\\
+\hline
+EdgeNeighbour & 4 neighbours which share an edge in grid \\
+Hexagonal & 6 neighbours which share an edge in hexagonal grid \\
+Neighbour & 8 neighbours which share an edge or corner in grid \\
+\hline
+\multicolumn{2}{|c|}{3D}\\
+\hline
+FaceNeighbour & 6 neighbours which share a face in grid\\
+Neighbour & 26 neighbours which share a face, edge or corner in grid \\
+\hline
+\end{tabular} 
+
+\medskip 
+
+\begin{figure}[h!]
+ \centering
+ \includegraphics[scale=0.2]{./images/channelTypes.png}
+ % channelTypes.png: 1042x202 pixel, 51dpi, 52.10x10.10 cm, bb=0 0 1477 286
+ \caption{2D channel types: EdgeNeighbour, Hexagonal and Neighbour}
+ \label{fig:channelTypes}
+\end{figure}
+
+There are also predefined directional channel types usable in both 2D and 3D compartments
+
+
+%channel: radial Radial :solidRectangle -> :solidRectangle
+%channel: radialIn RadialIn :solidRectangle -> :solidRectangle
+%channel: radialOut RadialOut :solidRectangle -> :solidRectangle
+%channel: lateral Lateral :solidRectangle -> :solidRectangle
+
+\medskip 
+
+\begin{tabular}{|c|l|}
+\hline
+Name & \multicolumn{1}{|c|}{Each voxel connected to}\\ 
+\hline
+Radial & neighbours both directly towards and away from compartment centre  \\
+RadialIn & neighbours both directly towards compartment centre \\
+RadialOut & neighbours both directly away from compartment centre \\
+Lateral & neighbours at same distance from compartment centre \\
+\hline
+\end{tabular} 
+
+\medskip 
+
+\begin{figure}[h!]
+ \centering
+ \includegraphics[scale=0.2]{./images/directedChannelTypes.png}
+ % directedChannelTypes.png: 1042x202 pixel, 51dpi, 52.10x10.10 cm, bb=0 0 1477 286
+ \caption{Directed channel types: Radial and Lateral}
+ \label{fig:directedChannelTypes}
+\end{figure}
+
+The syntax to use a predefined channel type is
+
 \begin{bnfsource}
-'\%transport:' (transportName=LABEL)? linkName=LABEL (agentGroup)? transportKineticExpr
+'\%channel:' id channel
+| '\%channel:' id '(' channel ')' ('+' '(' channel ')')*
 \end{bnfsource}
-  where
+where
 \begin{bnfsource}
-agentGroup :
-  agent (',' agent)*
-
-transportKineticExpr :
-  '@' a=rateValueExpr
-
-rateValueExpr :
-  number | '\$INF'   # \$INF means infinite rate
+channel :
+  type=id source=locations '->' target=locations
 \end{bnfsource}
-
-See appendix \ref{chap:spatialGrammar} for the definition of the remaining constructs. For examples of usage
-
+Where \verb|locations| is as described above. For example
 \begin{kappasource}
-# All species diffusing around the torus defined above
-\%transport: 'general diffusion' 'meshlinks' @ 0.1
+\%compartment: 2dArray [10][200]    # 10x200 voxels in size 
+\%compartment: solidRectangle[5][5] # [height][width]
 
-# Immediate exit of the named species through a uni-directional channel.
-# Note the label for the transport is optional.
-\%transport: 'Ca channel' Calcium() @ \$INF
+\%channel: radial Radial :solidRectangle -> :solidRectangle
+\%channel: radialIn RadialIn :solidRectangle -> :solidRectangle
+\%channel: radialOut RadialOut :solidRectangle -> :solidRectangle
+\%channel: lateral Lateral :solidRectangle -> :solidRectangle
 \end{kappasource}
 
-When referencing bidirectional compartment links (i.e. ones specified with '\verb|<->|', the rate applies equally in either direction across the link. In the second example above, care would need to be taken in defining the compartment link \verb|Ca channel| in the correct orientation.
+\subsubsection{Using predefined channel types between compartments}
 
-\section{Additions to existing language constructs}
+It is possible to use predefined channel types (usually 'Neighbour') to describe movement between compartments. For this to be valid, the compartments must have compatible geometry. Compatible compartments are treated as being nested one inside the other and the channel then specifies the diffusion (or agent linkage) across the boundary between the two compartments. The compartments must fit together exactly, with no overlapping voxels or gaps. For example, a circle may only be nested inside a larger open circle whose dimensions (diameter and thickness) allow the smaller circle to fit exactly inside.
 
-New clauses were added to existing Kappa language constructs to allow the use of compartments and links. In all cases, existing Kappa syntax is still valid. Where necessary, the optional label in existing Kappa statements is non-optional in statements using compartments to avoid ambiguity. When basic Kappa syntax is used in the context of a spatially aware model, the statement is generally taken to apply to all compartments in the model equally.
-
-\subsection{Transform rules}
-
-The following transform statement was added
-
-\begin{bnfsource}
-transformName=LABEL locationExpr transformExpr transformKineticExpr 
-\end{bnfsource}
-  where
-\begin{bnfsource}
-transformExpr :
-  (a=agentGroup)? ( '->' | '<->' ) (b=agentGroup)?
-
-transformKineticExpr :
-  '@' a=rateValueExpr (',' b=rateValueExpr)?
-\end{bnfsource}
-For example
 \begin{kappasource}
-# mRNA degradation happens outside the nuclear membrane
-'degradation' 'cytosol' mRNA() -> @ 6.21
+\%compartment: cytosol   SolidCircle   [3]           # [diameter]
+\%compartment: membrane  OpenCircle    [7] [2]       # [diameter] [thickness]
 
-# Heating of the agent occurs in cell 0 of the cytosol compartment
-'heating' 'cytosol'[0] A(state~blue) -> A(state~red) @ 1.0
-\end{kappasource}
-
-As mentioned before valid locations are either entire compartments or single compartment cells.
-
-\subsection{Initial values}
-
-The following initial value statement was added
-
-\begin{bnfsource}
-initExpr :
-  '\%init:' locationExpr INT '*' '(' agentGroup ')'
-\end{bnfsource}
-For example
-\begin{kappasource}
-# Distribute 2000 blue agents within the cells of cytosol equally
-\%init: 'cytosol' 2000 * (A(state~blue)) 
-
-# Add 500 red agents to cell 5 of the cytosol compartment
-\%init: 'cytosol'[5] 500 * (A(state~red)) 
-\end{kappasource}
-
-\subsection{Observations}
-
-The following observation statement was added
-
-\begin{bnfsource}
-obsExpr :
-  '\%obs:' LABEL locationExpr agentGroup
-\end{bnfsource}
-For example
-\begin{kappasource}
-# Count all blue agents in all cells of the cytosol
-\%obs: 'cytosol blue' 'cytosol' A(state~blue)
-
-# Count all red agents in cell 0 of the cytosol compartment
-\%obs: 'red[0]' 'cytosol'[0] A(state~red) 
+\%channel: domainLink Neighbour (:cytosol -> :membrane) + (:membrane -> :cytosol)
 \end{kappasource}
 
 
-\bigskip For example models demonstrating the use of the language extensions, refer to appendix \ref{chap:resources}.
+\subsection{Locating agents}
+
+The definitions above can now be used to locate species within the model. Any rule that accepts a definition of agents (i.e. transition, var, obs, init rules), now allows these agents to be located. For each group of agents, a prefixed location constrains the agents to that location. For example
+
+\begin{kappasource}
+\%compartment: membrane [5][5]
+\%compartment: cytosol [5][5][5]
+
+\%init: 1000 A                   # A distributed evenly among all voxels in model 
+\%init: 1000 :cytosol B          # B distributed evenly among all voxels in cytosol
+\%init: 1000 :membrane[2][2] C   # C in one voxel of the membrane only 
+\end{kappasource}
+
+In addition, individual agents can have a specified location. For example
+\begin{kappasource}
+\%init: 1000 B:cytosol             # B distributed evenly among all voxels in cytosol
+\%init: 1000 C:membrane[2][2](s~u) # C in one voxel of the membrane only 
+\end{kappasource}
+
+When locations are specified both for agent groups and individual agents, the individual agent location takes precedence. This allows for concise definition of agent groups where all but one of the agents in the group share a location.
+
+\subsection{Agent links}
+
+Agents in neighbouring voxels linked by a defined channel can be linked together. This is an extension of the basic Kappa link syntax to name the channel used to link the agents. For example
+
+\begin{kappasource}
+\%compartment: membrane [5][5]
+\%compartment: cytosol [5][5][5]
+
+\%channel: domainLink {\textbackslash}
+    (:membrane [x][y] -> :cytosol [x][y][0]) + (:cytosol [x][y][0] -> :membrane [x][y])
+
+\%init: 1000 A:membrane(d!1:domainLink), B(d!1)
+\end{kappasource}
+
+The above describes a model where the species A-B exists in two compartments, B in the cytosol and A embedded in the membrane. When specifying agent links using channels, only one end of the link needs to specify the channel. If a link does not specify the channel, it is assumed that both agents party to the link exist in the same voxel.
+
+Links including channels can be created or broken in the same way as basic Kappa links in transition rules.
+
+\subsection{Species movement}
+
+Species can move along defined channels. Species movement is described using the \verb|->:| operator.
+\begin{bnfsource}
+(source=location)? '->:' channelName=id (target=location)?
+| (a=agentGroup)? '->:' channelName=id (b=agentGroup)?
+\end{bnfsource}
+
+Movement transition rules can either constrain the movement by species chosen, or by source location. For example
+
+\begin{kappasource}
+\%compartment: membrane [5][5]
+
+\%channel: diffusion {\textbackslash}
+    (:membrane [x][y] -> :membrane [x+1][y]) + (:membrane [x][y] -> :membrane [x - 1][y]) + {\textbackslash}
+    (:membrane [x][y] -> :membrane [x][y+1]) + (:membrane [x][y] -> :membrane [x][y - 1])
+
+'diffusion A' A(s,t) ->:diffusion A(s,t) @ 1.0
+'diffusion B' B(s,t) ->:diffusion B(s,t) @ 1.0
+'diffusion AB' A(s!1,t),B(s!1,t) ->:diffusion A(s!1,t),B(s!1,t) @ 0.5
+
+'diffusion all' ->:diffusion @ 1.0 # All species located in a single voxel will match this rule
+\end{kappasource}
+
+To describe movement of species which span more than one voxel, use the multi agent channel definition above. For example
+
+\begin{kappasource}
+\%compartment: membrane [5][5]
+\%compartment: cytosol [5][5][5]
+
+\%channel: diffusion {\textbackslash}
+    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x+1][y], :cytosol [u+1][v][0]) + {\textbackslash}
+    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x -1][y], :cytosol [u -1][v][0]) + {\textbackslash}
+    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y+1], :cytosol [u][v+1][0]) + {\textbackslash}
+    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y -1], :cytosol [u][v -1][0])
+
+\%channel: domainLink {\textbackslash}
+    (:membrane [x][y] -> :cytosol [x][y][0]) + (:cytosol [x][y][0] -> :membrane [x][y])
+
+'diffusion A' A_m:membrane(s,t,d!1:domainLink),A_c(d!1) ->:diffusion {\textbackslash}
+              A_m:membrane(s,t,d!1:domainLink),A_c(d!1) @ 1.0
+'diffusion B' B_m:membrane(s,t,d!1:domainLink),B_c(d!1) ->:diffusion {\textbackslash}
+              B_m:membrane(s,t,d!1:domainLink),B_c(d!1) @ 1.0
+
+'diffusion AB' A_m:membrane(s!2,t,d!1:domainLink),A_c(d!1), {\textbackslash}
+               B_m:membrane(s!2,t,d!3:domainLink),B_c(d!3) ->:diffusion {\textbackslash}
+               A_m:membrane(s!2,t,d!1:domainLink),A_c(d!1), {\textbackslash}
+               B_m:membrane(s!2,t,d!3:domainLink),B_c(d!3) @ 0.5
+\end{kappasource}
+
+\subsubsection{Fixed location constraints}
+
+It is necessary in some models to distinguish between species which can diffuse freely within all voxels of a compartment, and species which are fixed to a single voxel. The predefined location \verb|:fixed|, used on the right hand side of a transition rule, allows this. For example, in the model below, agent \verb|A()| can diffuse freely, while agent \verb|B()| must remain static. 
+
+\begin{kappasource}
+\%compartment: cytosol [5][5][5]
+
+\%channel: diffusion Neighbour :cytosol -> :cytosol
+
+'diffusion A' :cytosol A(),B() ->:diffusion :cytosol A(),B:fixed() @ 1.0
+\end{kappasource}
+
+
+\subsection{Instance specific reaction rates}
+
+The rate of a transition rule can depend on the composition and size of the particular species it is being applied to. This is possible for all types of transition, not just diffusion transitions.  
+
+An agent description enclosed in '$\arrowvert\arrowvert$' may be used in a rate equation.
+
+\begin{bnfsource}
+'|' agentGroup '|'
+\end{bnfsource}
+
+where \verb|agentGroup| is agent definition syntax as used on the left hand side of transition rules.
+
+When applied to particular instances of complexes, the number of matching agent structures in the complex instances chosen are counted and substituted into the rate.
+
+For example, in the model below, diffusion rate is inversely proportional to the number of \verb|A()| in the chosen complex
+
+\begin{kappasource}
+\%compartment: array [10]
+\%channel: diffusion :array[x] -> :array[x+1]
+
+\%agent: A(x,y)
+
+\%init: 100 :array[0] A(x,y!1), A(x!1,y!2), A(x!2,y!3), A(x!3,y)
+\%init: 100 :array[0] A(x,y!1), A(x!1,y)
+\%init: 100 :array[0] A(x,y)
+
+'diffusion A' A(x) ->:diffusion A(x) @ 1 / |A()|
+\end{kappasource}
+
+In the second example, the diffusion rate depends on the agent types within individual complex instances
+
+\begin{kappasource}
+\%compartment: array [10]
+\%channel: diffusion :array[x] -> :array[x+1]
+
+\%agent: A(x,y)
+\%agent: B(x,y)
+
+\%init: 100 :array[0] A(x,y!1), A(x!1,y!2), A(x!2,y!3), A(x!3,y)
+\%init: 100 :array[0] A(x,y!1), A(x!1,y!2), B(x!2,y!3), B(x!3,y)
+\%init: 100 :array[0] B(x,y!1), B(x!1,y!2), B(x!2,y!3), B(x!3,y)
+\%init: 100 :array[0] B(x,y!1), B(x!1,y!2), A(x!2,y!3), A(x!3,y)
+
+'diffusion AX' A(x) ->:diffusion A(x) @ 1 / (|A()| + 10 * |B()|)
+'diffusion BX' B(x) ->:diffusion B(x) @ 1 / (|A()| + 10 * |B()|)
+\end{kappasource}
+
+In the final example, the diffusion rate depends on the states of the agents within individual complex instances
+
+\begin{kappasource}
+\%compartment: array [10]
+\%channel: diffusion :array[x] -> :array[x+1]
+
+\%agent: A(x,y,s~y~n)
+
+\%init: 100 :array[0] A(s~y,x,y!1), A(s~y,x!1,y!2), A(s~y,x!2,y!3), A(s~y,x!3,y)
+\%init: 100 :array[0] A(s~y,x,y!1), A(s~y,x!1,y!2), A(s~n,x!2,y!3), A(s~n,x!3,y)
+\%init: 100 :array[0] A(s~n,x,y!1), A(s~n,x!1,y!2), A(s~n,x!2,y!3), A(s~n,x!3,y)
+\%init: 100 :array[0] A(s~n,x,y!1), A(s~n,x!1,y!2), A(s~y,x!2,y!3), A(s~y,x!3,y)
+
+'diffusion A' A(x) ->:diffusion A(x) @ 1 / (|A(s~y)| + 10 * |A(s~n)|)
+\end{kappasource}
+
+The '$\arrowvert\arrowvert$' clause allows any agent declaration that could appear on the left hand side of a transition rule, including agents, complexes, agent state and agent location.
+
+
+\bigskip For example models demonstrating the use of the language extensions, refer to Appendix \ref{chap:resources}.
 
 \newpage
-

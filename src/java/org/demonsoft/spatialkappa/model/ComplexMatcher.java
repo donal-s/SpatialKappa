@@ -8,13 +8,8 @@ import java.util.Map;
 
 public class ComplexMatcher {
     public boolean isExactMatch(Complex template, Complex target) {
-        return getMatches(template, target, true).size() > 0;
+		return getMatches(template, target, true).size() > 0;
     }
-
-    public boolean isPartialMatch(Complex template, Complex target) {
-        return getMatches(template, target, false).size() > 0;
-    }
-
 
     public List<ComplexMapping> getPartialMatches(Complex template, Complex target) {
         return getMatches(template, target, false);
@@ -205,12 +200,22 @@ public class ComplexMatcher {
         for (int currentTarget = 0; currentTarget < core2.length; currentTarget++) {
             if (core2[currentTarget] == -1) {
                 Agent targetAgent = target.agents.get(currentTarget);
-                if (templateAgent.name.equals(targetAgent.name) && isStatesMatch(templateAgent, targetAgent, exactMatch)) {
+                if (templateAgent.name.equals(targetAgent.name) && isStatesMatch(templateAgent, targetAgent, exactMatch) && isLocationMatch(templateAgent, targetAgent, exactMatch)) {
                     result.add(currentTarget);
                 }
             }
         }
         return result;
+    }
+
+    boolean isLocationMatch(Agent templateAgent, Agent targetAgent, boolean exactMatch) {
+        if (templateAgent.location.equals(targetAgent.location)) {
+            return true;
+        }
+        if (!exactMatch) {
+            return templateAgent.location.isRefinement(targetAgent.location);
+        }
+        return false;
     }
 
     boolean isStatesMatch(Agent templateAgent, Agent targetAgent, boolean exactMatch) {

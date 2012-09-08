@@ -15,6 +15,7 @@ import org.junit.Test;
 
 public class VariableTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testVariable_variableExpression() {
         VariableExpression expression = new VariableExpression(new VariableReference("x"));
@@ -44,6 +45,7 @@ public class VariableTest {
         assertSame(Type.VARIABLE_EXPRESSION, variable.type);
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testVariable_kappaExpression() {
         Complex complex = new Complex(new Agent("agent1"));
@@ -65,6 +67,14 @@ public class VariableTest {
             // Expected exception
         }
         
+        try {
+            new Variable(complex, null, "label");
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
         Variable variable = new Variable(complex, location, "label");
         assertEquals("label", variable.label);
         assertNull(variable.expression);
@@ -73,15 +83,16 @@ public class VariableTest {
         assertEquals("'label' cytosol[2] ([agent1()])", variable.toString());
         assertSame(Type.KAPPA_EXPRESSION, variable.type);
  
-        variable = new Variable(complex, null, "label");
+        variable = new Variable(complex, Location.NOT_LOCATED, "label");
         assertEquals("label", variable.label);
         assertNull(variable.expression);
-        assertNull(variable.location);
+        assertSame(Location.NOT_LOCATED, variable.location);
         assertSame(complex, variable.complex);
         assertEquals("'label' ([agent1()])", variable.toString());
         assertSame(Type.KAPPA_EXPRESSION, variable.type);
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testVariable_transition() {
         try {

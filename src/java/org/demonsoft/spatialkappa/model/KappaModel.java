@@ -1,8 +1,14 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.Location.FIXED_LOCATION;
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
+import static org.demonsoft.spatialkappa.model.Utils.propogateLocation;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +19,7 @@ import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
+import org.demonsoft.spatialkappa.model.Complex.MappingInstance;
 import org.demonsoft.spatialkappa.model.Variable.Type;
 import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
 import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
@@ -23,42 +30,17 @@ public class KappaModel implements IKappaModel {
 
     private static final ComplexMatcher matcher = new ComplexMatcher();
     
-    private final List<LocatedTransform> locatedTransforms = new ArrayList<LocatedTransform>();
+    private final Map<String, AggregateAgent> agentDeclarationMap = new HashMap<String, AggregateAgent>();
     private final Map<String, AggregateAgent> aggregateAgentMap = new HashMap<String, AggregateAgent>();
     private final List<InitialValue> initialValues = new ArrayList<InitialValue>();
     private final List<Perturbation> perturbations = new ArrayList<Perturbation>();
     private final List<Compartment> compartments = new ArrayList<Compartment>();
-    private final List<CompartmentLink> compartmentLinks = new ArrayList<CompartmentLink>();
-    private final List<Transport> transports = new ArrayList<Transport>();
+    private final List<Channel> channels = new ArrayList<Channel>();
+    private final List<Transition> transitions = new ArrayList<Transition>();
     private final Set<Complex> canonicalComplexes = new HashSet<Complex>();
     private final List<String> plottedVariables = new ArrayList<String>();
     private final Map<String, Variable> variables = new HashMap<String, Variable>();
-
-
-    public void addTransform(String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, VariableExpression rate, Location location) {
-        addTransform(new LocatedTransform(new Transform(label, leftSideAgents, rightSideAgents, rate, false), location));
-        if (label != null) {
-            variables.put(label, new Variable(label));
-        }
-    }
-
-
-    private void addTransform(LocatedTransform transform) {
-        if (transform == null) {
-            throw new NullPointerException();
-        }
-        locatedTransforms.add(transform);
-        for (Complex complex : transform.transition.sourceComplexes) {
-            for (Agent agent : complex.agents) {
-                aggregateAgent(agent);
-            }
-        }
-        for (Complex complex : transform.transition.targetComplexes) {
-            for (Agent agent : complex.agents) {
-                aggregateAgent(agent);
-            }
-        }
-    }
+	private final List<String> orderedVariableNames = new ArrayList<String>();
 
     private void aggregateAgent(Agent agent) {
         if (aggregateAgentMap.get(agent.name) == null) {
@@ -67,7 +49,7 @@ public class KappaModel implements IKappaModel {
         aggregateAgentMap.get(agent.name).addSites(agent.getSites());
     }
 
-    public void addInitialValue(List<Agent> agents, String valueText, Location compartment) {
+    public void addInitialValue(List<Agent> agents, String valueText, Location location) {
         if (agents == null || valueText == null) {
             throw new NullPointerException();
         }
@@ -75,27 +57,31 @@ public class KappaModel implements IKappaModel {
             throw new IllegalArgumentException("Empty complex");
         }
         int quantity = Integer.parseInt(valueText);
+        propogateLocation(agents, location);
         for (Agent agent : agents) {
             aggregateAgent(agent);
         }
         List<Complex> complexes = getCanonicalComplexes(Utils.getComplexes(agents));
         
-        initialValues.add(new InitialValue(complexes, quantity, compartment));
+        initialValues.add(new InitialValue(complexes, quantity, location));
     }
 
-    public void addInitialValue(List<Agent> agents, VariableReference reference, Location compartment) {
+
+
+	public void addInitialValue(List<Agent> agents, VariableReference reference, Location location) {
         if (agents == null || reference == null) {
             throw new NullPointerException();
         }
         if (agents.size() == 0) {
             throw new IllegalArgumentException("Empty complex");
         }
+        propogateLocation(agents, location);
         for (Agent agent : agents) {
             aggregateAgent(agent);
         }
         List<Complex> complexes = getCanonicalComplexes(Utils.getComplexes(agents));
         
-        initialValues.add(new InitialValue(complexes, reference, compartment));
+        initialValues.add(new InitialValue(complexes, reference, location));
     }
 
     private List<Complex> getCanonicalComplexes(List<Complex> complexes) {
@@ -116,6 +102,8 @@ public class KappaModel implements IKappaModel {
 
     public void addVariable(List<Agent> agents, String label, Location location) {
         variables.put(label, new Variable(new Complex(agents), location, label));
+        orderedVariableNames.add(label);
+        propogateLocation(agents, location);
 
         for (Agent agent : agents) {
             aggregateAgent(agent);
@@ -124,6 +112,7 @@ public class KappaModel implements IKappaModel {
     
     public void addVariable(VariableExpression expression, String label) {
         variables.put(label, new Variable(expression, label));
+        orderedVariableNames.add(label);
     }
 
 
@@ -138,15 +127,8 @@ public class KappaModel implements IKappaModel {
         perturbations.add(perturbation);
     }
 
-    public void addCompartment(String name, List<Integer> dimensions) {
-        if (name == null || dimensions == null) {
-            throw new NullPointerException();
-        }
-        int[] dimArray = new int[dimensions.size()];
-        for (int index = 0; index < dimensions.size(); index++) {
-            dimArray[index] = dimensions.get(index);
-        }
-        addCompartment(new Compartment(name, dimArray));
+    public void addCompartment(String name, String type, List<Integer> dimensions) {
+        addCompartment(Compartment.createCompartment(name, type, dimensions));
     }
 
     public void addCompartment(Compartment compartment) {
@@ -156,11 +138,11 @@ public class KappaModel implements IKappaModel {
         compartments.add(compartment);
     }
 
-    public void addCompartmentLink(CompartmentLink link) {
-        if (link == null) {
+    public void addChannel(Channel channel) {
+        if (channel == null) {
             throw new NullPointerException();
         }
-        compartmentLinks.add(link);
+        channels.add(channel);
     }
 
     @Override
@@ -172,20 +154,16 @@ public class KappaModel implements IKappaModel {
             result.append(compartment).append("\n");
         }
         result.append("\nCOMPARTMENT LINKS\n");
-        for (CompartmentLink link : compartmentLinks) {
+        for (Channel link : channels) {
             result.append(link).append("\n");
         }
-        result.append("\nTRANSPORT RULES\n");
-        for (Transport transport : transports) {
-            result.append(transport).append("\n");
+        result.append("\nTRANSITION RULES\n");
+        for (Transition transition : transitions) {
+            result.append(transition).append("\n");
         }
         result.append("\nAGENTS\n");
         for (AggregateAgent agent : aggregateAgentMap.values()) {
             result.append(agent).append("\n");
-        }
-        result.append("\nTRANSFORM RULES\n");
-        for (LocatedTransition transform : locatedTransforms) {
-            result.append(transform).append("\n");
         }
         result.append("\nINITIAL VALUES\n");
         for (InitialValue initialValue : initialValues) {
@@ -202,169 +180,198 @@ public class KappaModel implements IKappaModel {
         return result.toString();
     }
 
-    public Map<LocatedComplex, Integer> getFixedLocatedInitialValuesMap() {
-        Map<LocatedComplex, Integer> result = new HashMap<LocatedComplex, Integer>();
+    public Map<Complex, Integer> getFixedLocatedInitialValuesMap() {
+        Map<Complex, Integer> result = new HashMap<Complex, Integer>();
         
         for (InitialValue initialValue : initialValues) {
-            boolean partition = false;
-            Compartment compartment = null;
-            
-            int quantity = initialValue.quantity;
             if (initialValue.reference != null) {
-                quantity = variables.get(initialValue.reference.variableName).expression.evaluate(this);
+                initialValue.quantity = variables.get(initialValue.reference.variableName).expression.evaluate(this);
             }
+
+            Map<Complex, Integer> currentResult = initialValue.getFixedLocatedComplexMap(compartments, channels);
             
-            Location location = initialValue.location;
-            if (location != null) {
-                compartment = location.getReferencedCompartment(compartments);
-                if (compartment != null && compartment.getDimensions().length != location.getIndices().length) {
-                    partition = true;
-                }
-
-                if (partition && compartment != null) {
-                    int[] cellCounts = compartment.getDistributedCellCounts(quantity);
-                    Location[] cellLocations = compartment.getDistributedCellReferences();
-                    
-                    for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
-                        Location cellLocation = cellLocations[cellIndex];
-                        for (Complex complex : initialValue.complexes) {
-                            addInitialLocatedValue(result, complex, cellLocation, cellCounts[cellIndex]);
-                        }
-                    }
-                }
-                else {
-                    for (Complex complex : initialValue.complexes) {
-                        addInitialLocatedValue(result, complex, location, quantity);
-                    }
-                }
-            }
-            else { // location == null
-                if (compartments.size() > 0) {
-                    int[] cellCounts = Compartment.getDistributedCellCounts(initialValue.quantity, compartments);
-                    Location[] cellLocations = Compartment.getDistributedCellReferences(compartments);
-                    
-                    for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
-                        Location cellLocation = cellLocations[cellIndex];
-                        for (Complex complex : initialValue.complexes) {
-                            addInitialLocatedValue(result, complex, cellLocation, cellCounts[cellIndex]);
-                        }
-                    }
-            }
-                else { // no compartments
-                    for (Complex complex : initialValue.complexes) {
-                        addInitialLocatedValue(result, complex, location, quantity);
-                    }
-                }
-
+            for (Map.Entry<Complex, Integer> current : currentResult.entrySet()) {
+                addInitialLocatedValue(result, current.getKey(), current.getValue());
             }
         }
-
         return result;
     }
 
-    private void addInitialLocatedValue(Map<LocatedComplex, Integer> result, Complex complex, Location location, int quantity) {
-        LocatedComplex locatedComplex = new LocatedComplex(complex, location);
-        for (Map.Entry<LocatedComplex, Integer> entry : result.entrySet()) {
-            if (locatedComplex.isExactMatch(entry.getKey())) {
+    private void addInitialLocatedValue(Map<Complex, Integer> result, Complex complex, int quantity) {
+        for (Agent agent : complex.agents) {
+            addDefaultAgentSites(agent);
+        }
+        complex.update();
+        
+        for (Map.Entry<Complex, Integer> entry : result.entrySet()) {
+            if (complex.isExactMatch(entry.getKey())) {
                 entry.setValue(entry.getValue() + quantity);
                 return;
             }
         }
-        result.put(locatedComplex, quantity);
+        result.put(complex, quantity);
     }
 
-    public void addTransport(String label, String compartmentLinkName, List<Agent> agents, VariableExpression rate) {
-        addTransport(new Transport(label, compartmentLinkName, agents, rate));
-        if (label != null) {
-            variables.put(label, new Variable(label));
+    private void addDefaultAgentSites(Agent agent) {
+        AggregateAgent aggregateAgent = agentDeclarationMap.get(agent.name);
+
+        if (aggregateAgent == null) {
+            throw new IllegalStateException("Agent '" + agent.name + "' not found");
         }
-    }
-
-    private void addTransport(Transport transport) {
-        transports.add(transport);
-    }
-
-    public List<LocatedTransition> getFixedLocatedTransitions() {
-        List<LocatedTransition> result = new ArrayList<LocatedTransition>();
-        for (LocatedTransform transition : locatedTransforms) {
-            Location location = transition.sourceLocation;
-            if (location != null) {
-                Compartment compartment = location.getReferencedCompartment(compartments);
-                if (compartment.getDimensions().length != location.getIndices().length) {
-                    Location[] cellLocations = compartment.getDistributedCellReferences();
-                    Transform cloneTransform = ((Transform) transition.transition).clone();
-                    for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
-                        result.add(new LocatedTransform(cloneTransform, cellLocations[cellIndex]));
-                    }
+        
+        for (AggregateSite aggregateSite : aggregateAgent.getSites()) {
+            String siteName = aggregateSite.getName();
+            if (agent.getSite(siteName) == null) {
+                String state = null;
+                if (aggregateSite.states.size() > 0) {
+                    state = aggregateSite.states.get(0);
                 }
-                else {
-                    result.add(transition.clone());
-                }
-            }
-            else { // location == null
-                if (compartments.size() > 0) {
-                    Transform cloneTransform = ((Transform) transition.transition).clone();
-                    for (Compartment compartment : compartments) {
-                        Location[] cellLocations = compartment.getDistributedCellReferences();
-                        for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
-                            result.add(new LocatedTransform(cloneTransform, cellLocations[cellIndex]));
-                        }
-                    }
-                }
-                else { // No compartments
-                    result.add(transition.clone());
-                }
+                agent.addSite(new AgentSite(siteName, state, null));
             }
         }
+    }
 
-        for (Transport transport : transports) {
-            List<CompartmentLink> links = getCompartmentLinks(transport.getCompartmentLinkName());
-            if (links.size() > 0) {
-                Transport cloneTransport = transport.clone();
-                for (CompartmentLink link : links) {
-                    Location[][] cellLocations = link.getCellReferencePairs(compartments);
-                    for (int cellIndex = 0; cellIndex < cellLocations.length; cellIndex++) {
-                        Location sourceReference = (link.getDirection() != Direction.BACKWARD) ? cellLocations[cellIndex][0] : cellLocations[cellIndex][1];
-                        Location targetReference = (link.getDirection() != Direction.BACKWARD) ? cellLocations[cellIndex][1] : cellLocations[cellIndex][0];
+    @SuppressWarnings("hiding")
+    public List<Transition> getValidLocatedTransitions(Transition templateTransition, List<Compartment> compartments, List<Channel> channels) {
+        if (templateTransition == null || compartments == null || channels == null) {
+            throw new NullPointerException();
+        }
+        List<Transition> result = new ArrayList<Transition>();
+        
+        List<Agent> leftAgents = new ArrayList<Agent>(templateTransition.leftAgents);
+        List<Agent> rightAgents = new ArrayList<Agent>(templateTransition.rightAgents);
+        Map<Agent,Agent> leftRightTemplateMap = templateTransition.getLeftRightAgentMap();
+        Map<Agent,Agent> templateMergedMap = new HashMap<Agent, Agent>();
+        List<Agent> mergedAgents = new ArrayList<Agent>();
+        
+        for (Agent leftTemplateAgent : leftAgents) {
+            Agent rightTemplateAgent = leftRightTemplateMap.get(leftTemplateAgent);
+            rightAgents.remove(rightTemplateAgent);
+            
+            Agent mergedAgent = leftTemplateAgent.clone();
+            mergedAgents.add(mergedAgent);
+            templateMergedMap.put(leftTemplateAgent, mergedAgent);
+            
+            if (rightTemplateAgent != null) {
+                mergedAgent.location = getMergedLocation(mergedAgent.location, rightTemplateAgent.location);
+                
+                for (AgentSite agentSite : rightTemplateAgent.getSites()) {
+                    String linkName = agentSite.isNamedLink() ? "rhs-" + agentSite.getLinkName() : agentSite.getLinkName();
+                    
+                    AgentSite mergedSite = new AgentSite("rhs-" + agentSite.name, null, linkName, agentSite.getChannel());
+                    mergedAgent.addSite(mergedSite);
+                }
+                templateMergedMap.put(rightTemplateAgent, mergedAgent);
+            }
+        }
+        
+        for (Agent rightTemplateAgent : rightAgents) {
+            Agent mergedAgent = rightTemplateAgent.clone();
+            mergedAgents.add(mergedAgent);
+            templateMergedMap.put(rightTemplateAgent, mergedAgent);
+            
+            for (AgentSite agentSite : mergedAgent.getSites()) {
+                if (agentSite.isNamedLink()) {
+                    agentSite.setLinkName("rhs-" + agentSite.getLinkName());
+                }
+            }
+        }
+        
+        List<Complex> mergedComplexes = Utils.getComplexes(mergedAgents);
+        if (mergedComplexes.size() != 1) {
+            throw new IllegalArgumentException("Currently only connected transforms are supported");
+        }
+        
+        Complex mergedComplex = mergedComplexes.get(0);
+        List<MappingInstance> mergedMappings = mergedComplex.getMappingInstances(compartments, channels);
+        if (mergedMappings.size() == 1) {
+            MappingInstance mapping = mergedMappings.get(0);
+            result.add(new Transition(templateTransition.label, 
+                    getUnmergedAgents(templateTransition.leftAgents, mapping.mapping, templateMergedMap), 
+                    null,
+                    getUnmergedAgents(templateTransition.rightAgents, mapping.mapping, templateMergedMap), 
+                    templateTransition.getRate()));
+
+        }
+        else if (mergedMappings.size() > 1) {
+            int labelSuffix = 1;
+            for (MappingInstance mapping : mergedMappings) {
+                String label = (templateTransition.label == null) ? 
+                        null : templateTransition.label + "-" + (labelSuffix++);
+                result.add(new Transition(label, 
+                        getUnmergedAgents(templateTransition.leftAgents, mapping.mapping, templateMergedMap), 
+                        null,
+                        getUnmergedAgents(templateTransition.rightAgents, mapping.mapping, templateMergedMap), 
+                        templateTransition.getRate()));
+            }
+        }
+
+        return result;
+    }
+
     
-                        result.add(new LocatedTransport(cloneTransport, sourceReference, targetReference));
-                        if (link.getDirection() == Direction.BIDIRECTIONAL) {
-                            result.add(new LocatedTransport(cloneTransport, targetReference, sourceReference));
-                        }
-                    }
-                }
+    List<Agent> getUnmergedAgents(List<Agent> templateAgents, Map<Agent, Agent> mergedLocatedMap,
+            Map<Agent, Agent> templateMergedMap) {
+        if (templateAgents == null || mergedLocatedMap == null || templateMergedMap == null) {
+            throw new NullPointerException();
+        }
+        List<Agent> result = new ArrayList<Agent>();
+        for (Agent templateAgent : templateAgents) {
+            if (!templateMergedMap.containsKey(templateAgent)) {
+                throw new IllegalArgumentException("Agent not found: " + templateAgent);
             }
+            Agent mergedAgent = templateMergedMap.get(templateAgent);
+            
+            if (!mergedLocatedMap.containsKey(mergedAgent)) {
+                throw new IllegalArgumentException("Agent not found: " + mergedAgent);
+            }
+            Agent locatedAgent = mergedLocatedMap.get(mergedAgent);
+            
+            Agent resultAgent = templateAgent.clone();
+            resultAgent.setLocation(locatedAgent.location);
+            result.add(resultAgent);
         }
         return result;
     }
 
-    private List<CompartmentLink> getCompartmentLinks(String compartmentLinkName) {
-        List<CompartmentLink> result = new ArrayList<CompartmentLink>();
-        for (CompartmentLink current : compartmentLinks) {
-            if (current.getName().equals(compartmentLinkName)) {
-                result.add(current);
+    Location getMergedLocation(Location location1, Location location2) {
+        if (location1 == null || location2 == null) {
+            throw new NullPointerException();
+        }
+        if (location1 == NOT_LOCATED) {
+            return location2;
+        }
+        if (location2 == NOT_LOCATED) {
+            return location1;
+        }
+        if (location1.getName().equals(location2.getName())) {
+            if (location1.getIndices().length == 0) {
+                return location2;
+            }
+            if (location2.getIndices().length == 0) {
+                return location1;
+            }
+            if (location1.equals(location2)) {
+                return location1;
             }
         }
-        return result;
+        throw new IllegalArgumentException("Locations are incompatible: " + location1 + "; " + location2);
     }
 
-    public List<LocatedTransform> getLocatedTransforms() {
-        return locatedTransforms;
+    public Channel getChannel(String channelName) {
+        return Utils.getChannel(channels, channelName);
     }
+
 
     public List<Compartment> getCompartments() {
         return compartments;
     }
     
-    public List<CompartmentLink> getCompartmentLinks() {
-        return compartmentLinks;
+    public List<Channel> getChannels() {
+        return channels;
     }
     
-    public List<Transport> getTransports() {
-        return transports;
-    }
-    
-    public Map<String, AggregateAgent> getAggregateAgentMap() {
+    Map<String, AggregateAgent> getAggregateAgentMap() {
         return aggregateAgentMap;
     }
     
@@ -384,10 +391,10 @@ public class KappaModel implements IKappaModel {
         return variables;
     }
 
+	public List<String> getOrderedVariableNames() {
+		return orderedVariableNames;
+	}
     
-
-
-
     public void validate() {
         
         for (Variable variable : variables.values()) {
@@ -400,28 +407,21 @@ public class KappaModel implements IKappaModel {
             }
         }
         
-        for (CompartmentLink link : compartmentLinks) {
-            boolean found = false;
-            for (Compartment compartment : compartments) {
-                if (link.getSourceReference().getName().equals(compartment.getName())) {
-                    found = true;
-                    break;
-                }
+        Set<String> compartmentNames = new HashSet<String>();
+        for (Compartment compartment : compartments) {
+            if (compartmentNames.contains(compartment.getName())) {
+                throw new IllegalStateException("Duplicate compartment '" + compartment.getName() + "'");
             }
-            if (!found) {
-                throw new IllegalStateException("Compartment '" + link.getSourceReference().getName() + "' not found");
+            compartmentNames.add(compartment.getName());
+        }
+       
+        Set<String> channelNames = new HashSet<String>();
+        for (Channel channel : channels) {
+            if (channelNames.contains(channel.getName())) {
+                throw new IllegalStateException("Duplicate channel '" + channel.getName() + "'");
             }
-            
-            found = false;
-            for (Compartment compartment : compartments) {
-                if (link.getTargetReference().getName().equals(compartment.getName())) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                throw new IllegalStateException("Compartment '" + link.getTargetReference().getName() + "' not found");
-            }
+            channelNames.add(channel.getName());
+            channel.validate(compartments);
         }
        
         for (InitialValue initialValue : initialValues) {
@@ -442,21 +442,8 @@ public class KappaModel implements IKappaModel {
             }
         }
         
-        for (LocatedTransform transform : locatedTransforms) {
-            VariableReference reference = transform.transition.rate.reference;
-            if (reference != null) {
-                Variable variable = variables.get(reference.variableName);
-                if (variable == null) {
-                    throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
-                }
-                if (!variable.expression.isFixed(variables)) {
-                    throw new IllegalStateException("Reference '" + reference.variableName + "' not fixed");
-                }
-            }
-        }
-        
-        for (Transport transport : transports) {
-            VariableReference reference = transport.rate.reference;
+        for (Transition transition : transitions) {
+            VariableReference reference = transition.rate.reference;
             if (reference != null) {
                 Variable variable = variables.get(reference.variableName);
                 if (variable == null) {
@@ -467,31 +454,15 @@ public class KappaModel implements IKappaModel {
                 }
             }
             
-            boolean found = false;
-            for (CompartmentLink link : compartmentLinks) {
-                if (transport.getCompartmentLinkName().equals(link.getName())) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                throw new IllegalStateException("Compartment link '" + transport.getCompartmentLinkName() + "' not found");
+            if (transition.channelName != null) {
+                getChannel(transition.channelName);
             }
         }
         
         for (String reference : plottedVariables) {
             boolean found = false;
-            for (Transport transport : transports) {
-                if (reference.equals(transport.label)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (found) {
-                continue;
-            }
-            for (LocatedTransform transform : locatedTransforms) {
-                if (reference.equals(transform.transition.label)) {
+            for (Transition transition : transitions) {
+                if (reference.equals(transition.label)) {
                     found = true;
                     break;
                 }
@@ -509,8 +480,94 @@ public class KappaModel implements IKappaModel {
             }
         }
         
+    	for (AggregateAgent agent : aggregateAgentMap.values()) {
+    		if (!agentDeclarationMap.containsKey(agent.getName())) {
+                throw new IllegalStateException("Agent '" + agent.getName() + "' not declared");
+    		}
+    		AggregateAgent declaredAgent = agentDeclarationMap.get(agent.getName());
+    		Map<String, AggregateSite> declaredSites = new HashMap<String, AggregateSite>();
+    		for (AggregateSite site : declaredAgent.getSites()) {
+    			declaredSites.put(site.getName(), site);
+    		}
+    		for (AggregateSite site : agent.getSites()) {
+    			if (!declaredSites.containsKey(site.getName())) {
+    				throw new IllegalStateException("Agent site " + agent.getName() + "(" + site.getName() + ") not declared");
+    			}
+    			AggregateSite declaredSite = declaredSites.get(site.getName());
+    			for (String state : site.getStates()) {
+    				if (!declaredSite.getStates().contains(state)) {
+    					throw new IllegalStateException("Agent state " + agent.getName() + "(" + site.getName() + "~" + state + ") not declared");
+    				}
+    			}
+    			declaredSite.getLinks().addAll(site.getLinks());
+    		}
+    	}
+    	
+    	for (InitialValue initialValue : initialValues) {
+    	    checkLocations(initialValue.complexes);
+    	}
+        for (Perturbation perturbation : perturbations) {
+            checkAgentLocations(perturbation.effect.agents, false);
+        }
+        checkLocations(canonicalComplexes);
+        for (Variable variable : variables.values()) {
+            checkLocations(variable.complex);
+            checkLocations(variable.location, false);
+        }
+        for (Transition transition : transitions) {
+            checkAgentLocations(transition.leftAgents, false);
+            checkAgentLocations(transition.rightAgents, true);
+            checkLocations(transition.leftLocation, false);
+            checkLocations(transition.rightLocation, false);
+        }
+        
+        // TODO add validation of when its possible to use variable expression agent groups
     }
     
+    private void checkAgentLocations(Collection<Agent> agents, boolean allowFixed) {
+        if (agents == null) {
+            return;
+        }
+        for (Agent agent : agents) {
+            checkLocations(agent, allowFixed);
+        }
+    }
+
+    private void checkLocations(Collection<Complex> complexes) {
+        if (complexes == null) {
+            return;
+        }
+        for (Complex complex : complexes) {
+            checkLocations(complex);
+        }
+    }
+
+    private void checkLocations(Complex complex) {
+        if (complex == null) {
+            return;
+        }
+        for (Agent agent : complex.agents) {
+            checkLocations(agent, false);
+        }
+    }
+
+    private void checkLocations(Agent agent, boolean allowFixed) {
+        if (agent == null) {
+            return;
+        }
+        checkLocations(agent.location, allowFixed);
+    }
+
+    private void checkLocations(Location location, boolean allowFixed) {
+        if (location == null || location == NOT_LOCATED || (allowFixed && location == FIXED_LOCATION)) {
+            return;
+        }
+        Compartment compartment = getCompartment(compartments, location.getName());
+        if (location.getIndices().length > 0 && !compartment.isValidVoxel(location)) {
+            throw new IllegalStateException("Location " + location + " not valid");
+        }
+    }
+
     public static IKappaModel createModel(File inputFile) throws Exception {
         ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(inputFile));
         CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));
@@ -568,7 +625,55 @@ public class KappaModel implements IKappaModel {
         public void stop() {
             throw new IllegalStateException("Should not be called");
         }
+
+        public void snapshot() {
+            throw new IllegalStateException("Should not be called");
+        }
         
+    }
+
+	public void addAgentDeclaration(AggregateAgent agent) {
+        agentDeclarationMap.put(agent.getName(), agent);
+	}
+
+	public Map<String, AggregateAgent> getAgentDeclarationMap() {
+		return agentDeclarationMap;
+	}
+
+
+    public void addTransition(String label, Location leftLocation, List<Agent> leftSideAgents, String channelName,
+            Location rightLocation, List<Agent> rightSideAgents, VariableExpression rate) {
+        if (leftSideAgents != null && leftLocation != null) {
+            propogateLocation(leftSideAgents, leftLocation);
+        }
+        if (rightSideAgents != null && rightLocation != null) {
+            propogateLocation(rightSideAgents, rightLocation);
+        }
+        if (leftSideAgents == null && rightSideAgents == null) {
+            transitions.add(new Transition(label, leftLocation, channelName, rightLocation, rate));
+        }
+        else {
+            transitions.add(new Transition(label, leftSideAgents, channelName, rightSideAgents, rate));
+        }
+        if (label != null) {
+            variables.put(label, new Variable(label));
+        }
+        if (leftSideAgents != null) {
+            for (Agent agent : leftSideAgents) {
+                aggregateAgent(agent);
+            }
+        }
+        if (rightSideAgents != null) {
+            for (Agent agent : rightSideAgents) {
+                aggregateAgent(agent);
+            }
+        }
+
+    }
+
+
+    public List<Transition> getTransitions() {
+        return transitions;
     }
     
 }

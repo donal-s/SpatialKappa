@@ -4,7 +4,7 @@
 \section{Spatial Kappa patterns}
 \label{sec:spatialPatterns}
 
-The following are generic shapes, with their equivalent Spatial Kappa representations. These are intended to be copied during model development.
+The following are generic shapes, with their equivalent Spatial Kappa representations. These are intended to be copied during model development. Explicitly specified models are shown first to demonstrate the syntax, then more concise versions are shown where possible.
 
 
 \subsection{1 dimensional patterns}
@@ -12,16 +12,17 @@ The following are generic shapes, with their equivalent Spatial Kappa representa
 \subsubsection{Linear array}
 
 \begin{kappasource}
-%compartment: 'array' [n] # Replace n with length of array
-%link: 'intra-array' 'array' [x] <-> 'array' [x+1]
+%compartment: array [n] # Replace n with length of array
+%channel: intra-array (:array [x] -> :array [x+1]) + (:array [x] -> :array [x -1])
 \end{kappasource}
 
 \subsubsection{Circle}
 
 \begin{kappasource}
-%compartment: 'circle' [n] # Replace n with number of cells in circle
-%link: 'intra-circle' 'circle' [x] <-> 'circle' [x+1]
-%link: 'intra-circle' 'circle' [n-1] <-> 'circle' [0] # Replace n-1 as above
+%compartment: circle [n] # Replace n with number of cells in circle
+%channel: intra-circle {\textbackslash}
+    (:circle [x] -> :circle [x+1]) + (:circle [x] -> :circle [x -1]) + {\textbackslash}
+    (:circle [n-1] -> :circle [0]) + (:circle [0] -> :circle [n -1]) # Replace n-1 as above
 \end{kappasource}
 
 
@@ -32,17 +33,31 @@ The following are generic shapes, with their equivalent Spatial Kappa representa
 There are 2 variants here, 4-way linked and 8-way linked.
 
 \begin{kappasource}
-%compartment: 'mesh' [n][m] # Replace n and m with dimensions of mesh
+%compartment: mesh [n][m] # Replace n and m with dimensions of mesh
 
 # 4-way diffusion
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y] 
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x][y+1] 
+%channel: intra-mesh {\textbackslash}
+    (:mesh [x][y] -> :mesh [x+1][y]) + (:mesh [x][y] -> :mesh [x -1][y]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x][y+1]) + (:mesh [x][y] -> :mesh [x][y -1])
 
 # or 8-way diffusion
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y] 
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x][y+1] 
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y+1] 
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y-1] 
+%channel: intra-mesh {\textbackslash}
+    (:mesh [x][y] -> :mesh [x+1][y]) + (:mesh [x][y] -> :mesh [x -1][y]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x][y+1]) + (:mesh [x][y] -> :mesh [x][y -1]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x+1][y+1]) + (:mesh [x][y] -> :mesh [x -1][y -1]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x+1][y -1]) + (:mesh [x][y] -> :mesh [x -1][y+1])
+\end{kappasource}
+
+These can also be specified using channel types as follows
+
+\begin{kappasource}
+%compartment: mesh [n][m] # Replace n and m with dimensions of mesh
+
+# 4-way diffusion
+%channel: intra-mesh EdgeNeighbour :mesh -> :mesh
+
+# or 8-way diffusion
+%channel: intra-mesh Neighbour :mesh -> :mesh
 \end{kappasource}
 
 \subsubsection{Hexagonal mesh}
@@ -52,18 +67,31 @@ Again, 2 variants depending on what overall shape is required. The first form ha
 The second variant demonstrates handling of alternate odd-even linkage depending on the column of the structure.
 
 \begin{kappasource}
-%compartment: 'mesh' [n][m] # Replace n and m with dimensions of mesh
+%compartment: mesh [n][m] # Replace n and m with dimensions of mesh
 
 # Variant 1 - rhomboid mesh
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x][y+1] 
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y] 
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y+1] 
+%channel: intra-mesh {\textbackslash}
+    (:mesh [x][y] -> :mesh [x][y+1]) + (:mesh [x][y] -> :mesh [x][y -1]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x+1][y]) + (:mesh [x][y] -> :mesh [x -1][y]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x+1][y+1]) + (:mesh [x][y] -> :mesh [x -1][y-1])
 
 # Variant 2 - rectangular mesh
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x][y+1] 
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y] 
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][(y+1)-(2*(x%2))] 
+%channel: intra-mesh {\textbackslash}
+    (:mesh [x][y] -> :mesh [x][y+1]) + (:mesh [x][y] -> :mesh [x][y -1]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x+1][y]) + (:mesh [x][y] -> :mesh [x -1][y]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x+1][(y+1)-(2*(x%2))]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x -1][(y -1)+(2*((x -1)%2))])
+
 # The above statement alternates [x+1][y+1] and [x+1][y-1] as x increases
+\end{kappasource}
+
+Variant 2 can also be specified using channel types as follows
+
+\begin{kappasource}
+%compartment: mesh [n][m] # Replace n and m with dimensions of mesh
+
+# Variant 2 - rectangular mesh
+%channel: intra-mesh Hexagonal :mesh -> :mesh
 \end{kappasource}
 
 
@@ -72,17 +100,35 @@ The second variant demonstrates handling of alternate odd-even linkage depending
 By connecting together the top and bottom edges of a mesh as described above, we get a cylinder. By also connecting together the left and right edges we get a torus.
 
 \begin{kappasource}
-%compartment: 'mesh' [n][m] # Replace n and m with dimensions of mesh
+%compartment: mesh [n][m] # Replace n and m with dimensions of mesh
 
-# 4-way diffusion
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x+1][y] 
-%link: 'intra-mesh' 'mesh' [x][y] <-> 'mesh' [x][y+1] 
+# 4-way diffusion mesh
+%channel: intra-mesh {\textbackslash}
+    (:mesh [x][y] -> :mesh [x+1][y]) + (:mesh [x][y] -> :mesh [x -1][y]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x][y+1]) + (:mesh [x][y] -> :mesh [x][y -1])
+%channel: intra-mesh mesh [x][y] <-> mesh [x+1][y] 
+%channel: intra-mesh mesh [x][y] <-> mesh [x][y+1] 
 
-# add this to get a cylinder
-%link: 'intra-mesh' 'mesh' [x][m-1] <-> 'mesh' [x+1][0] # Replace m-1 as above 
+# cylinder
+%channel: intra-mesh {\textbackslash}
+    (:mesh [x][y] -> :mesh [x+1][y]) + (:mesh [x][y] -> :mesh [x -1][y]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x][y+1]) + (:mesh [x][y] -> :mesh [x][y -1]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x][m -1]) + (:mesh [x][y] -> :mesh [x+1][0]) 
+# Replace m-1 as above 
 
-# add this to get a torus
-%link: 'intra-mesh' 'mesh' [n-1][y] <-> 'mesh' [0][y] # Replace n-1 as above 
+# torus
+%channel: intra-mesh {\textbackslash}
+    (:mesh [x][y] -> :mesh [x+1][y]) + (:mesh [x][y] -> :mesh [x -1][y]) + {\textbackslash}
+    (:mesh [x][y] -> :mesh [x][y+1]) + (:mesh [x][y] -> :mesh [x][y -1]) + {\textbackslash}
+    (:mesh [x][m -1] -> :mesh [x][0]) + (:mesh [x][0] -> :mesh [x][m -1]) + {\textbackslash}
+    (:mesh [n -1][y] -> :mesh [0][y]) + (:mesh [0][y] -> :mesh [n -1][y])
+# Replace n-1 as above 
+\end{kappasource}
+
+The predefined compartment \verb|OpenCylinder| allows creation of a cylinder with closed ends
+
+\begin{kappasource}
+\%compartment: openCylinder  OpenCylinder  [10][8] [2]    # [diameter][length] [thickness]
 \end{kappasource}
 
 \newpage
@@ -95,28 +141,55 @@ The following are a couple of simple spatial kappa models to demonstrate the use
 \subsection{2d diffusion model}
 \label{sec:2dDiffusion}
 
-This model shows simple diffusion from a point for three distinct species. It was developed as a test for the Compartment view pane. Note again that the current implementation of the Compartment view works only for observations labelled \verb|'Red'|, \verb|'Blue'| and \verb|'Green'| in a compartment labelled \verb|'Cytosol'|.
+This model shows simple diffusion from a point for three distinct species.
 
 
 \begin{kappasource}
-%compartment: 'cytosol' [30][30] 
+%agent: A()
+%agent: B()
+%agent: C()
+
+%compartment: cytosol [30][30]
 
 # 6-way diffusion
-%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x+1][y] 
-%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x][y+1] 
-%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x+1][(y+1)-(2*(x%2))] 
+%channel: 6way {\textbackslash}
+    (:cytosol [x][y] -> :cytosol [x][y+1]) + (:cytosol [x][y] -> :cytosol [x][y -1]) + {\textbackslash}
+    (:cytosol [x][y] -> :cytosol [x+1][y]) + (:cytosol [x][y] -> :cytosol [x -1][y]) + {\textbackslash}
+    (:cytosol [x][y] -> :cytosol [x+1][(y+1)-(2*(x%2))]) + {\textbackslash}
+    (:cytosol [x][y] -> :cytosol [x -1][(y -1)+(2*((x -1)%2))])
 
-%transport: 'diffusion' '6way' A() @ 0.4 
-%transport: 'diffusion' '6way' B() @ 0.4 
-%transport: 'diffusion' '6way' C() @ 0.4 
+'diffusion' ->:6way @ 0.4
 
-%init: 'cytosol'[10][10] 10000 * (A()) 
-%init: 'cytosol'[10][14] 10000 * (B()) 
-%init: 'cytosol'[14][14] 10000 * (C()) 
+%init: 10000 :cytosol[10][10] A
+%init: 10000 :cytosol[10][14] B
+%init: 10000 :cytosol[14][14] C
 
-%obs: 'Red' 'cytosol' A()  
-%obs: 'Green' 'cytosol' B()  
-%obs: 'Blue' 'cytosol' C()  
+%obs: 'Red' A
+%obs: 'Green' B
+%obs: 'Blue' C
+\end{kappasource}
+
+A more concise version would be
+
+\begin{kappasource}
+%agent: A()
+%agent: B()
+%agent: C()
+
+%compartment: cytosol [30][30]
+
+# 6-way diffusion
+%channel: 6way Hexagonal :cytosol -> :cytosol
+
+'diffusion' :cytosol ->:6way :cytosol @ 0.4
+
+%init: 10000 :cytosol[10][10] A
+%init: 10000 :cytosol[10][14] B
+%init: 10000 :cytosol[14][14] C
+
+%obs: 'Red' A
+%obs: 'Green' B
+%obs: 'Blue' C
 \end{kappasource}
 
 
@@ -124,38 +197,56 @@ This model shows simple diffusion from a point for three distinct species. It wa
 \label{sec:bitrivalent}
 
 
-A variant of bi-trivalent binding test model \citep{yang2008kinetic}. This spatial model allows unbound species to diffuse through the compartment, but bound species remain within a cell of the compartment. When run in the compartment view, this demonstrates the aggregation of the species involved.
+A variant of bi-trivalent binding test model \citep{yang2008kinetic}. This spatial model allows unbound species to diffuse through the compartment, but bound species remain within a cell of the compartment.
 
 
 \begin{kappasource}
-%compartment: 'cytosol' [20][20] 
+%agent: A(a,b,bindings~0~1~2)
+%agent: B(a,b,c)
+
+%compartment: cytosol [20][20] 
 
 # 6-way diffusion
-%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x+1][y] 
-%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x][y+1] 
-%link: '6way' 'cytosol' [x][y] <-> 'cytosol' [x+1][(y+1)-(2*(x%2))] 
+%channel: 6way {\textbackslash}
+    (:cytosol [x][y] -> :cytosol [x][y+1]) + (:cytosol [x][y] -> :cytosol [x][y -1]) + {\textbackslash}
+    (:cytosol [x][y] -> :cytosol [x+1][y]) + (:cytosol [x][y] -> :cytosol [x -1][y]) + {\textbackslash}
+    (:cytosol [x][y] -> :cytosol [x+1][(y+1)-(2*(x%2))]) + {\textbackslash}
+    (:cytosol [x][y] -> :cytosol [x -1][(y -1)+(2*((x -1)%2))])
 
-%transport: 'diffusion' '6way' A(bindings~0) @ 0.1 
-%transport: 'diffusion' '6way' B(a,b,c) @ 1 
+'diffusion-A' A(bindings~0) ->:6way A(bindings~0) @ 0.1 
+'diffusion-B' B(a,b,c) ->:6way B(a,b,c) @ 1 
 
-A(a,b,bindings~0), B(a) <-> A(a!1,b,bindings~1),B(a!1) @ 1,0.01
-A(a,b,bindings~0), B(b) <-> A(a!1,b,bindings~1),B(b!1) @ 1,0.01
-A(a,b,bindings~0), B(c) <-> A(a!1,b,bindings~1),B(c!1) @ 1,0.01
-A(a,b,bindings~0), B(a) <-> A(a,b!1,bindings~1),B(a!1) @ 1,0.01
-A(a,b,bindings~0), B(b) <-> A(a,b!1,bindings~1),B(b!1) @ 1,0.01
-A(a,b,bindings~0), B(c) <-> A(a,b!1,bindings~1),B(c!1) @ 1,0.01
-A(a,b!_,bindings~1), B(a) <-> A(a!1,b!_,bindings~2),B(a!1) @ 1,0.01
-A(a,b!_,bindings~1), B(b) <-> A(a!1,b!_,bindings~2),B(b!1) @ 1,0.01
-A(a,b!_,bindings~1), B(c) <-> A(a!1,b!_,bindings~2),B(c!1) @ 1,0.01
-A(a!_,b,bindings~1), B(a) <-> A(a!_,b!1,bindings~2),B(a!1) @ 1,0.01
-A(a!_,b,bindings~1), B(b) <-> A(a!_,b!1,bindings~2),B(b!1) @ 1,0.01
-A(a!_,b,bindings~1), B(c) <-> A(a!_,b!1,bindings~2),B(c!1) @ 1,0.01
+A(a,b,bindings~0), B(a) -> A(a!1,b,bindings~1),B(a!1) @ 1
+A(a,b,bindings~0), B(b) -> A(a!1,b,bindings~1),B(b!1) @ 1
+A(a,b,bindings~0), B(c) -> A(a!1,b,bindings~1),B(c!1) @ 1
+A(a,b,bindings~0), B(a) -> A(a,b!1,bindings~1),B(a!1) @ 1
+A(a,b,bindings~0), B(b) -> A(a,b!1,bindings~1),B(b!1) @ 1
+A(a,b,bindings~0), B(c) -> A(a,b!1,bindings~1),B(c!1) @ 1
+A(a,b!_,bindings~1), B(a) -> A(a!1,b!_,bindings~2),B(a!1) @ 1
+A(a,b!_,bindings~1), B(b) -> A(a!1,b!_,bindings~2),B(b!1) @ 1
+A(a,b!_,bindings~1), B(c) -> A(a!1,b!_,bindings~2),B(c!1) @ 1
+A(a!_,b,bindings~1), B(a) -> A(a!_,b!1,bindings~2),B(a!1) @ 1
+A(a!_,b,bindings~1), B(b) -> A(a!_,b!1,bindings~2),B(b!1) @ 1
+A(a!_,b,bindings~1), B(c) -> A(a!_,b!1,bindings~2),B(c!1) @ 1
 
-%init: 'cytosol'       600 * (A(a,b,bindings~0)) 
-%init: 'cytosol'       400 * (B(a,b,c)) 
+A(a!1,b,bindings~1),B(a!1) -> A(a,b,bindings~0), B(a) @ 0.01
+A(a!1,b,bindings~1),B(b!1) -> A(a,b,bindings~0), B(b) @ 0.01
+A(a!1,b,bindings~1),B(c!1) -> A(a,b,bindings~0), B(c) @ 0.01
+A(a,b!1,bindings~1),B(a!1) -> A(a,b,bindings~0), B(a) @ 0.01
+A(a,b!1,bindings~1),B(b!1) -> A(a,b,bindings~0), B(b) @ 0.01
+A(a,b!1,bindings~1),B(c!1) -> A(a,b,bindings~0), B(c) @ 0.01
+A(a!1,b!_,bindings~2),B(a!1) -> A(a,b!_,bindings~1), B(a) @ 0.01
+A(a!1,b!_,bindings~2),B(b!1) -> A(a,b!_,bindings~1), B(b) @ 0.01
+A(a!1,b!_,bindings~2),B(c!1) -> A(a,b!_,bindings~1), B(c) @ 0.01
+A(a!_,b!1,bindings~2),B(a!1) -> A(a!_,b,bindings~1), B(a) @ 0.01
+A(a!_,b!1,bindings~2),B(b!1) -> A(a!_,b,bindings~1), B(b) @ 0.01
+A(a!_,b!1,bindings~2),B(c!1) -> A(a!_,b,bindings~1), B(c) @ 0.01
 
-%obs: 'Red' 'cytosol' A(bindings~2) 
-%obs: 'Green' 'cytosol' A(bindings~1) 
-%obs: 'Blue' 'cytosol' A(bindings~0) 
+%init: 600 A(a,b,bindings~0) 
+%init: 400 B(a,b,c) 
+
+%obs: 'Red' A(bindings~2) 
+%obs: 'Green' A(bindings~1) 
+%obs: 'Blue' A(bindings~0) 
 \end{kappasource}
 

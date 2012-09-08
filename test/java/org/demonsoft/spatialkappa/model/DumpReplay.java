@@ -20,6 +20,7 @@ public class DumpReplay {
         inputStream.close();
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         try {
             new DumpReplay(new File("test/data/spatial-2D-diffusion.kareplay"));

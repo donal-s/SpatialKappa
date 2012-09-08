@@ -54,7 +54,7 @@ public class PerturbationEffect {
         }
         switch (type) {
         case ADD:
-            // TODO - upgrade to allow adding of compartment deltas (egdifferent values per cell
+            // TODO - upgrade to allow adding of compartment deltas (eg different values per cell)
             state.addComplexInstances(agents, (int) expression.evaluate(state).value);
             break;
         case REMOVE:
@@ -66,6 +66,9 @@ public class PerturbationEffect {
         case FIXED:
             if ("$STOP".equals(event)) {
                 state.stop();
+            }
+            else if ("$SNAPSHOT".equals(event)) {
+                state.snapshot();
             }
             break;
 

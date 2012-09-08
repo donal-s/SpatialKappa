@@ -1,0 +1,23 @@
+### PSD Project Stage 3 acceptance tests
+### Test 3.6 - Lateral diffusion of transmembrane proteins in predefined shapes
+### Last modified 05-09-2012
+
+%agent: A_Membrane(d)
+%agent: A_Cytosol(d)
+
+%compartment: cytosol   SolidCircle   [3]           # [diameter]
+%compartment: membrane  OpenCircle    [7] [2]       # [diameter] [thickness]
+
+%channel: diffusion Neighbour :cytosol, :membrane -> :cytosol, :membrane
+
+%channel: domainLink Neighbour :cytosol -> :membrane
+
+'diffusion A' A_Membrane(d!1:domainLink),A_Cytosol(d!1) ->:diffusion A_Membrane(d!1:domainLink),A_Cytosol(d!1) @ 1.0
+
+
+%init: 1000 A_Membrane:membrane[3][1](d!1),A_Cytosol:cytosol[1][0](d!1:domainLink)
+
+%obs: 'A top' A_Cytosol:cytosol[1][0]
+%var: 'A all' A_Cytosol:cytosol
+%var: 'A not top' 'A all' - 'A top'
+%plot: 'A not top'

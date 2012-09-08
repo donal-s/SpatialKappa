@@ -7,59 +7,62 @@ options {
 }
 
 tokens {
-  OBSERVATION;
-  VARIABLE;
-  INIT;
-  AGENTS;
-  AGENT;
-  INTERFACE;
-  STATE;
-  LINK;
-  OCCUPIED;
-  ANY;
-  LHS;
-  RHS;
-  RATE;
-  PERTURBATION;
-  COMPARTMENT;
-  DIMENSION;
-  COMPARTMENT_LINK;
-  LOCATION;
-  CELL_INDEX_EXPR;
-  INDEX;
-  TRANSPORT;
-  TRANSFORM;
-  ID;
-  LABEL;
-  VAR_EXPR;
-  VAR_INFINITY;
-  PLOT;
-  CONDITION;
-  EFFECT;
-  UNTIL;
-  SNAPSHOT;
-  STOP;
   ADD;
-  REMOVE;
-  SET;
-  BOOL_EXPR;
+  AGENT;
+  AGENT_DECL;
+  AGENTS;
   AND;
-  OR;
-  NOT;
-  TRUE;
-  FALSE;
-  TIME;
+  ANY;
+  BOOL_EXPR;
+  CELL_INDEX_EXPR;
+  CHANNEL;
+  COMPARTMENT;
+  CONDITION;
+  COS;
+  DIMENSION;
+  EFFECT;
   EVENTS;
-  TARGET;
+  EXP;
+  FALSE;
+  FIXED;
+  ID;
+  INDEX;
+  INIT;
+  INTERFACE;
+  LHS;
+  LINK;
+  LOCATION;
+  LOCATION_PAIR;
+  LOCATIONS;
   LOG;
   MODULUS;
+  NOT;
+  OBSERVATION;
+  OCCUPIED;
+  OR;
+  PERTURBATION;
   PI;
+  PLOT;
+  RATE;
+  REMOVE;
+  RHS;
+  RULE;
+  SET;
   SIN;
-  COS;
-  TAN;
+  SNAPSHOT;
   SQRT;
-  EXP;
-  AGENT_DECL;
+  STATE;
+  STOP;
+  TAN;
+  TARGET;
+  TIME;
+  TRANSITION;
+  TRUE;
+  TYPE;
+  UNTIL;
+  VAR_EXPR;
+  VAR_INFINITY;
+  VARIABLE;
 }
 
 @header        {package org.demonsoft.spatialkappa.parser;}
@@ -67,153 +70,170 @@ tokens {
 
 prog
   :
-  (line)+
+  (line)*
   ;
 
 line
   :
-  ruleExpr NEWLINE!
+  agentDecl NEWLINE!
+  | compartmentDecl NEWLINE!
+  | channelDecl NEWLINE!
+  | ruleDecl NEWLINE!
+  | initDecl NEWLINE!
+  | plotDecl NEWLINE!
+  | obsDecl NEWLINE!
+  | varDecl NEWLINE!
+  | modDecl NEWLINE!
   | COMMENT!
-  | compartmentExpr NEWLINE!
-  | compartmentLinkExpr NEWLINE!
-  | transportExpr NEWLINE!
-  | initExpr NEWLINE!
-  | plotExpr NEWLINE!
-  | obsExpr NEWLINE!
-  | varExpr NEWLINE!
-  | modExpr NEWLINE!
-  | agentExpr NEWLINE!
   | NEWLINE!
   ;
 
-ruleExpr
+ruleDecl
   :
-  label? transformExpr kineticExpr 
+  label? transition rate 
     -> 
-      ^(TRANSFORM transformExpr kineticExpr label?)
-  | label locationExpr transformExpr kineticExpr 
-    -> 
-      ^(TRANSFORM transformExpr kineticExpr label locationExpr)
+      ^(RULE transition rate label?)
   ;
 
-transformExpr
+transition
+options {backtrack=true;}
   :
-  a=agentGroup transformTransition b=agentGroup
+  (source=location)? CHANNEL_TRANSITION channelName=id (target=location)?
     ->
       ^(
-        transformTransition
-        ^(LHS $a)
-        ^(RHS $b)
+        TRANSITION
+        ^(LHS $source?)
+        ^(RHS $target?)
+        ^(CHANNEL $channelName)?
        )
-  | agentGroup transformTransition
+  |
+  (a=agentGroup)? CHANNEL_TRANSITION channelName=id (b=agentGroup)?
     ->
       ^(
-        transformTransition
-        ^(LHS agentGroup)
-        ^(RHS)
+        TRANSITION
+        ^(LHS $a?)
+        ^(RHS $b?)
+        ^(CHANNEL $channelName)?
        )
-  | transformTransition agentGroup
+  |
+  (a=agentGroup)? FORWARD_TRANSITION (b=agentGroup)?
     ->
       ^(
-        transformTransition
-        ^(LHS)
-        ^(RHS agentGroup)
+        TRANSITION
+        ^(LHS $a?)
+        ^(RHS $b?)
        )
-  | transformTransition
-    ->
   ;
+  
 
 agentGroup
   :
-  agent (',' agent)*
+  location? agent (',' agent)*
     ->
-      ^(AGENTS agent+)
+      ^(AGENTS location? agent+)
   ;
 
 agent
   :
-  id '(' (iface (',' iface)*)? ')'
+  id (location)? ('(' (agentInterface (',' agentInterface)*)? ')')?
     ->
-      ^(AGENT id iface*)
+      ^(AGENT id location? agentInterface*)
   ;
 
-iface
+agentInterface
   :
-  id stateExpr? linkExpr?
+  id state? link?
     ->
-      ^(INTERFACE id stateExpr? linkExpr?)
+      ^(INTERFACE id state? link?)
   ;
 
-stateExpr
+state
   :
   '~' id
     ->
       ^(STATE id)
   ;
 
-linkExpr
+link
   :
-  '!' INT
+  '!' INT (':' channelName=id)?
     ->
-      ^(LINK INT)
-  | '!' '_'
+      ^(LINK ^(CHANNEL $channelName)? INT)
+  | '!' '_' (':' channelName=id)?
     ->
-      ^(LINK OCCUPIED)
+      ^(LINK ^(CHANNEL $channelName)? OCCUPIED)
   | '?'
     ->
       ^(LINK ANY)
   ;
 
-kineticExpr
+rate
   :
   '@' varAlgebraExpr
     ->
       ^(RATE varAlgebraExpr)
   ;
 
-initExpr
-options {backtrack=true;}
+initDecl
   :
-  '%init:' locationExpr? INT '(' agentGroup ')'
+  '%init:' (INT | label) agentGroup
     ->
-      ^(INIT agentGroup INT locationExpr?)
-  | '%init:' locationExpr? label '(' agentGroup ')'
-    ->
-      ^(INIT agentGroup label locationExpr?)
+      ^(INIT agentGroup INT? label?)
   ;
 
-agentExpr
+agentDecl
   :
-  '%agent:' id '(' (id stateExpr* (',' id stateExpr*)*)? ')'
+  '%agent:' agentName=id ('(' (agentDeclInterface (',' agentDeclInterface)*)? ')')?
     ->
-     // TODO ignore for now
-     AGENT_DECL
+     ^(AGENT_DECL $agentName agentDeclInterface*)
   ;
 
-compartmentExpr
+agentDeclInterface
   :
-  '%compartment:' label ('[' INT ']')*
+  id state*
     ->
-      ^(COMPARTMENT label ^(DIMENSION INT)*)
+      ^(INTERFACE id state*)
   ;
 
-compartmentLinkExpr
+compartmentDecl
   :
-  '%link:' linkName=label sourceCompartment=locationExpr transportTransition targetCompartment=locationExpr
+  '%compartment:' name=id (type=id)? ('[' INT ']')*
     ->
-      ^(COMPARTMENT_LINK $linkName $sourceCompartment transportTransition $targetCompartment)
+      ^(COMPARTMENT $name ^(TYPE $type)? ^(DIMENSION INT)*)
   ;
 
-transportExpr
+channelDecl
   :
-  '%transport:' (transportName=label)? linkName=label (agentGroup)? kineticExpr
+  '%channel:' linkName=id channel
     ->
-      ^(TRANSPORT $linkName agentGroup? kineticExpr $transportName?)
+      ^(CHANNEL $linkName channel)
+  |
+  '%channel:' linkName=id '(' channel ')' ('+' '(' channel ')')*
+    ->
+      ^(CHANNEL $linkName channel+)
   ;
 
-locationExpr
+channel
   :
-  sourceCompartment=label compartmentIndexExpr*
+  (type=id)? source=locations FORWARD_TRANSITION target=locations
+    ->
+      ^(LOCATION_PAIR (^(TYPE $type))? $source $target)
+  ;
+
+locations
+  :
+  location (',' location)*
+    ->
+     ^(LOCATIONS location+)
+  ;
+
+location
+  :
+  ':' 'fixed'
+    ->
+      ^(LOCATION FIXED)
+  |
+  ':' sourceCompartment=id compartmentIndexExpr*
     ->
       ^(LOCATION $sourceCompartment compartmentIndexExpr*)
   ;
@@ -225,43 +245,38 @@ compartmentIndexExpr
       ^(INDEX cellIndexExpr)
   ;
 
-plotExpr
+plotDecl
   :
   '%plot:' label
     ->
       ^(PLOT label)
   ;
 
-obsExpr
+obsDecl
   :
   '%obs:' label? agentGroup
     ->
       ^(OBSERVATION agentGroup label?)
-  | '%obs:' label locationExpr agentGroup
-    ->
-      ^(OBSERVATION agentGroup label locationExpr)
   ;
 
-varExpr
+varDecl
 options {backtrack=true;}
   :
-  '%var:' label agentGroup
-    ->
-      ^(VARIABLE agentGroup label)
-  |
   '%var:' label varAlgebraExpr
     ->
       ^(VARIABLE varAlgebraExpr label)
-  ;
+   |
+  '%var:' label agentGroup
+    ->
+      ^(VARIABLE agentGroup label)
+ ;
 
 varAlgebraExpr
-options {backtrack=true;}
   :
   (a=varAlgebraMultExpr -> $a) (op=operator_add b=varAlgebraMultExpr -> ^(VAR_EXPR $op $varAlgebraExpr $b) )*
   ;
   
 varAlgebraMultExpr
-options {backtrack=true;}
   :
   (a=varAlgebraExpExpr -> $a) (op=operator_mult b=varAlgebraExpExpr -> ^(VAR_EXPR $op $varAlgebraMultExpr $b) )*
   ;
@@ -278,7 +293,6 @@ options {backtrack=true;}
   ;
   
 varAlgebraAtom
-options {backtrack=true;}
   :
   '(' varAlgebraExpr ')'
     ->
@@ -304,21 +318,20 @@ options {backtrack=true;}
   | operator_unary varAlgebraAtom
     ->
       ^(VAR_EXPR operator_unary varAlgebraAtom)
-  | operator_binary_prefix a=varAlgebraAtom b=varAlgebraAtom
+  | '|' agentGroup '|'
     ->
-      ^(VAR_EXPR operator_binary_prefix $a $b)
+      ^(VAR_EXPR agentGroup)
   ;
   
-modExpr
+modDecl
   :
-  '%mod:' booleanExpression 'do' effect untilExpression?
+  '%mod:' booleanExpression 'do' effect until?
     ->
-      ^(PERTURBATION ^(CONDITION booleanExpression) effect untilExpression?)
+      ^(PERTURBATION ^(CONDITION booleanExpression) effect until?)
   ;
   
 
 booleanExpression
-options {backtrack=true;}
   :
   (a=booleanAtom -> $a) (op=booleanOperator b=booleanAtom -> ^(BOOL_EXPR $op $booleanExpression $b) )*
   ;
@@ -374,7 +387,7 @@ effect
       ^(EFFECT SET ^(TARGET label) varAlgebraExpr)
   ;
   
-untilExpression
+until
   :
   'until' booleanExpression
     ->
@@ -401,15 +414,14 @@ options {backtrack=true;}
   | INT
     ->
       ^(CELL_INDEX_EXPR INT)
-  | label
+  | id
     ->
-      ^(CELL_INDEX_EXPR label)
+      ^(CELL_INDEX_EXPR id)
   ;
   
 id
-options {backtrack=true;}
   :
-    ( ID_FRAGMENT | INT ) ( ID_FRAGMENT | INT | '_' | '-' )*
+    ( INT | ID_FRAGMENT ) 
    ->
     {new CommonTree(new CommonToken(ID,$id.text.toString()))} // Avoid lexing as mutiple tokens
   ;
@@ -454,15 +466,11 @@ operator_unary
   | '[' 'exp' ']' -> EXP
   ;
 
-operator_binary_prefix
-  :
-  '[' 'mod' ']' -> MODULUS
-  ;
-
 operator_mult
   :
   '*'
   | '/'
+  | '[' 'mod' ']' -> MODULUS
   ;
 
 operator_add
@@ -471,35 +479,15 @@ operator_add
   | '-'
   ;
 
-transformTransition
-  :
-  ( 
-    FORWARD_TRANSITION
-  )
-  ;
 
-transportTransition
+CHANNEL_TRANSITION
   :
-  ( 
-    FORWARD_TRANSITION
-    | BACKWARD_TRANSITION
-    | EQUILIBRIUM_TRANSITION
-  )
-  ;
-
-EQUILIBRIUM_TRANSITION
-  :
-  '<->'
+  '->:'
   ;
 
 FORWARD_TRANSITION
   :
   '->'
-  ;
-
-BACKWARD_TRANSITION
-  :
-  '<-'
   ;
 
 INT
@@ -515,23 +503,26 @@ FLOAT
 
 ID_FRAGMENT
   :
-  ALPHANUMERIC
-  ;
-
-fragment
-ALPHANUMERIC
-  :
   (
-    NUMERIC
-    | 'a'..'z'
-    | 'A'..'Z'
-  )+
+    ALPHANUMERIC
+  ) 
+  (
+    ALPHANUMERIC
+    | '_'
+    | '-'
+  )*
   ;
 
 fragment
 NUMERIC
   :
   ('0'..'9')+
+  ;
+  
+fragment
+ALPHANUMERIC
+  :
+  (NUMERIC | 'a'..'z' | 'A'..'Z')+
   ;
   
 fragment
@@ -551,7 +542,7 @@ COMMENT
     '\n'
     | '\r'
    )*
-  NEWLINE {$channel=HIDDEN;}
+  {$channel=HIDDEN;}
   ;
 
 WS

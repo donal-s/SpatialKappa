@@ -17,4 +17,5 @@ public interface SimulationState {
     void addComplexInstances(List<Agent> agents, int amount);
     void setTransitionRate(String transitionName, VariableExpression rateExpression);
     void stop();
+    void snapshot();
 }

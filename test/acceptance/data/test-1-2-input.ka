@@ -1,0 +1,32 @@
+%agent: A(s)
+%agent: B(s)
+
+%compartment: cytosol [2]
+
+%channel: cl (:cytosol[0] -> :cytosol[1]) + (:cytosol[1] -> :cytosol[0]) 
+
+'dimerise AB' A:cytosol[0](s),B:cytosol[1](s) -> A:cytosol[0](s!1:cl),B:cytosol[1](s!1) @ 1.0
+'dimerise BA' A:cytosol[1](s),B:cytosol[0](s) -> A:cytosol[1](s!1:cl),B:cytosol[0](s!1) @ 1.0
+
+'break AB'    A:cytosol[0](s!1:cl),B:cytosol[1](s!1) -> A:cytosol[0](s),B:cytosol[1](s) @ 'break-rate'
+'break BA'    A:cytosol[1](s!1:cl),B:cytosol[0](s!1) -> A:cytosol[1](s),B:cytosol[0](s) @ 'break-rate'
+
+%init: 1000 A:cytosol # Location per agent
+%init: 1000 B:cytosol # Location per agent
+
+%var: 'break-rate' 50.0
+
+%obs: 'all monomer A' A(s)
+%obs: 'all monomer B' B(s)
+%obs: 'compartment monomer A - agent' A:cytosol(s)
+%obs: 'compartment monomer A - complex' :cytosol A(s)
+%obs: 'voxel monomer - agent' A:cytosol[0](s)
+%obs: 'voxel monomer - complex' :cytosol[0] A(s)
+
+%obs: 'all dimer' A(s!_)
+%obs: 'dimer AB' A:cytosol[0](s!1:cl),B:cytosol[1](s!1)
+%obs: 'dimer BA' B:cytosol[0](s!1:cl),A:cytosol[1](s!1)
+
+%obs: 'same voxel dimer AB' A:cytosol[1](s!1),B:cytosol[1](s!1) # Expect none
+%obs: 'same voxel dimer BA' A:cytosol[0](s!1),B:cytosol[0](s!1) # Expect none
+

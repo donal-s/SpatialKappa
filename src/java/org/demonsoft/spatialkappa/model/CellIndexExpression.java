@@ -11,6 +11,26 @@ public class CellIndexExpression extends VariableExpression {
 
     private static final long serialVersionUID = 1L;
 
+    // Commonly used indices
+    public static CellIndexExpression INDEX_0 = new CellIndexExpression("0");
+    public static CellIndexExpression INDEX_1 = new CellIndexExpression("1");
+    public static CellIndexExpression INDEX_2 = new CellIndexExpression("2");
+    public static CellIndexExpression INDEX_X = new CellIndexExpression(new VariableReference("x"));
+    public static CellIndexExpression INDEX_X_PLUS_1 = 
+            new CellIndexExpression(INDEX_X, Operator.PLUS, INDEX_1);
+    public static CellIndexExpression INDEX_X_MINUS_1 = 
+            new CellIndexExpression(INDEX_X, Operator.MINUS, INDEX_1);
+    public static CellIndexExpression INDEX_Y = new CellIndexExpression(new VariableReference("y"));
+    public static CellIndexExpression INDEX_Y_PLUS_1 = 
+            new CellIndexExpression(INDEX_Y, Operator.PLUS, INDEX_1);
+    public static CellIndexExpression INDEX_Y_MINUS_1 = 
+            new CellIndexExpression(INDEX_Y, Operator.MINUS, INDEX_1);
+    public static CellIndexExpression INDEX_Z = new CellIndexExpression(new VariableReference("z"));
+    public static CellIndexExpression INDEX_Z_PLUS_1 = 
+            new CellIndexExpression(INDEX_Z, Operator.PLUS, INDEX_1);
+    public static CellIndexExpression INDEX_Z_MINUS_1 = 
+            new CellIndexExpression(INDEX_Z, Operator.MINUS, INDEX_1);
+
     public CellIndexExpression(String input) {
         super(input);
     }
@@ -33,7 +53,25 @@ public class CellIndexExpression extends VariableExpression {
             return "" + ((int) value);
             
         case VARIABLE_REFERENCE:
-            return reference.toString();
+            return reference.variableName;
+            
+        default:
+            throw new IllegalStateException("Unknown expression");
+        }
+    }
+    
+    public CellIndexExpression getDeltaIndex(int delta) {
+        if (delta == 0) {
+            return this;
+        }
+        switch (type) {
+        case BINARY_EXPRESSION:
+        case VARIABLE_REFERENCE:
+            Operator oper = (delta < 0) ? Operator.MINUS : Operator.PLUS;
+            return new CellIndexExpression(this, oper, new CellIndexExpression("" + Math.abs(delta)));
+            
+        case NUMBER:
+            return new CellIndexExpression("" + (((int) value) + delta));
             
         default:
             throw new IllegalStateException("Unknown expression");

@@ -1,0 +1,38 @@
+### PSD Project Stage 2 acceptance tests
+### Test 2.7 - Lateral diffusion of membrane proteins
+### Last modified 10-07-2012
+
+%agent: A(s,t)
+%agent: B(s,t)
+%agent: C(s)
+
+%var: 'catalysedRate' 10
+
+%compartment: membrane [5][5]
+
+%channel: diffusion       (:membrane [x][y] -> :membrane [x+1][y]) + (:membrane [x][y] -> :membrane [x - 1][y]) + \
+		(:membrane [x][y] -> :membrane [x][y+1]) + (:membrane [x][y] -> :membrane [x][y - 1])
+
+'diffusion A' A(s,t) ->:diffusion A(s,t) @ 1.0
+'diffusion B' B(s,t) ->:diffusion B(s,t) @ 1.0
+'diffusion AB' A(s!1,t),B(s!1,t) ->:diffusion A(s!1,t),B(s!1,t) @ 0.5
+
+'AC bind' A(s,t), C(s) -> A(s!1,t), C(s!1) @ 'catalysedRate'
+'ACB bind' A(s!1,t), C(s!1), B(s,t) -> A(s!1,t), C(s), B(s!1,t) @ 'catalysedRate'
+'BC bind' B(s,t), C(s) -> B(s!1,t), C(s!1) @ 'catalysedRate'
+'BCA bind' B(s!1,t), C(s!1), A(s,t) -> B(s!1,t), C(s), A(s!1,t) @ 'catalysedRate'
+
+'ABAB bind' A(s!1,t), B(s!1,t), A(s!2,t), B(s!2,t) -> A(s!1,t), B(s!1,t!3), A(s!2,t!3), B(s!2,t) @ 0.1
+'ABAB close loop' A(s!1,t), B(s!1,t!3), A(s!2,t!3), B(s!2,t) -> A(s!1,t!4), B(s!1,t!3), A(s!2,t!3), B(s!2,t!4) @ 0.1
+
+
+%init: 1000 :membrane A,B
+%init: 1 :membrane[2][2] C
+
+%obs: 'AB' A(s!1,t),B(s!1,t)
+%var: 'A2B2 doubled all' A(s!1,t!3),B(s!1,t!4),A(s!2,t!4),B(s!2,t!3)
+%var: 'A2B2 doubled centre' :membrane[2][2] A(s!1,t!3),B(s!1,t!4),A(s!2,t!4),B(s!2,t!3)
+%var: 'A2B2 centre' 'A2B2 doubled centre' / 2
+%var: 'A2B2 not centre' ('A2B2 doubled all' - 'A2B2 doubled centre') / 2
+%plot: 'A2B2 centre'
+%plot: 'A2B2 not centre'

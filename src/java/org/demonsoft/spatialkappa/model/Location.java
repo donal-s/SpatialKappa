@@ -1,6 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,9 @@ public class Location implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final Location NOT_LOCATED = new Location("##NOT LOCATED##");
+    public static final Location FIXED_LOCATION = new Location("fixed");
+    
     private final String name;
     private final CellIndexExpression[] indices;
     private int hashCode;
@@ -34,18 +38,6 @@ public class Location implements Serializable {
         return indices;
     }
 
-    public Compartment getReferencedCompartment(List<Compartment> compartments) {
-        if (compartments == null) {
-            throw new NullPointerException();
-        }
-        for (Compartment compartment : compartments) {
-            if (name.equals(compartment.getName())) {
-                return compartment;
-            }
-        }
-        return null;
-    }
-
     public boolean isConcreteLocation() {
         for (CellIndexExpression index : indices) {
             if (!index.isFixed()) {
@@ -53,6 +45,16 @@ public class Location implements Serializable {
             }
         }
         return true;
+    }
+
+    public boolean isVoxel(Compartment compartment) {
+        if (this == NOT_LOCATED) {
+            throw new IllegalStateException();
+        }
+        if (!compartment.getName().equals(name)) {
+            throw new IllegalArgumentException("Compartment mismatch: " + compartment.getName());
+        }
+        return compartment.getDimensions().length == indices.length;
     }
 
     @Override
@@ -72,7 +74,7 @@ public class Location implements Serializable {
         return hashCode;
     }
 
-    public void calculateHashCode() {
+    private void calculateHashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + Arrays.hashCode(indices);
@@ -118,8 +120,25 @@ public class Location implements Serializable {
         return equals(location);
     }
     
-    public static boolean doLocationsMatch(Location location1, Location location2, boolean matchNameOnly) {
-        return location1 == null || location1.matches(location2, matchNameOnly);
+    public List<Location> getLinkedLocations(List<Compartment> compartments, Channel... channels) {
+        List<Location> result = new ArrayList<Location>();
+        for (Channel channel : channels) {
+            result.addAll(channel.applyChannel(this, NOT_LOCATED, compartments));
+        }
+        return result;
+    }
+
+    public boolean isRefinement(Location location) {
+        if (location == null) {
+            throw new NullPointerException();
+        }
+        if (this == NOT_LOCATED && location != NOT_LOCATED) {
+            return true;
+        }
+        if (this.name.equals(location.name)) {
+            return (this.indices.length < location.indices.length);
+        }
+        return false;
     }
     
 

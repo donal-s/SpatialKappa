@@ -1,0 +1,99 @@
+### PSD Project Stage 2 acceptance tests
+### Test 2.5 - Membrane bound scaffold (2D)
+### Last modified 06-07-2012
+
+### Combined trace of multiple compartment definitions
+## As S is fixed, having more than one voxel in the membrane is redundant
+
+%agent: A(s)
+%agent: B(s)
+%agent: S(s)
+
+%var: 'constitutiveRate' 0.001
+%var: 'catalysedRate' 10
+
+'AB bind' A(s), B(s) -> A(s!1), B(s!1) @ 'constitutiveRate'
+
+
+### cytosol[1][1]
+
+%compartment: membrane1
+%compartment: cytosol1 [1][1]
+
+%channel: diffusion1       (:cytosol1 [x][y] -> :cytosol1 [x+1][y]) + (:cytosol1 [x][y] -> :cytosol1 [x - 1][y]) + \
+		(:cytosol1 [x][y] -> :cytosol1 [x][y+1]) + (:cytosol1 [x][y] -> :cytosol1 [x][y - 1])
+%channel: membraneBinding1 (:cytosol1 [0][0] -> :membrane1) + (:membrane1 -> :cytosol1 [0][0])
+
+'diffusion' ->:diffusion1 @ 1.0
+'AS bind' A(s), S(s) -> A(s!1:membraneBinding1), S(s!1) @ 'catalysedRate'
+'ASB bind' A(s!1:membraneBinding1), S(s!1), B(s) -> A(s!1), S(s), B(s!1) @ 'catalysedRate'
+'BS bind' B(s), S(s) -> B(s!1:membraneBinding1), S(s!1) @ 'catalysedRate'
+'BSA bind' B(s!1:membraneBinding1), S(s!1), A(s) -> B(s!1), S(s), A(s!1) @ 'catalysedRate'
+
+%init: 1000 :cytosol1 A,B
+%init: 1 :membrane1 S
+
+
+### cytosol[3][3]
+
+%compartment: membrane3
+%compartment: cytosol3 [3][3]
+
+%channel: diffusion3       (:cytosol3 [x][y] -> :cytosol3 [x+1][y]) + (:cytosol3 [x][y] -> :cytosol3 [x - 1][y]) + \
+		(:cytosol3 [x][y] -> :cytosol3 [x][y+1]) + (:cytosol3 [x][y] -> :cytosol3 [x][y - 1])
+%channel: membraneBinding3 (:cytosol3 [0][1] -> :membrane3) + (:membrane3 -> :cytosol3 [0][1])
+
+'diffusion' ->:diffusion3 @ 1.0
+'AS bind' A(s), S(s) -> A(s!1:membraneBinding3), S(s!1) @ 'catalysedRate'
+'ASB bind' A(s!1:membraneBinding3), S(s!1), B(s) -> A(s!1), S(s), B(s!1) @ 'catalysedRate'
+'BS bind' B(s), S(s) -> B(s!1:membraneBinding3), S(s!1) @ 'catalysedRate'
+'BSA bind' B(s!1:membraneBinding3), S(s!1), A(s) -> B(s!1), S(s), A(s!1) @ 'catalysedRate'
+
+%init: 1000 :cytosol3 A,B
+%init: 1 :membrane3 S
+
+
+### cytosol[5][5]
+
+%compartment: membrane5
+%compartment: cytosol5 [5][5]
+
+%channel: diffusion5       (:cytosol5 [x][y] -> :cytosol5 [x+1][y]) + (:cytosol5 [x][y] -> :cytosol5 [x - 1][y]) + \
+		(:cytosol5 [x][y] -> :cytosol5 [x][y+1]) + (:cytosol5 [x][y] -> :cytosol5 [x][y - 1])
+%channel: membraneBinding5 (:cytosol5 [0][2] -> :membrane5) + (:membrane5 -> :cytosol5 [0][2])
+
+'diffusion' ->:diffusion5 @ 1.0
+'AS bind' A(s), S(s) -> A(s!1:membraneBinding5), S(s!1) @ 'catalysedRate'
+'ASB bind' A(s!1:membraneBinding5), S(s!1), B(s) -> A(s!1), S(s), B(s!1) @ 'catalysedRate'
+'BS bind' B(s), S(s) -> B(s!1:membraneBinding5), S(s!1) @ 'catalysedRate'
+'BSA bind' B(s!1:membraneBinding5), S(s!1), A(s) -> B(s!1), S(s), A(s!1) @ 'catalysedRate'
+
+%init: 1000 :cytosol5 A,B
+%init: 1 :membrane5 S
+
+
+### cytosol[7][7]
+
+%compartment: membrane7
+%compartment: cytosol7 [7][7]
+
+%channel: diffusion7       (:cytosol7 [x][y] -> :cytosol7 [x+1][y]) + (:cytosol7 [x][y] -> :cytosol7 [x - 1][y]) + \
+		(:cytosol7 [x][y] -> :cytosol7 [x][y+1]) + (:cytosol7 [x][y] -> :cytosol7 [x][y - 1])
+%channel: membraneBinding7 (:cytosol7 [0][3] -> :membrane7) + (:membrane7 -> :cytosol7 [0][3])
+
+'diffusion' ->:diffusion7 @ 1.0
+'AS bind' A(s), S(s) -> A(s!1:membraneBinding7), S(s!1) @ 'catalysedRate'
+'ASB bind' A(s!1:membraneBinding7), S(s!1), B(s) -> A(s!1), S(s), B(s!1) @ 'catalysedRate'
+'BS bind' B(s), S(s) -> B(s!1:membraneBinding7), S(s!1) @ 'catalysedRate'
+'BSA bind' B(s!1:membraneBinding7), S(s!1), A(s) -> B(s!1), S(s), A(s!1) @ 'catalysedRate'
+
+%init: 1000 :cytosol7 A,B
+%init: 1 :membrane7 S
+
+
+### All observations
+
+%obs: 'AB[1][1]' :cytosol1 A(s!1),B(s!1)
+%obs: 'AB[3][3]' :cytosol3 A(s!1),B(s!1)
+%obs: 'AB[5][5]' :cytosol5 A(s!1),B(s!1)
+%obs: 'AB[7][7]' :cytosol7 A(s!1),B(s!1)

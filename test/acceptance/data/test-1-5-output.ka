@@ -1,0 +1,30 @@
+### AGENTS
+%agent: A(s,loc~cytosol~membrane,loc_index_1~0~1)
+%agent: B(s,loc~cytosol~membrane,loc_index_1~0~1)
+
+### INITIAL VALUES
+%init: 500 A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~membrane,loc_index_1~0)
+%init: 500 A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~membrane,loc_index_1~1)
+
+### VARIABLES
+%var: 'all monomer A' A(s)
+%var: 'all monomer B' B(s)
+%var: 'all dimer' A(s!_)
+%var: 'dimer AB-1' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~membrane,loc_index_1~0)
+%var: 'dimer AB-2' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~membrane,loc_index_1~1)
+%var: 'dimer AB' 'dimer AB-1' + 'dimer AB-2'
+%var: 'dimer BA-1' A(s!1,loc~membrane,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0)
+%var: 'dimer BA-2' A(s!1,loc~membrane,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1)
+%var: 'dimer BA' 'dimer BA-1' + 'dimer BA-2'
+%var: 'same voxel dimer AB' A(s!1,loc~cytosol),B(s!1,loc~cytosol)
+%var: 'same voxel dimer BA' A(s!1,loc~membrane),B(s!1,loc~membrane)
+
+### PLOTS
+%plot: 'all monomer A'
+%plot: 'all monomer B'
+%plot: 'all dimer'
+%plot: 'dimer AB'
+%plot: 'dimer BA'
+%plot: 'same voxel dimer AB'
+%plot: 'same voxel dimer BA'
+

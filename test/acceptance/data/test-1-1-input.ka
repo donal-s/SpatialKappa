@@ -1,0 +1,29 @@
+%agent: A(s)
+
+%compartment: cytosol [2]
+
+'dimerise' A:cytosol(s),A:cytosol(s) -> A:cytosol(s!1),A:cytosol(s!1) @ 1.0 # Location per agent
+
+'break'    :cytosol A(s!1),A(s!1) -> A(s),A(s) @ 'break-rate' # Location per rule
+
+%init: 1000 A:cytosol # Location per agent
+%init: 500 :cytosol A # Location per init
+%init: 250 A:cytosol[0] # Location per agent
+%init: 250 :cytosol[1] A # Location per init
+
+%var: 'break-rate' 50.0
+
+%obs: 'all monomer' A(s)
+%obs: 'compartment monomer - agent' A:cytosol(s)
+%obs: 'compartment monomer - complex' :cytosol A(s)
+%obs: 'voxel monomer - agent' A:cytosol[0](s)
+%obs: 'voxel monomer - complex' :cytosol[0] A(s)
+
+%obs: 'all dimer' A(s!_)
+%obs: 'compartment dimer - agent' A:cytosol(s!_)
+%obs: 'compartment dimer - complex' :cytosol A(s!_)
+%obs: 'voxel dimer - agent' A:cytosol[0](s!_)
+%obs: 'voxel dimer - complex' :cytosol[0] A(s!_)
+
+%obs: 'cross dimer' A:cytosol[0](s!1),A:cytosol[1](s!1)
+
