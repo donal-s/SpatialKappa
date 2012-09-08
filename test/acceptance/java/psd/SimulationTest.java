@@ -219,6 +219,33 @@ public class SimulationTest {
                 });
     }
 
+//    @Test
+    public void testTest4_1_complexSizeAffectsDiffusionRate() throws Exception {
+         checkEventSimulation("test-4-1-input.ka", new String[] {
+                 "AAAA start", "AA start", "A start", "AAAA end", "AA end", "A end"}, 2000, 50, 
+                new float[][] {
+                 {1000, 1000, 1000, 0, 0, 0}, {0, 0, 0, 0, 0, 1000}, {0, 0, 0, 0, 1000, 1000},  
+                });
+    }
+
+//    @Test
+    public void testTest4_2_complexCompositionAffectsDiffusionRate() throws Exception {
+         checkEventSimulation("test-4-2-input.ka", new String[] {
+                 "AAAA start", "AABB start", "BBAA start", "BBBB start", "AAAA start", "AABB start", "BBAA start", "BBBB start"}, 2000, 50, 
+                new float[][] {
+                 {1000, 1000, 1000, 0, 1000, 0, 0, 0}, {0, 0, 0, 0, 1000, 0, 0, 0}, {0, 0, 0, 0, 1000, 1000, 1000, 0},  
+                });
+    }
+
+//    @Test
+    public void testTest4_3_agentStateAffectsDiffusionRate() throws Exception {
+         checkEventSimulation("test-4-3-input.ka", new String[] {
+                 "AAAA start", "AABB start", "BBAA start", "BBBB start", "AAAA start", "AABB start", "BBAA start", "BBBB start"}, 2000, 50, 
+                new float[][] {
+                 {1000, 1000, 1000, 0, 1000, 0, 0, 0}, {0, 0, 0, 0, 1000, 0, 0, 0}, {0, 0, 0, 0, 1000, 1000, 1000, 0},  
+                });
+    }
+
     private void checkEventSimulation(String inputModelFilename, String[] observableNames, int eventsPerStep, float accuracy, float[][] expectedObservableValues) throws Exception {
         simulation = createSimulation(inputModelFilename);
         

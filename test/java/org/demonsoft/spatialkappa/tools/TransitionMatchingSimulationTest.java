@@ -562,9 +562,9 @@ public class TransitionMatchingSimulationTest {
     
     
     @Test
-    public void testGetTotalTransitionActivity() {
+    public void testIsTransitionActive() {
         try {
-            simulation.getTotalTransitionActivity(null);
+            simulation.isTransitionActive(null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -585,33 +585,99 @@ public class TransitionMatchingSimulationTest {
         // Single list of single mapping
         simulation.transitionInstanceMap.put(transition, 
                 getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1)));
-        assertEquals(3, simulation.getTotalTransitionActivity(transition));
+        assertTrue(simulation.isTransitionActive(transition));
         
         // Single list of multiple mappings
         simulation.transitionInstanceMap.put(transition, 
                 getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1)));
-        assertEquals(21, simulation.getTotalTransitionActivity(transition));
+        assertTrue(simulation.isTransitionActive(transition));
         
         // Multiple lists of single mappings
         simulation.transitionInstanceMap.put(transition, 
                 getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1),
                         new TransitionInstance(getList(new ComplexMapping(complex2)), 1)));
-        assertEquals(10, simulation.getTotalTransitionActivity(transition));
+        assertTrue(simulation.isTransitionActive(transition));
         
         // Multiple lists of multiple mappings
         simulation.transitionInstanceMap.put(transition, 
                 getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1),
                         new TransitionInstance(getList(new ComplexMapping(complex3), new ComplexMapping(complex4)), 1)));
-        assertEquals(43, simulation.getTotalTransitionActivity(transition));
+        assertTrue(simulation.isTransitionActive(transition));
         
         // Multiple target locations per mapping
         simulation.transitionInstanceMap.put(transition, 
                 getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 2)));
-        assertEquals(6, simulation.getTotalTransitionActivity(transition));
+        assertTrue(simulation.isTransitionActive(transition));
         
         transition = new Transition("createComplex", null, null, getList(new Agent("newAgent")), 1f);
-        assertEquals(1, simulation.getTotalTransitionActivity(transition));
+        assertTrue(simulation.isTransitionActive(transition));
         
+        transition = new Transition("moveAnything", (Location) null, "channel", null, 1f);
+        simulation.complexStore.put(complex1, 0);
+        
+        // Single list of single mapping
+        simulation.transitionInstanceMap.put(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1)));
+        assertFalse(simulation.isTransitionActive(transition));
+        
+        // Single list of multiple mappings
+        simulation.transitionInstanceMap.put(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1)));
+        assertFalse(simulation.isTransitionActive(transition));
+        
+        // Multiple lists of single mappings
+        simulation.transitionInstanceMap.put(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1),
+                        new TransitionInstance(getList(new ComplexMapping(complex2)), 1)));
+        assertTrue(simulation.isTransitionActive(transition));
+        
+        // Multiple lists of multiple mappings
+        simulation.transitionInstanceMap.put(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1),
+                        new TransitionInstance(getList(new ComplexMapping(complex3), new ComplexMapping(complex4)), 1)));
+        assertTrue(simulation.isTransitionActive(transition));
+        
+        // Multiple target locations per mapping
+        simulation.transitionInstanceMap.put(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 2)));
+        assertFalse(simulation.isTransitionActive(transition));
+        
+        transition = new Transition("createComplex", null, null, getList(new Agent("newAgent")), 1f);
+        assertTrue(simulation.isTransitionActive(transition));
+    }
+    
+    
+    @Test
+    public void testGetTransitionInstanceActivity() {
+        try {
+            simulation.getTransitionInstanceActivity(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        Complex complex1 = new Complex(new Agent("agent1"));
+        Complex complex2 = new Complex(new Agent("agent2"));
+        Complex complex3 = new Complex(new Agent("agent3"));
+        Complex complex4 = new Complex(new Agent("agent4"));
+        simulation.complexStore.put(complex1, 3);
+        simulation.complexStore.put(complex2, 7);
+        simulation.complexStore.put(complex3, 11);
+        simulation.complexStore.put(complex4, 2);
+        
+        
+        // Single list of single mapping
+        TransitionInstance instance = new TransitionInstance(getList(new ComplexMapping(complex1)), 1);
+        assertEquals(3, simulation.getTransitionInstanceActivity(instance));
+        
+        // Single list of multiple mappings
+        instance = new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1);
+        assertEquals(21, simulation.getTransitionInstanceActivity(instance));
+        
+        // Multiple target locations per mapping
+        instance = new TransitionInstance(getList(new ComplexMapping(complex1)), 2);
+        assertEquals(6, simulation.getTransitionInstanceActivity(instance));
     }
     
     @Test

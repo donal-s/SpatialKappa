@@ -370,42 +370,61 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
             }
         }
 
-        int totalTransitionActivity = getTotalTransitionActivity(transition);
         if (transition.isInfiniteRate(kappaModel.getVariables())) {
-            infiniteRateTransitionActivityMap.put(transition, totalTransitionActivity > 0);
+            infiniteRateTransitionActivityMap.put(transition, isTransitionActive(transition));
         }
         else {
-            float totalTransitionRate = transition.getRate().evaluate(this).value;
-            totalTransitionRate *= totalTransitionActivity;
+            float totalTransitionRate = 0;
+            if (transition.sourceComplexes.size() == 0 && transition.channelName == null) {
+                totalTransitionRate = transition.getRate().evaluate(this).value;
+                // TODO invalid transition if using content based rate with no content defined
+            }
+            else {
+                List<TransitionInstance> transitionInstances = transitionInstanceMap.get(transition);
+                for (TransitionInstance transitionInstance : transitionInstances) {
+                    int instanceActivity = getTransitionInstanceActivity(transitionInstance);
+                    float instanceRate = getTransitionInstanceRate(transitionInstance, transition);
+                    totalTransitionRate += instanceActivity * instanceRate;
+                }
+            }
             finiteRateTransitionActivityMap.put(transition, totalTransitionRate);
         }
     }
 
-    int getTotalTransitionActivity(Transition transition) {
-        int totalComponentActivity = 0;
-        if (transition.sourceComplexes.size() >  0 || transition.channelName != null) {
-            List<TransitionInstance> transitionInstances = transitionInstanceMap.get(transition);
-            for (TransitionInstance transitionInstance : transitionInstances) {
-                int componentActivity = 1;
-                for (Map.Entry<Complex, Integer> countEntry : transitionInstance.requiredComplexCounts.entrySet()) {
-                    int availableCount = complexStore.get(countEntry.getKey());
-                    if (countEntry.getValue() > availableCount) {
-                        componentActivity = 0;
-                        break;
-                    }
-                    for (int index=0; index < countEntry.getValue(); index++) {
-                        componentActivity *= (availableCount--);
-                    }
-                }
-                
-                componentActivity *= transitionInstance.targetLocationCount;
-                totalComponentActivity += componentActivity;
+
+    private float getTransitionInstanceRate(TransitionInstance transitionInstance, Transition transition) {
+        return transition.getRate().evaluate(this).value;
+        // TODO replace with instance rate calculation
+    }
+
+    boolean isTransitionActive(Transition transition) {
+        if (transition.sourceComplexes.size() == 0 && transition.channelName == null) {
+            return true;
+        }
+        List<TransitionInstance> transitionInstances = transitionInstanceMap.get(transition);
+        for (TransitionInstance transitionInstance : transitionInstances) {
+            if (getTransitionInstanceActivity(transitionInstance) > 0) {
+                return true;
             }
         }
-        else {
-            totalComponentActivity = 1;
+        return false;
+    }
+
+
+    int getTransitionInstanceActivity(TransitionInstance transitionInstance) {
+        int result = 1;
+        for (Map.Entry<Complex, Integer> countEntry : transitionInstance.requiredComplexCounts.entrySet()) {
+            int availableCount = complexStore.get(countEntry.getKey());
+            if (countEntry.getValue() > availableCount) {
+                return 0;
+            }
+            for (int index=0; index < countEntry.getValue(); index++) {
+                result *= (availableCount--);
+            }
         }
-        return totalComponentActivity;
+        
+        result *= transitionInstance.targetLocationCount;
+        return result;
     }
 
     private Set<Transition> getAllTransitions() {
@@ -712,19 +731,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         int totalTransitionInstanceActivity = 0;
         for (int index = 0; index < allTransitionInstanceActivities.length; index++) {
             TransitionInstance transitionInstance = transitionInstances.get(index);
-            int activity = 1;
-            for (Map.Entry<Complex, Integer> countEntry : transitionInstance.requiredComplexCounts.entrySet()) {
-                int availableCount = complexStore.get(countEntry.getKey());
-                if (countEntry.getValue() > availableCount) {
-                    activity = 0;
-                    break;
-                }
-                for (int index2=0; index2 < countEntry.getValue(); index2++) {
-                    activity *= (availableCount--);
-                }
-            }
-
-            activity *= transitionInstance.targetLocationCount;
+            int activity = getTransitionInstanceActivity(transitionInstance);
             allTransitionInstanceActivities[index] = activity;
             totalTransitionInstanceActivity += activity;
         }

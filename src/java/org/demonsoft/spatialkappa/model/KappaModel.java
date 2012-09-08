@@ -421,7 +421,7 @@ public class KappaModel implements IKappaModel {
                 throw new IllegalStateException("Duplicate channel '" + channel.getName() + "'");
             }
             channelNames.add(channel.getName());
-            channel.validate(compartments); // TODO validate inter compartment predefined channels
+            channel.validate(compartments);
         }
        
         for (InitialValue initialValue : initialValues) {
