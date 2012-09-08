@@ -72,6 +72,8 @@ The spatial Kappa language requires some encoding of the following concepts to b
 
  \item A description of the \textbf{transport} (active or diffusive) of species within a compartment or between compartments along previously described channel structures. The rates of transport should be general to all species, or species specific. Note that transport of multi-voxel species should also be possible.
 
+ \item \textbf{Variable rates of diffusion} depending on the size of species diffusing. There should be a means of describing how diffusion rates change as overall species size increases or species composition changes.
+
 \end{itemize}
 
 
@@ -449,6 +451,71 @@ It is necessary in some models to distinguish between species which can diffuse 
 'diffusion A' :cytosol A(),B() ->:diffusion :cytosol A(),B:fixed() @ 1.0
 \end{kappasource}
 
+
+\subsection{Instance specific reaction rates}
+
+The rate of a transition rule can depend on the composition and size of the particular species it is being applied to. This is possible for all types of transition, not just diffusion transitions.  
+
+An agent description enclosed in '$\arrowvert\arrowvert$' may be used in a rate equation.
+
+\begin{bnfsource}
+'|' agentGroup '|'
+\end{bnfsource}
+
+where \verb|agentGroup| is agent definition syntax as used on the left hand side of transition rules.
+
+When applied to particular instances of complexes, the number of matching agent structures in the complex instances chosen are counted and substituted into the rate.
+
+For example, in the model below, diffusion rate is inversely proportional to the number of \verb|A()| in the chosen complex
+
+\begin{kappasource}
+\%compartment: array [10]
+\%channel: diffusion :array[x] -> :array[x+1]
+
+\%agent: A(x,y)
+
+\%init: 100 :array[0] A(x,y!1), A(x!1,y!2), A(x!2,y!3), A(x!3,y)
+\%init: 100 :array[0] A(x,y!1), A(x!1,y)
+\%init: 100 :array[0] A(x,y)
+
+'diffusion A' A(x) ->:diffusion A(x) @ 1 / |A()|
+\end{kappasource}
+
+In the second example, the diffusion rate depends on the agent types within individual complex instances
+
+\begin{kappasource}
+\%compartment: array [10]
+\%channel: diffusion :array[x] -> :array[x+1]
+
+\%agent: A(x,y)
+\%agent: B(x,y)
+
+\%init: 100 :array[0] A(x,y!1), A(x!1,y!2), A(x!2,y!3), A(x!3,y)
+\%init: 100 :array[0] A(x,y!1), A(x!1,y!2), B(x!2,y!3), B(x!3,y)
+\%init: 100 :array[0] B(x,y!1), B(x!1,y!2), B(x!2,y!3), B(x!3,y)
+\%init: 100 :array[0] B(x,y!1), B(x!1,y!2), A(x!2,y!3), A(x!3,y)
+
+'diffusion AX' A(x) ->:diffusion A(x) @ 1 / (|A()| + 10 * |B()|)
+'diffusion BX' B(x) ->:diffusion B(x) @ 1 / (|A()| + 10 * |B()|)
+\end{kappasource}
+
+In the final example, the diffusion rate depends on the states of the agents within individual complex instances
+
+\begin{kappasource}
+\%compartment: array [10]
+\%channel: diffusion :array[x] -> :array[x+1]
+
+\%agent: A(x,y,s~y~n)
+
+\%init: 100 :array[0] A(s~y,x,y!1), A(s~y,x!1,y!2), A(s~y,x!2,y!3), A(s~y,x!3,y)
+\%init: 100 :array[0] A(s~y,x,y!1), A(s~y,x!1,y!2), A(s~n,x!2,y!3), A(s~n,x!3,y)
+\%init: 100 :array[0] A(s~n,x,y!1), A(s~n,x!1,y!2), A(s~n,x!2,y!3), A(s~n,x!3,y)
+\%init: 100 :array[0] A(s~n,x,y!1), A(s~n,x!1,y!2), A(s~y,x!2,y!3), A(s~y,x!3,y)
+
+'diffusion A' A(x) ->:diffusion A(x) @ 1 / (|A(s~y)| + 10 * |A(s~n)|)
+\end{kappasource}
+
+The '$\arrowvert\arrowvert$' clause allows any agent declaration that could appear on the left hand side of a transition rule, including agents, complexes, agent state and agent location.
 
 
 \bigskip For example models demonstrating the use of the language extensions, refer to Appendix \ref{chap:resources}.

@@ -109,6 +109,7 @@ varAlgebraAtom :
   | '[' 'T' ']'
   | '[' 'E' ']'
   | operator_unary varAlgebraAtom
+  | \newbnf{'|' agentGroup '|'}
   
 modDecl :
   '\%mod:' booleanExpression 'do' effect until?
