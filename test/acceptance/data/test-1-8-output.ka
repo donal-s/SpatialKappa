@@ -1,0 +1,27 @@
+### AGENTS
+%agent: Ligand(r,loc~cytosol~membrane,loc_index_1~0~1)
+%agent: Receptor-cytosol(dl,state~inactive~active,loc~cytosol~membrane,loc_index_1~0~1)
+%agent: Receptor-membrane(dl,ligand,loc~cytosol~membrane,loc_index_1~0~1)
+
+### RULES
+Ligand(r,loc~membrane,loc_index_1~0),Receptor-membrane(dl!1,ligand,loc~membrane,loc_index_1~0),Receptor-cytosol(dl!1,state~inactive,loc~cytosol,loc_index_1~0) -> Ligand(r!2,loc~membrane,loc_index_1~0),Receptor-membrane(dl!1,ligand!2,loc~membrane,loc_index_1~0),Receptor-cytosol(dl!1,state~active,loc~cytosol,loc_index_1~0) @ 'link rate'
+Ligand(r,loc~membrane,loc_index_1~1),Receptor-membrane(dl!1,ligand,loc~membrane,loc_index_1~1),Receptor-cytosol(dl!1,state~inactive,loc~cytosol,loc_index_1~1) -> Ligand(r!2,loc~membrane,loc_index_1~1),Receptor-membrane(dl!1,ligand!2,loc~membrane,loc_index_1~1),Receptor-cytosol(dl!1,state~active,loc~cytosol,loc_index_1~1) @ 'link rate'
+Ligand(r!2,loc~membrane,loc_index_1~0),Receptor-membrane(dl!1,ligand!2,loc~membrane,loc_index_1~0),Receptor-cytosol(dl!1,state~active,loc~cytosol,loc_index_1~0) -> Ligand(r,loc~membrane,loc_index_1~0),Receptor-membrane(dl!1,ligand,loc~membrane,loc_index_1~0),Receptor-cytosol(dl!1,state~inactive,loc~cytosol,loc_index_1~0) @ 'unlink rate'
+Ligand(r!2,loc~membrane,loc_index_1~1),Receptor-membrane(dl!1,ligand!2,loc~membrane,loc_index_1~1),Receptor-cytosol(dl!1,state~active,loc~cytosol,loc_index_1~1) -> Ligand(r,loc~membrane,loc_index_1~1),Receptor-membrane(dl!1,ligand,loc~membrane,loc_index_1~1),Receptor-cytosol(dl!1,state~inactive,loc~cytosol,loc_index_1~1) @ 'unlink rate'
+
+### INITIAL VALUES
+%init: 500 Receptor-cytosol(dl!1,loc~cytosol,loc_index_1~0),Receptor-membrane(dl!1,loc~membrane,loc_index_1~0)
+%init: 500 Receptor-cytosol(dl!1,loc~cytosol,loc_index_1~1),Receptor-membrane(dl!1,loc~membrane,loc_index_1~1)
+%init: 50 Ligand(r,loc~membrane,loc_index_1~0)
+%init: 50 Ligand(r,loc~membrane,loc_index_1~1)
+
+### VARIABLES
+%var: 'link rate' 10.0
+%var: 'unlink rate' 10.0
+%var: 'inactive' Receptor-cytosol(state~inactive)
+%var: 'active' Receptor-cytosol(state~active)
+
+### PLOTS
+%plot: 'inactive'
+%plot: 'active'
+

@@ -1,0 +1,24 @@
+\chapter{Spatial Kappa Translator User Guide}
+
+\section{Obtaining the application}
+
+The application is available from GitHub as the source Eclipse project, or as a single executable jar file. Both are available at \url{https://github.com/DemonSoftUK/SpatialKappa-PSD2}.
+
+\section{Using the translator}
+
+The translator converts Kappa model files from the current version of Spatial Kappa (v2.0.1) to the version of Kappa supported by the current release of KaSim (v2.01). It takes a single input kappa file and an optional output file name.
+
+The generated output file can then be simulated using KaSim.
+
+\subsection{Running the executable jar}
+
+The simulator can be started by running the executable jar file:\\
+\verb|java -jar SpatialKappaTranslator-v2.0.1.jar  <input file path> [<output file path>]|\\\\
+Double clicking the jar file usually works too.
+
+\subsection{Running from the Eclipse project}
+
+The main class of the simulator is \\
+\verb|org.demonsoft.spatialkappa.tools.SpatialTranslator|\\\\
+Running as a Java Application with the command line arguments\\ \verb|<input file path> [<output file path>]| will execute the translator.
+

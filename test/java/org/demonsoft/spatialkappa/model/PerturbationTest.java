@@ -13,6 +13,7 @@ public class PerturbationTest {
     private PerturbationEffect effect = EasyMock.createMock(PerturbationEffect.class);
     private BooleanExpression conditionFalse = new BooleanExpression(false);
 
+    @SuppressWarnings("unused")
     @Test
     public void testPerturbation() {
         
@@ -49,12 +50,31 @@ public class PerturbationTest {
         }
 
         assertTrue(new Perturbation(conditionTrue, effect, conditionFalse).isConditionMet(state));
-        assertFalse(new Perturbation(conditionTrue, effect, conditionTrue).isConditionMet(state));
+        assertTrue(new Perturbation(conditionTrue, effect, conditionTrue).isConditionMet(state));
         assertFalse(new Perturbation(conditionFalse, effect, conditionTrue).isConditionMet(state));
         assertFalse(new Perturbation(conditionFalse, effect, conditionFalse).isConditionMet(state));
 
         assertTrue(new Perturbation(conditionTrue, effect, null).isConditionMet(state));
         assertFalse(new Perturbation(conditionFalse, effect, null).isConditionMet(state));
+    }
+
+    @Test
+    public void testIsUntilConditionMet() {
+        try {
+            new Perturbation(conditionTrue, effect, conditionFalse).isUntilConditionMet(null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // expected exception
+        }
+
+        assertFalse(new Perturbation(conditionTrue, effect, conditionFalse).isUntilConditionMet(state));
+        assertTrue(new Perturbation(conditionTrue, effect, conditionTrue).isUntilConditionMet(state));
+        assertTrue(new Perturbation(conditionFalse, effect, conditionTrue).isUntilConditionMet(state));
+        assertFalse(new Perturbation(conditionFalse, effect, conditionFalse).isUntilConditionMet(state));
+
+        assertTrue(new Perturbation(conditionTrue, effect, null).isUntilConditionMet(state));
+        assertTrue(new Perturbation(conditionFalse, effect, null).isUntilConditionMet(state));
     }
 
     @Test

@@ -1,5 +1,8 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,19 +18,29 @@ public class Agent implements Serializable {
     final Map<String, AgentSite> sites = new HashMap<String, AgentSite>();
     final List<String> orderedSiteNames = new ArrayList<String>();
     public final String name;
+    public Location location;
     private Complex complex;
     private String stateHash;
 
     public Agent(String name) {
-        if (name == null) {
+        this(name, NOT_LOCATED);
+    }
+
+    private Agent(String name, Location location) {
+        if (name == null || location == null) {
             throw new NullPointerException();
         }
         this.name = name;
         updateStateHash();
+        this.location = location;
     }
 
     public Agent(String name, Collection<AgentSite> sites) {
-        this(name);
+        this(name, NOT_LOCATED, sites);
+    }
+
+    public Agent(String name, Location location, Collection<AgentSite> sites) {
+        this(name, location);
         for (AgentSite site : sites) {
             this.sites.put(site.name, new AgentSite(this, site));
         }
@@ -36,7 +49,11 @@ public class Agent implements Serializable {
     }
 
     public Agent(String name, AgentSite... sites) {
-        this(name);
+        this(name, NOT_LOCATED, sites);
+    }
+
+    public Agent(String name, Location location, AgentSite... sites) {
+        this(name, location);
         if (sites == null) {
             throw new NullPointerException();
         }
@@ -47,7 +64,7 @@ public class Agent implements Serializable {
         updateStateHash();
     }
 
-    void updateStateHash() {
+    public void updateStateHash() {
         StringBuilder builder = new StringBuilder();
         for (String current : orderedSiteNames) {
             AgentSite site = sites.get(current);
@@ -66,14 +83,19 @@ public class Agent implements Serializable {
         Collections.sort(orderedSiteNames);
     }
 
-
+    public void addSite(AgentSite site) {
+        this.sites.put(site.name, new AgentSite(this, site));
+        canonicalSortSites();
+        updateStateHash();
+    }
+    
     public Collection<AgentSite> getSites() {
         return sites.values();
     }
 
     @Override
     public String toString() {
-        return toString("");
+        return toString("", false);
     }
 
     public boolean hasLink(String link) {
@@ -123,27 +145,32 @@ public class Agent implements Serializable {
     }
     
     @Override
-    protected Agent clone() {
+    public Agent clone() {
         // AgentSites are cloned in agent constructor
-        return new Agent(name, sites.values());
+        return new Agent(name, location, sites.values());
     }
 
     public String getStateHash() {
         return stateHash;
     }
 
-    public String toString(String siteSuffix) {
+    public String toString(String siteSuffix, boolean basicKappaOnly) {
         if (siteSuffix == null) {
             throw new NullPointerException();
         }
         
         StringBuilder builder = new StringBuilder();
-        builder.append(name).append("(");
-
+        builder.append(name);
+        
+        if (location != NOT_LOCATED && siteSuffix.length() == 0) {
+        	builder.append(':').append(location.toString());
+        }
+        
+        builder.append("(");
         if (orderedSiteNames.size() > 0) {
-            builder.append(sites.get(orderedSiteNames.get(0)));
+            builder.append(sites.get(orderedSiteNames.get(0)).toString(basicKappaOnly));
             for (int index = 1; index < orderedSiteNames.size(); index++) {
-                builder.append(",").append(sites.get(orderedSiteNames.get(index)));
+                builder.append(",").append(sites.get(orderedSiteNames.get(index)).toString(basicKappaOnly));
             }
         }
         
@@ -153,9 +180,54 @@ public class Agent implements Serializable {
             }
             builder.append(siteSuffix);
         }
-        
+	        
         builder.append(")");
         return builder.toString();
+    }
+
+    public void setLocation(Location location) {
+        if (location == null) {
+            throw new NullPointerException();
+        }
+		this.location = location;
+	}
+
+    public List<Agent> getLocatedAgents(List<Compartment> compartments) {
+        if (compartments == null) {
+            throw new NullPointerException();
+        }
+        List<Agent> result = new ArrayList<Agent>();
+        
+        if (location == NOT_LOCATED) {
+            if (compartments.size() == 0) {
+                result.add(this.clone());
+            }
+            else {
+                for (Compartment compartment : compartments) {
+                    Location[] locations = compartment.getDistributedCellReferences();
+                    for (Location currentLocation : locations) {
+                        Agent locatedAgent = clone();
+                        locatedAgent.location = currentLocation;
+                        result.add(locatedAgent);
+                    }
+                }
+            }
+        }
+        else {
+            Compartment compartment = getCompartment(compartments, location.getName());
+            if (location.isVoxel(compartment)) {
+                result.add(this.clone());
+            }
+            else {
+                Location[] locations = compartment.getDistributedCellReferences();
+                for (Location currentLocation : locations) {
+                    Agent locatedAgent = clone();
+                    locatedAgent.location = currentLocation;
+                    result.add(locatedAgent);
+                }
+            }
+        }
+        return result;
     }
 
 }

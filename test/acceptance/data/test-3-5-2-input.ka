@@ -1,0 +1,17 @@
+### PSD Project Stage 3 acceptance tests
+### Test 3.5 - Diffusion between geometric primitives 2D
+### Last modified 05-09-2012
+
+%agent: B
+
+%compartment: inner               [3][3] # [height][width]
+%compartment: outer OpenRectangle [5][5] [1] # [height][width] [thickness]
+
+%init: 100 :inner[1][2] B
+
+%channel: innerOuter   EdgeNeighbour :inner -> :outer
+
+B ->:innerOuter   B @ 1.0
+
+%obs: 'B inner' B:inner[1][2]
+%obs: 'B outer' B:outer[2][4]

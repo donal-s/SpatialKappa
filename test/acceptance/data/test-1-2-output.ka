@@ -1,0 +1,43 @@
+### AGENTS
+%agent: A(s,loc~cytosol,loc_index_1~0~1)
+%agent: B(s,loc~cytosol,loc_index_1~0~1)
+
+### RULES
+'dimerise AB' A(s,loc~cytosol,loc_index_1~0),B(s,loc~cytosol,loc_index_1~1) -> A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1) @ 1.0
+'dimerise BA' A(s,loc~cytosol,loc_index_1~1),B(s,loc~cytosol,loc_index_1~0) -> A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~0) @ 1.0
+'break AB' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1) -> A(s,loc~cytosol,loc_index_1~0),B(s,loc~cytosol,loc_index_1~1) @ 'break-rate'
+'break BA' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~0) -> A(s,loc~cytosol,loc_index_1~1),B(s,loc~cytosol,loc_index_1~0) @ 'break-rate'
+
+### INITIAL VALUES
+%init: 500 A(loc~cytosol,loc_index_1~0)
+%init: 500 A(loc~cytosol,loc_index_1~1)
+%init: 500 B(loc~cytosol,loc_index_1~0)
+%init: 500 B(loc~cytosol,loc_index_1~1)
+
+### VARIABLES
+%var: 'break-rate' 50.0
+%var: 'all monomer A' A(s)
+%var: 'all monomer B' B(s)
+%var: 'compartment monomer A - agent' A(s,loc~cytosol)
+%var: 'compartment monomer A - complex' A(s,loc~cytosol)
+%var: 'voxel monomer - agent' A(s,loc~cytosol,loc_index_1~0)
+%var: 'voxel monomer - complex' A(s,loc~cytosol,loc_index_1~0)
+%var: 'all dimer' A(s!_)
+%var: 'dimer AB' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~1)
+%var: 'dimer BA' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~0)
+%var: 'same voxel dimer AB' A(s!1,loc~cytosol,loc_index_1~1),B(s!1,loc~cytosol,loc_index_1~1)
+%var: 'same voxel dimer BA' A(s!1,loc~cytosol,loc_index_1~0),B(s!1,loc~cytosol,loc_index_1~0)
+
+### PLOTS
+%plot: 'all monomer A'
+%plot: 'all monomer B'
+%plot: 'compartment monomer A - agent'
+%plot: 'compartment monomer A - complex'
+%plot: 'voxel monomer - agent'
+%plot: 'voxel monomer - complex'
+%plot: 'all dimer'
+%plot: 'dimer AB'
+%plot: 'dimer BA'
+%plot: 'same voxel dimer AB'
+%plot: 'same voxel dimer BA'
+

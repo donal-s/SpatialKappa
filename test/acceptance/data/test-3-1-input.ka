@@ -1,0 +1,19 @@
+### PSD Project Stage 3 acceptance tests
+### Test 3.1 - Creation of geometric primitives
+### Last modified 23-07-2012
+
+### 2D Shapes
+
+%compartment: solidRectangle              [10][5]        # [height][width]
+%compartment: openRectangle OpenRectangle [10][5] [2]    # [height][width] [thickness]
+%compartment: solidCircle   SolidCircle   [10]           # [diameter]
+%compartment: openCircle    OpenCircle    [10] [2]       # [diameter] [thickness]
+
+### 3D Shapes
+
+%compartment: solidCuboid                 [10][5][8]     # [height][width][depth]
+%compartment: openCuboid    OpenCuboid    [10][5][8] [2] # [height][width][depth] [thickness]
+%compartment: solidSphere   SolidSphere   [10]           # [diameter]
+%compartment: openSphere    OpenSphere    [10] [2]       # [diameter] [thickness]
+%compartment: solidCylinder SolidCylinder [10][8]        # [diameter][length]
+%compartment: openCylinder  OpenCylinder  [10][8] [2]    # [diameter][length] [thickness]

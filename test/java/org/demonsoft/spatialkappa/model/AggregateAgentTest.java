@@ -6,16 +6,13 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
-import org.demonsoft.spatialkappa.model.AgentSite;
-import org.demonsoft.spatialkappa.model.AggregateAgent;
-import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.junit.Test;
 
 public class AggregateAgentTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testAggregateAgent() {
         try {
@@ -31,6 +28,7 @@ public class AggregateAgentTest {
         assertTrue(agent.getSites().isEmpty());
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testAggregateAgent_nameAndInterfaces_varArgs() {
         Collection<AggregateSite> interfaces = new ArrayList<AggregateSite>();
@@ -71,7 +69,7 @@ public class AggregateAgentTest {
         
         AggregateAgent agent = new AggregateAgent("name", new AggregateSite("interface1", "state1", "link1"), new AggregateSite("interface2", "state2", "link2"));
 
-        Set<AggregateSite> expected = new HashSet<AggregateSite>();
+        List<AggregateSite> expected = new ArrayList<AggregateSite>();
         expected.add(new AggregateSite("interface1", "state1", "link1"));
         expected.add(new AggregateSite("interface2", "state2", "link2"));
 
@@ -87,7 +85,7 @@ public class AggregateAgentTest {
         interfaces.add(new AgentSite("interface2", "state6", null));
         agent.addSites(interfaces);
 
-        expected = new HashSet<AggregateSite>();
+        expected.clear();
         expected.add(new AggregateSite("interface1", new String[] {"state1", "state4"}, new String[] {"link1", "link4", "link5"}));
         expected.add(new AggregateSite("interface2", new String[] {"state2", "state6"}, new String[] {"link2"}));
         expected.add(new AggregateSite("interface3", "state3", "link3"));

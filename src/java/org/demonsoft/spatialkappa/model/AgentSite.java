@@ -10,26 +10,39 @@ public class AgentSite implements Serializable {
     public final String name;
     private String state;
     private String linkName;
+	private String channel;
     
     public AgentSite(String name, String state, String linkName) {
-        this(null, name, state, linkName);
+        this((Agent) null, name, state, linkName, null);
     }
     
     public AgentSite(Agent agent, AgentSite placeholder) {
-        this(agent, placeholder.name, placeholder.state, placeholder.linkName);
+        this(agent, placeholder.name, placeholder.state, placeholder.linkName, placeholder.channel);
     }
     
     public AgentSite(Agent agent, String name, String state, String linkName) {
+        this(agent, name, state, linkName, null);
+    }
+    
+    public AgentSite(Agent agent, String name, String state, String linkName, String channel) {
         if (name == null) {
             throw new NullPointerException();
+        }
+        if (channel != null && (linkName == null || "?".equals(linkName))) {
+            throw new IllegalArgumentException("Channel unexpected: " + channel);
         }
         this.agent = agent;
         this.name = name;
         this.state = state;
         this.linkName = linkName;
+        this.channel = channel;
     }
     
-    public String getState() {
+    public AgentSite(String name, String state, String linkName, String channel) {
+    	this((Agent) null, name, state, linkName, channel);
+	}
+
+	public String getState() {
         return state;
     }
 
@@ -56,8 +69,7 @@ public class AgentSite implements Serializable {
     
     @Override
     public String toString() {
-        return name + (state != null ? ("~" + state) : "") + (linkName != null ? ("!" + linkName) : "");
-        
+        return toString(false);
     }
     
     @Override
@@ -110,6 +122,33 @@ public class AgentSite implements Serializable {
         else if (!state.equals(other.state))
             return false;
         return true;
+    }
+
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
+    public String toString(boolean basicKappaOnly) {
+        StringBuilder output = new StringBuilder(name);
+        if (state != null) {
+            output.append("~").append(state);
+        }
+        if (linkName != null) {
+            if ("?".equals(linkName)) {
+                output.append("?");
+            }
+            else {
+                output.append("!").append(linkName);
+            }
+        }
+        if (channel != null && !basicKappaOnly) {
+            output.append(":").append(channel);
+        }
+        return output.toString();
     }
 
 }

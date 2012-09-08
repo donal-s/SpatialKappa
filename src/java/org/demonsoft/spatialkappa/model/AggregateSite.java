@@ -1,13 +1,16 @@
 package org.demonsoft.spatialkappa.model;
 
-import java.util.HashSet;
-import java.util.Set;
+import static org.demonsoft.spatialkappa.model.Utils.getFlatString;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class AggregateSite {
     
     private final String name;
-    final Set<String> states = new HashSet<String>();
-    final Set<String> links = new HashSet<String>();
+    final List<String> states = new ArrayList<String>();
+    final List<String> links = new ArrayList<String>();
     
     public AggregateSite(String name, String state, String link) {
         if (name == null) {
@@ -23,6 +26,11 @@ public class AggregateSite {
     }
     
     public AggregateSite(String name, String[] states, String[] links) {
+    	this(name, (states == null) ? null : Arrays.asList(states), 
+    			(links == null) ? null :Arrays.asList(links));
+    }
+
+    public AggregateSite(String name, List<String> states, List<String> links) {
         if (name == null) {
             throw new NullPointerException();
         }
@@ -53,27 +61,30 @@ public class AggregateSite {
         return name;
     }
     
-    public  Set<String> getLinks() {
+    public  List<String> getLinks() {
         return links;
     }
 
-    public  Set<String> getStates() {
+    public  List<String> getStates() {
         return states;
     }
 
     public void merge(AgentSite other) {
         if (other.getState() != null) {
-            states.add(other.getState());
+    		if (!states.contains(other.getState())) {
+    			states.add(other.getState());
+    		}
         }
         if (other.getLinkName() != null) {
-            links.add(other.getLinkName());
+    		if (!links.contains(other.getLinkName())) {
+    			links.add(other.getLinkName());
+    		}
         }
     }
     
     @Override
     public String toString() {
-        return name + (states.size() > 0 ? "~" + states.toString() : "") + (links.size() > 0 ? "!" + links.toString() : "");
-        
+        return name + (states.size() > 0 ? "~" +  getFlatString("~", false, states.toArray()) : "") + (links.size() > 0 ? "!" + links.toString() : "");
     }
 
     @Override

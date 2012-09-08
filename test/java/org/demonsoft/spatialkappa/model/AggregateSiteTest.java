@@ -5,15 +5,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
-import org.demonsoft.spatialkappa.model.AgentSite;
-import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.junit.Test;
 
 public class AggregateSiteTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testAggregateInterface_singleState() {
         try {
@@ -37,6 +35,7 @@ public class AggregateSiteTest {
         assertEquals(0, interface1.links.size());
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testAggregateInterface_fromAgentInterface() {
         AgentSite agentInterface = new AgentSite("name", "state", "link");
@@ -62,6 +61,7 @@ public class AggregateSiteTest {
         assertEquals(0, interface1.links.size());
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testAggregateInterface_multipleStates() {
         String[] states = {"state1", "state2"};
@@ -107,8 +107,8 @@ public class AggregateSiteTest {
         interface1.merge(new AgentSite("", "state6", null));
         interface1.merge(new AgentSite("", (String) null, null));
         
-        Set<String> expectedStates = new HashSet<String>(Arrays.asList(new String[] {"state1", "state2", "state6"}));
-        Set<String> expectedLinks = new HashSet<String>(Arrays.asList(new String[] {"link1", "link2", "link5"}));
+        List<String> expectedStates = Arrays.asList(new String[] {"state1", "state2", "state6"});
+        List<String> expectedLinks = Arrays.asList(new String[] {"link1", "link2", "link5"});
 
         assertEquals(expectedStates, interface1.states);
         assertEquals(expectedLinks, interface1.links);

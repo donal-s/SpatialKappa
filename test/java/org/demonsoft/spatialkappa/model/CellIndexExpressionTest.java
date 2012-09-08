@@ -14,6 +14,7 @@ import org.junit.Test;
 
 public class CellIndexExpressionTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testConstructor() {
         CellIndexExpression expr1 = new CellIndexExpression(new VariableReference("x"));
@@ -71,7 +72,7 @@ public class CellIndexExpressionTest {
         
         CellIndexExpression expr = new CellIndexExpression(new VariableReference("x"));
         assertEquals(Type.VARIABLE_REFERENCE, expr.type);
-        assertEquals("'x'", expr.toString());
+        assertEquals("x", expr.toString());
         assertFalse(expr.isFixed());
         
         expr = new CellIndexExpression("2");
@@ -81,13 +82,26 @@ public class CellIndexExpressionTest {
         
         expr = new CellIndexExpression(expr1, Operator.PLUS, expr2);
         assertEquals(Type.BINARY_EXPRESSION, expr.type);
-        assertEquals("('x' + 2)", expr.toString());
+        assertEquals("(x + 2)", expr.toString());
         assertFalse(expr.isFixed());
         
         expr = new CellIndexExpression(expr2, Operator.PLUS, expr2);
         assertEquals(Type.BINARY_EXPRESSION, expr.type);
         assertEquals("(2 + 2)", expr.toString());
         assertTrue(expr.isFixed());
+    }
+    
+    @Test
+    public void testGetDeltaIndex() {
+        CellIndexExpression expr = new CellIndexExpression(new VariableReference("x"));
+        assertEquals("(x + 1)", expr.getDeltaIndex(1).toString());
+        assertSame(expr, expr.getDeltaIndex(0));
+        assertEquals("(x - 2)", expr.getDeltaIndex(-2).toString());
+        
+        expr = new CellIndexExpression("3");
+        assertEquals("4", expr.getDeltaIndex(1).toString());
+        assertSame(expr, expr.getDeltaIndex(0));
+        assertEquals("1", expr.getDeltaIndex(-2).toString());
     }
     
     @Test

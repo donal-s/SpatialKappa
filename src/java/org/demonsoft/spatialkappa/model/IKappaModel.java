@@ -3,14 +3,10 @@ package org.demonsoft.spatialkappa.model;
 import java.util.List;
 import java.util.Map;
 
-
-
-
 public interface IKappaModel {
 
-    public void addTransform(String label, List<Agent> leftSideAgents, List<Agent> rightSideAgents, VariableExpression rate, Location location);
-
-    public void addTransport(String label, String compartmentLinkName, List<Agent> agents, VariableExpression rate);
+    public void addTransition(String label, Location leftLocation, List<Agent> leftSideAgents, 
+            String channelName, Location rightLocation, List<Agent> rightSideAgents, VariableExpression rate);
 
     public void addInitialValue(List<Agent> agents, String valueText, Location compartment);
     public void addInitialValue(List<Agent> agents, VariableReference reference, Location compartment);
@@ -22,12 +18,12 @@ public interface IKappaModel {
 
     public void addPerturbation(Perturbation perturbation);
 
-    public void addCompartment(String name, List<Integer> dimensions);
+    public void addCompartment(String name, String type, List<Integer> dimensions);
     public void addCompartment(Compartment compartment);
 
-    public void addCompartmentLink(CompartmentLink link);
+    public void addChannel(Channel link);
 
-
+    public void addAgentDeclaration(AggregateAgent agent);
 
     public void validate();
     
@@ -35,22 +31,27 @@ public interface IKappaModel {
 
     public List<InitialValue> getInitialValues();
 
-    public Map<LocatedComplex, Integer> getFixedLocatedInitialValuesMap();
+    public Map<Complex, Integer> getFixedLocatedInitialValuesMap();
 
     public List<String> getPlottedVariables();
 
-    public List<LocatedTransition> getFixedLocatedTransitions();
 
-    public List<LocatedTransform> getLocatedTransforms();
 
     public List<Compartment> getCompartments();
     
-    public List<CompartmentLink> getCompartmentLinks();
+    public List<Channel> getChannels();
+    public Channel getChannel(String channelName);
+
     
-    public List<Transport> getTransports();
-    
-    public Map<String, AggregateAgent> getAggregateAgentMap();
+    public Map<String, AggregateAgent> getAgentDeclarationMap();
     
     public List<Perturbation> getPerturbations();
+    
+    public List<String> getOrderedVariableNames();
 
+    
+    public List<Transition> getTransitions();
+
+//    public List<LocatedTransition> getFixedLocatedTransitions();
+    
 }

@@ -1,0 +1,164 @@
+# Kappa version of the BNGL egfr_net model contained in the models2 repository of BioNetGen.
+# Original BNGL version:
+# Kappa version: Donal Stewart 20-05-2012
+
+%var: 'egf_tot' 1.2e6
+%var: 'egfr_tot' 1.8e5
+%var: 'Grb2_tot' 1.0e5
+%var: 'Shc_tot' 2.7e5
+%var: 'Sos_tot' 1.3e4
+%var: 'Grb2_Sos_tot' 4.9e4
+
+%var: 'kp1' 1.667e-06 # ligand-monomer binding (scaled)
+%var: 'km1' 0.06 # ligand-monomer dissociation
+
+%var: 'kp2' 5.556e-06 # aggregation of bound monomers (scaled)
+%var: 'km2' 0.1 # dissociation of bound monomers
+
+%var: 'kp3' 0.5 # dimer transphosphorylation
+%var: 'km3' 4.505 # dimer dephosphorylation
+
+%var: 'kp14' 3 # Shc transphosphorylation
+%var: 'km14' 0.03 # Shc dephosphorylation
+
+%var: 'km16' 0.005 # Shc cytosolic dephosphorylation
+
+%var: 'kp9' 8.333e-07 # binding of Grb2 to receptor (scaled)
+%var: 'km9' 0.05 # dissociation of Grb2 from receptor
+
+%var: 'kp10' 5.556e-06 # binding of Sos to receptor (scaled)
+%var: 'km10' 0.06 # dissociation of Sos from receptor
+
+%var: 'kp11' 1.25e-06 # binding of Grb2-Sos to receptor (scaled)
+%var: 'km11' 0.03 # diss. of Grb2-Sos from receptor
+
+%var: 'kp13' 2.5e-05 # binding of Shc to receptor (scaled)
+%var: 'km13' 0.6 # diss. of Shc from receptor
+
+%var: 'kp15' 2.5e-07 # binding of ShcP to receptor (scaled)
+%var: 'km15' 0.3 # diss. of ShcP from receptor
+
+%var: 'kp17' 1.667e-06 # binding of Grb2 to RP-ShcP (scaled)
+%var: 'km17' 0.1 # diss. of Grb2 from RP-ShcP
+
+%var: 'kp18' 2.5e-07 # binding of ShcP-Grb2 to receptor (scaled)
+%var: 'km18' 0.3 # diss. of ShcP-Grb2 from receptor
+
+%var: 'kp19' 5.556e-06 # binding of Sos to RP-ShcP-Grb2 (scaled)
+%var: 'km19' 0.0214 # diss. of Sos from RP-ShcP-Grb2
+
+%var: 'kp20' 6.667e-08 # binding of ShcP-Grb2-Sos to receptor (scaled)
+%var: 'km20' 0.12 # diss. of ShcP-Grb2-Sos from receptor
+
+%var: 'kp24' 5e-06 # binding of Grb2-Sos to RP-ShcP (scaled)
+%var: 'km24' 0.0429 # diss. of Grb2-Sos from RP-ShcP
+
+%var: 'kp21' 1.667e-06 # binding of ShcP to Grb2 in cytosol (scaled)
+%var: 'km21' 0.01 # diss. of Grb2 and SchP in cytosol
+
+%var: 'kp23' 1.167e-05 # binding of ShcP to Grb2-Sos in cytosol (scaled)
+%var: 'km23' 0.1 # diss. of Grb2-Sos and SchP in cytosol
+
+%var: 'kp12' 5.556e-08 # binding of Grb2 to Sos in cytosol (scaled)
+%var: 'km12' 0.0015 # diss. of Grb2 and Sos in cytosol
+
+%var: 'kp22' 1.667e-05 # binding of ShcP-Grb2 to Sos in cytosol (scaled)
+%var: 'km22' 0.064 # diss. of ShcP-Grb2 and Sos in cytosol
+
+%agent: egf(r)
+%agent: Grb2(SH2,SH3)
+%agent: Shc(PTB,Y317~Y~pY)
+%agent: Sos(dom)
+%agent: egfr(l,r,Y1068~Y~pY,Y1148~Y~pY)
+
+%init: 'egf_tot' egf
+%init: 'Grb2_tot' Grb2
+%init: 'Shc_tot' Shc
+%init: 'Sos_tot' Sos
+%init: 'egfr_tot' egfr
+%init: 'Grb2_Sos_tot' Grb2(SH3!1),Sos(dom!1)
+
+# Ligand-receptor binding
+egfr(l,r),egf(r) -> egfr(l!1,r),egf(r!1) @ 'kp1' #ligand-monomer
+egfr(l!1,r),egf(r!1) -> egfr(l,r),egf(r) @ 'km1' #ligand-monomer
+
+# Receptor-aggregation
+egfr(l!_,r),egfr(l!_,r) -> egfr(l!_,r!3),egfr(l!_,r!3) @ 'kp2'
+egfr(l!_,r!3),egfr(l!_,r!3) -> egfr(l!_,r),egfr(l!_,r) @ 'km2'
+
+# Transphosphorylation of egfr by RTK
+ egfr(r!_,Y1068~Y) -> egfr(r!_,Y1068~pY) @ 'kp3'
+ egfr(r!_,Y1148~Y) -> egfr(r!_,Y1148~pY) @ 'kp3'
+
+# Dephosphorylation
+ egfr(Y1068~pY) -> egfr(Y1068~Y) @ 'km3'
+ egfr(Y1148~pY) -> egfr(Y1148~Y) @ 'km3'
+
+# Shc transphosph
+
+ egfr(r!_,Y1148~pY!1),Shc(PTB!1,Y317~Y) -> egfr(r!_,Y1148~pY!1),Shc(PTB!1,Y317~pY) @ 'kp14'
+ Shc(PTB!_,Y317~pY) -> Shc(PTB!_,Y317~Y) @ 'km14'
+
+# Y1068 activity
+ egfr(Y1068~pY),Grb2(SH2,SH3) -> egfr(Y1068~pY!1),Grb2(SH2!1,SH3) @ 'kp9'
+ egfr(Y1068~pY!1),Grb2(SH2!1,SH3) -> egfr(Y1068~pY),Grb2(SH2,SH3) @ 'km9'
+ egfr(Y1068~pY),Grb2(SH2,SH3!_) -> egfr(Y1068~pY!1),Grb2(SH2!1,SH3!_) @ 'kp11'
+ egfr(Y1068~pY!1),Grb2(SH2!1,SH3!_) -> egfr(Y1068~pY),Grb2(SH2,SH3!_) @ 'km11'
+ egfr(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) -> egfr(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) @ 'kp10'
+ egfr(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2) -> egfr(Y1068~pY!1),Grb2(SH2!1,SH3),Sos(dom) @ 'km10'
+
+# Y1148 activity
+
+ egfr(Y1148~pY),Shc(PTB,Y317~Y) -> egfr(Y1148~pY!1),Shc(PTB!1,Y317~Y) @ 'kp13'
+ egfr(Y1148~pY!1),Shc(PTB!1,Y317~Y) -> egfr(Y1148~pY),Shc(PTB,Y317~Y) @ 'km13'
+ egfr(Y1148~pY),Shc(PTB,Y317~pY) -> egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY) @ 'kp15'
+ egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY) -> egfr(Y1148~pY),Shc(PTB,Y317~pY) @ 'km15'
+ egfr(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp18'
+ egfr(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3) -> egfr(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'km18'
+ egfr(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'kp20'
+ egfr(Y1148~pY!2),Shc(PTB!2,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) -> egfr(Y1148~pY),Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!3),Sos(dom!3) @ 'km20'
+
+ egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) -> egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) @ 'kp17'
+ egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3) -> egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3) @ 'km17'
+
+ egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) -> egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp24'
+ egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY),Grb2(SH2,SH3!3),Sos(dom!3) @ 'km24'
+
+ Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp19'
+ Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km19'
+
+# Cytosolic
+
+ Shc(PTB,Y317~pY),Grb2(SH2,SH3) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) @ 'kp21'
+ Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3) @ 'km21'
+ Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) -> Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) @ 'kp23'
+ Shc(PTB,Y317~pY!1),Grb2(SH2!1,SH3!_) -> Shc(PTB,Y317~pY),Grb2(SH2,SH3!_) @ 'km23'
+ Shc(PTB,Y317~pY) -> Shc(PTB,Y317~Y) @ 'km16'
+ Grb2(SH2,SH3),Sos(dom) -> Grb2(SH2,SH3!1),Sos(dom!1) @ 'kp12'
+ Grb2(SH2,SH3!1),Sos(dom!1) -> Grb2(SH2,SH3),Sos(dom) @ 'km12'
+ Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) @ 'kp22'
+ Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3) -> Shc(PTB,Y317~pY!2),Grb2(SH2!2,SH3),Sos(dom) @ 'km22'
+
+
+%obs: 'Dimers' egfr(r!1),egfr(r!1)
+%var: 'Sos_act-1' Shc(PTB!_,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3)
+%var: 'Sos_act-2' egfr(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2)
+%obs: 'Sos_act' 'Sos_act-1' + 'Sos_act-2'
+%var: 'RP-1' egfr(Y1068~pY?)
+%var: 'RP-2' egfr(Y1148~pY?)
+%obs: 'RP' 'RP-1' + 'RP-2'
+%obs: 'Shc_Grb' Shc(Y317~pY!1),Grb2(SH2!1)
+%obs: 'Shc_Grb_Sos' Shc(Y317~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2)
+%obs: 'R_Grb2' egfr(Y1068~pY!1),Grb2(SH2!1)
+%obs: 'R_Shc' egfr(Y1148~pY!1),Shc(PTB!1,Y317~Y)
+%obs: 'R_ShcP' egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY?)
+%obs: 'ShcP' Shc(Y317~pY?)
+%obs: 'R_G_S' egfr(Y1068~pY!1),Grb2(SH2!1,SH3!2),Sos(dom!2)
+# Strong differences are seen for R_G_S in comparison with path model
+%obs: 'R_S_G_S' egfr(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3)
+
+%obs: 'Efgr_total' egfr
+%obs: 'Shc_total' Shc
+%obs: 'Sos_total' Sos
+%obs: 'Grb2_total' Grb2
+

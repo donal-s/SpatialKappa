@@ -9,8 +9,9 @@ import org.junit.Test;
 
 public class AgentSiteTest {
 
+    @SuppressWarnings("unused")
     @Test
-    public void testAgentInterface_singleState() {
+    public void testAgentSite_singleState() {
         try {
             new AgentSite(null, "state", "link");
             fail("null should have failed");
@@ -23,11 +24,74 @@ public class AgentSiteTest {
         assertEquals("name", site.name);
         assertEquals("state", site.getState());
         assertEquals("link", site.getLinkName());
+        assertEquals("name~state!link", site.toString());
+        
+        site = new AgentSite("name", "state", "_");
+        assertEquals("name", site.name);
+        assertEquals("state", site.getState());
+        assertEquals("_", site.getLinkName());
+        assertEquals("name~state!_", site.toString());
+
+        site = new AgentSite("name", "state", "?");
+        assertEquals("name", site.name);
+        assertEquals("state", site.getState());
+        assertEquals("?", site.getLinkName());
+        assertEquals("name~state?", site.toString());
 
         site = new AgentSite("name", (String) null, null);
         assertEquals("name", site.name);
         assertEquals(null, site.getState());
         assertEquals(null, site.getLinkName());
+        assertEquals("name", site.toString());
+    }
+
+    @SuppressWarnings("unused")
+    @Test
+    public void testAgentSite_withChannel() {
+        try {
+            new AgentSite((String) null, "state", "link", "channel");
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        AgentSite site = new AgentSite("name", null, null, null);
+        assertEquals("name", site.name);
+        assertNull(site.getState());
+        assertNull(site.getLinkName());
+        assertNull(site.getChannel());
+        assertEquals("name", site.toString());
+        
+        site = new AgentSite("name", "state", "link", "channel");
+        assertEquals("name", site.name);
+        assertEquals("state", site.getState());
+        assertEquals("link", site.getLinkName());
+        assertEquals("channel", site.getChannel());
+        assertEquals("name~state!link:channel", site.toString());
+        
+        site = new AgentSite("name", "state", "_", "channel");
+        assertEquals("name", site.name);
+        assertEquals("state", site.getState());
+        assertEquals("_", site.getLinkName());
+        assertEquals("channel", site.getChannel());
+        assertEquals("name~state!_:channel", site.toString());
+
+        try {
+            new AgentSite("name", "state", "?", "channel");
+            fail("invalid channel should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            new AgentSite("name", "state", null, "channel");
+            fail("invalid channel should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
     }
 
     @Test
@@ -58,16 +122,16 @@ public class AgentSiteTest {
         checkEqualsHashCode(site, new AgentSite(agent1, "name2", "state", "link"), false);
         checkEqualsHashCode(site, new AgentSite(agent1, "name", "state2", "link"), false);
         checkEqualsHashCode(site, new AgentSite(agent1, "name", "state", "link2"), false);
-        checkEqualsHashCode(site, new AgentSite(null, "name", "state", "link"), false);
+        checkEqualsHashCode(site, new AgentSite((Agent) null, "name", "state", "link"), false);
         checkEqualsHashCode(site, new AgentSite(agent1, "name2", null, "link"), false);
         checkEqualsHashCode(site, new AgentSite(agent1, "name", "state2", null), false);
         
-        site = new AgentSite(null, "name", null, null);
+        site = new AgentSite((Agent) null, "name", null, null);
 
-        checkEqualsHashCode(site, new AgentSite(null, "name", null, null), true);
+        checkEqualsHashCode(site, new AgentSite((Agent) null, "name", null, null), true);
         checkEqualsHashCode(site, new AgentSite(agent1, "name", null, null), false);
-        checkEqualsHashCode(site, new AgentSite(null, "name", "state", null), false);
-        checkEqualsHashCode(site, new AgentSite(null, "name", null, "link"), false);
+        checkEqualsHashCode(site, new AgentSite((Agent) null, "name", "state", null), false);
+        checkEqualsHashCode(site, new AgentSite((Agent) null, "name", null, "link"), false);
     }
 
     private void checkEqualsHashCode(AgentSite site1, AgentSite site2, boolean equal) {

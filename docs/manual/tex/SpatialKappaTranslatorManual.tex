@@ -1,0 +1,37 @@
+\documentclass[a4paper]{report}
+
+\usepackage{natbib}
+\usepackage{fancyvrb}
+\usepackage{relsize}
+\usepackage{graphicx}
+\usepackage{amssymb,amsmath}
+\usepackage{color}
+\usepackage{hyperref}
+
+
+\DefineVerbatimEnvironment{kappasource}{Verbatim}{baselinestretch=1,fontsize=\relsize{-1},commandchars=\\\{\}}
+\DefineVerbatimEnvironment{bnfsource}{Verbatim}{baselinestretch=1,fontsize=\relsize{-1},commandchars=\\\{\}}
+\DefineVerbatimEnvironment{pseudocode}{Verbatim}{baselinestretch=1,fontsize=\relsize{-1}}
+
+\newcommand{\newbnf}[1]{\colorbox[rgb]{0.8,0.8,1}{#1}}
+
+\title{Spatial Kappa Translator\\User Guide\\v2.0.1}
+\author{Donal Stewart\\DemonSoft Ltd}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\include{SpatialKappaTranslatorManual-chap1}
+\include{SpatialKappaTranslatorManual-chap2}
+
+\appendix
+\include{SpatialKappaTranslatorManual-appendix1}
+\include{SpatialKappaTranslatorManual-appendix2}
+
+\bibliographystyle{apalike}
+\bibliography{SpatialKappaTranslatorManual}
+
+\end{document}

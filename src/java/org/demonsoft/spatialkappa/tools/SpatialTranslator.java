@@ -1,5 +1,8 @@
 package org.demonsoft.spatialkappa.tools;
 
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.getChannel;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,22 +23,21 @@ import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
 import org.demonsoft.spatialkappa.model.AggregateAgent;
 import org.demonsoft.spatialkappa.model.AggregateSite;
+import org.demonsoft.spatialkappa.model.Channel;
+import org.demonsoft.spatialkappa.model.ChannelConstraint;
 import org.demonsoft.spatialkappa.model.Compartment;
-import org.demonsoft.spatialkappa.model.CompartmentLink;
 import org.demonsoft.spatialkappa.model.Complex;
-import org.demonsoft.spatialkappa.model.Direction;
+import org.demonsoft.spatialkappa.model.Complex.MappingInstance;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.InitialValue;
-import org.demonsoft.spatialkappa.model.LocatedTransform;
+import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Location;
-import org.demonsoft.spatialkappa.model.Transform;
-import org.demonsoft.spatialkappa.model.Transport;
+import org.demonsoft.spatialkappa.model.Transition;
 import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.Variable.Type;
 import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
 import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
 import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
-
 
 public class SpatialTranslator {
 
@@ -50,27 +52,30 @@ public class SpatialTranslator {
         kappaModel = getKappaModel(new FileInputStream(inputFile));
     }
 
-    public SpatialTranslator(String input) throws Exception {
+    SpatialTranslator(String input) throws Exception {
         if (input == null) {
             throw new NullPointerException();
         }
         kappaModel = getKappaModel(new ByteArrayInputStream(input.getBytes()));
     }
 
-    public SpatialTranslator(IKappaModel kappaModel) {
+    SpatialTranslator(IKappaModel kappaModel) {
         if (kappaModel == null) {
             throw new NullPointerException();
         }
         this.kappaModel = kappaModel;
     }
 
-    private IKappaModel getKappaModel(InputStream inputStream) throws Exception {
+    private static IKappaModel getKappaModel(InputStream inputStream) throws Exception {
         ANTLRInputStream input = new ANTLRInputStream(inputStream);
         CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));
         SpatialKappaParser.prog_return r = new SpatialKappaParser(tokens).prog();
 
         CommonTree t = (CommonTree) r.getTree();
 
+        if (t == null) {
+            return new KappaModel();
+        }
         CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
         nodes.setTokenStream(tokens);
         SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
@@ -80,67 +85,62 @@ public class SpatialTranslator {
     public String translateToKappa() {
         StringBuilder builder = new StringBuilder();
 
-        String aggregateLocationState = getAggregateLocationState(kappaModel.getCompartments());
-        
-        List<String> agentNames = new ArrayList<String>(kappaModel.getAggregateAgentMap().keySet());
-        Collections.sort(agentNames);
-        
-        for (String agentName : agentNames) {
-            builder.append(getKappaString(kappaModel.getAggregateAgentMap().get(agentName), aggregateLocationState));
-        }
-        builder.append("\n");
-        
-        // TODO - allow multiple diffusions same name
-        // TODO - restrict diffusion agents to unlinked complexes
-        for (Transport transport : kappaModel.getTransports()) {
-            builder.append(getKappaString(transport));
-        }
-        builder.append("\n");
-        
-        for (LocatedTransform transform : kappaModel.getLocatedTransforms()) {
-            builder.append(getKappaString(transform));
-        }
-        builder.append("\n");
+        String aggregateLocationState = getAgentDeclLocationState(kappaModel.getCompartments());
 
-        for (InitialValue initialValue : kappaModel.getInitialValues()) {
-            builder.append(getKappaString(initialValue));
-        }
-        builder.append("\n");
-        List<String> variableNames = new ArrayList<String>(kappaModel.getVariables().keySet());
-        Collections.sort(variableNames); // TODO need to sort to fix referencing issues
-        
-        for (String variableName : variableNames) {
-            Variable variable = kappaModel.getVariables().get(variableName);
-            if (variable.type != Type.TRANSITION_LABEL) {
-                builder.append(getKappaString(variable));
+        List<String> agentNames = new ArrayList<String>(kappaModel.getAgentDeclarationMap().keySet());
+        if (agentNames.size() > 0) {
+            builder.append("### AGENTS\n");
+            Collections.sort(agentNames);
+            for (String agentName : agentNames) {
+                builder.append(getKappaString(kappaModel.getAgentDeclarationMap().get(agentName), aggregateLocationState));
             }
+            builder.append("\n");
         }
         
-        for (String plotName : kappaModel.getPlottedVariables()) {
-            Variable variable = kappaModel.getVariables().get(plotName);
-            if (variable.type == Type.KAPPA_EXPRESSION && variable.location != null) { // TODO - what about indirectly referenced compartments ?
-                Compartment compartment = variable.location.getReferencedCompartment(kappaModel.getCompartments());
-                if (compartment.getDimensions().length != variable.location.getIndices().length) {
-                    String[] stateSuffixes = compartment.getCellStateSuffixes();
-                    for (int cellIndex = 0; cellIndex < stateSuffixes.length; cellIndex++) {
-                        String cellName = plotName + " :" + stateSuffixes[cellIndex];
-                        builder.append("%var: '").append(cellName).append("' ").append(getKappaString(variable.complex, stateSuffixes[cellIndex])).append("\n");
-                        builder.append("%plot: '").append(cellName).append("'\n");
-                    }
+        // TODO - restrict diffusion agents to unlinked complexes
+        if (kappaModel.getTransitions().size() > 0) {
+            builder.append("### RULES\n");
+            for (Transition transition : kappaModel.getTransitions()) {
+                builder.append(getKappaString(transition));
+            }
+            builder.append("\n");
+        }
+        
+        if (kappaModel.getInitialValues().size() > 0) {
+            builder.append("### INITIAL VALUES\n");
+            for (InitialValue initialValue : kappaModel.getInitialValues()) {
+                builder.append(getKappaString(initialValue));
+            }
+            builder.append("\n");
+        }
+        
+        List<String> variableNames = new ArrayList<String>(kappaModel.getOrderedVariableNames());
+        if (variableNames.size() > 0) {
+            builder.append("### VARIABLES\n");
+            for (String variableName : variableNames) {
+                Variable variable = kappaModel.getVariables().get(variableName);
+                if (variable.type != Type.TRANSITION_LABEL) {
+                    builder.append(getKappaString(variable));
                 }
             }
-            
-            builder.append("%plot: '").append(plotName).append("'\n");
+            builder.append("\n");
         }
-        builder.append("\n");
+
+        if (kappaModel.getPlottedVariables().size() > 0) {
+            builder.append("### PLOTS\n");
+            for (String plotName : kappaModel.getPlottedVariables()) {
+                builder.append("%plot: '").append(plotName).append("'\n");
+            }
+            builder.append("\n");
+        }
         return builder.toString();
     }
 
-    private String getAggregateLocationState(List<Compartment> compartments) {
+    private String getAgentDeclLocationState(List<Compartment> compartments) {
         if (compartments == null || compartments.size() == 0) {
             return "";
         }
-        
+
         int maxDimensions = 0;
         List<String> compartmentNames = new ArrayList<String>();
         for (Compartment compartment : compartments) {
@@ -149,7 +149,7 @@ public class SpatialTranslator {
                 maxDimensions = compartment.getDimensions().length;
             }
         }
-        
+
         int[] maxDimensionSizes = new int[maxDimensions];
         for (Compartment compartment : compartments) {
             for (int index = 0; index < compartment.getDimensions().length; index++) {
@@ -158,29 +158,29 @@ public class SpatialTranslator {
                 }
             }
         }
-        
+
         StringBuilder result = new StringBuilder();
-        
+
         result.append("loc");
         Collections.sort(compartmentNames);
         for (String compartmentName : compartmentNames) {
             result.append("~").append(compartmentName);
         }
-        
+
         for (int index = 0; index < maxDimensions; index++) {
             result.append(",loc_index_").append(index + 1);
             for (int stateIndex = 0; stateIndex < maxDimensionSizes[index]; stateIndex++) {
                 result.append("~").append(stateIndex);
             }
         }
-        
+
         return result.toString();
     }
 
-    private Object getKappaString(AggregateAgent agent, String aggregateLocationState) {
+    private Object getKappaString(AggregateAgent agent, String agentDeclLocationState) {
         StringBuilder builder = new StringBuilder();
         builder.append("%agent: ").append(agent.getName()).append("(");
-        
+
         boolean firstElement = true;
         for (AggregateSite site : agent.getSites()) {
             if (!firstElement) {
@@ -190,16 +190,14 @@ public class SpatialTranslator {
                 firstElement = false;
             }
             builder.append(site.getName());
-            List<String> states = new ArrayList<String>(site.getStates());
-            Collections.sort(states);
-            for (String state : states) {
+            for (String state : site.getStates()) {
                 builder.append("~").append(state);
             }
         }
-        if (agent.getSites().size() > 0 && aggregateLocationState.length() > 0) {
+        if (agent.getSites().size() > 0 && agentDeclLocationState.length() > 0) {
             builder.append(",");
         }
-        builder.append(aggregateLocationState).append(")\n");
+        builder.append(agentDeclLocationState).append(")\n");
         return builder.toString();
     }
 
@@ -216,45 +214,35 @@ public class SpatialTranslator {
         return result;
     }
 
-    private List<CompartmentLink> getCompartmentLinks(List<CompartmentLink> compartmentLinks, String compartmentLinkName) {
-        List<CompartmentLink> result = new ArrayList<CompartmentLink>();
-        for (CompartmentLink link : compartmentLinks) {
-            if (compartmentLinkName.equals(link.getName())) {
-                result.add(link);
+    private String getAgentKappaString(List<Agent> agents) {
+        return getAgentKappaString(agents, "");
+    }
+
+    private String getAgentKappaString(List<Agent> agents, String stateSuffix) {
+        StringBuilder builder = new StringBuilder();
+        boolean first = true;
+        for (Agent agent : agents) {
+            if (!first) {
+                builder.append(",");
             }
-        }
-        return result;
-    }
-
-    private String getComplexKappaString(List<Complex> complexes, String stateSuffix) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getKappaString(complexes.get(0), stateSuffix));
-        for (int index = 1; index < complexes.size(); index++) {
-            builder.append(",").append(getKappaString(complexes.get(index), stateSuffix));
+            if (agent.location != NOT_LOCATED) {
+                builder.append(agent.toString(getKappaString(agent.location), true));
+            }
+            else {
+                builder.append(agent.toString(stateSuffix, true));
+            }
+            first = false;
         }
         return builder.toString();
     }
 
-    String getAgentKappaString(List<Agent> agents, Location location) {
-        return getAgentKappaString(agents, getKappaString(location));
-    }
-
-    String getAgentKappaString(List<Agent> agents, String stateSuffix) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(agents.get(0).toString(stateSuffix));
-        for (int index = 1; index < agents.size(); index++) {
-            builder.append(",").append(agents.get(index).toString(stateSuffix));
-        }
-        return builder.toString();
-    }
-
-    String getKappaString(Complex complex, String agentStateSuffix) {
+    private String getKappaString(Complex complex, String agentStateSuffix) {
         return getAgentKappaString(complex.agents, agentStateSuffix);
     }
 
-    String getKappaString(Location location) {
+    private String getKappaString(Location location) {
         int dimensionCount = 0;
-        if (location != null && location.getIndices() != null && location.getIndices().length > 0) {
+        if (location != null && location != NOT_LOCATED && location.getIndices() != null && location.getIndices().length > 0) {
             dimensionCount = location.getIndices().length;
         }
         return getKappaString(location, NO_VARIABLES, dimensionCount);
@@ -268,7 +256,7 @@ public class SpatialTranslator {
         if (variables == null) {
             throw new NullPointerException();
         }
-        if (location == null) {
+        if (location == NOT_LOCATED) {
             return "";
         }
         int usedDimensions = 0;
@@ -278,99 +266,157 @@ public class SpatialTranslator {
         if (usedDimensions > dimensionCount) {
             throw new IllegalArgumentException();
         }
-        
+
         StringBuilder builder = new StringBuilder();
         builder.append("loc~").append(location.getName());
         for (int index = 0; index < usedDimensions; index++) {
-            builder.append(",loc_index_").append(index + 1).append("~").append(location.getIndices()[index].evaluateIndex(variables));
+            builder.append(",loc_index_").append(index + 1).append("~")
+                    .append(location.getIndices()[index].evaluateIndex(variables));
         }
         for (int index = usedDimensions; index < dimensionCount; index++) {
             builder.append(",loc_index_").append(index + 1).append("~0");
         }
-        
+
         return builder.toString();
     }
 
-    String getKappaString(Variable variable) {
+    private String getKappaString(Variable variable) {
         StringBuilder builder = new StringBuilder();
-        builder.append("%var: '").append(variable.label).append("'");
         switch (variable.type) {
         case KAPPA_EXPRESSION:
-            builder.append(" ").append(getKappaString(variable.complex, getKappaString(variable.location)));
+            if (!hasLinksWithChannels(variable.complex)) {
+                builder.append("%var: '").append(variable.label).append("'");
+                builder.append(" ").append(getKappaString(variable.complex, getKappaString(variable.location)));
+                builder.append("\n");
+            }
+            else {
+                List<MappingInstance> mappings = variable.complex.getMappingInstances(
+                        kappaModel.getCompartments(), kappaModel.getChannels());
+                if (mappings.size() == 1) {
+                    builder.append("%var: '").append(variable.label).append("'");
+                    builder.append(" ").append(getAgentKappaString(mappings.get(0).locatedAgents));
+                    builder.append("\n");
+                }
+                else if (mappings.size() > 1) {
+                    int index = 0;
+                    StringBuilder totalVariableExpression = new StringBuilder();
+                    for (MappingInstance mapping : mappings) {
+                        String mappingVariableName = variable.label + "-" + (++index);
+                        builder.append("%var: '").append(mappingVariableName).append("'");
+                        builder.append(" ").append(getAgentKappaString(mapping.locatedAgents));
+                        builder.append("\n");
+                        
+                        if (index > 1) {
+                            totalVariableExpression.append(" + ");
+                        }
+                        totalVariableExpression.append("'").append(mappingVariableName).append("'");
+                    }
+                    
+                    builder.append("%var: '").append(variable.label).append("'");
+                    builder.append(" ").append(totalVariableExpression.toString());
+                    builder.append("\n");
+                }
+            }
             break;
         case VARIABLE_EXPRESSION:
+            builder.append("%var: '").append(variable.label).append("'");
             builder.append(" ").append(variable.expression.toString());
+            builder.append("\n");
             break;
         case TRANSITION_LABEL:
             // Do nothing
             break;
         }
-        builder.append("\n");
         return builder.toString();
     }
-    
-    String getKappaString(Transport transport) {
+
+    boolean hasLinksWithChannels(Complex complex) {
+        if (complex == null) {
+            throw new NullPointerException();
+        }
+        return hasLinksWithChannels(complex.agents);
+    }
+
+    boolean hasLinksWithChannels(List<Agent> agents) {
+        if (agents == null) {
+            throw new NullPointerException();
+        }
+        for (Agent agent : agents) {
+            for (AgentSite site : agent.getSites()) {
+                if (site != null && site.getChannel() != null) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private String getKappaString(Transition transition) {
         StringBuilder builder = new StringBuilder();
-        List<CompartmentLink> compartmentLinks = getCompartmentLinks(kappaModel.getCompartmentLinks(), transport.getCompartmentLinkName());
-        int labelSuffix = 1;
-        boolean forceSuffix = compartmentLinks.size() > 0;
-        for (CompartmentLink compartmentLink : compartmentLinks) {
-            String[][] stateSuffixPairs = getLinkStateSuffixPairs(compartmentLink, kappaModel.getCompartments());
-            List<Agent> agents = transport.getAgents();
-            if (agents != null) {
-                labelSuffix = writeAgents(builder, stateSuffixPairs, transport, compartmentLink, agents, labelSuffix, kappaModel.getAggregateAgentMap(), forceSuffix);
+        if (transition.channelName != null) {
+            Channel channel = getChannel(kappaModel.getChannels(), transition.channelName);
+            int labelSuffix = 1;
+            String[][] stateSuffixPairs = getLinkStateSuffixPairs(channel, kappaModel.getCompartments());
+            List<Agent> agents = transition.leftAgents;
+            if (agents.size() > 0) {
+                labelSuffix = writeAgents(builder, stateSuffixPairs, transition, agents, labelSuffix,
+                        kappaModel.getAgentDeclarationMap(), true);
             }
             else {
-                agents = getAggregateAgents(kappaModel.getAggregateAgentMap());
+                agents = getAggregateAgents(kappaModel.getAgentDeclarationMap());
                 List<Agent> currentAgents = new ArrayList<Agent>();
                 for (Agent agent : agents) {
                     currentAgents.clear();
                     currentAgents.add(agent);
-                    labelSuffix =  writeAgents(builder, stateSuffixPairs, transport, compartmentLink, currentAgents, labelSuffix, kappaModel.getAggregateAgentMap(), forceSuffix);
+                    labelSuffix = writeAgents(builder, stateSuffixPairs, transition, currentAgents,
+                            labelSuffix, kappaModel.getAgentDeclarationMap(), true);
                 }
             }
         }
+        else {
+            List<Transition> locatedTransitions = 
+                    ((KappaModel) kappaModel).getValidLocatedTransitions(transition, kappaModel.getCompartments(), kappaModel.getChannels());
+    
+            for (Transition locatedTransition : locatedTransitions) {
+                if (locatedTransition.label != null) {
+                    builder.append("'").append(locatedTransition.label).append("' ");
+                }
+                if (locatedTransition.leftAgents.size() > 0) {
+                    builder.append(getAgentKappaString(locatedTransition.leftAgents)).append(" ");
+                }
+                builder.append("-> ");
+                if (locatedTransition.rightAgents.size() > 0) {
+                    builder.append(getAgentKappaString(locatedTransition.rightAgents)).append(" ");
+                }
+                builder.append("@ ").append(locatedTransition.getRate().toString()).append("\n");
+            }
+            
+        }
         return builder.toString();
     }
+
     
-    private int writeAgents(StringBuilder builder, String[][] stateSuffixPairs, Transport transport, CompartmentLink compartmentLink, List<Agent> agents,
-            int startLabelSuffix, Map<String, AggregateAgent> aggregateAgentMap, boolean forceSuffix) {
+    private int writeAgents(StringBuilder builder, String[][] stateSuffixPairs, Transition transition,
+            List<Agent> agents, int startLabelSuffix, Map<String, AggregateAgent> aggregateAgentMap, boolean forceSuffix) {
 
         int labelSuffix = startLabelSuffix;
         List<Agent> isolatedAgents = getIsolatedAgents(agents, aggregateAgentMap);
 
         for (int index = 0; index < stateSuffixPairs.length; index++) {
-            if (transport.label != null) {
-                builder.append("'").append(transport.label);
+            if (transition.label != null) {
+                builder.append("'").append(transition.label);
                 if (stateSuffixPairs.length > 1 || forceSuffix) {
                     builder.append("-").append(labelSuffix++);
                 }
                 builder.append("' ");
             }
-            String leftSuffix = (compartmentLink.getDirection() != Direction.BACKWARD) ? stateSuffixPairs[index][0] : stateSuffixPairs[index][1];
-            String rightSuffix = (compartmentLink.getDirection() != Direction.BACKWARD) ? stateSuffixPairs[index][1] : stateSuffixPairs[index][0];
+            String leftSuffix = stateSuffixPairs[index][0];
+            String rightSuffix = stateSuffixPairs[index][1];
             builder.append(getAgentKappaString(isolatedAgents, leftSuffix));
-            builder.append(" ").append(Direction.FORWARD).append(" ");
+            builder.append(" -> ");
             builder.append(getAgentKappaString(isolatedAgents, rightSuffix)).append(" @ ");
-            builder.append(transport.getRate().toString());
+            builder.append(transition.getRate().toString());
             builder.append("\n");
-            
-            if (compartmentLink.getDirection() == Direction.BIDIRECTIONAL) {
-                if (transport.label != null) {
-                    builder.append("'").append(transport.label);
-                    if (stateSuffixPairs.length > 1 || forceSuffix) {
-                        builder.append("-").append(labelSuffix++);
-                    }
-                    builder.append("' ");
-                }
-                leftSuffix = stateSuffixPairs[index][1];
-                rightSuffix = stateSuffixPairs[index][0];
-                builder.append(getAgentKappaString(isolatedAgents, leftSuffix));
-                builder.append(" ").append(Direction.FORWARD).append(" ");
-                builder.append(getAgentKappaString(isolatedAgents, rightSuffix)).append(" @ ");
-                builder.append(transport.getRate().toString());
-                builder.append("\n");
-            }
         }
         return labelSuffix;
     }
@@ -393,109 +439,52 @@ public class SpatialTranslator {
         return result;
     }
 
-
-    // Transforms
-    String getKappaString(LocatedTransform transition) {
+    private String getKappaString(InitialValue initialValue) {
         StringBuilder builder = new StringBuilder();
-        Transform transform = (Transform) transition.transition;
-        boolean partition = false;
-        Compartment compartment = null;
-        Location reference = transition.sourceLocation;
-
-        if (reference != null) {
-            compartment = reference.getReferencedCompartment(kappaModel.getCompartments());
-            if (compartment.getDimensions().length != reference.getIndices().length) {
-                partition = true;
-            }
-        }
-
-        if (partition && compartment != null) {
-            String[] stateSuffixes = compartment.getCellStateSuffixes();
-            int labelSuffix = 1;
-            for (int cellIndex = 0; cellIndex < stateSuffixes.length; cellIndex++) {
-                if (transform.label != null) {
-                    builder.append("'").append(transform.label).append("-").append(labelSuffix++).append("' ");
-                }
-                if (transform.leftAgents.size() > 0) {
-                    builder.append(getAgentKappaString(transform.leftAgents, stateSuffixes[cellIndex])).append(" ");
-                }
-                builder.append("-> ");
-                if (transform.rightAgents.size() > 0) {
-                    builder.append(getAgentKappaString(transform.rightAgents, stateSuffixes[cellIndex])).append(" ");
-                }
-                builder.append("@ ").append(transform.getRate().toString()).append("\n");
-
-            }
-        }
-        else {
-            if (transform.label != null) {
-                builder.append("'").append(transform.label).append("' ");
-            }
-            if (transform.leftAgents.size() > 0) {
-                builder.append(getAgentKappaString(transform.leftAgents, transition.sourceLocation)).append(" ");
-            }
-            builder.append("-> ");
-            if (transform.rightAgents.size() > 0) {
-                builder.append(getAgentKappaString(transform.rightAgents, transition.sourceLocation)).append(" ");
-            }
-            builder.append("@ ").append(transform.getRate().toString()).append("\n");
-        }
-        return builder.toString();
-
-    }
-    
-    String getKappaString(InitialValue initialValue) {
-        StringBuilder builder = new StringBuilder();
-        boolean partition = false;
-        Compartment compartment = null;
         int quantity = initialValue.quantity;
+        
         if (initialValue.reference != null) {
             Variable target = kappaModel.getVariables().get(initialValue.reference.variableName);
             quantity = target.evaluate(kappaModel);
         }
         
-        Location location = initialValue.location;
-        if (location != null) {
-            compartment = location.getReferencedCompartment(kappaModel.getCompartments());
-            if (compartment.getDimensions().length != location.getIndices().length) {
-                partition = true;
+        for (Complex complex : initialValue.complexes) {
+            List<MappingInstance> mappings = complex.getMappingInstances(kappaModel.getCompartments(), kappaModel.getChannels());
+            int totalCellCount = mappings.size();
+            if (totalCellCount > 0) {
+                int baseValue = quantity / totalCellCount;
+                int remainder = quantity % totalCellCount;
+    
+                int index = 0;
+    
+                for (MappingInstance mapping : mappings) {
+                    builder.append("%init: ").append(baseValue + (index++ < remainder ? 1 : 0)).append(" ");
+                    builder.append(getAgentKappaString(mapping.locatedAgents));
+                    builder.append("\n");
+                }
             }
         }
-
-        if (partition && compartment != null) {
-            int[] cellCounts = compartment.getDistributedCellCounts(quantity);
-            String[] stateSuffixes = compartment.getCellStateSuffixes();
-
-            for (int cellIndex = 0; cellIndex < cellCounts.length; cellIndex++) {
-                builder.append("%init: ").append(cellCounts[cellIndex]).append(" (");
-                builder.append(getComplexKappaString(initialValue.complexes, stateSuffixes[cellIndex]));
-                builder.append(")\n");
-            }
-        }
-        else {
-            builder.append("%init: ").append(quantity).append(" (");
-            builder.append(getComplexKappaString(initialValue.complexes, getKappaString(location)));
-            builder.append(")\n");
-        }
+        
         return builder.toString();
     }
 
-    String[][] getLinkStateSuffixPairs(CompartmentLink link, List<Compartment> compartments) {
-        Location[][] references = link.getCellReferencePairs(compartments);
-        String[][] result = new String[references.length][2];
+    String[][] getLinkStateSuffixPairs(Channel link, List<Compartment> compartments) {
+        List<ChannelConstraint> references = link.getCellReferencePairs(compartments);
+        String[][] result = new String[references.size()][2];
         int maxDimensions = 0;
         for (Compartment compartment : compartments) {
             if (compartment.getDimensions() != null && compartment.getDimensions().length > maxDimensions) {
                 maxDimensions = compartment.getDimensions().length;
             }
         }
-        for (int index = 0; index < references.length; index++) {
-            result[index][0] = getKappaString(references[index][0], maxDimensions);
-            result[index][1] = getKappaString(references[index][1], maxDimensions);
+        for (int index = 0; index < references.size(); index++) {
+            result[index][0] = getKappaString(references.get(index).sourceLocation, maxDimensions);
+            result[index][1] = getKappaString(references.get(index).targetConstraint, maxDimensions);
         }
         return result;
     }
 
+    
     
     public static void main(String[] args) throws Exception {
         if (args.length < 1 || args.length > 2) {
@@ -513,6 +502,5 @@ public class SpatialTranslator {
             System.out.println("Result written to " + args[1]);
         }
     }
-
 
 }

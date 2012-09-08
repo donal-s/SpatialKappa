@@ -1,19 +1,18 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.demonsoft.spatialkappa.model.Agent;
-import org.demonsoft.spatialkappa.model.AgentSite;
-import org.demonsoft.spatialkappa.model.Complex;
-import org.demonsoft.spatialkappa.model.ComplexMapping;
-import org.demonsoft.spatialkappa.model.ComplexMatcher;
 import org.junit.Test;
 
 public class ComplexMatcherTest {
@@ -123,6 +122,28 @@ public class ComplexMatcherTest {
             new Agent("MEK", new AgentSite("S218", "p", null), new AgentSite("S222", "p", null), new AgentSite("s", null, "2")));
         checkExactMatch(template, target, true);
 
+    }
+
+    @Test
+    public void testGetExactMatches_located() {
+        Complex complex = new Complex(new Agent("agent", new Location("comp1")));
+
+        checkExactMatch(complex, complex, true);
+        checkExactMatch(complex, new Complex(new Agent("agent2", new Location("comp1"))), false);
+        checkExactMatch(complex, new Complex(new Agent("agent")), false);
+        checkExactMatch(complex, new Complex(new Agent("agent", new Location("comp2"))), false);
+        checkExactMatch(complex, new Complex(new Agent("agent", new Location("comp1", INDEX_0))), false);
+        checkExactMatch(complex, new Complex(new Agent("agent", new Location("comp1"))), true);
+        
+        complex = new Complex(new Agent("agent", new Location("comp1", INDEX_0)));
+
+        checkExactMatch(complex, complex, true);
+        checkExactMatch(complex, new Complex(new Agent("agent2", new Location("comp1", INDEX_0))), false);
+        checkExactMatch(complex, new Complex(new Agent("agent")), false);
+        checkExactMatch(complex, new Complex(new Agent("agent", new Location("comp2"))), false);
+        checkExactMatch(complex, new Complex(new Agent("agent", new Location("comp1"))), false);
+        checkExactMatch(complex, new Complex(new Agent("agent", new Location("comp1", INDEX_1))), false);
+        checkExactMatch(complex, new Complex(new Agent("agent", new Location("comp1", INDEX_0))), true);
     }
 
     @Test
@@ -384,6 +405,77 @@ public class ComplexMatcherTest {
         expected2.put(template.agents.get(0), target.agents.get(2));
         checkPartialMatches(template, target, expected, expected2);
 
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testGetPartialMatches_located() {
+        Agent agent1 = new Agent("agent", new Location("comp1"));
+        Complex target = new Complex(agent1);
+
+        Map<Agent, Agent> expected = new HashMap<Agent, Agent>();
+        expected.put(agent1, agent1);
+        checkPartialMatches(target, target, expected);
+
+        checkPartialMatches(new Complex(new Agent("agent2")), target);
+        checkPartialMatches(new Complex(new Agent("agent", new Location("comp2"))), target);
+        checkPartialMatches(new Complex(new Agent("agent", new Location("comp1", INDEX_0))), target);
+
+        Agent agent2 = new Agent("agent");
+        Complex template = new Complex(agent2);
+        expected.clear();
+        expected.put(agent2, agent1);
+        checkPartialMatches(template, target, expected);
+
+        agent2 = new Agent("agent", new Location("comp1"));
+        template = new Complex(agent2);
+        expected.clear();
+        expected.put(agent2, agent1);
+        checkPartialMatches(template, target, expected);
+
+        
+        agent1 = new Agent("agent", new Location("comp1", INDEX_0));
+        target = new Complex(agent1);
+
+        expected.clear();
+        expected.put(agent1, agent1);
+        checkPartialMatches(target, target, expected);
+
+        checkPartialMatches(new Complex(new Agent("agent2")), target);
+        checkPartialMatches(new Complex(new Agent("agent", new Location("comp2"))), target);
+        checkPartialMatches(new Complex(new Agent("agent", new Location("comp1", INDEX_1))), target);
+
+        agent2 = new Agent("agent");
+        template = new Complex(agent2);
+        expected.clear();
+        expected.put(agent2, agent1);
+        checkPartialMatches(template, target, expected);
+
+        agent2 = new Agent("agent", new Location("comp1"));
+        template = new Complex(agent2);
+        expected.clear();
+        expected.put(agent2, agent1);
+        checkPartialMatches(template, target, expected);
+
+        agent2 = new Agent("agent", new Location("comp1", INDEX_0));
+        template = new Complex(agent2);
+        expected.clear();
+        expected.put(agent2, agent1);
+        checkPartialMatches(template, target, expected);
+        
+        // Check with sites
+        agent2 = new Agent("A", new Location("cytosol", INDEX_0), new AgentSite("s", null, null));
+        template = new Complex(agent2);
+        agent1 = new Agent("A", new Location("cytosol", INDEX_0), new AgentSite("s", null, null));
+        target = new Complex(agent1);
+        expected.clear();
+        expected.put(agent2, agent1);
+        checkPartialMatches(template, target, expected);
+        
+        agent1 = new Agent("A", new Location("cytosol", INDEX_0), new AgentSite("t", null, null));
+        target = new Complex(agent1);
+        expected.clear();
+        checkPartialMatches(template, target);
     }
 
     private void checkPartialMatches(Complex template, Complex target, Map<Agent, Agent>... expectedMaps) {

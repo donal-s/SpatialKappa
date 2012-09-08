@@ -16,6 +16,7 @@ public class ObservationElementTest {
         assertNull(element.cellValues);
     }
 
+    @SuppressWarnings("unused")
     @Test
     public void testObservationElement_compartment() {
         int[] dimensions = new int[] {3};

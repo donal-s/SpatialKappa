@@ -4,6 +4,8 @@ import java.util.Map;
 
 public class ComplexMapping {
 
+    public static final Complex UNSPECIFIED_COMPLEX = new Complex(new Agent("unspecified"));
+    
     public final Complex template;
     public final Complex target;
     public final Map<Agent, Agent> mapping;
@@ -12,6 +14,12 @@ public class ComplexMapping {
         this.template = template;
         this.target = target;
         this.mapping = mapping;
+    }
+
+    public ComplexMapping(Complex target) {
+        this.template = UNSPECIFIED_COMPLEX;
+        this.target = target;
+        this.mapping = null;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+
 public class Variable {
 
     public enum Type { VARIABLE_EXPRESSION, KAPPA_EXPRESSION, TRANSITION_LABEL }
@@ -22,7 +24,7 @@ public class Variable {
     }
     
     public Variable(Complex complex, Location location, String label) {
-        if (complex == null || label == null) {
+        if (complex == null || location == null || label == null) {
             throw new NullPointerException();
         }
         this.expression = null;
@@ -100,7 +102,7 @@ public class Variable {
             return "'" + label + "' (" + expression + ")";
             
         case KAPPA_EXPRESSION:
-            if (location == null) {
+            if (location == NOT_LOCATED) {
                 return "'" + label + "' (" + complex + ")";
             }
             return "'" + label + "' " + location + " (" + complex + ")";

@@ -36,6 +36,9 @@ public class ReplaySimulation implements Simulation {
     List<String> outputObservableNames = new ArrayList<String>();
     String nextLine;
     
+    private boolean readTime = false;
+    private boolean readEvents = false;
+    
     
     public ReplaySimulation(Reader reader, int interval) {
         this.reader = new BufferedReader(reader);
@@ -129,8 +132,8 @@ public class ReplaySimulation implements Simulation {
             nextLine = reader.readLine();
             StringTokenizer tokens = new StringTokenizer(line);
             
-            float time = Float.parseFloat(tokens.nextToken());
-            int event = Integer.parseInt(tokens.nextToken());
+            float time = readTime ? Float.parseFloat(tokens.nextToken()) : 0;
+            int event = readEvents ? Integer.parseInt(tokens.nextToken()) : 0;
             
             Map<String, ObservationElement> elements = new HashMap<String, ObservationElement>();
             for (String observableName : observableNames) {
@@ -235,21 +238,31 @@ public class ReplaySimulation implements Simulation {
             String line = reader.readLine();
             StringTokenizer tokens = new StringTokenizer(line);
             
-            if (!tokens.hasMoreTokens() || !TOKEN_HASH.equals(tokens.nextToken())) {
-                throw new IllegalArgumentException("Column name missing: " + TOKEN_HASH);
+            if (!tokens.hasMoreTokens()) {
+                throw new IllegalArgumentException("Event or time column missing");
             }
-            if (!tokens.hasMoreTokens() || !TOKEN_TIME.equals(tokens.nextToken())) {
-                throw new IllegalArgumentException("Column name missing: " + TOKEN_TIME);
+            
+            String token = tokens.nextToken();
+            if (TOKEN_HASH.equals(token)) {
+                if (!tokens.hasMoreTokens()) {
+                    throw new IllegalArgumentException("Event or time column missing");
+                }
+                token = tokens.nextToken();
             }
-            if (!tokens.hasMoreTokens() || !TOKEN_EVENTS.equals(tokens.nextToken())) {
-                throw new IllegalArgumentException("Column name missing: " + TOKEN_EVENTS);
+            if (TOKEN_TIME.equals(token)) {
+                readTime = true;
+                token = tokens.hasMoreTokens() ? tokens.nextToken() : null;
+            }
+            if (TOKEN_EVENTS.equals(token)) {
+                readEvents = true;
+                token = tokens.hasMoreTokens() ? tokens.nextToken() : null;
             }
             
             observableNames.clear();
-            while (tokens.hasMoreTokens()) {
-                String token = tokens.nextToken();
+            while (token != null) {
                 token = token.substring(1, token.length() - 1);
                 observableNames.add(token);
+                token = tokens.hasMoreTokens() ? tokens.nextToken() : null;
             }
             
             constructCompartmentDefinitions();

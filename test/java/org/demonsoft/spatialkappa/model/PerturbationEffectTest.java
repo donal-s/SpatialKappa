@@ -1,9 +1,9 @@
 package org.demonsoft.spatialkappa.model;
 
-import static junit.framework.Assert.*;
-import static org.demonsoft.spatialkappa.model.TestUtils.getList;
+import static junit.framework.Assert.assertEquals;
 import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.fail;
 
 import java.util.List;
@@ -14,10 +14,11 @@ import org.junit.Test;
 
 public class PerturbationEffectTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void testPerturbationEffect() {
         VariableExpression expression = new VariableExpression("2");
-        List<Agent> agents = getList(new Agent("A"));
+        List<Agent> agents = Utils.getList(new Agent("A"));
         
         try {
             new PerturbationEffect(null, expression, agents);
@@ -99,7 +100,7 @@ public class PerturbationEffectTest {
     public void testApply() {
         SimulationState state = EasyMock.createMock(SimulationState.class);
         VariableExpression expression = new VariableExpression("2");
-        List<Agent> agents = getList(new Agent("A"));
+        List<Agent> agents = Utils.getList(new Agent("A"));
         try {
             new PerturbationEffect(Type.ADD, expression, agents).apply(null);
             fail("null should have failed");
@@ -136,7 +137,7 @@ public class PerturbationEffectTest {
         verify(state);
 
         reset(state);
-        // TODO currently does nothing
+        state.snapshot();
         
         replay(state);
         PerturbationEffect.SNAPSHOT.apply(state);

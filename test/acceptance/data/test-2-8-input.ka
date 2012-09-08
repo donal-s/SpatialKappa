@@ -1,0 +1,49 @@
+### PSD Project Stage 2 acceptance tests
+### Test 2.8 - Lateral diffusion of transmembrane proteins
+### Last modified 10-07-2012
+
+%agent: A_Membrane(s,t,d)
+%agent: B_Membrane(s,t,d)
+%agent: A_Cytosol(d)
+%agent: B_Cytosol(d)
+%agent: C(s)
+
+%var: 'catalysedRate' 10
+
+%compartment: membrane [5][5]
+%compartment: cytosol [5][5][5]
+
+%channel: diffusion       (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x+1][y], :cytosol [u+1][v][0]) + \
+		(:membrane [x][y], :cytosol [u][v][0] -> :membrane [x -1][y], :cytosol [u -1][v][0]) + \
+		(:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y+1], :cytosol [u][v+1][0]) + \
+		(:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y -1], :cytosol [u][v -1][0])
+
+%channel: domainLink       (:membrane [x][y] -> :cytosol [x][y][0]) + (:cytosol [x][y][0] -> :membrane [x][y])
+
+'diffusion A' A_Membrane(s,t,d!1:domainLink),A_Cytosol(d!1) ->:diffusion A_Membrane(s,t,d!1:domainLink),A_Cytosol(d!1) @ 1.0
+'diffusion B' B_Membrane(s,t,d!1:domainLink),B_Cytosol(d!1) ->:diffusion B_Membrane(s,t,d!1:domainLink),B_Cytosol(d!1) @ 1.0
+'diffusion AB' A_Membrane(s!2,t,d!1:domainLink),A_Cytosol(d!1),B_Membrane(s!2,t,d!3:domainLink),B_Cytosol(d!3) ->:diffusion \
+               A_Membrane(s!2,t,d!1:domainLink),A_Cytosol(d!1),B_Membrane(s!2,t,d!3:domainLink),B_Cytosol(d!3) @ 0.5
+
+'AC bind' A_Membrane(s,t), C(s) -> A_Membrane(s!1,t), C(s!1) @ 'catalysedRate'
+'ACB bind' A_Membrane(s!1,t), C(s!1), B_Membrane(s,t) -> A_Membrane(s!1,t), C(s), B_Membrane(s!1,t) @ 'catalysedRate'
+'BC bind' B_Membrane(s,t), C(s) -> B_Membrane(s!1,t), C(s!1) @ 'catalysedRate'
+'BCA bind' B_Membrane(s!1,t), C(s!1), A_Membrane(s,t) -> B_Membrane(s!1,t), C(s), A_Membrane(s!1,t) @ 'catalysedRate'
+
+'ABAB bind' A_Membrane(s!1,t), B_Membrane(s!1,t), A_Membrane(s!2,t), B_Membrane(s!2,t) -> \
+            A_Membrane(s!1,t), B_Membrane(s!1,t!3), A_Membrane(s!2,t!3), B_Membrane(s!2,t) @ 0.1
+'ABAB close loop' A_Membrane(s!1,t), B_Membrane(s!1,t!3), A_Membrane(s!2,t!3), B_Membrane(s!2,t) -> \
+            A_Membrane(s!1,t!4), B_Membrane(s!1,t!3), A_Membrane(s!2,t!3), B_Membrane(s!2,t!4) @ 0.1
+
+
+%init: 1000 A_Membrane:membrane(s,t,d!1:domainLink),A_Cytosol:cytosol(d!1)
+%init: 1000 B_Membrane:membrane(s,t,d!1:domainLink),B_Cytosol:cytosol(d!1)
+%init: 1 :membrane[2][2] C
+
+%obs: 'AB' A_Membrane(s!1,t),B_Membrane(s!1,t)
+%var: 'A2B2 doubled all' A_Membrane(s!1,t!3),B_Membrane(s!1,t!4),A_Membrane(s!2,t!4),B_Membrane(s!2,t!3)
+%var: 'A2B2 doubled centre' :membrane[2][2] A_Membrane(s!1,t!3),B_Membrane(s!1,t!4),A_Membrane(s!2,t!4),B_Membrane(s!2,t!3)
+%var: 'A2B2 centre' 'A2B2 doubled centre' / 2
+%var: 'A2B2 not centre' ('A2B2 doubled all' - 'A2B2 doubled centre') / 2
+%plot: 'A2B2 centre'
+%plot: 'A2B2 not centre'
