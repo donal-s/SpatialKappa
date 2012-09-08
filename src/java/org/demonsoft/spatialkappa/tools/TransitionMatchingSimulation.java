@@ -392,9 +392,11 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     }
 
 
-    private float getTransitionInstanceRate(TransitionInstance transitionInstance, Transition transition) {
-        return transition.getRate().evaluate(this).value;
-        // TODO replace with instance rate calculation
+    float getTransitionInstanceRate(TransitionInstance transitionInstance, Transition transition) {
+        if (transitionInstance == null || transition == null) {
+            throw new NullPointerException();
+        }
+        return transition.getRate().evaluate(this, transitionInstance).value;
     }
 
     boolean isTransitionActive(Transition transition) {
@@ -722,30 +724,33 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     }
 
     TransitionInstance pickTransitionInstance(Transition transition) {
+        
         List<TransitionInstance> transitionInstances = transitionInstanceMap.get(transition);
         if (transitionInstances.size() == 0) {
             return null;
         }
 
-        int[] allTransitionInstanceActivities = new int[transitionInstances.size()];
-        int totalTransitionInstanceActivity = 0;
-        for (int index = 0; index < allTransitionInstanceActivities.length; index++) {
+        boolean infiniteRate = transition.getRate().isInfinite(getVariables());
+        float[] allTransitionInstanceRates = new float[transitionInstances.size()];
+        float totalTransitionInstanceRate = 0;
+        for (int index = 0; index < allTransitionInstanceRates.length; index++) {
             TransitionInstance transitionInstance = transitionInstances.get(index);
             int activity = getTransitionInstanceActivity(transitionInstance);
-            allTransitionInstanceActivities[index] = activity;
-            totalTransitionInstanceActivity += activity;
+            float instanceRate = infiniteRate ? 1 : getTransitionInstanceRate(transitionInstance, transition);
+            allTransitionInstanceRates[index] = activity * instanceRate;
+            totalTransitionInstanceRate += activity * instanceRate;
         }
         
         
         TransitionInstance lastInstance = null;
-        int randomValue = (int) (totalTransitionInstanceActivity * Math.random());
-        for (int index = 0; index < allTransitionInstanceActivities.length; index++) {
-            if (allTransitionInstanceActivities[index] > 0) {
+        float randomValue = (float) (totalTransitionInstanceRate * Math.random());
+        for (int index = 0; index < allTransitionInstanceRates.length; index++) {
+            if (allTransitionInstanceRates[index] > 0) {
                 lastInstance = transitionInstances.get(index);
-                if (randomValue < allTransitionInstanceActivities[index]) {
+                if (randomValue < allTransitionInstanceRates[index]) {
                     break;
                 }
-                randomValue -= allTransitionInstanceActivities[index];
+                randomValue -= allTransitionInstanceRates[index];
             }
         }
         return lastInstance;

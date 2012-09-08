@@ -2,7 +2,7 @@
 ### Test 4.2 - Complex composition affects diffusion rate - heteropolymers
 ### Last modified 07-09-2012
 
-%compartment: array [100] # Think of gel electrophoresis
+%compartment: array [10] # Think of gel electrophoresis
 
 %agent: A(x,y)
 %agent: B(x,y)
@@ -21,7 +21,7 @@
 %obs: 'AABB start' :array[0] A(x,y!1), A(x!1,y!2), B(x!2,y!3), B(x!3,y)
 %obs: 'BBAA start' :array[0] B(x,y!1), B(x!1,y!2), A(x!2,y!3), A(x!3,y)
 %obs: 'BBBB start' :array[0] B(x,y!1), B(x!1,y!2), B(x!2,y!3), B(x!3,y)
-%obs: 'AAAA end'   :array[99] A(x,y!1), A(x!1,y!2), A(x!2,y!3), A(x!3,y)
-%obs: 'AABB end'   :array[99] A(x,y!1), A(x!1,y!2), B(x!2,y!3), B(x!3,y)
-%obs: 'BBAA end'   :array[99] B(x,y!1), B(x!1,y!2), A(x!2,y!3), A(x!3,y)
-%obs: 'BBBB end'   :array[99] B(x,y!1), B(x!1,y!2), B(x!2,y!3), B(x!3,y)
+%obs: 'AAAA end'   :array[9] A(x,y!1), A(x!1,y!2), A(x!2,y!3), A(x!3,y)
+%obs: 'AABB end'   :array[9] A(x,y!1), A(x!1,y!2), B(x!2,y!3), B(x!3,y)
+%obs: 'BBAA end'   :array[9] B(x,y!1), B(x!1,y!2), A(x!2,y!3), A(x!3,y)
+%obs: 'BBBB end'   :array[9] B(x,y!1), B(x!1,y!2), B(x!2,y!3), B(x!3,y)

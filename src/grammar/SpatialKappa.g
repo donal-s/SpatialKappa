@@ -318,6 +318,9 @@ varAlgebraAtom
   | operator_unary varAlgebraAtom
     ->
       ^(VAR_EXPR operator_unary varAlgebraAtom)
+  | '|' agentGroup '|'
+    ->
+      ^(VAR_EXPR agentGroup)
   ;
   
 modDecl

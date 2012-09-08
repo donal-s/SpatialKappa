@@ -520,6 +520,8 @@ public class KappaModel implements IKappaModel {
             checkLocations(transition.leftLocation, false);
             checkLocations(transition.rightLocation, false);
         }
+        
+        // TODO add validation of when its possible to use variable expression agent groups
     }
     
     private void checkAgentLocations(Collection<Agent> agents, boolean allowFixed) {

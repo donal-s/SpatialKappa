@@ -2,7 +2,7 @@
 ### Test 4.1 - Complex size affects diffusion rate - homopolymers
 ### Last modified 07-09-2012
 
-%compartment: array [100] # Think of gel electrophoresis
+%compartment: array [10] # Think of gel electrophoresis
 
 %agent: A(x,y)
 
@@ -17,6 +17,6 @@
 %obs: 'AAAA start' :array[0] A(x,y!1), A(x!1,y!2), A(x!2,y!3), A(x!3,y)
 %obs: 'AA start'   :array[0] A(x,y!1), A(x!1,y)
 %obs: 'A start'    :array[0] A(x,y)
-%obs: 'AAAA end'   :array[99] A(x,y!1), A(x!1,y!2), A(x!2,y!3), A(x!3,y)
-%obs: 'AA end'     :array[99] A(x,y!1), A(x!1,y)
-%obs: 'A end'      :array[99] A(x,y)
+%obs: 'AAAA end'   :array[9] A(x,y!1), A(x!1,y!2), A(x!2,y!3), A(x!3,y)
+%obs: 'AA end'     :array[9] A(x,y!1), A(x!1,y)
+%obs: 'A end'      :array[9] A(x,y)

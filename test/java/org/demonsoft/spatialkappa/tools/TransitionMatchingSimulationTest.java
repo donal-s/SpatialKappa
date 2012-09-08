@@ -39,6 +39,7 @@ import org.demonsoft.spatialkappa.model.TransitionInstance;
 import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.VariableExpression;
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
+import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -681,7 +682,75 @@ public class TransitionMatchingSimulationTest {
     }
     
     @Test
-    public void testPickComplexMappings() {
+    public void testGetTransitionInstanceRate() {
+        Transition transition = new Transition("moveAnything", (Location) null, "channel", null, 1f);
+        Complex complex1 = new Complex(new Agent("agent1"));
+        TransitionInstance instance = new TransitionInstance(getList(new ComplexMapping(complex1)), 1);
+        
+        try {
+            simulation.getTransitionInstanceRate(instance, null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+
+        try {
+            simulation.getTransitionInstanceRate(null, transition);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        transition = new Transition("moveAnything", (Location) null, "channel", null, 1f);
+        instance = new TransitionInstance(getList(new ComplexMapping(complex1)), 1);
+        assertEquals(1, simulation.getTransitionInstanceRate(instance, transition), 0.1);
+
+        // Not dependent on instance agents
+        VariableExpression rateExpression = new VariableExpression(4);
+        List<Complex> instanceComplexes = new ArrayList<Complex>();
+        checkGetTransitionInstanceRate(rateExpression, instanceComplexes, 4);
+        
+        // Single agent type 
+        rateExpression = new VariableExpression(new VariableExpression(4), Operator.DIVIDE, 
+                new VariableExpression(getList(new Agent("A")), NOT_LOCATED));
+        instanceComplexes.clear();
+        checkGetTransitionInstanceRate(rateExpression, instanceComplexes, Float.POSITIVE_INFINITY);
+        
+        rateExpression = new VariableExpression(new VariableExpression(4), Operator.DIVIDE, 
+                new VariableExpression(getList(new Agent("A")), NOT_LOCATED));
+        instanceComplexes.add(new Complex(new Agent("A")));
+        checkGetTransitionInstanceRate(rateExpression, instanceComplexes, 4);
+        
+        rateExpression = new VariableExpression(new VariableExpression(4), Operator.DIVIDE, 
+                new VariableExpression(getList(new Agent("A")), NOT_LOCATED));
+        instanceComplexes = getList(new Complex(new Agent("A")), new Complex(new Agent("A")));
+        checkGetTransitionInstanceRate(rateExpression, instanceComplexes, 2);
+        
+        rateExpression = new VariableExpression(new VariableExpression(4), Operator.DIVIDE, 
+                new VariableExpression(getList(new Agent("A")), NOT_LOCATED));
+        instanceComplexes = getList(new Complex(
+                new Agent("A", new AgentSite("x", null, "1"), new AgentSite("y", null, "2")), 
+                new Agent("A", new AgentSite("x", null, "1")), 
+                new Agent("A", new AgentSite("x", null, "2"))));
+        checkGetTransitionInstanceRate(rateExpression, instanceComplexes, 1.33f);
+        
+        // TODO multiple agent types and agent state
+    }
+
+    private void checkGetTransitionInstanceRate(VariableExpression rateExpression, List<Complex> instanceComplexes, float expectedRate) {
+        Transition transition = new Transition("moveAnything", (Location) null, "channel", null, rateExpression);
+        List<ComplexMapping> complexMappings = new ArrayList<ComplexMapping>();
+        for (Complex complex : instanceComplexes) {
+            complexMappings.add(new ComplexMapping(complex));
+        }
+        TransitionInstance instance = new TransitionInstance(complexMappings, 1);
+        assertEquals(expectedRate, simulation.getTransitionInstanceRate(instance, transition), 0.1);
+    }
+    
+    @Test
+    public void testPickTransitionInstance() {
         try {
             simulation.pickTransitionInstance(null);
             fail("null should have failed");
@@ -703,7 +772,6 @@ public class TransitionMatchingSimulationTest {
         List<TransitionInstance> transitionInstances = getList(
                 new TransitionInstance(getList(new ComplexMapping(complex1)), 1));
         simulation.transitionInstanceMap.put(transition, transitionInstances);
-        Map<List<ComplexMapping>, Integer> expectedDistribution = new HashMap<List<ComplexMapping>, Integer>();
         checkPickTransitionInstance(transition, 100, 0, transitionInstances, new int[] {100});
         
         transitionInstances = getList(
@@ -725,8 +793,60 @@ public class TransitionMatchingSimulationTest {
                 new TransitionInstance(getList(new ComplexMapping(complex4)), 1));
         
         simulation.transitionInstanceMap.put(transition, transitionInstances);
-        expectedDistribution.clear();
         checkPickTransitionInstance(transition, 12000, 200, transitionInstances, new int[] {2000, 4000, 4000, 2000});
+    }
+    
+    @Test
+    public void testPickTransitionInstance_infiniteRates() {
+        Transition transition = new Transition("moveAnything", (Location) null, "channel", null, 
+                new VariableExpression(VariableExpression.Constant.INFINITY));
+        Complex complex1 = new Complex(new Agent("agent1"));
+        Complex complex2 = new Complex(new Agent("agent2"));
+        Complex complex3 = new Complex(new Agent("agent3"));
+        Complex complex4 = new Complex(new Agent("agent4"));
+        
+        // Check even random distribution - with multiple locations per transition
+        simulation.complexStore.put(complex1, 5);
+        simulation.complexStore.put(complex2, 5);
+        simulation.complexStore.put(complex3, 5);
+        simulation.complexStore.put(complex4, 5);
+        
+        List<TransitionInstance> transitionInstances = getList(
+                new TransitionInstance(getList(new ComplexMapping(complex1)), 1),
+                new TransitionInstance(getList(new ComplexMapping(complex2)), 2),
+                new TransitionInstance(getList(new ComplexMapping(complex3)), 2),
+                new TransitionInstance(getList(new ComplexMapping(complex4)), 1));
+        
+        simulation.transitionInstanceMap.put(transition, transitionInstances);
+        checkPickTransitionInstance(transition, 12000, 200, transitionInstances, new int[] {2000, 4000, 4000, 2000});
+    }
+
+    @Test
+    public void testPickTransitionInstance_agentBasedRate() {
+
+        Complex complex1 = new Complex(new Agent("agent1"));
+        Complex complex2 = new Complex(new Agent("agent1", new AgentSite("x", null, "1")), new Agent("agent1", new AgentSite("x", null, "1")));
+        simulation.complexStore.put(complex1, 6);
+        simulation.complexStore.put(complex2, 3);
+        
+        Transition transition = new Transition("moveAnything", (Location) null, "channel", null, 
+                new VariableExpression(getList(new Agent("agent1")), NOT_LOCATED));
+        List<TransitionInstance> transitionInstances = getList(
+                new TransitionInstance(getList(new ComplexMapping(complex1)), 1));
+        simulation.transitionInstanceMap.put(transition, transitionInstances);
+        checkPickTransitionInstance(transition, 100, 0, transitionInstances, new int[] {100});
+        
+        transition = new Transition("moveAnything", (Location) null, "channel", null, new VariableExpression(1f));
+        transitionInstances = getList(
+                new TransitionInstance(getList(new ComplexMapping(complex1)), 1),
+                new TransitionInstance(getList(new ComplexMapping(complex2)), 1));
+        simulation.transitionInstanceMap.put(transition, transitionInstances);
+        checkPickTransitionInstance(transition, 10000, 150, transitionInstances, new int[] {6670, 3330});
+        
+        transition = new Transition("moveAnything", (Location) null, "channel", null, 
+                new VariableExpression(getList(new Agent("agent1")), NOT_LOCATED));
+        simulation.transitionInstanceMap.put(transition, transitionInstances);
+        checkPickTransitionInstance(transition, 10000, 150, transitionInstances, new int[] {5000, 5000});
     }
 
     private void checkPickTransitionInstance(Transition transition, int runCount, int error,

@@ -13,6 +13,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
+import static org.demonsoft.spatialkappa.model.Utils.getList;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Method;
@@ -118,6 +119,14 @@ public class SpatialKappaWalkerTest {
 
         checkRuleDecl("'label' :source A(s),B(x) ->:intra-cytosol A(s),B(x) @ 1", 
                 "label", new Location("source"), "[A(s), B(x)]", NOT_LOCATED, "[A(s), B(x)]", "intra-cytosol", new VariableExpression(1));
+
+        // With variable rate
+        checkRuleDecl("->:intra-cytosol @ |A|", null,
+                NOT_LOCATED, null, NOT_LOCATED, null, "intra-cytosol", 
+                new VariableExpression(getList(new Agent("A")), NOT_LOCATED));
+        checkRuleDecl("->:intra-cytosol @ |:loc1 A|", null,
+                NOT_LOCATED, null, NOT_LOCATED, null, "intra-cytosol", 
+                new VariableExpression(getList(new Agent("A")), new Location("loc1")));
     }
 
 

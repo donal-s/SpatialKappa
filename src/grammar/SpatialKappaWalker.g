@@ -323,6 +323,10 @@ varAlgebraExpr returns [VariableExpression result]
   {
     $result = new VariableExpression(new VariableReference($label.result));
   }  
+  | ^(VAR_EXPR agentGroup)
+  {
+    $result = new VariableExpression($agentGroup.agents, $agentGroup.location);
+  }  
   | ^(VAR_EXPR VAR_INFINITY)  
   {
     $result = new VariableExpression(Constant.INFINITY);

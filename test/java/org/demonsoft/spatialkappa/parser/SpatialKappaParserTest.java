@@ -149,6 +149,12 @@ public class SpatialKappaParserTest {
 
         // Show difference between rule channel and target location syntax
         runParserRuleFail("ruleDecl", "'transport-all' -> :target @ 0.1");
+        
+        // With variable rate
+        runParserRule("ruleDecl", "->:intra-cytosol @ 3 / |A,B|", 
+                "(RULE (TRANSITION LHS RHS " +
+                "(CHANNEL intra-cytosol)) " +
+                "(RATE (VAR_EXPR / (VAR_EXPR 3) (VAR_EXPR (AGENTS (AGENT A) (AGENT B))))))");
     }
 
     @Test
@@ -168,6 +174,9 @@ public class SpatialKappaParserTest {
         runParserRule("agentGroup", "A()", "(AGENTS (AGENT A))");
         runParserRule("agentGroup", "A(x~a,l!1),B(y~b,m!1)", 
                 "(AGENTS (AGENT A (INTERFACE x (STATE a)) (INTERFACE l (LINK 1))) (AGENT B (INTERFACE y (STATE b)) (INTERFACE m (LINK 1))))");
+        
+        runParserRule("agentGroup", ":loc1 A(),B:loc2[1]()", 
+                "(AGENTS (LOCATION loc1) (AGENT A) (AGENT B (LOCATION loc2 (INDEX (CELL_INDEX_EXPR 1)))))");
 
         // With parentheses TODO
 //        runParserRule("agentGroup", "(A())", "(AGENTS (AGENT A))");
@@ -276,39 +285,58 @@ public class SpatialKappaParserTest {
         runParserRule("varDecl", "%var: 'label' 800", 
                 "(VARIABLE (VAR_EXPR 800) label)");
         
-        runParserRule("varDecl", "%var: 'label' 2.55e4", 
-                "(VARIABLE (VAR_EXPR 2.55e4) label)");
-        runParserRule("varDecl", "%var: 'label' ('a' + 'b') * 2", 
-                "(VARIABLE (VAR_EXPR * (VAR_EXPR + (VAR_EXPR a) (VAR_EXPR b)) (VAR_EXPR 2)) label)");
-        runParserRule("varDecl", "%var: 'label' 'a' + 'b' + 2", 
-                "(VARIABLE (VAR_EXPR + (VAR_EXPR + (VAR_EXPR a) (VAR_EXPR b)) (VAR_EXPR 2)) label)");
-        runParserRule("varDecl", "%var: 'label' 'a' + 'b' * 2", 
-                "(VARIABLE (VAR_EXPR + (VAR_EXPR a) (VAR_EXPR * (VAR_EXPR b) (VAR_EXPR 2))) label)");
-        runParserRule("varDecl", "%var: 'label' [inf] * 2", 
-                "(VARIABLE (VAR_EXPR * (VAR_EXPR VAR_INFINITY) (VAR_EXPR 2)) label)");
         runParserRule("varDecl", "%var: 'label' [pi] ^ 2", 
                 "(VARIABLE (VAR_EXPR ^ (VAR_EXPR PI) (VAR_EXPR 2)) label)");
 
         runParserRule("varDecl", "%var: 'label' [log] 'n'", 
                 "(VARIABLE (VAR_EXPR LOG (VAR_EXPR n)) label)");
-        runParserRule("varDecl", "%var: 'label' [sin] 'n'", 
-                "(VARIABLE (VAR_EXPR SIN (VAR_EXPR n)) label)");
-        runParserRule("varDecl", "%var: 'label' [cos] 'n'", 
-                "(VARIABLE (VAR_EXPR COS (VAR_EXPR n)) label)");
-        runParserRule("varDecl", "%var: 'label' [tan] 'n'", 
-                "(VARIABLE (VAR_EXPR TAN (VAR_EXPR n)) label)");
-        runParserRule("varDecl", "%var: 'label' [sqrt] 'n'", 
-                "(VARIABLE (VAR_EXPR SQRT (VAR_EXPR n)) label)");
-        runParserRule("varDecl", "%var: 'label' [exp] 'n'", 
-                "(VARIABLE (VAR_EXPR EXP (VAR_EXPR n)) label)");
 
-        runParserRule("varDecl", "%var: 'label' 'n' [mod] 2", 
-                "(VARIABLE (VAR_EXPR MODULUS (VAR_EXPR n) (VAR_EXPR 2)) label)");
-
-        // TODO - handle the rest of the grammar as needed
-        
         runParserRuleFail("varDecl", "%var: ");
 //        runParserRuleFail("varDecl", "%var: A(x~a),B(y~d)"); // TODO - handle this
+    }
+    
+    @Test
+    public void testVarAlgebraExpr() throws Exception {
+        runParserRule("varAlgebraExpr", "800", 
+                "(VAR_EXPR 800)");
+        
+        runParserRule("varAlgebraExpr", "2.55e4", 
+                "(VAR_EXPR 2.55e4)");
+        runParserRule("varAlgebraExpr", "('a' + 'b') * 2", 
+                "(VAR_EXPR * (VAR_EXPR + (VAR_EXPR a) (VAR_EXPR b)) (VAR_EXPR 2))");
+        runParserRule("varAlgebraExpr", "'a' + 'b' + 2", 
+                "(VAR_EXPR + (VAR_EXPR + (VAR_EXPR a) (VAR_EXPR b)) (VAR_EXPR 2))");
+        runParserRule("varAlgebraExpr", "'a' + 'b' * 2", 
+                "(VAR_EXPR + (VAR_EXPR a) (VAR_EXPR * (VAR_EXPR b) (VAR_EXPR 2)))");
+        runParserRule("varAlgebraExpr", "[inf] * 2", 
+                "(VAR_EXPR * (VAR_EXPR VAR_INFINITY) (VAR_EXPR 2))");
+        runParserRule("varAlgebraExpr", "[pi] ^ 2", 
+                "(VAR_EXPR ^ (VAR_EXPR PI) (VAR_EXPR 2))");
+
+        runParserRule("varAlgebraExpr", "[log] 'n'", 
+                "(VAR_EXPR LOG (VAR_EXPR n))");
+        runParserRule("varAlgebraExpr", "[sin] 'n'", 
+                "(VAR_EXPR SIN (VAR_EXPR n))");
+        runParserRule("varAlgebraExpr", "[cos] 'n'", 
+                "(VAR_EXPR COS (VAR_EXPR n))");
+        runParserRule("varAlgebraExpr", "[tan] 'n'", 
+                "(VAR_EXPR TAN (VAR_EXPR n))");
+        runParserRule("varAlgebraExpr", "[sqrt] 'n'", 
+                "(VAR_EXPR SQRT (VAR_EXPR n))");
+        runParserRule("varAlgebraExpr", "[exp] 'n'", 
+                "(VAR_EXPR EXP (VAR_EXPR n))");
+
+        runParserRule("varAlgebraExpr", "'n' [mod] 2", 
+                "(VAR_EXPR MODULUS (VAR_EXPR n) (VAR_EXPR 2))");
+
+        runParserRule("varAlgebraExpr", "|A|", 
+                "(VAR_EXPR (AGENTS (AGENT A)))");
+
+        runParserRule("varAlgebraExpr", "3 / |A,B|", 
+                "(VAR_EXPR / (VAR_EXPR 3) (VAR_EXPR (AGENTS (AGENT A) (AGENT B))))");
+
+        runParserRule("varAlgebraExpr", "|:loc1 A,B:loc2[1]()|", 
+                "(VAR_EXPR (AGENTS (LOCATION loc1) (AGENT A) (AGENT B (LOCATION loc2 (INDEX (CELL_INDEX_EXPR 1))))))");
     }
 
     @Test

@@ -207,7 +207,7 @@ public class SimulationTest {
     public void testTest3_6_1_lateralDiffusionOfTransmembraneProteins() throws Exception {
          checkEventSimulation("test-3-6-1-input.ka", new String[] {"A top", "A not top"}, 2000, 50, 
                 new float[][] {
-                    {1000, 0}, {340, 660}, {200, 800}, 
+                    {1000, 0}, {340, 660}, {220, 780}, 
                 });
     }
 
@@ -219,31 +219,41 @@ public class SimulationTest {
                 });
     }
 
-//    @Test
+    @Test
     public void testTest4_1_complexSizeAffectsDiffusionRate() throws Exception {
          checkEventSimulation("test-4-1-input.ka", new String[] {
-                 "AAAA start", "AA start", "A start", "AAAA end", "AA end", "A end"}, 2000, 50, 
+                 "AAAA start", "AA start", "A start", "AAAA end", "AA end", "A end"}, 1000, 20, 
                 new float[][] {
-                 {1000, 1000, 1000, 0, 0, 0}, {0, 0, 0, 0, 0, 1000}, {0, 0, 0, 0, 1000, 1000},  
+                 {100, 100, 100, 0, 0, 0}, {20, 0, 0, 0, 0, 20}, {0, 0, 0, 0, 40, 100}, {0, 0, 0, 100, 100, 100},  
                 });
     }
 
-//    @Test
+    @Test
     public void testTest4_2_complexCompositionAffectsDiffusionRate() throws Exception {
-         checkEventSimulation("test-4-2-input.ka", new String[] {
-                 "AAAA start", "AABB start", "BBAA start", "BBBB start", "AAAA start", "AABB start", "BBAA start", "BBBB start"}, 2000, 50, 
+        checkEventSimulation("test-4-2-input.ka", new String[] { 
+                "AAAA start", "AABB start", "BBAA start", "BBBB start", 
+                "AAAA end", "AABB end", "BBAA end", "BBBB end" }, 1000, 20, 
                 new float[][] {
-                 {1000, 1000, 1000, 0, 1000, 0, 0, 0}, {0, 0, 0, 0, 1000, 0, 0, 0}, {0, 0, 0, 0, 1000, 1000, 1000, 0},  
+                { 100, 100, 100, 100, 0, 0, 0, 0 }, 
+                { 0, 30, 30, 60, 30, 0, 0, 0 }, 
+                { 0, 0, 0, 0, 100, 0, 0, 0 },
+                { 0, 0, 0, 0, 100, 60, 60, 10 }, 
+                { 0, 0, 0, 0, 100, 100, 100, 100 }, 
                 });
     }
 
-//    @Test
+    @Test
     public void testTest4_3_agentStateAffectsDiffusionRate() throws Exception {
          checkEventSimulation("test-4-3-input.ka", new String[] {
-                 "AAAA start", "AABB start", "BBAA start", "BBBB start", "AAAA start", "AABB start", "BBAA start", "BBBB start"}, 2000, 50, 
-                new float[][] {
-                 {1000, 1000, 1000, 0, 1000, 0, 0, 0}, {0, 0, 0, 0, 1000, 0, 0, 0}, {0, 0, 0, 0, 1000, 1000, 1000, 0},  
-                });
+                 "AAAA start", "AABB start", "BBAA start", "BBBB start", 
+                 "AAAA end", "AABB end", "BBAA end", "BBBB end" }, 1000, 20, 
+                 new float[][] {
+                 { 100, 100, 100, 100, 0, 0, 0, 0 }, 
+                 { 0, 30, 30, 60, 30, 0, 0, 0 }, 
+                 { 0, 0, 0, 0, 100, 0, 0, 0 },
+                 { 0, 0, 0, 0, 100, 60, 60, 10 }, 
+                 { 0, 0, 0, 0, 100, 100, 100, 100 }, 
+                 });
     }
 
     private void checkEventSimulation(String inputModelFilename, String[] observableNames, int eventsPerStep, float accuracy, float[][] expectedObservableValues) throws Exception {
