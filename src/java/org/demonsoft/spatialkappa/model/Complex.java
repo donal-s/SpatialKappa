@@ -632,6 +632,7 @@ public class Complex implements Serializable {
             }
         }
         else { // channel != null
+            // TODO add validation logic to ensure predefined channels don't get applied to 1D compartments, etc
             List<Location> targetLocations = sourceLocation.getLinkedLocations(compartments, channel);
             if (locationConstraint == NOT_LOCATED) {
                 result.addAll(targetLocations);

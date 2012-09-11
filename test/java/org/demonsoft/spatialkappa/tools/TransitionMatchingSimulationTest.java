@@ -4,6 +4,8 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_2;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_3;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_PLUS_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertEquals;
@@ -133,6 +135,83 @@ public class TransitionMatchingSimulationTest {
         checkObservation("observable2", new ObservationElement(5));
         checkObservation("observable1", new ObservationElement(12, new int[] {4}, "cytosol", new Serializable[] {5, 0, 0, 7}));
         checkObservation("observable3", new ObservationElement(12));
+    }
+
+    @Test
+    public void testGetCurrentObservation_voxelObservationsSplitAcrossVoxels() {
+        kappaModel.addAgentDeclaration(new AggregateAgent("A", 
+                new AggregateSite("x", (String) null, null), new AggregateSite("y", (String) null, null)));
+        kappaModel.addAgentDeclaration(new AggregateAgent("B", 
+                new AggregateSite("x", (String) null, null), new AggregateSite("y", (String) null, null)));
+        kappaModel.addCompartment("loc1", null, getList(4));
+        kappaModel.addCompartment(new Compartment("loc2"));
+
+        Channel intra = new Channel("intra", new Location("loc1", INDEX_X), new Location("loc1", INDEX_X_PLUS_1));
+        kappaModel.addChannel(intra);
+        
+        Channel inter = new Channel("inter", new Location("loc1", INDEX_X), new Location("loc2"));
+        kappaModel.addChannel(inter);
+        
+        kappaModel.addInitialValue(getList(
+                new Agent("A", new Location("loc1", INDEX_0))),
+                "5", NOT_LOCATED);
+        kappaModel.addInitialValue(getList(
+                new Agent("A", new Location("loc1", INDEX_1), new AgentSite("x", null, "1")),
+                new Agent("A", new Location("loc1", INDEX_1), new AgentSite("x", null, "1"))), 
+                "3", NOT_LOCATED);
+        kappaModel.addInitialValue(getList(
+                new Agent("A", new Location("loc1", INDEX_1), new AgentSite("x", null, "1")),
+                new Agent("B", new Location("loc1", INDEX_1), new AgentSite("x", null, "1"))), 
+                "7", NOT_LOCATED);
+        kappaModel.addInitialValue(getList(
+                new Agent("A", new Location("loc1", INDEX_2), new AgentSite("x", null, "1", "intra")),
+                new Agent("A", new Location("loc1", INDEX_3), new AgentSite("x", null, "1"))), 
+                "11", NOT_LOCATED);
+        kappaModel.addInitialValue(getList(
+                new Agent("A", new Location("loc1", INDEX_2), new AgentSite("x", null, "1", "intra")),
+                new Agent("B", new Location("loc1", INDEX_3), new AgentSite("x", null, "1"))), 
+                "13", NOT_LOCATED);
+        kappaModel.addInitialValue(getList(
+                new Agent("A", new Location("loc1", INDEX_2), new AgentSite("x", null, "1", "inter")),
+                new Agent("A", new Location("loc2"), new AgentSite("x", null, "1"))), 
+                "19", NOT_LOCATED);
+//        kappaModel.addInitialValue(getList(
+//                new Agent("B", new Location("loc1", INDEX_3), new AgentSite("x", null, "1", "inter")),
+//                new Agent("A", new Location("loc2"), new AgentSite("x", null, "1"))), 
+//                "23", NOT_LOCATED);
+        // TODO make link channels bidirectional
+        
+        
+        kappaModel.addVariable(getList(new Agent("A")), "A", new Location("loc1"), true);
+        kappaModel.addVariable(getList(new Agent("B")), "B", new Location("loc1"), true);
+        kappaModel.addVariable(getList(
+                new Agent("A", new AgentSite("x", null, "1")),
+                new Agent("A", new AgentSite("x", null, "1"))), 
+                "AA", new Location("loc1"), true);
+        kappaModel.addVariable(getList(
+                new Agent("A", new AgentSite("x", null, "1")),
+                new Agent("B", new AgentSite("x", null, "1"))), 
+                "AB", new Location("loc1"), true);
+        
+        kappaModel.addPlot("A");
+        kappaModel.addPlot("B");
+        kappaModel.addPlot("AA");
+        kappaModel.addPlot("AB");
+
+        
+        simulation = new TransitionMatchingSimulation(kappaModel);
+        
+        checkObservation("A",  new ObservationElement(5 + 3*2 + 7 + 11 * 2 + 13 + 19, new int[] {4}, "loc1", 
+                new Serializable[] {5, 3*2 + 7, 11 + 13 + 19, 11}));
+        // TODO make link channels bidirectional
+//        checkObservation("B",  new ObservationElement(7 + 13 + 23, new int[] {4}, "loc1", 
+//                new Serializable[] {0, 7, 0, 13 + 23}));
+        checkObservation("B",  new ObservationElement(7 + 13, new int[] {4}, "loc1", 
+                new Serializable[] {0, 7, 0, 13}));
+        checkObservation("AA", new ObservationElement(3 * 2 + 11 * 2, new int[] {4}, "loc1", 
+                new Serializable[] {0, 3 * 2, 0, 0}));
+        checkObservation("AB", new ObservationElement(7 + 13, new int[] {4}, "loc1", 
+                new Serializable[] {0, 7, 0, 0}));
     }
 
     @Test
