@@ -687,4 +687,10 @@ public class Compartment {
         }
         return result;
     }
+
+    public void validate() {
+        if (Location.FIXED_LOCATION.getName().equals(name)) {
+            throw new IllegalStateException("Compartment '" + name + "' uses a reserved compartment name");
+        }
+    }
 }

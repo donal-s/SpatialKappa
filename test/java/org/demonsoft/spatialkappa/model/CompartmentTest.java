@@ -713,5 +713,24 @@ public class CompartmentTest {
                 Arrays.deepToString(compartment.createVoxelArray()));
 
     }
+
+    
+    @Test
+    public void testValidate() {
+        Compartment compartment = new Compartment("known");
+        compartment.validate();
+
+        try {
+            compartment = new Compartment("fixed");
+            compartment.validate();
+            fail("validation should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+            assertEquals("Compartment 'fixed' uses a reserved compartment name", ex.getMessage());
+        }
+    }
+
+
     
 }

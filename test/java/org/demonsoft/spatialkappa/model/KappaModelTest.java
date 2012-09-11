@@ -4,7 +4,7 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_2;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
-import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.*;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertEquals;
@@ -879,7 +879,33 @@ public class KappaModelTest {
         model.addVariable(Utils.getList(new Agent("agent1")), "kappaRef", NOT_LOCATED, false);
         model.addVariable(new VariableExpression(new VariableReference("kappaRef")), "label");
         model.validate();
-
+    }
+    
+    @Test
+    public void testValidate_variable_recordVoxels() {
+        Compartment compartment = new Compartment("loc1", 4);
+        AggregateAgent agentDeclaration = new AggregateAgent("agent1", new AggregateSite("x", null, "1"));
+        
+        // Test variable.validate() is called
+        model = new KappaModel();
+        model.addAgentDeclaration(agentDeclaration);
+        model.addCompartment(compartment);
+        model.addVariable(Utils.getList(new Agent("agent1")), "label", new Location("loc1", INDEX_0), true);
+        checkValidate_failure("Voxel based observation must refer to a voxel based compartment: label");
+    }
+    
+    @Test
+    public void testValidate_compartment() {
+        // Test compartment.validate() is called
+        model = new KappaModel();
+        model.addCompartment(new Compartment("fixed"));
+        checkValidate_failure("Compartment 'fixed' uses a reserved compartment name");
+        
+        // Test one one compartment per name is used
+        model = new KappaModel();
+        model.addCompartment(new Compartment("name"));
+        model.addCompartment(new Compartment("name"));
+        checkValidate_failure("Duplicate compartment 'name'");
     }
     
     @Test
@@ -933,7 +959,6 @@ public class KappaModelTest {
             // Expected exception
             assertEquals(expectedMessage, ex.getMessage());
         }
-
     }
 
     

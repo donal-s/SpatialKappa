@@ -69,6 +69,27 @@ tokens {
 @header        {package org.demonsoft.spatialkappa.parser;}
 @lexer::header {package org.demonsoft.spatialkappa.parser;}
 
+@members {
+    private List<String> errors = new ArrayList<String>();
+    public void emitErrorMessage(String message) {
+        errors.add(message);
+    }
+    public List<String> getErrors() {
+        return errors;
+    }
+}
+
+@lexer::members {
+    private List<String> errors = new ArrayList<String>();
+    public void emitErrorMessage(String message) {
+        errors.add(message);
+    }
+    public List<String> getErrors() {
+        return errors;
+    }
+}
+
+
 prog
   :
   (line)*

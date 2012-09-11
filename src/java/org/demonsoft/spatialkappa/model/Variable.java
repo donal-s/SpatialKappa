@@ -1,6 +1,9 @@
 package org.demonsoft.spatialkappa.model;
 
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
+
+import java.util.List;
 
 public class Variable {
 
@@ -142,6 +145,31 @@ public class Variable {
             
         default:
             throw new IllegalStateException();
+        }
+    }
+
+    public void validate(List<Compartment> compartments) {
+        if (!recordVoxels) {
+            return;
+        }
+        
+        if (location == NOT_LOCATED) {
+            throw new IllegalStateException("Voxel based observation must refer to a voxel based compartment: " + label);
+        }
+        Compartment compartment = getCompartment(compartments, location.getName());
+        if (location.getIndices().length != 0 || compartment.getDimensions().length == 0) {
+            throw new IllegalStateException("Voxel based observation must refer to a voxel based compartment: " + label);
+        }
+        
+        for (Agent agent : complex.agents) {
+            if (agent.location != NOT_LOCATED && !location.equals(agent.location)) {
+                throw new IllegalStateException("Agents of voxel based observation must have compatible location: " + label);
+            }
+        }
+        for (AgentLink agentLink : complex.agentLinks) {
+            if (agentLink.getChannel() != null && !agentLink.isAnyLink() && !agentLink.isNoneLink() && !agentLink.isOccupiedLink()) {
+                throw new IllegalStateException("Agents of voxel based observation must be colocated in single voxel: " + label);
+            }
         }
     }
 

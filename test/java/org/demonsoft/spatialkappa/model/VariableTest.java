@@ -1,5 +1,8 @@
 package org.demonsoft.spatialkappa.model;
 
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
+import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reset;
@@ -8,6 +11,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
+
+import java.util.List;
 
 import org.demonsoft.spatialkappa.model.Variable.Type;
 import org.easymock.EasyMock;
@@ -187,5 +192,76 @@ public class VariableTest {
         Variable variable = new Variable(new VariableExpression(2), "label");
         assertEquals(2, variable.evaluate(model));
     }
+    
+    @Test
+    public void testValidate_kappaExpression_recordVoxels() {
+        Compartment compartment = new Compartment("loc1", 4);
+        List<Compartment> compartments = getList(compartment);
+        Location loc1 = new Location("loc1");
+        
+        Variable variable = new Variable(new Complex(new Agent("agent1")), NOT_LOCATED, "label", true);
+        checkValidate_failure(variable, compartments, 
+                "Voxel based observation must refer to a voxel based compartment: label");
+        
+        variable = new Variable(new Complex(new Agent("agent1")), new Location("unknown"), "label", true);
+        checkValidate_failure(variable, compartments, 
+                "Compartment 'unknown' not found");
+        
+        variable = new Variable(new Complex(new Agent("agent1")), new Location("loc1", INDEX_0), "label", true);
+        checkValidate_failure(variable, compartments, 
+                "Voxel based observation must refer to a voxel based compartment: label");
+        
+        variable = new Variable(new Complex(new Agent("agent1")), new Location("noVoxels"), "label", true);
+        checkValidate_failure(variable, getList(new Compartment("noVoxels")), 
+                "Voxel based observation must refer to a voxel based compartment: label");
+        
+        variable = new Variable(new Complex(new Agent("agent1", new Location("loc1", INDEX_0))), loc1, "label", true);
+        checkValidate_failure(variable, compartments, 
+                "Agents of voxel based observation must have compatible location: label");
+        
+        variable = new Variable(new Complex(new Agent("agent1", new Location("loc2"))), loc1, "label", true);
+        checkValidate_failure(variable, compartments, 
+                "Agents of voxel based observation must have compatible location: label");
+        
+        variable = new Variable(new Complex(new Agent("agent1", new AgentSite("x", null, "1", "intra")),
+                new Agent("agent1", new AgentSite("x", null, "1"))), loc1, "label", true);
+        checkValidate_failure(variable, compartments, 
+                "Agents of voxel based observation must be colocated in single voxel: label");
+        
+        
+        // Valid cases
+        
+        variable = new Variable(new Complex(new Agent("agent1")), loc1, "label", true);
+        variable.validate(compartments);
+        
+        variable = new Variable(new Complex(new Agent("agent1", NOT_LOCATED)), loc1, "label", true);
+        variable.validate(compartments);
+        
+        variable = new Variable(new Complex(new Agent("agent1", loc1)), loc1, "label", true);
+        variable.validate(compartments);
+        
+        variable = new Variable(new Complex(
+                new Agent("agent1", new AgentSite("x", null, "1")),
+                new Agent("agent1", new AgentSite("x", null, "1"))), loc1, "label", true);
+        variable.validate(compartments);
+        
+        variable = new Variable(new Complex(
+                new Agent("agent1", new AgentSite("x", null, "?")),
+                new Agent("agent1", new AgentSite("x", null, "_"))), loc1, "label", true);
+        variable.validate(compartments);
+    }
+    
+    private void checkValidate_failure(Variable variable, List<Compartment> compartments, String expectedMessage) {
+        try {
+            variable.validate(compartments);
+            fail("validation should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+            assertEquals(expectedMessage, ex.getMessage());
+        }
+
+    }
+
 
 }
