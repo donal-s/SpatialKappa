@@ -23,8 +23,7 @@ public class ReplaySimulation implements Simulation {
     private static final String TOKEN_HASH = "#";
     private static final String TOKEN_TIME = "time";
     private static final String TOKEN_EVENTS = "E";
-    private static final String COMPARTMENT_ELEMENT_PREFIX = "_:loc~";
-    private static final String COMPARTMENT_INDEX_PREFIX = "loc_index_";
+    private static final String COMPARTMENT_ELEMENT_PREFIX = ":";
     
     List<CompartmentElementDefinition> definitions = new ArrayList<CompartmentElementDefinition>();
     final Set<ObservationListener> listeners = new HashSet<ObservationListener>();
@@ -165,24 +164,24 @@ public class ReplaySimulation implements Simulation {
     
     private void constructCompartmentObservations(Map<String, ObservationElement> elements) {
         for (CompartmentElementDefinition definition : definitions) {
-            Serializable cellValues = constructSlice(definition.elementNames, elements);
+            Serializable[] voxelValues = constructSlice(definition.elementNames, elements);
             int totalValue = (int) elements.get(definition.compartmentName).value;
-            elements.put(definition.compartmentName, new ObservationElement(totalValue, definition.dimensions, definition.compartmentName, cellValues));
+            elements.put(definition.compartmentName, new ObservationElement(totalValue, definition.dimensions, definition.compartmentName, voxelValues));
         }
     }
     
-    private Serializable constructSlice(Object[] elementNames, Map<String, ObservationElement> elements) {
+    private Serializable[] constructSlice(Object[] elementNames, Map<String, ObservationElement> elements) {
         if (elementNames[0] instanceof String) {
-            float[] result = new float[elementNames.length];
+            Serializable[] result = new Serializable[elementNames.length];
             for (int index = 0; index < elementNames.length; index++) {
-                result[index] = elements.get(elementNames[index]).value;
+                result[index] = (int) elements.get(elementNames[index]).value;
                 elements.remove(elementNames[index]);
             }
             return result;
         }
         Serializable[] result = new Serializable[elementNames.length];
         for (int index = 0; index < elementNames.length; index++) {
-            result[index] =  constructSlice((Object[]) elementNames[index], elements);
+            result[index] = constructSlice((Object[]) elementNames[index], elements);
         }
         return result;
     }
@@ -229,6 +228,11 @@ public class ReplaySimulation implements Simulation {
             if (!Arrays.deepEquals(elementNames, other.elementNames))
                 return false;
             return true;
+        }
+        
+        @Override
+        public String toString() {
+            return compartmentName + ", " + Arrays.toString(dimensions) + ", " + Arrays.deepToString(elementNames);
         }
     }
     
@@ -290,7 +294,7 @@ public class ReplaySimulation implements Simulation {
         if (dimension == dimensions.length - 1) {
             String[] result = new String[dimensions[dimension]];
             for (int index = 0; index < result.length; index++) {
-                String indexString = indexPrefix + "," + COMPARTMENT_INDEX_PREFIX + (dimension + 1) +  "~" + index;
+                String indexString = indexPrefix + "[" + index +  "]";
                 for (String current : elementNames) {
                     if (current.contains(indexString)) {
                         result[index] = current;
@@ -303,7 +307,7 @@ public class ReplaySimulation implements Simulation {
         
         Object[] result = new Object[dimensions[dimension]];
         for (int index = 0; index < result.length; index++) {
-            String indexString = indexPrefix + "," + COMPARTMENT_INDEX_PREFIX + (dimension + 1) +  "~" + index;
+            String indexString = indexPrefix + "[" + index +  "]";
             result[index] = getOrderedElementNames(elementNames, indexString, dimension + 1, dimensions);
         }
         return result;
@@ -312,29 +316,41 @@ public class ReplaySimulation implements Simulation {
     private int[] getDimensions(List<String> elementNames) {
         String elementName = elementNames.get(0);
         int highestDimension = 0;
-        while (elementName.contains(COMPARTMENT_INDEX_PREFIX + (highestDimension + 1))) {
-            highestDimension++;
+        int currentDimensions = count(elementName, '[');
+        if (currentDimensions > highestDimension) {
+            highestDimension = currentDimensions;
         }
         int[] result = new int[highestDimension];
-        for (int index = 0; index < highestDimension; index++) {
-            int maxValue = 0;
-            while (true) {
-                boolean found = false;
-                String elementIndex = COMPARTMENT_INDEX_PREFIX + (index + 1) + "~" + maxValue;
-                for (String current : elementNames) {
-                    if (current.contains(elementIndex)) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (found) {
-                    maxValue++;
-                }
-                else {
-                    break;
+        for (String current : elementNames) {
+            int[] dimensions = getDimensions(current);
+            for (int index = 0; index < dimensions.length; index++) {
+                if (dimensions[index] > result[index]) {
+                    result[index] = dimensions[index];
                 }
             }
-            result[index] = maxValue;
+        }
+        return result;
+    }
+
+    private int[] getDimensions(String elementName) {
+        int[] result = new int[count(elementName, '[')];
+        int startIndex = 0;
+        int dimensionIndex = 0;
+        while (dimensionIndex < result.length) {
+            startIndex = elementName.indexOf('[', startIndex) + 1;
+            int endIndex = elementName.indexOf(']', startIndex);
+            result[dimensionIndex++] = Integer.parseInt(elementName.substring(startIndex, endIndex)) + 1;
+            startIndex = endIndex;
+        }
+        return result;
+    }
+
+    private int count(String input, char matchChar) {
+        int result = 0;
+        for (char c : input.toCharArray()) {
+            if (c == matchChar) {
+                result++;
+            }
         }
         return result;
     }

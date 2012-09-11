@@ -517,6 +517,26 @@ In the final example, the diffusion rate depends on the states of the agents wit
 
 The '$\arrowvert\arrowvert$' clause allows any agent declaration that could appear on the left hand side of a transition rule, including agents, complexes, agent state and agent location.
 
+\subsection{Voxel breakdown of observables}
+
+Observables using the constructs \verb|%obs:| and \verb|%var:| can be used to get the total amount of species per compartment. For example
+
+\begin{kappasource}
+\%obs: 'A in cytosol' :cytosol A()
+\%var: 'A in cytosol' :cytosol A()
+\end{kappasource}
+
+However, for some simulations, recording amount of observable in each voxel of a compartment is useful. In these cases, using the keyword \verb|voxel| will allow recording of observables per voxel. This works only on observable or variable declarations which specify a compartment as the location of the declaration. For example
+
+\begin{kappasource}
+\%obs: voxel 'A in cytosol' :cytosol A()
+\%var: voxel 'A in cytosol' :cytosol A()
+\end{kappasource}
+
+The above each declare variables which record for each voxel within the compartment \verb|cytosol|.
+
+\textbf{Warning} - as all voxels within the dimensions of the compartment are recorded for each observable using the \verb|voxel| keyword at each timepoint, the output data file will rapidly become very large.
+
 
 \bigskip For example models demonstrating the use of the language extensions, refer to Appendix \ref{chap:resources}.
 

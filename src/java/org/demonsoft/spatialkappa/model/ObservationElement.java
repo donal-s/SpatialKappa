@@ -13,7 +13,7 @@ public class ObservationElement implements Serializable {
     public final boolean isCompartment;
     public final int[] dimensions;
     // int array of unknown dimension
-    public final Serializable cellValues;
+    public final Serializable[] cellValues;
     public final String compartmentName;
     
     public ObservationElement(float value) {
@@ -24,19 +24,19 @@ public class ObservationElement implements Serializable {
         this.compartmentName = null;
     }
     
-    public ObservationElement(int value, int[] dimensions, String compartmentName, Serializable cellValues) {
+    public ObservationElement(int value, int[] dimensions, String compartmentName, Serializable[] cellValues) {
         if (dimensions == null || compartmentName == null || cellValues == null) {
             throw new NullPointerException();
         }
         
-        Object slice = cellValues;
+        Serializable[] slice = cellValues;
         for (int index = 0; index < dimensions.length - 1; index++) {
-            if (((Object[]) slice).length != dimensions[index]) {
+            if (slice.length != dimensions[index]) {
                 throw new IllegalArgumentException();
             }
-            slice = ((Object[]) slice)[0];
+            slice = ((Serializable[]) slice[0]);
         }
-        if (((float[]) slice).length != dimensions[dimensions.length - 1]) {
+        if (slice.length != dimensions[dimensions.length - 1] || !(slice[0] instanceof Integer)) {
             throw new IllegalArgumentException();
         }
 
@@ -59,18 +59,19 @@ public class ObservationElement implements Serializable {
         return value + " " + Arrays.toString(dimensions) + " " + toString(cellValues);
     }
     
-    private String toString(Object cells) {
-        if (cells instanceof float[]) {
-            return Arrays.toString((float[]) cells);
-        }
-        Object[] values = (Object[]) cells;
+    private String toString(Serializable[] cells) {
         StringBuilder builder = new StringBuilder();
         builder.append("[");
-        for (int index = 0; index < values.length; index++) {
+        for (int index = 0; index < cells.length; index++) {
             if (index > 0) {
                 builder.append(", ");
             }
-            builder.append(toString(values[index]));
+            if (cells[index] instanceof Integer) {
+                builder.append(cells[index].toString());
+            }
+            else {
+                builder.append(toString((Serializable[]) cells[index]));
+            }
         }
         builder.append("]");
         return builder.toString();
@@ -120,18 +121,18 @@ public class ObservationElement implements Serializable {
         return true;
     }
 
-    public float getCellValue(int columnIndex, int rowIndex) {
+    public int getCellValue(int columnIndex, int rowIndex) {
         if (dimensions.length == 1) {
-            return ((float[]) cellValues)[columnIndex];
+            return (Integer) (cellValues[columnIndex]);
         }
         if (dimensions.length == 2) {
-            return ((float[]) ((Object[]) cellValues)[columnIndex])[rowIndex];
+            return (Integer) (((Serializable[]) cellValues[columnIndex])[rowIndex]);
         }
-        Object slice = ((Object[][]) cellValues)[columnIndex][rowIndex];
+        Serializable[] slice = (Serializable[]) ((Serializable[]) cellValues[columnIndex])[rowIndex];
         for (int index = 0; index < dimensions.length - 3; index++) {
-            slice = ((Object[]) slice)[0];
+            slice = ((Serializable[]) slice[0]);
         }
-        return ((float[]) slice)[0];
+        return (Integer) slice[0];
     }
 
     public ObservationElement plus(ObservationElement y) {

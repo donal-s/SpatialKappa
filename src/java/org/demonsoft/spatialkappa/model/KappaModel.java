@@ -100,8 +100,8 @@ public class KappaModel implements IKappaModel {
         return complexes;
     }
 
-    public void addVariable(List<Agent> agents, String label, Location location) {
-        variables.put(label, new Variable(new Complex(agents), location, label));
+    public void addVariable(List<Agent> agents, String label, Location location, boolean recordVoxels) {
+        variables.put(label, new Variable(new Complex(agents), location, label, recordVoxels));
         orderedVariableNames.add(label);
         propogateLocation(agents, location);
 

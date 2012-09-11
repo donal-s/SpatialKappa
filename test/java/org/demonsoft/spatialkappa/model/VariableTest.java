@@ -52,7 +52,7 @@ public class VariableTest {
         Location location = new Location("cytosol", new CellIndexExpression("2"));
         
         try {
-            new Variable(null, location, "label");
+            new Variable(null, location, "label", false);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -60,7 +60,7 @@ public class VariableTest {
         }
         
         try {
-            new Variable(complex, location, null);
+            new Variable(complex, location, null, false);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -68,14 +68,14 @@ public class VariableTest {
         }
         
         try {
-            new Variable(complex, null, "label");
+            new Variable(complex, null, "label", false);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
         
-        Variable variable = new Variable(complex, location, "label");
+        Variable variable = new Variable(complex, location, "label", false);
         assertEquals("label", variable.label);
         assertNull(variable.expression);
         assertSame(location, variable.location);
@@ -83,7 +83,15 @@ public class VariableTest {
         assertEquals("'label' cytosol[2] ([agent1()])", variable.toString());
         assertSame(Type.KAPPA_EXPRESSION, variable.type);
  
-        variable = new Variable(complex, Location.NOT_LOCATED, "label");
+        variable = new Variable(complex, location, "label", true);
+        assertEquals("label", variable.label);
+        assertNull(variable.expression);
+        assertSame(location, variable.location);
+        assertSame(complex, variable.complex);
+        assertEquals("'label' voxel cytosol[2] ([agent1()])", variable.toString());
+        assertSame(Type.KAPPA_EXPRESSION, variable.type);
+ 
+        variable = new Variable(complex, Location.NOT_LOCATED, "label", false);
         assertEquals("label", variable.label);
         assertNull(variable.expression);
         assertSame(Location.NOT_LOCATED, variable.location);
@@ -129,7 +137,7 @@ public class VariableTest {
 
         Complex complex = new Complex(new Agent("agent1"));
         Location location = new Location("cytosol", new CellIndexExpression("2"));
-        variable = new Variable(complex, location, "label");
+        variable = new Variable(complex, location, "label", false);
 
         expect(state.getComplexQuantity(variable)).andReturn(new ObservationElement(3));
         
@@ -162,7 +170,7 @@ public class VariableTest {
         Complex complex = new Complex(new Agent("agent1"));
         Location location = new Location("cytosol", new CellIndexExpression("2"));
         try {
-            new Variable(complex, location, "label").evaluate(model);
+            new Variable(complex, location, "label", false).evaluate(model);
             fail("null should have failed");
         }
         catch (IllegalStateException ex) {

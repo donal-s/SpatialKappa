@@ -1,5 +1,6 @@
 package org.demonsoft.spatialkappa.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,9 +9,6 @@ import java.util.Map;
 
 public class Compartment {
 
-    // TODO getOriginLocation(Location centreLocation)
-    // TODO getCentreLocation(Location originLocation)
-    
     private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
     
     protected final String name;
@@ -644,6 +642,7 @@ public class Compartment {
         return 0;
     }
 
+    // TODO replace with single translate method
     public Location getCentreLocation(Location location) {
         float[] centre = new float[dimensions.length];
         for (int index=0; index < dimensions.length; index++) {
@@ -666,5 +665,26 @@ public class Compartment {
             indices.add(new CellIndexExpression("" + (location.getIndices()[index].value + centre[index])));
         }
         return new Location(name, indices);
+    }
+
+    public Serializable[] createVoxelArray() {
+        if (dimensions.length == 0) {
+            return null;
+        }
+        return createVoxelArray(0);
+    }
+
+    private Serializable[] createVoxelArray(int dimensionIndex) {
+        int currentDimension = dimensions[dimensionIndex];
+        Serializable[] result = new Serializable[currentDimension];
+        for (int index=0; index < result.length; index++) {
+            if (dimensionIndex == dimensions.length - 1) {
+                result[index] = 0;
+            }
+            else {
+                result[index] = createVoxelArray(dimensionIndex + 1);
+            }
+        }
+        return result;
     }
 }

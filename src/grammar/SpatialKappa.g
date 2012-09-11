@@ -63,6 +63,7 @@ tokens {
   VAR_EXPR;
   VAR_INFINITY;
   VARIABLE;
+  VOXEL;
 }
 
 @header        {package org.demonsoft.spatialkappa.parser;}
@@ -254,6 +255,10 @@ plotDecl
 
 obsDecl
   :
+  '%obs:' 'voxel' label? agentGroup
+    ->
+      ^(OBSERVATION VOXEL agentGroup label?)
+  |
   '%obs:' label? agentGroup
     ->
       ^(OBSERVATION agentGroup label?)
@@ -265,6 +270,10 @@ options {backtrack=true;}
   '%var:' label varAlgebraExpr
     ->
       ^(VARIABLE varAlgebraExpr label)
+   |
+  '%var:' 'voxel' label agentGroup
+    ->
+      ^(VARIABLE VOXEL agentGroup label)
    |
   '%var:' label agentGroup
     ->

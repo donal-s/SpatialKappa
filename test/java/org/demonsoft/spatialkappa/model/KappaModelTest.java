@@ -409,27 +409,27 @@ public class KappaModelTest {
         List<Agent> agents1 = getList(new Agent("agent1"));
 
         try {
-            model.addVariable(null, "label", null);
+            model.addVariable(null, "label", null, false);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
         try {
-            model.addVariable(agents1, null, null);
+            model.addVariable(agents1, null, null, false);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
 
-        model.addVariable(agents1, "label", NOT_LOCATED);
+        model.addVariable(agents1, "label", NOT_LOCATED, false);
 
         checkVariables(model, "'label' ([agent1()])");
         checkOrderedVariableNames(model, "label");
         checkAggregateAgents(new AggregateAgent("agent1"));
 
-        model.addVariable(getList(new Agent("agent1"), new Agent("agent2")), "label2", NOT_LOCATED);
+        model.addVariable(getList(new Agent("agent1"), new Agent("agent2")), "label2", NOT_LOCATED, false);
 
         checkVariables(model, "'label' ([agent1()])", "'label2' ([agent1(), agent2()])");
         checkOrderedVariableNames(model, "label", "label2");
@@ -439,9 +439,9 @@ public class KappaModelTest {
 
     @Test
     public void testAddVariable_orderingOfNames() {
-        model.addVariable(getList(new Agent("agent1")), "C", NOT_LOCATED);
+        model.addVariable(getList(new Agent("agent1")), "C", NOT_LOCATED, false);
 
-        model.addVariable(getList(new Agent("agent1"), new Agent("agent2")), "A", NOT_LOCATED);
+        model.addVariable(getList(new Agent("agent1"), new Agent("agent2")), "A", NOT_LOCATED, false);
 
         model.addVariable(new VariableExpression(100f), "B");
 
@@ -455,33 +455,40 @@ public class KappaModelTest {
         Location location = new Location("cytosol", INDEX_2);
 
         try {
-            model.addVariable(null, "label", location);
+            model.addVariable(null, "label", location, false);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
         try {
-            model.addVariable(agents1, null, location);
+            model.addVariable(agents1, null, location, false);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
 
-        model.addVariable(agents1, "label", location);
+        model.addVariable(agents1, "label", location, false);
 
         checkVariables(model, "'label' cytosol[2] ([agent1:cytosol[2]()])");
         checkOrderedVariableNames(model, "label");
         checkAggregateAgents(new AggregateAgent("agent1"));
 
         model.addVariable(getList(new Agent("agent1", new Location("cytosol", INDEX_0)), 
-                new Agent("agent2")), "label2", location);
+                new Agent("agent2")), "label2", location, false);
 
         checkVariables(model, "'label' cytosol[2] ([agent1:cytosol[2]()])", 
                 "'label2' cytosol[2] ([agent1:cytosol[0](), agent2:cytosol[2]()])");
         checkOrderedVariableNames(model, "label", "label2");
         checkAggregateAgents(new AggregateAgent("agent1"), new AggregateAgent("agent2"));
+
+        model.addVariable(getList(new Agent("agent3")), "label3", new Location("cytosol"), true);
+
+        checkVariables(model, "'label' cytosol[2] ([agent1:cytosol[2]()])", 
+                "'label2' cytosol[2] ([agent1:cytosol[0](), agent2:cytosol[2]()])",
+                "'label3' voxel cytosol ([agent3:cytosol()])");
+        checkOrderedVariableNames(model, "label", "label2", "label3");
     }
 
     @Test
@@ -721,7 +728,7 @@ public class KappaModelTest {
         // Plot reference to kappa expression
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("agent1"));
-        model.addVariable(Utils.getList(new Agent("agent1")), "kappaRef", NOT_LOCATED);
+        model.addVariable(Utils.getList(new Agent("agent1")), "kappaRef", NOT_LOCATED, false);
         model.addPlot("kappaRef");
         model.validate();
     }
@@ -869,7 +876,7 @@ public class KappaModelTest {
         // Variable reference to kappa expression
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("agent1"));
-        model.addVariable(Utils.getList(new Agent("agent1")), "kappaRef", NOT_LOCATED);
+        model.addVariable(Utils.getList(new Agent("agent1")), "kappaRef", NOT_LOCATED, false);
         model.addVariable(new VariableExpression(new VariableReference("kappaRef")), "label");
         model.validate();
 
@@ -902,17 +909,17 @@ public class KappaModelTest {
     @Test
     public void testValidate_agentDeclarationInvalid() {
         model = new KappaModel();
-        model.addVariable(Utils.getList(new Agent("A")), "test", NOT_LOCATED);
+        model.addVariable(Utils.getList(new Agent("A")), "test", NOT_LOCATED, false);
         checkValidate_failure("Agent 'A' not declared");
 
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("A", new AggregateSite("site2", (String) null, null)));
-        model.addVariable(Utils.getList(new Agent("A", new AgentSite("site1", null, null))), "test", NOT_LOCATED);
+        model.addVariable(Utils.getList(new Agent("A", new AgentSite("site1", null, null))), "test", NOT_LOCATED, false);
         checkValidate_failure("Agent site A(site1) not declared");
         
         model = new KappaModel();
         model.addAgentDeclaration(new AggregateAgent("A", new AggregateSite("site1", "x", null)));
-        model.addVariable(Utils.getList(new Agent("A", new AgentSite("site1", "y", null))), "test", NOT_LOCATED);
+        model.addVariable(Utils.getList(new Agent("A", new AgentSite("site1", "y", null))), "test", NOT_LOCATED, false);
         checkValidate_failure("Agent state A(site1~y) not declared");
         
     }

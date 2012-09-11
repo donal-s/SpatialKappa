@@ -66,16 +66,16 @@ public class Observation implements Serializable {
     }
 
     
-    private String toKaSimString(Object cells) {
+    private String toKaSimString(Serializable[] cells) {
         StringBuilder result = new StringBuilder();
-        if (cells instanceof float[]) {
-            for (float cell : (float[]) cells) {
+        if (cells[0] instanceof Integer) {
+            for (Serializable cell : cells) {
                 result.append(" ").append(VALUE_FORMAT.format(cell));
             }
         }
         else {
-            for (Object slice : (Object[]) cells) {
-                result.append(toKaSimString(slice));
+            for (Serializable slice : cells) {
+                result.append(toKaSimString((Serializable[]) slice));
             }
         }
         return result.toString();
@@ -93,7 +93,7 @@ public class Observation implements Serializable {
             if (element.isCompartment) {
                 String[] cellIndices = getCellIndexStrings(element.dimensions, 0);
                 for (String cellIndex : cellIndices) {
-                    String name = observableName + "_:loc~" + element.compartmentName + cellIndex;
+                    String name = observableName + ":" + element.compartmentName + cellIndex;
                     result.append(" '").append(name.replace(' ', '_')).append("'");
                 }
             }
@@ -107,7 +107,6 @@ public class Observation implements Serializable {
 
     
     String[] getCellIndexStrings(int[] dimensions, int index) {
-        String prefix = ",loc_index_" + (index + 1) + "~";
         String[] suffixes = new String[] {""};
         
         if (index + 1 < dimensions.length) {
@@ -118,7 +117,7 @@ public class Observation implements Serializable {
         int resultIndex = 0;
         for (int outer = 0; outer < dimensions[index]; outer++) {
             for (int inner = 0; inner < suffixes.length; inner++) {
-                result[resultIndex++] = prefix + outer + suffixes[inner];
+                result[resultIndex++] = "[" + outer + "]" + suffixes[inner];
             }
         }
         return result;
