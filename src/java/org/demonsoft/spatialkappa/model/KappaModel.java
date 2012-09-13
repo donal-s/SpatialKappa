@@ -100,8 +100,8 @@ public class KappaModel implements IKappaModel {
         return complexes;
     }
 
-    public void addVariable(List<Agent> agents, String label, Location location) {
-        variables.put(label, new Variable(new Complex(agents), location, label));
+    public void addVariable(List<Agent> agents, String label, Location location, boolean recordVoxels) {
+        variables.put(label, new Variable(new Complex(agents), location, label, recordVoxels));
         orderedVariableNames.add(label);
         propogateLocation(agents, location);
 
@@ -397,21 +397,12 @@ public class KappaModel implements IKappaModel {
     
     public void validate() {
         
-        for (Variable variable : variables.values()) {
-            if (Variable.Type.VARIABLE_EXPRESSION == variable.type && VariableExpression.Type.VARIABLE_REFERENCE == variable.expression.type) {
-                VariableReference reference = variable.expression.reference;
-                Variable other = variables.get(reference.variableName);
-                if (other == null) {
-                    throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
-                }
-            }
-        }
-        
         Set<String> compartmentNames = new HashSet<String>();
         for (Compartment compartment : compartments) {
             if (compartmentNames.contains(compartment.getName())) {
                 throw new IllegalStateException("Duplicate compartment '" + compartment.getName() + "'");
             }
+            compartment.validate();
             compartmentNames.add(compartment.getName());
         }
        
@@ -420,9 +411,23 @@ public class KappaModel implements IKappaModel {
             if (channelNames.contains(channel.getName())) {
                 throw new IllegalStateException("Duplicate channel '" + channel.getName() + "'");
             }
-            channelNames.add(channel.getName());
             channel.validate(compartments);
+            channelNames.add(channel.getName());
         }
+        
+        for (Variable variable : variables.values()) {
+            if (Variable.Type.VARIABLE_EXPRESSION == variable.type && VariableExpression.Type.VARIABLE_REFERENCE == variable.expression.type) {
+                VariableReference reference = variable.expression.reference;
+                Variable other = variables.get(reference.variableName);
+                if (other == null) {
+                    throw new IllegalStateException("Reference '" + reference.variableName + "' not found");
+                }
+            }
+            variable.validate(compartments);
+        }
+        // TODO check for circular dependencies
+        
+
        
         for (InitialValue initialValue : initialValues) {
             if (initialValue.reference != null) {
@@ -437,8 +442,6 @@ public class KappaModel implements IKappaModel {
                 if (variable.expression.isInfinite(variables)) {
                     throw new IllegalStateException("Reference '" + reference.variableName + "' evaluates to infinity - cannot be initial value");
                 }
-                
-                
             }
         }
         

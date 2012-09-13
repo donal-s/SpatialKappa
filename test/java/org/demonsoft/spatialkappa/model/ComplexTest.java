@@ -479,7 +479,6 @@ public class ComplexTest {
 
     }
     
-    
     @Test
     public void testGetMappingInstances_nestedCompartmentComplexes() throws Exception {
         

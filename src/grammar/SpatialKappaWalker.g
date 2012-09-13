@@ -284,23 +284,39 @@ plotDecl
 obsDecl
 options {backtrack=true;}
   :
+  ^(OBSERVATION VOXEL agentGroup)
+  {
+    kappaModel.addVariable($agentGroup.agents, $agentGroup.agents.toString(), $agentGroup.location, true);
+    kappaModel.addPlot($agentGroup.agents.toString());
+  }
+  |
   ^(OBSERVATION agentGroup)
   {
-    kappaModel.addVariable($agentGroup.agents, $agentGroup.agents.toString(), $agentGroup.location);
+    kappaModel.addVariable($agentGroup.agents, $agentGroup.agents.toString(), $agentGroup.location, false);
     kappaModel.addPlot($agentGroup.agents.toString());
+  }
+  | ^(OBSERVATION VOXEL agentGroup label)
+  {
+    kappaModel.addVariable($agentGroup.agents, $label.result, $agentGroup.location, true);
+    kappaModel.addPlot($label.result);
   }
   | ^(OBSERVATION agentGroup label)
   {
-    kappaModel.addVariable($agentGroup.agents, $label.result, $agentGroup.location);
+    kappaModel.addVariable($agentGroup.agents, $label.result, $agentGroup.location, false);
     kappaModel.addPlot($label.result);
   }
   ;
 
 varDecl
   :
+  ^(VARIABLE VOXEL agentGroup label)
+  {
+    kappaModel.addVariable($agentGroup.agents, $label.result, $agentGroup.location, true);
+  }
+  |
   ^(VARIABLE agentGroup label)
   {
-    kappaModel.addVariable($agentGroup.agents, $label.result, $agentGroup.location);
+    kappaModel.addVariable($agentGroup.agents, $label.result, $agentGroup.location, false);
   }
   |
   ^(VARIABLE varAlgebraExpr label)

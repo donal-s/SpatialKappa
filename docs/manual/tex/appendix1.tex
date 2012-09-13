@@ -84,11 +84,11 @@ plotDecl :
   '\%plot:' label
 
 obsDecl :
-  '\%obs:' label? agentGroup
+  '\%obs:' \newbnf{voxel?} label? agentGroup
 
 varDecl :
   '\%var:' label varAlgebraExpr
-   | '\%var:' label agentGroup
+   | '\%var:' \newbnf{voxel?} label agentGroup
 
 varAlgebraExpr :
   a=varAlgebraMultExpr (op=operator_add b=varAlgebraMultExpr )*

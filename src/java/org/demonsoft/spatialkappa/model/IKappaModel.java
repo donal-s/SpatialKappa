@@ -11,7 +11,7 @@ public interface IKappaModel {
     public void addInitialValue(List<Agent> agents, String valueText, Location compartment);
     public void addInitialValue(List<Agent> agents, VariableReference reference, Location compartment);
 
-    public void addVariable(List<Agent> agents, String label, Location location);
+    public void addVariable(List<Agent> agents, String label, Location location, boolean recordVoxels);
     public void addVariable(VariableExpression expression, String label);
 
     public void addPlot(String label);

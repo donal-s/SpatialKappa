@@ -8,10 +8,12 @@ import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -694,5 +696,41 @@ public class CompartmentTest {
         assertEquals(2, compartment.getThickness());
     }
 
+    @Test
+    public void testCreateVoxelArray() {
+        Compartment compartment = new Compartment("label");
+        assertNull(compartment.createVoxelArray());
 
+        compartment = new Compartment("label", 2, 3, 5);
+        assertEquals("[[[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]], " +
+        		"[[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]]", 
+                Arrays.deepToString(compartment.createVoxelArray()));
+
+        compartment = new Compartment.OpenCylinder("label", 3, 4, 1);
+        assertEquals("[[[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], " +
+        		"[[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], " +
+        		"[[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]]", 
+                Arrays.deepToString(compartment.createVoxelArray()));
+
+    }
+
+    
+    @Test
+    public void testValidate() {
+        Compartment compartment = new Compartment("known");
+        compartment.validate();
+
+        try {
+            compartment = new Compartment("fixed");
+            compartment.validate();
+            fail("validation should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+            assertEquals("Compartment 'fixed' uses a reserved compartment name", ex.getMessage());
+        }
+    }
+
+
+    
 }
