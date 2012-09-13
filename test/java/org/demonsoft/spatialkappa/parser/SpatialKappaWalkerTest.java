@@ -317,21 +317,22 @@ public class SpatialKappaWalkerTest {
 
 	@Test
     public void testObsDecl() throws Exception {
-        checkObsDecl("obsDecl", "%obs: A(x~a),B(y~d)\n", "[A(x~a), B(y~d)]", "[A(x~a), B(y~d)]", NOT_LOCATED, true);
-        checkObsDecl("obsDecl", "%obs: 'label' A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", NOT_LOCATED, true);
+        checkObsDecl("obsDecl", "%obs: A(x~a),B(y~d)\n", "[A(x~a), B(y~d)]", "[A(x~a), B(y~d)]", NOT_LOCATED, true, false);
+        checkObsDecl("obsDecl", "%obs: 'label' A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", NOT_LOCATED, true, false);
     }
 
     @Test
     public void testObsDecl_spatial() throws Exception {
-        checkObsDecl("obsDecl", "%obs: 'label' :cytosol A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol"), true);
-        checkObsDecl("obsDecl", "%obs: 'label' :cytosol[0][1] A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")), true);
-        checkObsDecl("obsDecl", "%obs: 'label' A:cytosol[0][1](x~a),B:cytosol[0][1](y~d)\n", "label", "[A:cytosol[0][1](x~a), B:cytosol[0][1](y~d)]", NOT_LOCATED, true);
-           }
+        checkObsDecl("obsDecl", "%obs: 'label' :cytosol A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol"), true, false);
+        checkObsDecl("obsDecl", "%obs: voxel 'label' :cytosol A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol"), true, true);
+        checkObsDecl("obsDecl", "%obs: 'label' :cytosol[0][1] A(x~a),B(y~d)\n", "label", "[A(x~a), B(y~d)]", new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")), true, false);
+        checkObsDecl("obsDecl", "%obs: 'label' A:cytosol[0][1](x~a),B:cytosol[0][1](y~d)\n", "label", "[A:cytosol[0][1](x~a), B:cytosol[0][1](y~d)]", NOT_LOCATED, true, false);
+    }
 
-    private void checkObsDecl(String ruleName, String inputText, String label, String leftSideAgents, Location location, boolean inObservations) throws Exception {
+    private void checkObsDecl(String ruleName, String inputText, String label, String leftSideAgents, Location location, boolean inObservations, boolean recordVoxels) throws Exception {
         lhsAgents.reset();
         reset(mocks);
-        kappaModel.addVariable(capture(lhsAgents), eq(label), eq(location));
+        kappaModel.addVariable(capture(lhsAgents), eq(label), eq(location), eq(recordVoxels));
         if (inObservations) {
             kappaModel.addPlot(label);
         }
@@ -379,9 +380,10 @@ public class SpatialKappaWalkerTest {
 
     @Test
     public void testVarDecl() throws Exception {
-        checkObsDecl("varDecl", "%var: 'label' A(x~a),B(y~d)", "label", "[A(x~a), B(y~d)]", NOT_LOCATED, false);
+        checkObsDecl("varDecl", "%var: 'label' A(x~a),B(y~d)", "label", "[A(x~a), B(y~d)]", NOT_LOCATED, false, false);
+        checkObsDecl("varDecl", "%var: voxel 'label' A(x~a),B(y~d)", "label", "[A(x~a), B(y~d)]", NOT_LOCATED, false, true);
         checkObsDecl("varDecl", "%var: 'label' A:cytosol(x~a),B:cytosol(y~d)", 
-                "label", "[A:cytosol(x~a), B:cytosol(y~d)]", NOT_LOCATED, false);
+                "label", "[A:cytosol(x~a), B:cytosol(y~d)]", NOT_LOCATED, false, false);
         checkVarDecl("%var: 'label' 2.55e4", "25500.0", "label");
         checkVarDecl("%var: 'label' ('a' + 'b') * 2", "(('a' + 'b') * 2.0)", "label");
         checkVarDecl("%var: 'label' [inf] * 2", "([inf] * 2.0)", "label");

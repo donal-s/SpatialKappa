@@ -1,11 +1,14 @@
 package org.demonsoft.spatialkappa.tools;
 
+import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getChannel;
+import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 import static org.demonsoft.spatialkappa.model.Utils.getComplexes;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -20,6 +23,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentLink;
+import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Channel;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.Complex;
@@ -44,7 +48,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
 
     // TODO potential bug - does rerunning simulation also reset perturbations ?
     
-//    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
+    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
 
     private static final List<ComplexMapping> NO_COMPLEX_MAPPINGS = new ArrayList<ComplexMapping>();
     private static final List<TransitionInstance> NO_TRANSITION_INSTANCES = new ArrayList<TransitionInstance>();
@@ -74,9 +78,6 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     private final ComplexMatcher matcher = new ComplexMatcher();
 
     
-//    private final Map<Location, List<Transition>> emptySubstrateTransitionMap = new HashMap<Location, List<Transition>>();
-
-
     public TransitionMatchingSimulation(IKappaModel kappaModel) {
         this.kappaModel = kappaModel;
         
@@ -223,15 +224,6 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     public float getTime() {
         return time;
     }
-
-//    private void addCellValue(Object cellValues, float quantity, CellIndexExpression[] indices) {
-//        Object slice = cellValues;
-//        for (int index = 0; index < indices.length - 1; index++) {
-//            slice = ((Object[]) slice)[indices[index].evaluateIndex(NO_VARIABLES)];
-//        }
-//        int index = indices[indices.length - 1].evaluateIndex(NO_VARIABLES);
-//        ((float[]) slice)[index] = ((float[]) slice)[index] + quantity;
-//    }
 
     private void resetTransitionsFiredCount() {
         for (Map.Entry<Variable, Integer> entry : transitionsFiredMap.entrySet()) {
@@ -596,12 +588,6 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
                 }
             }
             else { // transition without source complexes
-//                List<Transition> transitionMap = emptySubstrateTransitionMap.get(transition.sourceLocation);
-//                if (transitionMap == null) {
-//                    transitionMap = new ArrayList<Transition>();
-//                    emptySubstrateTransitionMap.put(transition.sourceLocation, transitionMap);
-//                }
-//                transitionMap.add(transition);
                 updateTransitionActivity(transition, false);
             }
         }
@@ -776,6 +762,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
                         componentComplexMappingMap.get(component).addAll(mappings);
                     }
                 }
+                // TODO replace below with transition type enum for clarity ?
                 if (transition.sourceComplexes.size() == 0 && transition.channelName != null) {
                     // Unspecified source complex
                     Location complexLocation = complex.getSingleLocation();
@@ -798,13 +785,6 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
             }
     
             addComplexToObservables(complex);
-    
-    //        List<Transition> transitionMap = emptySubstrateTransitionMap.get(location);
-    //        if (transitionMap != null) {
-    //            for (Transition transition : transitionMap) {
-    //                updateTransitionActivity(transition, false);
-    //            }
-    //        }
         }
         else {
             List<Transition> affectedTransitions = complexTransitionMap.get(complex);
@@ -981,12 +961,6 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         for (Transition transition : affectedTransitions) {
             updateTransitionActivity(transition, false);
         }
-//        List<Transition> transitionMap = emptySubstrateTransitionMap.get(location);
-//        if (transitionMap != null) {
-//            for (Transition transition : transitionMap) {
-//                updateTransitionActivity(transition, false);
-//            }
-//        }
     }
 
 
@@ -995,9 +969,8 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
             throw new NullPointerException();
         }
         int value = 0;
-//        int[] dimensions = null;
-//        Serializable cellValues = null;
-//        boolean partition = false;
+        int[] dimensions = null;
+        Serializable[] voxelValues = null;
         List<ObservableMapValue> complexes = observableComplexMap.get(variable);
         if (complexes != null) {
 
@@ -1005,34 +978,54 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
                 value += current.count * complexStore.get(current.complex);
             }
             
-            // TODO - grid observations - currently disabled
-//            if (variable.location != NOT_LOCATED) {
-//                Compartment compartment = variable.location.getReferencedCompartment(kappaModel.getCompartments());
-//                if (compartment.getDimensions().length != variable.location.getIndices().length) {
-//                    partition = true;
-//                    dimensions = compartment.getDimensions();
-//                    cellValues = compartment.createValueArray();
-//                }
-//
-//                for (ObservableMapValue current : complexes) {
-//                    int quantity = current.count;
-//                    value += quantity;
-//                    if (partition) {
-//                        addCellValue(cellValues, quantity, current.location.getIndices());
-//                    }
-//                }
-//                if (partition) {
-//                    return new ObservationElement(value, dimensions, compartment.getName(), cellValues);
-//                }
-//            }
-//            else { // No compartment
-//                for (ObservableMapValue current : complexes) {
-//                    value += current.count;
-//                }
-//            }
+            // TODO simplify check into single boolean in variable including user choice
+            if (variable.location != NOT_LOCATED && variable.recordVoxels) {
+                Compartment compartment = getCompartment(kappaModel.getCompartments(), variable.location.getName());
+                if (compartment.getDimensions().length != variable.location.getIndices().length) {
+                    dimensions = compartment.getDimensions();
+                    voxelValues = compartment.createVoxelArray();
+                    Set<Complex> processedComplexes = new HashSet<Complex>();
+                    
+                    for (ObservableMapValue current : complexes) {
+                        if (!processedComplexes.contains(current.complex)) {
+                            int quantity = complexStore.get(current.complex);
+                            addVoxelValues(voxelValues, quantity, variable.complex, current.complex);
+                            processedComplexes.add(current.complex);
+                        }
+                    }
+                    return new ObservationElement(value, dimensions, compartment.getName(), voxelValues);
+                }
+            }
         }
         return new ObservationElement(value);
     }
 
-    
+    private void addVoxelValues(Object voxelValues, int quantity, Complex template, Complex complex) {
+        List<ComplexMapping> matches = matcher.getPartialMatches(template, complex);
+        for (ComplexMapping match : matches) {
+            Location location = null;
+            boolean locationMatch = true;
+            for (Agent agent : match.mapping.values()) {
+                if (location == null) {
+                    location = agent.location;
+                }
+                else if (!agent.location.equals(location)) {
+                    locationMatch = false;
+                    break;
+                }
+            }
+            if (locationMatch) {
+                @SuppressWarnings("null")
+                CellIndexExpression[] indices = location.getIndices();
+                Object slice = voxelValues;
+                for (int index = 0; index < indices.length - 1; index++) {
+                    slice = ((Object[]) slice)[indices[index].evaluateIndex(NO_VARIABLES)];
+                }
+                int index = indices[indices.length - 1].evaluateIndex(NO_VARIABLES);
+                ((Serializable[]) slice)[index] = ((Integer) ((Serializable[]) slice)[index]) + quantity;
+            }
+        }
+    }
+
+
 }

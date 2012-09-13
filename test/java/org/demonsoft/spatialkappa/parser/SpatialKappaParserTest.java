@@ -282,6 +282,14 @@ public class SpatialKappaParserTest {
         runParserRule("varDecl", "%var: 'label' A(x~a),B(y~d)", 
                 "(VARIABLE (AGENTS (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
     
+        runParserRule("varDecl", "%var: 'label' :cytosol A(x~a),B(y~d)", 
+                "(VARIABLE (AGENTS (LOCATION cytosol) " +
+                "(AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
+    
+        runParserRule("varDecl", "%var: voxel 'label' :cytosol A(x~a),B(y~d)", 
+                "(VARIABLE VOXEL (AGENTS (LOCATION cytosol) " +
+                "(AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
+    
         runParserRule("varDecl", "%var: 'label' 800", 
                 "(VARIABLE (VAR_EXPR 800) label)");
         
@@ -588,8 +596,10 @@ public class SpatialKappaParserTest {
 
     @Test
     public void testObsDecl_spatial() throws Exception {
+        runParserRule("obsDecl", "%obs: voxel 'label' :cytosol A:membrane(x~a),B(y~d)", 
+                "(OBSERVATION VOXEL (AGENTS (LOCATION cytosol) (AGENT A (LOCATION membrane) (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
         runParserRule("obsDecl", "%obs: 'label' :cytosol A:membrane(x~a),B(y~d)", 
-            "(OBSERVATION (AGENTS (LOCATION cytosol) (AGENT A (LOCATION membrane) (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
+                "(OBSERVATION (AGENTS (LOCATION cytosol) (AGENT A (LOCATION membrane) (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
         runParserRule("obsDecl", "%obs: 'label' :cytosol[0][1] A(x~a),B(y~d)", 
             "(OBSERVATION (AGENTS (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))) " +
             "(AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");

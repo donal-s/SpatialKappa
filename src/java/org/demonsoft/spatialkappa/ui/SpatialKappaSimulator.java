@@ -1,7 +1,6 @@
 package org.demonsoft.spatialkappa.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
-//import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,6 +8,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilterOutputStream;
@@ -18,9 +18,9 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
 
-//import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -37,11 +37,17 @@ import javax.swing.JToolBar;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
+import org.antlr.runtime.ANTLRInputStream;
+import org.antlr.runtime.CommonTokenStream;
+import org.antlr.runtime.tree.CommonTree;
+import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.demonsoft.spatialkappa.model.IKappaModel;
-import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.ObservationListener;
+import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
+import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
+import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
 import org.demonsoft.spatialkappa.tools.RecordSimulation;
 import org.demonsoft.spatialkappa.tools.ReplaySimulation;
 import org.demonsoft.spatialkappa.tools.Simulation;
@@ -52,9 +58,6 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
-//import org.jfree.chart.renderer.xy.DeviationRenderer;
-//import org.jfree.data.xy.XYIntervalSeries;
-//import org.jfree.data.xy.XYIntervalSeriesCollection;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -94,11 +97,14 @@ public class SpatialKappaSimulator implements ActionListener, ObservationListene
 //    private ChartPanel cellMeanChartPanel;
 //    protected JPanel cellViewChartPanel;
     private JTextArea consoleTextArea;
+    private JTextArea debugTextArea;
     private PrintStream consoleStream;
+    private PrintStream debugStream;
     private JToolBar toolbar;
 
     private JTabbedPane tabbedPane;
-
+    JScrollPane consoleTextPane;
+    
     JButton toolbarButtonOpen;
     JButton toolbarButtonRun;
     JButton toolbarButtonReplay;
@@ -149,12 +155,19 @@ public class SpatialKappaSimulator implements ActionListener, ObservationListene
 
         consoleTextArea = new JTextArea();
         consoleTextArea.setEditable(false);
-        JScrollPane textPane = new JScrollPane(consoleTextArea);
-        tabbedPane.add(textPane, "Console Output");
+        consoleTextPane = new JScrollPane(consoleTextArea);
+        tabbedPane.add(consoleTextPane, "Console Output");
         
         consoleStream = new PrintStream(new ConsoleOutputStream(consoleTextArea));
-        System.setErr(consoleStream);
         System.setOut(consoleStream);
+                
+        debugTextArea = new JTextArea();
+        debugTextArea.setEditable(false);
+        JScrollPane textPane = new JScrollPane(debugTextArea);
+        tabbedPane.add(textPane, "Debug Output");
+        
+        debugStream = new PrintStream(new ConsoleOutputStream(debugTextArea));
+        System.setErr(debugStream);
                 
         textAreaData = new JTextArea();
         textAreaData.setEditable(false);
@@ -287,12 +300,13 @@ public class SpatialKappaSimulator implements ActionListener, ObservationListene
         textStatus.setText(STATUS_LOADING);
         setToolbarMode(ToolbarMode.PROCESSING);
         consoleTextArea.setText("");
+        debugTextArea.setText("");
         removeSimulation();
         kappaFile = inputFile;
         replayFile = null;
 
         try {
-            model = KappaModel.createModel(inputFile);
+            model = createModel(inputFile);
 
             textAreaData.setText(model.toString() + "\n");
 
@@ -303,8 +317,35 @@ public class SpatialKappaSimulator implements ActionListener, ObservationListene
             textStatus.setText(STATUS_ERROR_LOADING);
             handleException(e);
             setToolbarMode(ToolbarMode.START);
+            tabbedPane.setSelectedComponent(consoleTextPane);
         }
     }
+    
+    public IKappaModel createModel(File inputFile) throws Exception {
+        ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(inputFile));
+        SpatialKappaLexer lexer = new SpatialKappaLexer(input);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        SpatialKappaParser parser = new SpatialKappaParser(tokens);
+        SpatialKappaParser.prog_return r = parser.prog();
+        
+        List<String> parseErrors = lexer.getErrors();
+        parseErrors.addAll(parser.getErrors());
+        if (parseErrors.size() > 0) {
+            for (String error : parseErrors) {
+                System.out.println(error);
+            }
+            throw new Exception("Problems parsing model file: " + inputFile.getPath());
+        }
+        
+        CommonTree t = (CommonTree) r.getTree();
+
+        CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
+        nodes.setTokenStream(tokens);
+        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
+        return walker.prog();
+    }
+
+
 
     private void removeSimulation() {
         if (simulation != null) {
@@ -338,6 +379,7 @@ public class SpatialKappaSimulator implements ActionListener, ObservationListene
         textStatus.setText(STATUS_LOADING);
         setToolbarMode(ToolbarMode.PROCESSING);
         consoleTextArea.setText("");
+        debugTextArea.setText("");
 
         removeSimulation();
         model = null;
@@ -353,6 +395,8 @@ public class SpatialKappaSimulator implements ActionListener, ObservationListene
         catch (Exception e) {
             textStatus.setText(STATUS_ERROR_LOADING);
             handleException(e);
+            setToolbarMode(ToolbarMode.START);
+            tabbedPane.setSelectedComponent(consoleTextPane);
         }
     }
     

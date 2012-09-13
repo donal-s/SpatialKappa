@@ -15,6 +15,7 @@ public class CellIndexExpression extends VariableExpression {
     public static CellIndexExpression INDEX_0 = new CellIndexExpression("0");
     public static CellIndexExpression INDEX_1 = new CellIndexExpression("1");
     public static CellIndexExpression INDEX_2 = new CellIndexExpression("2");
+    public static CellIndexExpression INDEX_3 = new CellIndexExpression("3");
     public static CellIndexExpression INDEX_X = new CellIndexExpression(new VariableReference("x"));
     public static CellIndexExpression INDEX_X_PLUS_1 = 
             new CellIndexExpression(INDEX_X, Operator.PLUS, INDEX_1);
