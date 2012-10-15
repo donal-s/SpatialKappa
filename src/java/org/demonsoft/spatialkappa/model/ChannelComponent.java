@@ -24,9 +24,12 @@ import org.demonsoft.spatialkappa.model.Compartment.OpenCuboid;
 import org.demonsoft.spatialkappa.model.Compartment.OpenCylinder;
 import org.demonsoft.spatialkappa.model.Compartment.OpenRectangle;
 import org.demonsoft.spatialkappa.model.Compartment.OpenSphere;
+import org.demonsoft.spatialkappa.model.Compartment.OpenSpine;
 import org.demonsoft.spatialkappa.model.Compartment.SolidCircle;
 import org.demonsoft.spatialkappa.model.Compartment.SolidCylinder;
 import org.demonsoft.spatialkappa.model.Compartment.SolidSphere;
+import org.demonsoft.spatialkappa.model.Compartment.SolidSpine;
+import org.demonsoft.spatialkappa.model.Compartment.Spine;
 import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.demonsoft.spatialkappa.model.VariableExpression.Type;
 
@@ -1515,6 +1518,12 @@ public class ChannelComponent {
         else if (OpenCylinder.class == outer.getClass()) {
             if (OpenCylinder.class == inner.getClass() || SolidCylinder.class == inner.getClass()) {
                 return isCorrectNestedDimensions(inner, outer, 3);
+            }
+        }
+        else if (OpenSpine.class == outer.getClass()) {
+            if (OpenSpine.class == inner.getClass() || SolidSpine.class == inner.getClass()) {
+                return isCorrectNestedDimensions(inner, outer, 3) && 
+                        ((Spine) inner).getCylinderDiameter() + 2*outer.getThickness() == ((Spine) outer).getCylinderDiameter();
             }
         }
         

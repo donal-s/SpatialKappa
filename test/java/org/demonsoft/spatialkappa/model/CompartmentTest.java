@@ -22,9 +22,11 @@ import org.demonsoft.spatialkappa.model.Compartment.OpenCuboid;
 import org.demonsoft.spatialkappa.model.Compartment.OpenCylinder;
 import org.demonsoft.spatialkappa.model.Compartment.OpenRectangle;
 import org.demonsoft.spatialkappa.model.Compartment.OpenSphere;
+import org.demonsoft.spatialkappa.model.Compartment.OpenSpine;
 import org.demonsoft.spatialkappa.model.Compartment.SolidCircle;
 import org.demonsoft.spatialkappa.model.Compartment.SolidCylinder;
 import org.demonsoft.spatialkappa.model.Compartment.SolidSphere;
+import org.demonsoft.spatialkappa.model.Compartment.SolidSpine;
 import org.junit.Test;
 
 public class CompartmentTest {
@@ -352,6 +354,58 @@ public class CompartmentTest {
     }
     
     @Test
+    public void testSolidSpine() {
+        SolidSpine compartment = new SolidSpine("name", new int[] {4, 4, 3});
+        checkCompartmentReferences3D(compartment.getDistributedCellReferences(), compartment,
+                new String[][] {
+                    {"       ", " xxxxxx", " xxxxxx", "       "}, 
+                    {" xxxxxx", "xxxxxxx", "xxxxxxx", " xxxxxx"}, 
+                    {" xxxxxx", "xxxxxxx", "xxxxxxx", " xxxxxx"},
+                    {"       ", " xxxxxx", " xxxxxx", "       "}, 
+                }
+        );
+        
+        compartment = new SolidSpine("name", new int[] {7, 5, 4});
+        checkCompartmentReferences3D(compartment.getDistributedCellReferences(), compartment,
+                new String[][] {
+                    {"           ", "           ", "  xxx      ", "  xxx      ", "  xxx      ", "           ", "           "}, 
+                    {"           ", " xxxxx     ", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxx     ", "           "}, 
+                    {"  xxx      ", " xxxxxxxxxx", "xxxxxxxxxxx", "xxxxxxxxxxx", "xxxxxxxxxxx", " xxxxxxxxxx", "  xxx      "}, 
+                    {"  xxx      ", " xxxxxxxxxx", "xxxxxxxxxxx", "xxxxxxxxxxx", "xxxxxxxxxxx", " xxxxxxxxxx", "  xxx      "}, 
+                    {"  xxx      ", " xxxxxxxxxx", "xxxxxxxxxxx", "xxxxxxxxxxx", "xxxxxxxxxxx", " xxxxxxxxxx", "  xxx      "}, 
+                    {"           ", " xxxxx     ", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxx     ", "           "}, 
+                    {"           ", "           ", "  xxx      ", "  xxx      ", "  xxx      ", "           ", "           "}, 
+                }
+        );
+    }
+    
+    @Test
+    public void testOpenSpine() {
+        OpenSpine compartment = new OpenSpine("name", new int[] {4, 4, 3, 1});
+        checkCompartmentReferences3D(compartment.getDistributedCellReferences(), compartment,
+                new String[][] {
+                    {"       ", " xxxxxx", " xxxxxx", "       "}, 
+                    {" xxxxxx", "x     x", "x     x", " xxxxxx"}, 
+                    {" xxxxxx", "x     x", "x     x", " xxxxxx"},
+                    {"       ", " xxxxxx", " xxxxxx", "       "}, 
+                }
+        );
+        
+        compartment = new OpenSpine("name", new int[] {7, 5, 4, 2});
+        checkCompartmentReferences3D(compartment.getDistributedCellReferences(), compartment,
+                new String[][] {
+                    {"           ", "           ", "  xxx      ", "  xxx      ", "  xxx      ", "           ", "           "}, 
+                    {"           ", " xxxxx     ", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxx     ", "           "}, 
+                    {"  xxx      ", " xxxxxxxxxx", "xxx xxxxxxx", "xx   xxxxxx", "xxx xxxxxxx", " xxxxxxxxxx", "  xxx      "}, 
+                    {"  xxx      ", " xxxxxxxxxx", "xx   xxxxxx", "xx       xx", "xx   xxxxxx", " xxxxxxxxxx", "  xxx      "}, 
+                    {"  xxx      ", " xxxxxxxxxx", "xxx xxxxxxx", "xx   xxxxxx", "xxx xxxxxxx", " xxxxxxxxxx", "  xxx      "}, 
+                    {"           ", " xxxxx     ", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxx     ", "           "}, 
+                    {"           ", "           ", "  xxx      ", "  xxx      ", "  xxx      ", "           ", "           "}, 
+                }
+        );
+    }
+    
+    @Test
     public void testSolidSphere() {
         SolidSphere compartment = new SolidSphere("name", new int[] {4});
         checkCompartmentReferences3D(compartment.getDistributedCellReferences(), compartment,
@@ -469,7 +523,7 @@ public class CompartmentTest {
             Compartment.createCompartment("label", "OpenRectangle", getList(1, 2));
             fail("wrong dimension count should have failed");
         }
-        catch (ArrayIndexOutOfBoundsException ex) {
+        catch (IllegalArgumentException ex) {
             // Expected exception
         }
 
@@ -501,7 +555,7 @@ public class CompartmentTest {
             Compartment.createCompartment("label", "SolidCircle", new ArrayList<Integer>());
             fail("wrong dimension count should have failed");
         }
-        catch (ArrayIndexOutOfBoundsException ex) {
+        catch (IllegalArgumentException ex) {
             // Expected exception
         }
 
@@ -526,7 +580,7 @@ public class CompartmentTest {
             Compartment.createCompartment("label", "OpenCircle", getList(1));
             fail("wrong dimension count should have failed");
         }
-        catch (ArrayIndexOutOfBoundsException ex) {
+        catch (IllegalArgumentException ex) {
             // Expected exception
         }
 
@@ -558,7 +612,7 @@ public class CompartmentTest {
             Compartment.createCompartment("label", "OpenCuboid", getList(1, 2, 2));
             fail("wrong dimension count should have failed");
         }
-        catch (ArrayIndexOutOfBoundsException ex) {
+        catch (IllegalArgumentException ex) {
             // Expected exception
         }
 
@@ -590,7 +644,7 @@ public class CompartmentTest {
             Compartment.createCompartment("label", "SolidSphere", new ArrayList<Integer>());
             fail("wrong dimension count should have failed");
         }
-        catch (ArrayIndexOutOfBoundsException ex) {
+        catch (IllegalArgumentException ex) {
             // Expected exception
         }
 
@@ -614,7 +668,7 @@ public class CompartmentTest {
             Compartment.createCompartment("label", "OpenSphere", getList(2));
             fail("wrong dimension count should have failed");
         }
-        catch (ArrayIndexOutOfBoundsException ex) {
+        catch (IllegalArgumentException ex) {
             // Expected exception
         }
 
@@ -646,7 +700,7 @@ public class CompartmentTest {
             Compartment.createCompartment("label", "SolidCylinder", getList(10));
             fail("wrong dimension count should have failed");
         }
-        catch (ArrayIndexOutOfBoundsException ex) {
+        catch (IllegalArgumentException ex) {
             // Expected exception
         }
 
@@ -670,7 +724,7 @@ public class CompartmentTest {
             Compartment.createCompartment("label", "OpenCylinder", getList(2, 20));
             fail("wrong dimension count should have failed");
         }
-        catch (ArrayIndexOutOfBoundsException ex) {
+        catch (IllegalArgumentException ex) {
             // Expected exception
         }
 
@@ -693,6 +747,94 @@ public class CompartmentTest {
         Compartment compartment = Compartment.createCompartment("compartment1", "OpenCylinder", getList(10, 20, 2));
         assertEquals(Compartment.OpenCylinder.class, compartment.getClass());
         assertEquals("compartment1 (OpenCylinder) [10][20] [2]", compartment.toString());
+        assertEquals(2, compartment.getThickness());
+    }
+
+    @Test
+    public void testCreateCompartment_solidSpine() {
+        try {
+            Compartment.createCompartment("label", "SolidSpine", getList(10, 10));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "SolidSpine", getList(10, 10, 10, 10));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "SolidSpine", getList(10, 9, 10));
+            fail("mismatched diameters should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "SolidSpine", getList(10, 12, 10));
+            fail("too wide cylinder should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Compartment compartment = Compartment.createCompartment("compartment1", "SolidSpine", getList(10, 8, 5));
+        assertEquals(Compartment.SolidSpine.class, compartment.getClass());
+        assertEquals("compartment1 (SolidSpine) [10][8][5]", compartment.toString());
+        assertEquals(0, compartment.getThickness());
+    }
+
+    @Test
+    public void testCreateCompartment_openSpine() {
+        try {
+            Compartment.createCompartment("label", "OpenSpine", getList(10, 10, 2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenSpine", getList(10, 10, 10, 10, 2));
+            fail("wrong dimension count should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenSpine", getList(10, 9, 10, 2));
+            fail("mismatched diameters should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenSpine", getList(10, 12, 10, 2));
+            fail("too wide cylinder should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        try {
+            Compartment.createCompartment("label", "OpenSpine", getList(12, 8, 5, 5));
+            fail("too thick should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        Compartment compartment = Compartment.createCompartment("compartment1", "OpenSpine", getList(10, 8, 5, 2));
+        assertEquals(Compartment.OpenSpine.class, compartment.getClass());
+        assertEquals("compartment1 (OpenSpine) [10][8][5] [2]", compartment.toString());
         assertEquals(2, compartment.getThickness());
     }
 

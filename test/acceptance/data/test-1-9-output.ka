@@ -70,7 +70,7 @@ Shc(PTB,Y317~pY!2,loc~cytosol),Grb2(SH2!2,SH3!3,loc~cytosol),Sos(dom!3,loc~cytos
 %var: 'km3' 4.505
 %var: 'kp14' 3.0
 %var: 'km14' 0.03
-%var: 'km16' 0.0050
+%var: 'km16' 0.005
 %var: 'kp9' 8.333E-7
 %var: 'km9' 0.05
 %var: 'kp10' 5.556E-6

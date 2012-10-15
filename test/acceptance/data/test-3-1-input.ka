@@ -17,3 +17,5 @@
 %compartment: openSphere    OpenSphere    [10] [2]       # [diameter] [thickness]
 %compartment: solidCylinder SolidCylinder [10][8]        # [diameter][length]
 %compartment: openCylinder  OpenCylinder  [10][8] [2]    # [diameter][length] [thickness]
+%compartment: solidSpine    SolidSpine    [10][6][8]     # [sphere diameter][cylinder diameter][length]
+%compartment: openSpine     OpenSpine     [10][6][8] [2] # [sphere diameter][cylinder diameter][length] [thickness]

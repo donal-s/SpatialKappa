@@ -35,9 +35,11 @@ import org.demonsoft.spatialkappa.model.Compartment.OpenCuboid;
 import org.demonsoft.spatialkappa.model.Compartment.OpenCylinder;
 import org.demonsoft.spatialkappa.model.Compartment.OpenRectangle;
 import org.demonsoft.spatialkappa.model.Compartment.OpenSphere;
+import org.demonsoft.spatialkappa.model.Compartment.OpenSpine;
 import org.demonsoft.spatialkappa.model.Compartment.SolidCircle;
 import org.demonsoft.spatialkappa.model.Compartment.SolidCylinder;
 import org.demonsoft.spatialkappa.model.Compartment.SolidSphere;
+import org.demonsoft.spatialkappa.model.Compartment.SolidSpine;
 import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.junit.Test;
 
@@ -1589,6 +1591,20 @@ public class ChannelComponentTest {
         checkValidateFail_nesting(component, getList(new OpenCylinder("inner", 4, 4, 1), new OpenCylinder("outer", 8, 9, 2), other));
         checkValidateFail_nesting(component, getList(new OpenCylinder("inner", 5, 5, 1), new OpenCylinder("outer", 8, 9, 2), other));
         checkValidateFail_nesting(component, getList(new OpenCylinder("inner", 3, 5, 1), new OpenCylinder("outer", 8, 9, 2), other));
+        
+        // 3D spines
+        component.validate(getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 4, 1), other));
+        component.validate(getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 7, 5, 2), other));
+        
+        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 9, 5, 4, 1), other));
+        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 7, 4, 1), other));
+        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 3, 1), other));
+        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 5, 1), other));
+        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 4, 2), other));
+        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 7, 7, 5, 2), other));
+        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 9, 5, 2), other));
+        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 7, 4, 2), other));
+        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 7, 5, 1), other));
         
         // Shape mismatch
         checkValidateFail_nesting(component, getList(new Compartment("inner", 2, 3, 5), new OpenSphere("outer", 4, 1)));

@@ -103,10 +103,10 @@ public class Compartment {
             centreEndY = dimensions[HEIGHT] - thickness - 1;
 
             if (dimensions.length != 3) {
-                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
+                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions.length);
             }
             if (dimensions[HEIGHT] < thickness * 2 || dimensions[WIDTH] < thickness * 2) {
-                throw new IllegalArgumentException("Too thick: " + dimensions);
+                throw new IllegalArgumentException("Too thick: " + thickness);
             }
         }
         
@@ -158,7 +158,7 @@ public class Compartment {
         public SolidCircle(String name, int... dimensions) {
             super(name, new int[] {dimensions[DIAMETER], dimensions[DIAMETER]});
             if (dimensions.length != 1) {
-                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
+                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions.length);
             }
             rSquared = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
             centre = dimensions[DIAMETER] / 2f - 0.5f;
@@ -212,10 +212,10 @@ public class Compartment {
             centre = dimensions[DIAMETER] / 2f - 0.5f;
 
             if (dimensions.length != 2) {
-                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
+                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions.length);
             }
             if (dimensions[DIAMETER] < thickness * 2) {
-                throw new IllegalArgumentException("Too thick: " + dimensions);
+                throw new IllegalArgumentException("Too thick: " + thickness);
             }
         }
         
@@ -283,11 +283,11 @@ public class Compartment {
             centreEndZ = dimensions[DEPTH] - thickness - 1;
 
             if (dimensions.length != 4) {
-                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
+                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions.length);
             }
             if (dimensions[HEIGHT] < thickness * 2 || dimensions[WIDTH] < thickness * 2
                     || dimensions[DEPTH] < thickness * 2) {
-                throw new IllegalArgumentException("Too thick: " + dimensions);
+                throw new IllegalArgumentException("Too thick: " + thickness);
             }
         }
         
@@ -344,7 +344,7 @@ public class Compartment {
             rSquared = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
             centre = dimensions[DIAMETER] / 2f - 0.5f;
             if (dimensions.length != 1) {
-                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
+                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions.length);
             }
         }
         
@@ -399,10 +399,10 @@ public class Compartment {
             rSquaredInner = (dimensions[DIAMETER] - thickness * 2) * (dimensions[DIAMETER] - thickness * 2) / 4f;
             centre = dimensions[DIAMETER] / 2f - 0.5f;
             if (dimensions.length != 2) {
-                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
+                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions.length);
             }
             if (dimensions[DIAMETER] < thickness * 2) {
-                throw new IllegalArgumentException("Too thick: " + dimensions);
+                throw new IllegalArgumentException("Too thick: " + thickness);
             }
         }
         
@@ -460,7 +460,7 @@ public class Compartment {
             rSquared = dimensions[DIAMETER] * dimensions[DIAMETER] / 4f;
             centre = dimensions[DIAMETER] / 2f - 0.5f;
             if (dimensions.length != 2) {
-                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
+                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions.length);
             }
         }
         
@@ -524,10 +524,10 @@ public class Compartment {
             centreEndZ = dimensions[LENGTH] - thickness - 1;
             
             if (dimensions.length != 3) {
-                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions);
+                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions.length);
             }
             if (dimensions[DIAMETER] < thickness * 2 || dimensions[LENGTH] < thickness * 2) {
-                throw new IllegalArgumentException("Too thick: " + dimensions);
+                throw new IllegalArgumentException("Too thick: " + thickness);
             }
         }
         
@@ -573,6 +573,196 @@ public class Compartment {
         }
     }
 
+    public static interface Spine {
+        public int getCylinderDiameter();
+    }
+    
+    public static class SolidSpine extends Compartment implements Spine {
+
+        public static final String NAME = "SolidSpine";
+
+        private static final int SPHERE_DIAMETER = 0;
+        private static final int CYLINDER_DIAMETER = 1;
+        private static final int CYLINDER_LENGTH = 2;
+        
+        private final float rSquaredSphere;
+        private final float rSquaredCylinder;
+        private final float centre;
+        
+        private final int sphereDiameter;
+        private final int cylinderDiameter;
+        private final int cylinderLength;
+
+        public SolidSpine(String name, int... dimensions) {
+            super(name, new int[] {dimensions[SPHERE_DIAMETER], dimensions[SPHERE_DIAMETER], 
+                    dimensions[SPHERE_DIAMETER] + dimensions[CYLINDER_LENGTH]});
+            sphereDiameter = dimensions[SPHERE_DIAMETER];
+            cylinderDiameter = dimensions[CYLINDER_DIAMETER];
+            cylinderLength = dimensions[CYLINDER_LENGTH];
+            
+            rSquaredSphere = sphereDiameter * sphereDiameter / 4f;
+            rSquaredCylinder = cylinderDiameter * cylinderDiameter / 4f;
+            centre = sphereDiameter / 2f - 0.5f;
+            if (dimensions.length != 3) {
+                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions.length);
+            }
+            if (sphereDiameter % 2 != cylinderDiameter % 2) {
+                throw new IllegalArgumentException("Sphere and cylinder diameters must both be either even or odd");
+            }
+            if (sphereDiameter < cylinderDiameter) {
+                throw new IllegalArgumentException("Sphere diameter must not be less than cylinder diameter");
+            }
+        }
+        
+        public int getCylinderDiameter() {
+            return cylinderDiameter;
+        }
+        
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder(name);
+            builder.append(" (SolidSpine) [").append(sphereDiameter);
+            builder.append("][").append(cylinderDiameter);
+            builder.append("][").append(cylinderLength).append("]");
+            return builder.toString();
+        }
+        
+        @Override
+        public Location[] getDistributedCellReferences() {
+            List<Location> result = new ArrayList<Location>();
+            for (int x=0; x<dimensions[1]; x++) {
+                for (int y=0; y<dimensions[0]; y++) {
+                    for (int z=0; z<dimensions[2]; z++) {
+                        if (isValidVoxel(y, x, z)) {
+                            result.add(new Location(name, new CellIndexExpression("" + y), 
+                                    new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
+                        }
+                    }
+                }
+            }
+            return result.toArray(new Location[result.size()]);
+        }
+
+        @Override
+        protected boolean isValidVoxel(int... indices) {
+            float centreX = centre - indices[1];
+            float centreY = centre - indices[0];
+            float centreZ = centre - indices[2];
+            
+            boolean insideSphere = centreX*centreX + centreY*centreY + centreZ*centreZ <= rSquaredSphere;
+            boolean insideCylinder = centreX*centreX + centreY*centreY  <= rSquaredCylinder;
+
+            if (centreZ > 0) {
+                return insideSphere;
+            }
+            return insideSphere || insideCylinder;
+        }
+
+    }
+    
+    public static class OpenSpine extends Compartment implements Spine {
+
+        public static final String NAME = "OpenSpine";
+
+        private static final int SPHERE_DIAMETER = 0;
+        private static final int CYLINDER_DIAMETER = 1;
+        private static final int CYLINDER_LENGTH = 2;
+        private static final int THICKNESS = 3;
+        
+        private final int sphereDiameter;
+        private final int cylinderDiameter;
+        private final int cylinderLength;
+        private final int thickness;
+        
+        private final float rSquaredOuterSphere;
+        private final float rSquaredInnerSphere;
+        private final float rSquaredOuterCylinder;
+        private final float rSquaredInnerCylinder;
+        private final float centre;
+        
+        public OpenSpine(String name, int... dimensions) {
+            super(name, new int[] {dimensions[SPHERE_DIAMETER], dimensions[SPHERE_DIAMETER], 
+                    dimensions[SPHERE_DIAMETER] + dimensions[CYLINDER_LENGTH]});
+            sphereDiameter = dimensions[SPHERE_DIAMETER];
+            cylinderDiameter = dimensions[CYLINDER_DIAMETER];
+            cylinderLength = dimensions[CYLINDER_LENGTH];
+            thickness = dimensions[THICKNESS];
+            
+            rSquaredOuterSphere = sphereDiameter * sphereDiameter / 4f;
+            rSquaredInnerSphere = (sphereDiameter - thickness * 2) * (sphereDiameter - thickness * 2) / 4f;
+            rSquaredOuterCylinder = cylinderDiameter * cylinderDiameter / 4f;
+            rSquaredInnerCylinder = (cylinderDiameter - thickness * 2) * (cylinderDiameter - thickness * 2) / 4f;
+            centre = sphereDiameter / 2f - 0.5f;
+            
+            if (dimensions.length != 4) {
+                throw new IllegalArgumentException("Wrong number of dimensions: " + dimensions.length);
+            }
+            if (sphereDiameter % 2 != cylinderDiameter % 2) {
+                throw new IllegalArgumentException("Sphere and cylinder diameters must both be either even or odd");
+            }
+            if (sphereDiameter < cylinderDiameter) {
+                throw new IllegalArgumentException("Sphere diameter must not be less than cylinder diameter");
+            }
+            if (cylinderDiameter < thickness * 2) {
+                throw new IllegalArgumentException("Too thick: " + thickness);
+            }
+        }
+        
+        public int getCylinderDiameter() {
+            return cylinderDiameter;
+        }
+        
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder(name);
+            builder.append(" (OpenSpine) [").append(sphereDiameter);
+            builder.append("][").append(cylinderDiameter);
+            builder.append("][").append(cylinderLength);
+            builder.append("] [").append(thickness).append("]");
+            return builder.toString();
+        }
+        
+        @Override
+        public Location[] getDistributedCellReferences() {
+            List<Location> result = new ArrayList<Location>();
+            for (int x=0; x<dimensions[1]; x++) {
+                for (int y=0; y<dimensions[0]; y++) {
+                    for (int z=0; z<dimensions[2]; z++) {
+                        if (isValidVoxel(y, x, z)) {
+                            result.add(new Location(name, new CellIndexExpression("" + y),
+                                    new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
+                        }
+                    }
+                }
+            }
+            return result.toArray(new Location[result.size()]);
+        }
+
+        @Override
+        protected boolean isValidVoxel(int... indices) {
+            float centreX = centre - indices[1];
+            float centreY = centre - indices[0];
+            float centreZ = centre - indices[2];
+            
+            boolean insideOuterSphere = centreX*centreX + centreY*centreY + centreZ*centreZ <= rSquaredOuterSphere;
+            boolean insideOuterCylinder = centreX*centreX + centreY*centreY  <= rSquaredOuterCylinder;
+
+            boolean insideInnerSphere = centreX*centreX + centreY*centreY + centreZ*centreZ <= rSquaredInnerSphere;
+            boolean insideInnerCylinder = (centreX*centreX + centreY*centreY  <= rSquaredInnerCylinder) && 
+                    dimensions[2] - indices[2] > thickness;
+
+            if (centreZ > 0) {
+                return insideOuterSphere && !insideInnerSphere;
+            }
+            return (insideOuterSphere || insideOuterCylinder) && !(insideInnerSphere || insideInnerCylinder);
+        }
+        
+        @Override
+        public int getThickness() {
+            return thickness;
+        }
+    }
+
     public boolean isValidVoxel(Location location) {
         if (!location.getName().equals(name) || location.getIndices().length != dimensions.length) {
             return false;
@@ -606,35 +796,46 @@ public class Compartment {
         for (int index = 0; index < dimensions.size(); index++) {
             dimArray[index] = dimensions.get(index);
         }
-        if (null == type) {
-            return new Compartment(name, dimArray);
+        try {
+            if (null == type) {
+                return new Compartment(name, dimArray);
+            }
+            else if (OpenRectangle.NAME.equals(type)) {
+                return new OpenRectangle(name, dimArray);
+            }
+            else if (SolidCircle.NAME.equals(type)) {
+                return new SolidCircle(name, dimArray);
+            }
+            else if (OpenCircle.NAME.equals(type)) {
+                return new OpenCircle(name, dimArray);
+            }
+            else if (OpenCuboid.NAME.equals(type)) {
+                return new OpenCuboid(name, dimArray);
+            }
+            else if (SolidSphere.NAME.equals(type)) {
+                return new SolidSphere(name, dimArray);
+            }
+            else if (OpenSphere.NAME.equals(type)) {
+                return new OpenSphere(name, dimArray);
+            }
+            else if (SolidCylinder.NAME.equals(type)) {
+                return new SolidCylinder(name, dimArray);
+            }
+            else if (OpenCylinder.NAME.equals(type)) {
+                return new OpenCylinder(name, dimArray);
+            }
+            else if (SolidSpine.NAME.equals(type)) {
+                return new SolidSpine(name, dimArray);
+            }
+            else if (OpenSpine.NAME.equals(type)) {
+                return new OpenSpine(name, dimArray);
+            }
+            else {
+                throw new IllegalArgumentException("Unknown shape: " + type);
+            }
         }
-        else if (OpenRectangle.NAME.equals(type)) {
-            return new OpenRectangle(name, dimArray);
-        }
-        else if (SolidCircle.NAME.equals(type)) {
-            return new SolidCircle(name, dimArray);
-        }
-        else if (OpenCircle.NAME.equals(type)) {
-            return new OpenCircle(name, dimArray);
-        }
-        else if (OpenCuboid.NAME.equals(type)) {
-            return new OpenCuboid(name, dimArray);
-        }
-        else if (SolidSphere.NAME.equals(type)) {
-            return new SolidSphere(name, dimArray);
-        }
-        else if (OpenSphere.NAME.equals(type)) {
-            return new OpenSphere(name, dimArray);
-        }
-        else if (SolidCylinder.NAME.equals(type)) {
-            return new SolidCylinder(name, dimArray);
-        }
-        else if (OpenCylinder.NAME.equals(type)) {
-            return new OpenCylinder(name, dimArray);
-        }
-        else {
-            throw new IllegalArgumentException("Unknown shape: " + type);
+        catch (ArrayIndexOutOfBoundsException ex) {
+            throw new IllegalArgumentException("Wrong number of dimensions: " + dimArray, ex);
         }
     }
 
