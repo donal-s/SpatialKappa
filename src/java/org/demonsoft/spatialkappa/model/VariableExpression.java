@@ -18,6 +18,10 @@ public class VariableExpression implements Serializable {
             int eval(int x, int y) {
                 return x + y;
             }
+            @Override
+            float eval(float x, float y) {
+                return x + y;
+            }
         },
         MINUS("-") {
             @Override
@@ -26,6 +30,10 @@ public class VariableExpression implements Serializable {
             }
             @Override
             int eval(int x, int y) {
+                return x - y;
+            }
+            @Override
+            float eval(float x, float y) {
                 return x - y;
             }
         },
@@ -38,6 +46,10 @@ public class VariableExpression implements Serializable {
             int eval(int x, int y) {
                 return x * y;
             }
+            @Override
+            float eval(float x, float y) {
+                return x * y;
+            }
         },
         DIVIDE("/") {
             @Override
@@ -46,6 +58,10 @@ public class VariableExpression implements Serializable {
             }
             @Override
             int eval(int x, int y) {
+                return x / y;
+            }
+            @Override
+            float eval(float x, float y) {
                 return x / y;
             }
         },
@@ -59,6 +75,10 @@ public class VariableExpression implements Serializable {
             int eval(int x, int y) {
                 return x % y;
             }
+            @Override
+            float eval(float x, float y) {
+                return x % y;
+            }
         },
         MODULUS("[mod]") {
             @Override
@@ -67,6 +87,10 @@ public class VariableExpression implements Serializable {
             }
             @Override
             int eval(int x, int y) {
+                return x % y;
+            }
+            @Override
+            float eval(float x, float y) {
                 return x % y;
             }
         },
@@ -78,6 +102,10 @@ public class VariableExpression implements Serializable {
             @Override
             int eval(int x, int y) {
                 return (int) Math.pow(x, y);
+            }
+            @Override
+            float eval(float x, float y) {
+                return (float) Math.pow(x, y);
             }
         };
 
@@ -96,6 +124,8 @@ public class VariableExpression implements Serializable {
         
         abstract int eval(int x, int y);
         
+        abstract float eval(float x, float y);
+        
         public static Operator getOperator(String input) {
             for (Operator current : Operator.values()) {
                 if (current.text.equals(input)) {
@@ -112,11 +142,19 @@ public class VariableExpression implements Serializable {
             ObservationElement eval(ObservationElement x) {
                 return x.log();
             }
+            @Override
+            float eval(float x) {
+                return (float) Math.log(x);
+            }
         },
         SIN("[sin]") {
             @Override
             ObservationElement eval(ObservationElement x) {
                 return x.sin();
+            }
+            @Override
+            float eval(float x) {
+                return (float) Math.sin(x);
             }
         },
         COS("[cos]") {
@@ -124,11 +162,19 @@ public class VariableExpression implements Serializable {
             ObservationElement eval(ObservationElement x) {
                 return x.cos();
             }
+            @Override
+            float eval(float x) {
+                return (float) Math.cos(x);
+            }
         },
         TAN("[tan]") {
             @Override
             ObservationElement eval(ObservationElement x) {
                 return x.tan();
+            }
+            @Override
+            float eval(float x) {
+                return (float) Math.tan(x);
             }
         },
         SQRT("[sqrt]") {
@@ -136,11 +182,19 @@ public class VariableExpression implements Serializable {
             ObservationElement eval(ObservationElement x) {
                 return x.sqrt();
             }
+            @Override
+            float eval(float x) {
+                return (float) Math.sqrt(x);
+            }
         },
         EXP("[exp]") {
             @Override
             ObservationElement eval(ObservationElement x) {
                 return x.exp();
+            }
+            @Override
+            float eval(float x) {
+                return (float) Math.exp(x);
             }
         };
 
@@ -156,6 +210,8 @@ public class VariableExpression implements Serializable {
         }
 
         abstract ObservationElement eval(ObservationElement x);
+
+        abstract float eval(float x);
     }
 
     public static enum Constant {
@@ -423,6 +479,39 @@ public class VariableExpression implements Serializable {
             
         case AGENT_GROUP:
             return new ObservationElement(0);
+            
+        default:
+            throw new IllegalStateException("Unknown expression");
+        }
+    }
+
+    public float evaluate(Map<String, Variable> variables) {
+        if (variables == null) {
+            throw new NullPointerException();
+        }
+        switch (type) {
+        case BINARY_EXPRESSION:
+            return operator.eval(lhsExpression.evaluate(variables), rhsExpression.evaluate(variables));
+            
+        case CONSTANT:
+            return constant.value;
+            
+        case NUMBER:
+            return value;
+            
+        case SIMULATION_TOKEN:
+        case AGENT_GROUP:
+            throw new IllegalStateException();
+            
+        case UNARY_EXPRESSION:
+            return unaryOperator.eval(lhsExpression.evaluate(variables));
+            
+        case VARIABLE_REFERENCE:
+            Variable target = variables.get(reference.variableName);
+            if (target == null) {
+                throw new IllegalArgumentException("Missing value: " + reference);
+            }
+            return target.evaluate(variables);
             
         default:
             throw new IllegalStateException("Unknown expression");

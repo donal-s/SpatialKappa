@@ -48,7 +48,7 @@ public class ComplexTest {
         assertEquals(1, complex.agents.size());
         assertEquals(agents, complex.agents);
         assertSame(complex, complex.agents.get(0).getComplex());
-        assertEquals("agent1", complex.getMatchHash());
+        assertEquals("agent##NOT LOCATED##1", complex.getMatchHash());
 
         agents = new ArrayList<Agent>();
         agents.add(new Agent("agent1"));
@@ -58,7 +58,7 @@ public class ComplexTest {
         assertEquals(agents, complex.agents);
         assertSame(complex, complex.agents.get(0).getComplex());
         assertSame(complex, complex.agents.get(1).getComplex());
-        assertEquals("agent11agent21", complex.getMatchHash());
+        assertEquals("agent1##NOT LOCATED##1agent2##NOT LOCATED##1", complex.getMatchHash());
 
         agents = new ArrayList<Agent>();
         agents.add(new Agent("dimerAgent"));
@@ -68,7 +68,7 @@ public class ComplexTest {
         assertEquals(agents, complex.agents);
         assertSame(complex, complex.agents.get(0).getComplex());
         assertSame(complex, complex.agents.get(1).getComplex());
-        assertEquals("dimerAgent2", complex.getMatchHash());
+        assertEquals("dimerAgent##NOT LOCATED##2", complex.getMatchHash());
 
         // Test canonical ordering
         agents = new ArrayList<Agent>();
@@ -110,7 +110,7 @@ public class ComplexTest {
         assertEquals(1, complex.agents.size());
         assertEquals(agents, complex.agents);
         assertSame(complex, complex.agents.get(0).getComplex());
-        assertEquals("agent11", complex.getMatchHash());
+        assertEquals("agent1##NOT LOCATED##1", complex.getMatchHash());
 
         agents = new ArrayList<Agent>();
         agents.add(agent1);
@@ -120,7 +120,7 @@ public class ComplexTest {
         assertEquals(agents, complex.agents);
         assertSame(complex, complex.agents.get(0).getComplex());
         assertSame(complex, complex.agents.get(1).getComplex());
-        assertEquals("agent11agent21", complex.getMatchHash());
+        assertEquals("agent1##NOT LOCATED##1agent2##NOT LOCATED##1", complex.getMatchHash());
 
         agents = new ArrayList<Agent>();
         agents.add(agent1);
@@ -129,7 +129,7 @@ public class ComplexTest {
         assertEquals(2, complex.agents.size());
         assertEquals(agents, complex.agents);
         assertSame(complex, complex.agents.get(0).getComplex());
-        assertEquals("agent12", complex.getMatchHash());
+        assertEquals("agent1##NOT LOCATED##2", complex.getMatchHash());
 
         // Test canonical ordering
         assertEquals(new Complex(agent1, agent2).toString(), new Complex(agent2, agent1).toString());
@@ -140,14 +140,14 @@ public class ComplexTest {
     public void testAgentLinks() {
         Complex complex = new Complex(new Agent("agent1"), new Agent("agent2"), new Agent("agent3"));
         assertEquals(0, complex.agentLinks.size());
-        assertEquals("agent11agent21agent31", complex.getMatchHash());
+        assertEquals("agent1##NOT LOCATED##1agent2##NOT LOCATED##1agent3##NOT LOCATED##1", complex.getMatchHash());
 
         complex = new Complex(new Agent("agent1", new AgentSite("x", null, "1")), new Agent("agent2", new AgentSite("y", null, "1")));
 
         List<String[]> expected = new ArrayList<String[]>();
         expected.add(new String[] { "agent1", "x", "agent2", "y" });
         checkAgentLinks(complex, expected);
-        assertEquals("agent11agent21agent1xagent2y1", complex.getMatchHash());
+        assertEquals("agent1##NOT LOCATED##1agent2##NOT LOCATED##1agent1xagent2y1", complex.getMatchHash());
 
         complex = new Complex(new Agent("agent1", new AgentSite("x", null, "1"), new AgentSite("y", null, "2")), new Agent("agent2",
                 new AgentSite("z", null, "2"), new AgentSite("y", null, "1")));
@@ -156,7 +156,7 @@ public class ComplexTest {
         expected.add(new String[] { "agent1", "y", "agent2", "z" });
         expected.add(new String[] { "agent1", "x", "agent2", "y" });
         checkAgentLinks(complex, expected);
-        assertEquals("agent11agent21agent1xagent2y1agent1yagent2z1", complex.getMatchHash());
+        assertEquals("agent1##NOT LOCATED##1agent2##NOT LOCATED##1agent1xagent2y1agent1yagent2z1", complex.getMatchHash());
 
         // Self binding
         complex = new Complex(new Agent("agent1", new AgentSite("x", null, "1"), new AgentSite("y", null, "1")));
@@ -164,7 +164,7 @@ public class ComplexTest {
         expected = new ArrayList<String[]>();
         expected.add(new String[] { "agent1", "x", "agent1", "y" });
         checkAgentLinks(complex, expected);
-        assertEquals("agent11agent1xagent1y1", complex.getMatchHash());
+        assertEquals("agent1##NOT LOCATED##1agent1xagent1y1", complex.getMatchHash());
 
         try {
             new Complex(new Agent("agent1", new AgentSite("x", null, "1"), new AgentSite("y", null, "3")), new Agent("agent2", new AgentSite(
@@ -498,15 +498,16 @@ public class ComplexTest {
                 "[A:inner[0][0](s!1:domainLink), B:outer[1][2](s!1)]",
                 "[A:inner[0][0](s!1:domainLink), B:outer[2][1](s!1)]",
                 "[A:inner[1][0](s!1:domainLink), B:outer[3][1](s!1)]",
-                "[A:inner[2][0](s!1:domainLink), B:outer[5][2](s!1)]",
                 "[A:inner[2][0](s!1:domainLink), B:outer[4][1](s!1)]",
+                "[A:inner[2][0](s!1:domainLink), B:outer[5][2](s!1)]",
                 "[A:inner[0][1](s!1:domainLink), B:outer[1][3](s!1)]",
                 "[A:inner[2][1](s!1:domainLink), B:outer[5][3](s!1)]",
                 "[A:inner[0][2](s!1:domainLink), B:outer[1][4](s!1)]",
                 "[A:inner[0][2](s!1:domainLink), B:outer[2][5](s!1)]",
                 "[A:inner[1][2](s!1:domainLink), B:outer[3][5](s!1)]",
-                "[A:inner[2][2](s!1:domainLink), B:outer[5][4](s!1)]",
-                "[A:inner[2][2](s!1:domainLink), B:outer[4][5](s!1)]");
+                "[A:inner[2][2](s!1:domainLink), B:outer[4][5](s!1)]",
+                "[A:inner[2][2](s!1:domainLink), B:outer[5][4](s!1)]"
+                );
                
         checkMappingInstancesByString(complex, compartments, channels, expected);
         

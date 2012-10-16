@@ -23,7 +23,6 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentLink;
-import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Channel;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.Complex;
@@ -48,8 +47,6 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
 
     // TODO potential bug - does rerunning simulation also reset perturbations ?
     
-    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
-
     private static final List<ComplexMapping> NO_COMPLEX_MAPPINGS = new ArrayList<ComplexMapping>();
     private static final List<TransitionInstance> NO_TRANSITION_INSTANCES = new ArrayList<TransitionInstance>();
     private static final TransitionInstance EMPTY_TRANSITION_INSTANCE = new TransitionInstance(NO_COMPLEX_MAPPINGS, 1);
@@ -92,6 +89,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         }
 
         for (Transition transition : kappaModel.getTransitions()) {
+            transition.checkSimpleRate(kappaModel.getVariables());
             if (transition.getRate().isInfinite(kappaModel.getVariables())) {
                 infiniteRateTransitions.add(transition);
             }
@@ -388,6 +386,9 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         if (transitionInstance == null || transition == null) {
             throw new NullPointerException();
         }
+        if (transition.hasSimpleRate) {
+            return transition.simpleRate;
+        }
         return transition.getRate().evaluate(this, transitionInstance).value;
     }
 
@@ -557,7 +558,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     public void setTransitionRate(String transitionName, VariableExpression rateExpression) {
         Transition transition = getTransition(transitionName);
         if (transition != null) {
-            transition.setRate(rateExpression);
+            transition.setRate(rateExpression, kappaModel.getVariables());
             updateTransitionActivity(transition, true);
         }
     }
@@ -981,7 +982,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
             // TODO simplify check into single boolean in variable including user choice
             if (variable.location != NOT_LOCATED && variable.recordVoxels) {
                 Compartment compartment = getCompartment(kappaModel.getCompartments(), variable.location.getName());
-                if (compartment.getDimensions().length != variable.location.getIndices().length) {
+                if (compartment.getDimensions().length != variable.location.getDimensionCount()) {
                     dimensions = compartment.getDimensions();
                     voxelValues = compartment.createVoxelArray();
                     Set<Complex> processedComplexes = new HashSet<Complex>();
@@ -1016,12 +1017,12 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
             }
             if (locationMatch) {
                 @SuppressWarnings("null")
-                CellIndexExpression[] indices = location.getIndices();
+                int[] indices = location.getFixedIndices();
                 Object slice = voxelValues;
                 for (int index = 0; index < indices.length - 1; index++) {
-                    slice = ((Object[]) slice)[indices[index].evaluateIndex(NO_VARIABLES)];
+                    slice = ((Object[]) slice)[indices[index]];
                 }
-                int index = indices[indices.length - 1].evaluateIndex(NO_VARIABLES);
+                int index = indices[indices.length - 1];
                 ((Serializable[]) slice)[index] = ((Integer) ((Serializable[]) slice)[index]) + quantity;
             }
         }

@@ -2,15 +2,11 @@ package org.demonsoft.spatialkappa.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 public class Compartment {
 
-    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
-    
     protected final String name;
     protected final int[] dimensions;
     
@@ -60,13 +56,13 @@ public class Compartment {
             return new Location[] { new Location(name) };
         }
         
-        CellIndexExpression[][] indices = new CellIndexExpression[getCellCount()][dimensions.length];
+        int[][] indices = new int[getCellCount()][dimensions.length];
         int cellRunLength = 1;
         int cycleLength = 1;
         for (int dimensionIndex = 0; dimensionIndex < dimensions.length; dimensionIndex++) {
             cycleLength *= dimensions[dimensionIndex];
             for (int cellIndex = 0; cellIndex < indices.length; cellIndex++) {
-                indices[cellIndex][dimensionIndex] = new CellIndexExpression("" + ((cellIndex % cycleLength) / cellRunLength));
+                indices[cellIndex][dimensionIndex] = (cellIndex % cycleLength) / cellRunLength;
             }
             cellRunLength = cycleLength;
         }
@@ -124,7 +120,7 @@ public class Compartment {
             for (int x=0; x<dimensions[WIDTH]; x++) {
                 for (int y=0; y<dimensions[HEIGHT]; y++) {
                     if (isValidVoxel(y, x)) {
-                        result.add(new Location(name, new CellIndexExpression("" + y), new CellIndexExpression("" + x)));
+                        result.add(new Location(name, y, x));
                     }
                 }
             }
@@ -132,7 +128,7 @@ public class Compartment {
         }
         
         @Override
-        protected boolean isValidVoxel(int... indices) {
+        public boolean isValidVoxel(int... indices) {
             return super.isValidVoxel(indices) && 
                     !(indices[WIDTH] >= centreStartX && indices[WIDTH] <= centreEndX &&
                     indices[HEIGHT] >= centreStartY && indices[HEIGHT] <= centreEndY);
@@ -177,7 +173,7 @@ public class Compartment {
             for (int x=0; x<dimensions[1]; x++) {
                 for (int y=0; y<dimensions[0]; y++) {
                     if (isValidVoxel(y, x)) {
-                        result.add(new Location(name, new CellIndexExpression("" + y), new CellIndexExpression("" + x)));
+                        result.add(new Location(name, y, x));
                     }
                 }
             }
@@ -185,7 +181,7 @@ public class Compartment {
         }
 
         @Override
-        protected boolean isValidVoxel(int... indices) {
+        public boolean isValidVoxel(int... indices) {
             float centreX = Math.abs(centre - indices[1]);
             float centreY = Math.abs(centre - indices[0]);
             return centreX*centreX + centreY*centreY <= rSquared;
@@ -233,7 +229,7 @@ public class Compartment {
             for (int x=0; x<dimensions[1]; x++) {
                 for (int y=0; y<dimensions[0]; y++) {
                     if (isValidVoxel(y, x)) {
-                        result.add(new Location(name, new CellIndexExpression("" + y), new CellIndexExpression("" + x)));
+                        result.add(new Location(name, y, x));
                     }
                 }
             }
@@ -241,7 +237,7 @@ public class Compartment {
         }
 
         @Override
-        protected boolean isValidVoxel(int... indices) {
+        public boolean isValidVoxel(int... indices) {
             float centreX = Math.abs(centre - indices[1]);
             float centreY = Math.abs(centre - indices[0]);
             float voxelSquared = centreX*centreX + centreY*centreY;
@@ -307,8 +303,7 @@ public class Compartment {
                 for (int y=0; y<dimensions[HEIGHT]; y++) {
                     for (int z=0; z<dimensions[DEPTH]; z++) {
                         if (isValidVoxel(y, x, z)) {
-                            result.add(new Location(name, new CellIndexExpression("" + y), 
-                                    new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
+                            result.add(new Location(name, y, x, z));
                         }
                     }
                 }
@@ -317,7 +312,7 @@ public class Compartment {
         }
         
         @Override
-        protected boolean isValidVoxel(int... indices) {
+        public boolean isValidVoxel(int... indices) {
             return super.isValidVoxel(indices) && 
                     !(indices[WIDTH] >= centreStartX && indices[WIDTH] <= centreEndX && 
                             indices[HEIGHT] >= centreStartY && indices[HEIGHT] <= centreEndY && 
@@ -362,8 +357,7 @@ public class Compartment {
                 for (int y=0; y<dimensions[0]; y++) {
                     for (int z=0; z<dimensions[2]; z++) {
                         if (isValidVoxel(y, x, z)) {
-                            result.add(new Location(name, new CellIndexExpression("" + y), 
-                                    new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
+                            result.add(new Location(name, y, x, z));
                         }
                     }
                 }
@@ -372,7 +366,7 @@ public class Compartment {
         }
 
         @Override
-        protected boolean isValidVoxel(int... indices) {
+        public boolean isValidVoxel(int... indices) {
             float centreX = Math.abs(centre - indices[1]);
             float centreY = Math.abs(centre - indices[0]);
             float centreZ = Math.abs(centre - indices[2]);
@@ -421,8 +415,7 @@ public class Compartment {
                 for (int y=0; y<dimensions[0]; y++) {
                     for (int z=0; z<dimensions[2]; z++) {
                         if (isValidVoxel(y, x, z)) {
-                            result.add(new Location(name, new CellIndexExpression("" + y), 
-                                    new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
+                            result.add(new Location(name, y, x, z));
                         }
                     }
                 }
@@ -431,7 +424,7 @@ public class Compartment {
         }
 
         @Override
-        protected boolean isValidVoxel(int... indices) {
+        public boolean isValidVoxel(int... indices) {
             float centreX = Math.abs(centre - indices[1]);
             float centreY = Math.abs(centre - indices[0]);
             float centreZ = Math.abs(centre - indices[2]);
@@ -479,8 +472,7 @@ public class Compartment {
                 for (int y=0; y<dimensions[0]; y++) {
                     if (isValidVoxel(y, x)) {
                         for (int z=0; z<dimensions[2]; z++) {
-                            result.add(new Location(name, new CellIndexExpression("" + y), 
-                                    new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
+                            result.add(new Location(name, y, x, z));
                         }
                     }
                 }
@@ -489,7 +481,7 @@ public class Compartment {
         }
 
         @Override
-        protected boolean isValidVoxel(int... indices) {
+        public boolean isValidVoxel(int... indices) {
             float centreX = Math.abs(centre - indices[1]);
             float centreY = Math.abs(centre - indices[0]);
             return centreX*centreX + centreY*centreY <= rSquared;
@@ -547,8 +539,7 @@ public class Compartment {
                 for (int y=0; y<dimensions[0]; y++) {
                     for (int z=0; z<dimensions[2]; z++) {
                         if (isValidVoxel(y, x, z)) {
-                            result.add(new Location(name, new CellIndexExpression("" + y),
-                                    new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
+                            result.add(new Location(name, y, x, z));
                         }
                     }
                 }
@@ -557,7 +548,7 @@ public class Compartment {
         }
 
         @Override
-        protected boolean isValidVoxel(int... indices) {
+        public boolean isValidVoxel(int... indices) {
             float centreX = Math.abs(centre - indices[1]);
             float centreY = Math.abs(centre - indices[0]);
             float voxelSquared = centreX*centreX + centreY*centreY;
@@ -634,8 +625,7 @@ public class Compartment {
                 for (int y=0; y<dimensions[0]; y++) {
                     for (int z=0; z<dimensions[2]; z++) {
                         if (isValidVoxel(y, x, z)) {
-                            result.add(new Location(name, new CellIndexExpression("" + y), 
-                                    new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
+                            result.add(new Location(name, y, x, z));
                         }
                     }
                 }
@@ -644,13 +634,14 @@ public class Compartment {
         }
 
         @Override
-        protected boolean isValidVoxel(int... indices) {
+        public boolean isValidVoxel(int... indices) {
             float centreX = centre - indices[1];
             float centreY = centre - indices[0];
             float centreZ = centre - indices[2];
             
             boolean insideSphere = centreX*centreX + centreY*centreY + centreZ*centreZ <= rSquaredSphere;
-            boolean insideCylinder = centreX*centreX + centreY*centreY  <= rSquaredCylinder;
+            boolean insideCylinder = centreX*centreX + centreY*centreY  <= rSquaredCylinder && 
+                    indices[2] < sphereDiameter + cylinderLength;
 
             if (centreZ > 0) {
                 return insideSphere;
@@ -729,8 +720,7 @@ public class Compartment {
                 for (int y=0; y<dimensions[0]; y++) {
                     for (int z=0; z<dimensions[2]; z++) {
                         if (isValidVoxel(y, x, z)) {
-                            result.add(new Location(name, new CellIndexExpression("" + y),
-                                    new CellIndexExpression("" + x), new CellIndexExpression("" + z)));
+                            result.add(new Location(name, y, x, z));
                         }
                     }
                 }
@@ -739,13 +729,14 @@ public class Compartment {
         }
 
         @Override
-        protected boolean isValidVoxel(int... indices) {
+        public boolean isValidVoxel(int... indices) {
             float centreX = centre - indices[1];
             float centreY = centre - indices[0];
             float centreZ = centre - indices[2];
             
             boolean insideOuterSphere = centreX*centreX + centreY*centreY + centreZ*centreZ <= rSquaredOuterSphere;
-            boolean insideOuterCylinder = centreX*centreX + centreY*centreY  <= rSquaredOuterCylinder;
+            boolean insideOuterCylinder = centreX*centreX + centreY*centreY  <= rSquaredOuterCylinder && 
+                    indices[2] < sphereDiameter + cylinderLength;
 
             boolean insideInnerSphere = centreX*centreX + centreY*centreY + centreZ*centreZ <= rSquaredInnerSphere;
             boolean insideInnerCylinder = (centreX*centreX + centreY*centreY  <= rSquaredInnerCylinder) && 
@@ -764,21 +755,19 @@ public class Compartment {
     }
 
     public boolean isValidVoxel(Location location) {
-        if (!location.getName().equals(name) || location.getIndices().length != dimensions.length) {
+        if (!location.getName().equals(name) || location.getDimensionCount() != dimensions.length) {
             return false;
         }
         if (!location.isConcreteLocation()) {
             return true;
         }
-        int[] indices = new int[dimensions.length];
-        int i = 0;
-        for (CellIndexExpression index : location.getIndices()) {
-            indices[i++] = index.evaluateIndex(NO_VARIABLES);
-        }
-        return isValidVoxel(indices);
+        return isValidVoxel(location.getFixedIndices());
     }
 
-    protected boolean isValidVoxel(int... indices) {
+    public boolean isValidVoxel(int... indices) {
+        if (indices.length != dimensions.length) {
+            return false;
+        }
         for (int i=0; i<indices.length; i++) {
             if (indices[i] < 0 || indices[i] >= dimensions[i]) {
                 return false;
@@ -843,31 +832,22 @@ public class Compartment {
         return 0;
     }
 
-    // TODO replace with single translate method
-    public Location getCentreLocation(Location location) {
-        float[] centre = new float[dimensions.length];
-        for (int index=0; index < dimensions.length; index++) {
-            centre[index] = dimensions[index] / 2f;
+    public static void translate(Compartment sourceCompartment, Compartment targetCompartment, int[] voxelIndices) {
+        if (sourceCompartment.dimensions.length != targetCompartment.dimensions.length ||
+                sourceCompartment.dimensions.length != voxelIndices.length) {
+            throw new IllegalArgumentException("Compartment dimension mismatch");
         }
-        List<CellIndexExpression> indices = new ArrayList<CellIndexExpression>();
-        for (int index=0; index < dimensions.length; index++) {
-            indices.add(new CellIndexExpression("" + (location.getIndices()[index].value - centre[index])));
+        for (int index=0; index < voxelIndices.length; index++) {
+            voxelIndices[index] += (targetCompartment.dimensions[index] - sourceCompartment.dimensions[index]) / 2;
         }
-        return new Location(name, indices);
     }
-
-    public Location getOriginLocation(Location location) {
-        float[] centre = new float[dimensions.length];
-        for (int index=0; index < dimensions.length; index++) {
-            centre[index] = dimensions[index] / 2f;
+    
+    public static void translate(Compartment sourceCompartment, Compartment targetCompartment, List<int[]> voxelIndicesList) {
+        for (int[] voxelIndices : voxelIndicesList) {
+            translate(sourceCompartment, targetCompartment, voxelIndices);
         }
-        List<CellIndexExpression> indices = new ArrayList<CellIndexExpression>();
-        for (int index=0; index < dimensions.length; index++) {
-            indices.add(new CellIndexExpression("" + (location.getIndices()[index].value + centre[index])));
-        }
-        return new Location(name, indices);
     }
-
+    
     public Serializable[] createVoxelArray() {
         if (dimensions.length == 0) {
             return null;

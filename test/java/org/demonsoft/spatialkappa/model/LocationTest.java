@@ -14,6 +14,7 @@ import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -48,26 +49,28 @@ public class LocationTest {
 		
         Location location = new Location("name");
         assertEquals("name", location.getName());
-        assertEquals(0, location.getIndices().length);
+        assertNull(location.getIndices());
+        assertEquals(0, location.getFixedIndices().length);
         assertEquals("name", location.toString());
         assertTrue(location.isConcreteLocation());
         
         location = new Location("name", INDEX_2, new CellIndexExpression("3"));
         assertEquals("name", location.getName());
-        assertArrayEquals(new CellIndexExpression[] {INDEX_2, new CellIndexExpression("3")}, 
-        		location.getIndices());
+        assertNull(location.getIndices());
+        assertArrayEquals(new int[] {2, 3}, location.getFixedIndices());
         assertEquals("name[2][3]", location.toString());
         assertTrue(location.isConcreteLocation());
         
         location = new Location("name", new CellIndexExpression[] {INDEX_2, new CellIndexExpression("3")});
         assertEquals("name", location.getName());
-        assertArrayEquals(new CellIndexExpression[] {INDEX_2, new CellIndexExpression("3")}, 
-        		location.getIndices());
+        assertNull(location.getIndices());
+        assertArrayEquals(new int[] {2, 3}, location.getFixedIndices());
         assertEquals("name[2][3]", location.toString());
         assertTrue(location.isConcreteLocation());
 
         location = new Location("label", INDEX_2, INDEX_X);
         assertEquals("label", location.getName());
+        assertNull(location.getFixedIndices());
         assertArrayEquals(new CellIndexExpression[] {INDEX_2, INDEX_X}, location.getIndices());
         assertEquals("label[2][x]", location.toString());
         assertFalse(location.isConcreteLocation());
@@ -75,7 +78,9 @@ public class LocationTest {
         location = new Location("label", 
                 new CellIndexExpression(INDEX_2, Operator.PLUS, INDEX_2), 
                 new CellIndexExpression("5"));
-        assertEquals("label[(2 + 2)][5]", location.toString());
+        assertNull(location.getIndices());
+        assertArrayEquals(new int[] {4, 5}, location.getFixedIndices());
+        assertEquals("label[4][5]", location.toString());
         assertTrue(location.isConcreteLocation());
 	}
 

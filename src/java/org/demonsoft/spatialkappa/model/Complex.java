@@ -63,11 +63,11 @@ public class Complex implements Serializable {
             if (previous == null) {
                 count = 1;
             }
-            else if (current.name.equals(previous.name)) {
+            else if (current.name.equals(previous.name) && Utils.equal(current.location, previous.location)) {
                 count++;
             }
             else {
-                builder.append(previous.name).append(count);
+                builder.append(previous.name).append(previous.location).append(count);
                 count = 1;
             }
             previous = current;
@@ -76,7 +76,7 @@ public class Complex implements Serializable {
             matchHash = "";
             return;
         }
-        builder.append(previous.name).append(count);
+        builder.append(previous.name).append(previous.location).append(count);
         
         // Add links
         Map<String, Integer> linkHashMap = new HashMap<String, Integer>();
@@ -625,7 +625,7 @@ public class Complex implements Serializable {
                 result.add(sourceLocation);
             }
             else {
-                boolean matchNameOnly = locationConstraint.getIndices().length == 0;
+                boolean matchNameOnly = locationConstraint.isCompartment();
                 if (sourceLocation.matches(locationConstraint, matchNameOnly)) {
                     result.add(sourceLocation);
                 }
@@ -638,7 +638,7 @@ public class Complex implements Serializable {
                 result.addAll(targetLocations);
             }
             else {
-                boolean matchNameOnly = locationConstraint.getIndices().length == 0;
+                boolean matchNameOnly = locationConstraint.isCompartment();
                 for (Location targetLocation : targetLocations) {
                     if (targetLocation.matches(locationConstraint, matchNameOnly)) {
                         result.add(targetLocation);

@@ -25,6 +25,9 @@ public class Transition {
     static final int UNMAPPED = -2;
     
     protected VariableExpression rate;
+    public float simpleRate;
+    public boolean hasSimpleRate;
+    
     public final String label;
     public final List<Complex> sourceComplexes = new ArrayList<Complex>();
     public final List<Complex> targetComplexes = new ArrayList<Complex>();
@@ -96,12 +99,26 @@ public class Transition {
         return rate;
     }
 
-    public final void setRate(VariableExpression rate) {
+    public final void setRate(VariableExpression rate, Map<String, Variable> variables) {
         this.rate = rate;
+        checkSimpleRate(variables);
+        this.hasSimpleRate = false;
+    }
+
+    public void checkSimpleRate(Map<String, Variable> variables) {
+        if (rate.isFixed(variables)) {
+            hasSimpleRate = true;
+            simpleRate = rate.evaluate(variables);
+        }
+        else {
+            hasSimpleRate = false;
+        }
+        
     }
 
     public final boolean isInfiniteRate(Map<String, Variable> variables) {
         return rate.isInfinite(variables);
+        // TODO - use simple rate ?
     }
 
 

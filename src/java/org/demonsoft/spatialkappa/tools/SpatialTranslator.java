@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,8 +39,6 @@ import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
 import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
 
 public class SpatialTranslator {
-
-    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
 
     private final IKappaModel kappaModel;
 
@@ -242,26 +239,19 @@ public class SpatialTranslator {
 
     private String getKappaString(Location location) {
         int dimensionCount = 0;
-        if (location != null && location != NOT_LOCATED && location.getIndices() != null && location.getIndices().length > 0) {
-            dimensionCount = location.getIndices().length;
+        if (location != null && location != NOT_LOCATED) {
+            dimensionCount = location.getDimensionCount();
         }
-        return getKappaString(location, NO_VARIABLES, dimensionCount);
+        return getKappaString(location, dimensionCount);
     }
 
     String getKappaString(Location location, int dimensionCount) {
-        return getKappaString(location, NO_VARIABLES, dimensionCount);
-    }
-
-    String getKappaString(Location location, Map<String, Integer> variables, int dimensionCount) {
-        if (variables == null) {
-            throw new NullPointerException();
-        }
         if (location == NOT_LOCATED) {
             return "";
         }
         int usedDimensions = 0;
-        if (location.getIndices() != null && location.getIndices().length > 0) {
-            usedDimensions = location.getIndices().length;
+        if (location.getDimensionCount() > 0) {
+            usedDimensions = location.getDimensionCount();
         }
         if (usedDimensions > dimensionCount) {
             throw new IllegalArgumentException();
@@ -270,8 +260,13 @@ public class SpatialTranslator {
         StringBuilder builder = new StringBuilder();
         builder.append("loc~").append(location.getName());
         for (int index = 0; index < usedDimensions; index++) {
-            builder.append(",loc_index_").append(index + 1).append("~")
-                    .append(location.getIndices()[index].evaluateIndex(variables));
+            builder.append(",loc_index_").append(index + 1).append("~");
+            if (location.isConcreteLocation()) {
+                builder.append(location.getFixedIndices()[index]);
+            }
+            else {
+                builder.append(location.getIndices()[index].evaluateIndex());
+            }
         }
         for (int index = usedDimensions; index < dimensionCount; index++) {
             builder.append(",loc_index_").append(index + 1).append("~0");

@@ -135,6 +135,14 @@ public class ObservationElement implements Serializable {
         return (Integer) slice[0];
     }
 
+    public int getCellValue(int x, int y, int z) {
+        if (dimensions.length != 3) {
+            throw new IllegalStateException();
+        }
+        Serializable[] slice = (Serializable[]) ((Serializable[]) cellValues[x])[y];
+        return (Integer) slice[z];
+    }
+
     public ObservationElement plus(ObservationElement y) {
         if (isCompartment) {
             if (y.isCompartment) {

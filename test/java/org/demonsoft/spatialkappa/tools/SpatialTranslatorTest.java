@@ -9,9 +9,7 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -345,64 +343,6 @@ public class SpatialTranslatorTest {
     }
 
     
-    @Test
-    public void testGetKappaString_location_withVariables() {
-        Location location = new Location("label");
-        Map<String, Integer> variables = new HashMap<String, Integer>();
-        
-        try {
-            translator.getKappaString(location, null, 0);
-            fail("null should have failed");
-        }
-        catch (NullPointerException ex) {
-            // Expected exception
-        }
-
-        assertEquals("loc~label", translator.getKappaString(location, variables, 0));
-        assertEquals("loc~label,loc_index_1~0", translator.getKappaString(location, variables, 1));
-
-        location = new Location("label", new CellIndexExpression("2"));
-        assertEquals("loc~label,loc_index_1~2", translator.getKappaString(location, variables, 1));
-        assertEquals("loc~label,loc_index_1~2,loc_index_2~0", translator.getKappaString(location, variables, 2));
-
-
-        location = new Location("label", new CellIndexExpression("2"), new CellIndexExpression(new CellIndexExpression("3"), Operator.PLUS, new CellIndexExpression("1")));
-        try {
-            translator.getKappaString(location, variables, 1);
-            fail("too few dimensions should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-        assertEquals("loc~label,loc_index_1~2,loc_index_2~4", translator.getKappaString(location, variables, 2));
-        assertEquals("loc~label,loc_index_1~2,loc_index_2~4,loc_index_3~0", translator.getKappaString(location, variables, 3));
-
-        location = new Location("label", new CellIndexExpression(refX));
-        try {
-            translator.getKappaString(location, variables, 1);
-            fail("missing variable should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-        
-        variables.put("x", 7);
-        assertEquals("loc~label,loc_index_1~7", translator.getKappaString(location, variables, 1));
-
-        location = new Location("label", new CellIndexExpression("2"), new CellIndexExpression(refX));
-        variables.clear();
-        try {
-            translator.getKappaString(location, variables, 1);
-            fail("missing variable should have failed");
-        }
-        catch (IllegalArgumentException ex) {
-            // Expected exception
-        }
-        
-        variables.put("x", 7);
-        assertEquals("loc~label,loc_index_1~2,loc_index_2~7", translator.getKappaString(location, variables, 2));
-    }
-
     @Test
     public void testHasLinksWithChannels() throws Exception {
         

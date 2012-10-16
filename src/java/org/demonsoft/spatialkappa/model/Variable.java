@@ -4,6 +4,7 @@ import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 
 import java.util.List;
+import java.util.Map;
 
 public class Variable {
 
@@ -137,6 +138,18 @@ public class Variable {
             throw new IllegalStateException();
         }
     }
+    
+
+    public float evaluate(Map<String, Variable> variables) {
+        switch (type) {
+        case VARIABLE_EXPRESSION:
+            return expression.evaluate(variables);
+            
+        default:
+            throw new IllegalStateException();
+        }
+    }
+
 
     public int evaluate(IKappaModel kappaModel) {
         switch (type) {
@@ -157,7 +170,7 @@ public class Variable {
             throw new IllegalStateException("Voxel based observation must refer to a voxel based compartment: " + label);
         }
         Compartment compartment = getCompartment(compartments, location.getName());
-        if (location.getIndices().length != 0 || compartment.getDimensions().length == 0) {
+        if (location.getDimensionCount() != 0 || compartment.getDimensions().length == 0) {
             throw new IllegalStateException("Voxel based observation must refer to a voxel based compartment: " + label);
         }
         

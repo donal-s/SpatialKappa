@@ -1,5 +1,6 @@
 package org.demonsoft.spatialkappa.model;
 
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -11,6 +12,8 @@ public class CellIndexExpression extends VariableExpression {
 
     private static final long serialVersionUID = 1L;
 
+    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
+    
     // Commonly used indices
     public static CellIndexExpression INDEX_0 = new CellIndexExpression("0");
     public static CellIndexExpression INDEX_1 = new CellIndexExpression("1");
@@ -77,6 +80,12 @@ public class CellIndexExpression extends VariableExpression {
         default:
             throw new IllegalStateException("Unknown expression");
         }
+    }
+
+    // TODO - fixed values should be preevaluated on construction
+    
+    public int evaluateIndex() {
+        return evaluateIndex(NO_VARIABLES);
     }
 
     public int evaluateIndex(Map<String, Integer> variables) {

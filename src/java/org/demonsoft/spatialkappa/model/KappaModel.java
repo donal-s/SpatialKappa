@@ -345,10 +345,10 @@ public class KappaModel implements IKappaModel {
             return location1;
         }
         if (location1.getName().equals(location2.getName())) {
-            if (location1.getIndices().length == 0) {
+            if (location1.getDimensionCount() == 0) {
                 return location2;
             }
-            if (location2.getIndices().length == 0) {
+            if (location2.getDimensionCount() == 0) {
                 return location1;
             }
             if (location1.equals(location2)) {
@@ -566,7 +566,7 @@ public class KappaModel implements IKappaModel {
             return;
         }
         Compartment compartment = getCompartment(compartments, location.getName());
-        if (location.getIndices().length > 0 && !compartment.isValidVoxel(location)) {
+        if (location.getDimensionCount() > 0 && !compartment.isValidVoxel(location)) {
             throw new IllegalStateException("Location " + location + " not valid");
         }
     }

@@ -238,6 +238,7 @@ public class Utils {
                 }
                 else {
                     Channel channel = getChannel(channels, currentLink.getChannel());
+                    // TODO - this is slow - improve
                     List<Location> possibleLocations = channel.applyChannel(currentAgent.location, NOT_LOCATED, compartments);
                     if (!possibleLocations.contains(otherAgent.location)) {
                         possibleLocations = channel.applyChannel(otherAgent.location, NOT_LOCATED, compartments);

@@ -14,8 +14,6 @@ import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.demonsoft.spatialkappa.model.Compartment.OpenCircle;
 import org.demonsoft.spatialkappa.model.Compartment.OpenCuboid;
@@ -30,8 +28,6 @@ import org.demonsoft.spatialkappa.model.Compartment.SolidSpine;
 import org.junit.Test;
 
 public class CompartmentTest {
-
-    private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
 
     @SuppressWarnings("unused")
     @Test
@@ -108,9 +104,8 @@ public class CompartmentTest {
         boolean[][] actual = new boolean[compartment.dimensions[0]][compartment.dimensions[1]];
         for (Location location : distributedCellReferences) {
             assertEquals(compartment.name, location.getName());
-            assertEquals(2, location.getIndices().length);
-            actual[location.getIndices()[0].evaluateIndex(NO_VARIABLES)]
-                    [location.getIndices()[1].evaluateIndex(NO_VARIABLES)] = true;
+            assertEquals(2, location.getFixedIndices().length);
+            actual[location.getFixedIndices()[0]][location.getFixedIndices()[1]] = true;
         }
         String[] actualStrings = boolean2DArrayToString(actual);
         assertArrayEquals(expected, actualStrings);
@@ -118,7 +113,7 @@ public class CompartmentTest {
         actual = new boolean[compartment.dimensions[0]][compartment.dimensions[1]];
         for (int y=0; y<compartment.dimensions[0]; y++) {
             for (int x=0; x<compartment.dimensions[1]; x++) {
-                actual[y][x] = compartment.isValidVoxel(new Location(compartment.name, new CellIndexExpression("" + y), new CellIndexExpression("" + x)));
+                actual[y][x] = compartment.isValidVoxel(y, x);
             }
         }
         actualStrings = boolean2DArrayToString(actual);
@@ -144,10 +139,8 @@ public class CompartmentTest {
         boolean[][][] actual = new boolean[compartment.dimensions[0]][compartment.dimensions[1]][compartment.dimensions[2]];
         for (Location location : distributedCellReferences) {
             assertEquals(compartment.name, location.getName());
-            assertEquals(3, location.getIndices().length);
-            actual[location.getIndices()[0].evaluateIndex(NO_VARIABLES)]
-                    [location.getIndices()[1].evaluateIndex(NO_VARIABLES)]
-                    [location.getIndices()[2].evaluateIndex(NO_VARIABLES)] = true;
+            assertEquals(3, location.getFixedIndices().length);
+            actual[location.getFixedIndices()[0]][location.getFixedIndices()[1]][location.getFixedIndices()[2]] = true;
         }
         String[][] actualStrings = boolean3DArrayToString(actual);
         assertArrayEquals(expected, actualStrings);
@@ -156,9 +149,7 @@ public class CompartmentTest {
         for (int y=0; y<compartment.dimensions[0]; y++) {
             for (int x=0; x<compartment.dimensions[1]; x++) {
                 for (int z=0; z<compartment.dimensions[2]; z++) {
-                    actual[y][x][z] = compartment.isValidVoxel(new Location(compartment.name, 
-                            new CellIndexExpression("" + y), new CellIndexExpression("" + x), 
-                            new CellIndexExpression("" + z)));
+                    actual[y][x][z] = compartment.isValidVoxel(y, x, z);
                 }
             }
         }
@@ -484,7 +475,66 @@ public class CompartmentTest {
         assertTrue(compartment.isValidVoxel(new Location("rectangle", INDEX_1, INDEX_0)));
     }
 
+    @Test
+    public void testIsValidVoxel_voxelIndices() {
+        Compartment compartment = new Compartment("single");
+        
+        try {
+            compartment.isValidVoxel((int[]) null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        
+        assertTrue(compartment.isValidVoxel());
+        assertFalse(compartment.isValidVoxel(0));
+        
+        compartment = new Compartment("rectangle", 3, 4);
+        assertFalse(compartment.isValidVoxel());
+        assertFalse(compartment.isValidVoxel(0));
+        assertFalse(compartment.isValidVoxel(0, 0, 1));
+        assertFalse(compartment.isValidVoxel(0, 4));
+        assertTrue(compartment.isValidVoxel(1, 0));
+    }
 
+    @Test
+    public void testIsValidVoxel_solidSpine() {
+        SolidSpine compartment = new SolidSpine("name", new int[] {7, 5, 4});
+        
+        assertFalse(compartment.isValidVoxel(0, 0, 0));
+        assertFalse(compartment.isValidVoxel(3, 0, 0));
+        assertTrue(compartment.isValidVoxel(3, 3, 0));
+        assertTrue(compartment.isValidVoxel(3, 3, 10));
+        assertFalse(compartment.isValidVoxel(3, 3, 11));
+    }
+
+    @Test
+    public void testIsValidVoxel_openSpine() {
+        OpenSpine compartment = new OpenSpine("name", new int[] {7, 5, 4, 2});
+        
+        assertFalse(compartment.isValidVoxel(0, 0, 0));
+        assertFalse(compartment.isValidVoxel(3, 0, 0));
+        assertTrue(compartment.isValidVoxel(3, 3, 0));
+        assertTrue(compartment.isValidVoxel(3, 3, 1));
+        assertFalse(compartment.isValidVoxel(3, 3, 2));
+        assertFalse(compartment.isValidVoxel(3, 3, 8));
+        assertTrue(compartment.isValidVoxel(3, 3, 9));
+        assertTrue(compartment.isValidVoxel(3, 3, 10));
+        assertFalse(compartment.isValidVoxel(3, 3, 11));
+    }
+
+
+    @Test
+    public void testTranslate() {
+        Compartment sourceCompartment = new Compartment("source", 3, 4);
+        Compartment targetCompartment = new Compartment("target", 9, 8);
+        
+        int[] indices = new int[] {0, 0};
+        Compartment.translate(sourceCompartment, targetCompartment, indices);
+        assertArrayEquals(new int[] {3, 2}, indices);
+    }
+    
     @Test
     public void testCreateCompartment() {
         try {

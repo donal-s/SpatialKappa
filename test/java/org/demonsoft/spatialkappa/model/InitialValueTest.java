@@ -327,8 +327,8 @@ public class InitialValueTest {
 
         checkFixedLocatedComplexMapByString(initialValue, compartments, channels, new Object[][] { 
                 { "[A:cytosol[10][20](d!1:domainLink), B:membrane[13][23](d!1)]", 33 }, 
-                { "[A:cytosol[10][20](d!1:domainLink), B:membrane[12][23](d!1)]", 34 }, 
-                { "[A:cytosol[10][20](d!1:domainLink), B:membrane[11][23](d!1)]", 33 }, 
+                { "[A:cytosol[10][20](d!1:domainLink), B:membrane[12][23](d!1)]", 33 }, 
+                { "[A:cytosol[10][20](d!1:domainLink), B:membrane[11][23](d!1)]", 34 }, 
                 });
         
     }
