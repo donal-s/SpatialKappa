@@ -29,10 +29,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
+import org.demonsoft.spatialkappa.model.VariableExpression.SimulationToken;
 import org.junit.Test;
 
 public class TransitionTest {
 
+
+    private static final Map<String, Variable> NO_VARIABLES = new HashMap<String, Variable>();
 
     @SuppressWarnings("unused")
     @Test
@@ -913,4 +916,32 @@ public class TransitionTest {
         checkSetByString("[CREATE_LINK(A(s1!_,s2!2:ch1) [s2!2:ch1] -> B(s3!_:ch2,s4!2) [s4!2] ch4), " +
         		"CREATE_LINK(C(s5?,s6!1) [s6!1] -> D(s7!1) [s7!1] ch3)]", primitives);
     }
+    
+    @Test
+    public void testSetRate() {
+        Transition transition = new Transition("test", Utils.getList(new Agent("DNA")), null, Utils.getList(new Agent("DNA")), 10.0f);
+        
+        assertFalse(transition.hasSimpleRate);
+        assertEquals("10.0", transition.getRate().toString());
+        
+        transition.applyVariables(NO_VARIABLES);
+        assertTrue(transition.hasSimpleRate);
+        assertEquals(10, transition.simpleRate, 0);
+        assertEquals("10.0", transition.getRate().toString());
+        
+        transition.setRate(new VariableExpression(5), NO_VARIABLES);
+        assertTrue(transition.hasSimpleRate);
+        assertEquals(5, transition.simpleRate, 0);
+        assertEquals("5.0", transition.getRate().toString());
+        
+        transition.setRate(new VariableExpression(Constant.PI), NO_VARIABLES);
+        assertTrue(transition.hasSimpleRate);
+        assertEquals(Math.PI, transition.simpleRate, 0.01);
+        assertEquals("[pi]", transition.getRate().toString());
+        
+        transition.setRate(new VariableExpression(SimulationToken.EVENTS), NO_VARIABLES);
+        assertFalse(transition.hasSimpleRate);
+        assertEquals("[E]", transition.getRate().toString());
+    }
+
 }

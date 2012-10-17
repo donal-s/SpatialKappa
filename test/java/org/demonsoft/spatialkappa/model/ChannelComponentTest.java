@@ -1052,7 +1052,7 @@ public class ChannelComponentTest {
     @Test
     public void testApplyChannel_multipleCompartments() {
         List<Compartment> compartments = getList(new Compartment("a", 4), new Compartment("b", 3));
-        ChannelComponent component = new ChannelComponent(null, getList(new Location("a", INDEX_X), new Location("b", INDEX_X)), 
+        ChannelComponent component = new ChannelComponent(getList(new Location("a", INDEX_X), new Location("b", INDEX_X)), 
                 getList(new Location("a", INDEX_X_PLUS_1), new Location("b", INDEX_X_PLUS_1)));
         
         // No match
@@ -1086,7 +1086,7 @@ public class ChannelComponentTest {
 
         
         // Variable independent
-        component = new ChannelComponent(null, getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
+        component = new ChannelComponent(getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
                 getList(new Location("a", INDEX_X_PLUS_1), new Location("b", INDEX_Y_PLUS_1)));
         
         results = component.applyChannel(getList(
@@ -1103,7 +1103,7 @@ public class ChannelComponentTest {
 
         
         // Swap locations - allow source reordering
-        component = new ChannelComponent(null, getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
+        component = new ChannelComponent(getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
                 getList(new Location("b", INDEX_X), new Location("a", INDEX_Y)));
         
         results = component.applyChannel(getList(
@@ -1126,7 +1126,7 @@ public class ChannelComponentTest {
         assertEquals(expected, results);
                 
         // Target constraints
-        component = new ChannelComponent(null, getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
+        component = new ChannelComponent(getList(new Location("a", INDEX_X), new Location("b", INDEX_Y)), 
                 getList(new Location("a", INDEX_X_PLUS_1), new Location("b", INDEX_Y_PLUS_1)));
 
         results = component.applyChannel(getList(
@@ -1489,15 +1489,58 @@ public class ChannelComponentTest {
             // Expected exception
             assertEquals("Not a valid voxel for compartment 'known'", ex.getMessage());
         }
-        
+    }
 
-        // TODO compartment link range out of bounds ?
+    
+    @Test
+    public void testValidate_predefinedCompartmentDimensions() {
+        List<Location> location = getList(new Location("compartment"));
         
-        // TODO channel type validation
+        checkValidDimensions(new EdgeNeighbourComponent(location, location), 2);
+        checkValidDimensions(new FaceNeighbourComponent(location, location), 3);
+        checkValidDimensions(new HexagonalComponent(location, location), 2);
+        checkValidDimensions(new LateralComponent(location, location), 2, 3);
+        checkValidDimensions(new NeighbourComponent(location, location), 2, 3);
+        checkValidDimensions(new RadialComponent(location, location), 2, 3);
+        checkValidDimensions(new RadialInComponent(location, location), 2, 3);
+        checkValidDimensions(new RadialOutComponent(location, location), 2, 3);
         
     }
 
     
+    private void checkValidDimensions(PredefinedChannelComponent component, int... validDimensions) {
+        int[][] dimensions = new int[][] { new int[] {}, new int[] {5}, new int[] {5, 5}, new int[] {5, 5, 5}, new int[] {5, 5, 5, 5}, };
+
+        // Check valid
+        for (int validDimension : validDimensions) {
+            Compartment compartment = new Compartment("compartment", dimensions[validDimension]);
+            component.validate(getList(compartment));
+        }
+        
+        // Check invalid
+        for (int j=0; j<dimensions.length; j++) {
+            boolean valid = false;
+            for (int validDimension : validDimensions) {
+                if (validDimension == j) {
+                    valid = true;
+                    break;
+                }
+            }
+            if (!valid) {
+                try {
+                    component.validate(getList(new Compartment("compartment", dimensions[j])));
+                    fail("validation should have failed");
+                }
+                catch (IllegalStateException ex) {
+                    // Expected exception
+                    assertEquals("Component has wrong number of dimensions for channel", ex.getMessage());
+                }
+            }
+        }
+    }
+
+
+
     @Test
     public void testValidate_nestedCompartments_predefinedChannels() {
         

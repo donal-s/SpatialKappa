@@ -91,10 +91,10 @@ public class KappaModelTest {
             // Expected exception
         }
 
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
-        model.addAgentDeclaration(new AggregateAgent("agent2"));
-        model.addAgentDeclaration(new AggregateAgent("agent3"));
-        model.addAgentDeclaration(new AggregateAgent("agent4"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent2"));
+        model.addAgentDeclaration(new AgentDeclaration("agent3"));
+        model.addAgentDeclaration(new AgentDeclaration("agent4"));
         model.addInitialValue(agents, "3", NOT_LOCATED);
 
         agents = Utils.getList(new Agent("agent1", new AgentSite("x", null, "1")), 
@@ -118,10 +118,10 @@ public class KappaModelTest {
                 { "[agent1:cytosol[2](x!1), agent2:cytosol[2](x!1)]", 5 }, 
                 { "[agent3:cytosol[2](x!2), agent4:cytosol[2](x!2)]", 5 }, 
                 { "[agent3:nucleus[2](x!7), agent4:nucleus[2](x!7)]", 7 } });
-        checkAggregateAgents(new AggregateAgent("agent1", new AggregateSite("x", null, "1")), 
-                new AggregateAgent("agent2", new AggregateSite("x", null, "1")),
-                new AggregateAgent("agent3", new AggregateSite("x", null, new String[] {"2", "7"})), 
-                new AggregateAgent("agent4", new AggregateSite("x", null, new String[] {"2", "7"})));
+        checkAggregateAgents(new AgentDeclaration("agent1", new AggregateSite("x", null, "1")), 
+                new AgentDeclaration("agent2", new AggregateSite("x", null, "1")),
+                new AgentDeclaration("agent3", new AggregateSite("x", null, new String[] {"2", "7"})), 
+                new AgentDeclaration("agent4", new AggregateSite("x", null, new String[] {"2", "7"})));
     }
     
     @Test
@@ -135,10 +135,10 @@ public class KappaModelTest {
         Channel channel = new Channel("dl", new Location("cytosol", INDEX_X), new Location("nucleus", INDEX_X));
         model.addChannel(channel);
         
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
-        model.addAgentDeclaration(new AggregateAgent("agent2"));
-        model.addAgentDeclaration(new AggregateAgent("agent3"));
-        model.addAgentDeclaration(new AggregateAgent("agent4"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent2"));
+        model.addAgentDeclaration(new AgentDeclaration("agent3"));
+        model.addAgentDeclaration(new AgentDeclaration("agent4"));
         model.addInitialValue(agents, "3", location);
 
         agents = Utils.getList(new Agent("agent1", new AgentSite("x", null, "1", "dl")), 
@@ -151,10 +151,10 @@ public class KappaModelTest {
                 { "[agent1:cytosol[2]()]", 3 }, 
                 { "[agent1:cytosol[2](x!1:dl), agent2:nucleus[2](x!1)]", 5 }, 
                 { "[agent3:cytosol[2](x!2), agent4:cytosol[2](x!2)]", 5 } });
-        checkAggregateAgents(new AggregateAgent("agent1", new AggregateSite("x", null, "1")), 
-                new AggregateAgent("agent2", new AggregateSite("x", null, "1")),
-                new AggregateAgent("agent3", new AggregateSite("x", null, new String[] {"2"})), 
-                new AggregateAgent("agent4", new AggregateSite("x", null, new String[] {"2"})));
+        checkAggregateAgents(new AgentDeclaration("agent1", new AggregateSite("x", null, "1")), 
+                new AgentDeclaration("agent2", new AggregateSite("x", null, "1")),
+                new AgentDeclaration("agent3", new AggregateSite("x", null, new String[] {"2"})), 
+                new AgentDeclaration("agent4", new AggregateSite("x", null, new String[] {"2"})));
     }
     
     @Test
@@ -192,10 +192,10 @@ public class KappaModelTest {
             // Expected exception
         }
 
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
-        model.addAgentDeclaration(new AggregateAgent("agent2"));
-        model.addAgentDeclaration(new AggregateAgent("agent3"));
-        model.addAgentDeclaration(new AggregateAgent("agent4"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent2"));
+        model.addAgentDeclaration(new AgentDeclaration("agent3"));
+        model.addAgentDeclaration(new AgentDeclaration("agent4"));
         model.addInitialValue(agents, new VariableReference("variable 3"), location);
 
         agents = Utils.getList(new Agent("agent1", new AgentSite("x", null, "1")), 
@@ -214,10 +214,10 @@ public class KappaModelTest {
                 { "[agent1:cytosol[2](x!1), agent2:cytosol[2](x!1)]", 5 }, 
                 { "[agent3:cytosol[2](x!2), agent4:cytosol[2](x!2)]", 5 }, 
                 { "[agent3:nucleus[2](x!7), agent4:nucleus[2](x!7)]", 7 } });
-        checkAggregateAgents(new AggregateAgent("agent1", new AggregateSite("x", null, "1")), 
-                new AggregateAgent("agent2", new AggregateSite("x", null, "1")),
-                new AggregateAgent("agent3", new AggregateSite("x", null, new String[] {"2", "7"})), 
-                new AggregateAgent("agent4", new AggregateSite("x", null, new String[] {"2", "7"})));
+        checkAggregateAgents(new AgentDeclaration("agent1", new AggregateSite("x", null, "1")), 
+                new AgentDeclaration("agent2", new AggregateSite("x", null, "1")),
+                new AgentDeclaration("agent3", new AggregateSite("x", null, new String[] {"2", "7"})), 
+                new AgentDeclaration("agent4", new AggregateSite("x", null, new String[] {"2", "7"})));
     }
     
     @Test
@@ -226,8 +226,8 @@ public class KappaModelTest {
         assertEquals(0, actual.size());
         
         // No compartments
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
-        model.addAgentDeclaration(new AggregateAgent("agent2"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent2"));
         model.addInitialValue(Utils.getList(new Agent("agent1")), "3", NOT_LOCATED);
 
         checkFixedLocatedInitialValues(new Object[][] { { "[agent1()]", 3 } });
@@ -260,8 +260,8 @@ public class KappaModelTest {
         model.addChannel(new Channel("domainLink", 
                 new Location("cytosol", INDEX_X, INDEX_Y, INDEX_0), new Location("membrane", INDEX_X, INDEX_Y)));
         
-        model.addAgentDeclaration(new AggregateAgent("A", new AggregateSite("d", (String) null, null)));
-        model.addAgentDeclaration(new AggregateAgent("B", new AggregateSite("d", (String) null, null)));
+        model.addAgentDeclaration(new AgentDeclaration("A", new AggregateSite("d", (String) null, null)));
+        model.addAgentDeclaration(new AgentDeclaration("B", new AggregateSite("d", (String) null, null)));
         
         model.addInitialValue(Utils.getList(new Agent("A", new Location("cytosol"), new AgentSite("d", null, "1", "domainLink")), 
                 new Agent("B", new AgentSite("d", null, "1"))), "900", NOT_LOCATED);
@@ -281,11 +281,11 @@ public class KappaModelTest {
     
     @Test
     public void testGetFixedLocatedInitialValuesMap_additionOfSiteDefaults() {
-        model.addAgentDeclaration(new AggregateAgent("agent1", 
+        model.addAgentDeclaration(new AgentDeclaration("agent1", 
                 new AggregateSite("s", (String) null, null), 
                 new AggregateSite("t", "x", null),
                 new AggregateSite("u", getList("y", "z"), null)));
-        model.addAgentDeclaration(new AggregateAgent("agent2", 
+        model.addAgentDeclaration(new AgentDeclaration("agent2", 
                 new AggregateSite("v", getList("a", "b"), null)));
         
         // No compartments
@@ -427,13 +427,13 @@ public class KappaModelTest {
 
         checkVariables(model, "'label' ([agent1()])");
         checkOrderedVariableNames(model, "label");
-        checkAggregateAgents(new AggregateAgent("agent1"));
+        checkAggregateAgents(new AgentDeclaration("agent1"));
 
         model.addVariable(getList(new Agent("agent1"), new Agent("agent2")), "label2", NOT_LOCATED, false);
 
         checkVariables(model, "'label' ([agent1()])", "'label2' ([agent1(), agent2()])");
         checkOrderedVariableNames(model, "label", "label2");
-        checkAggregateAgents(new AggregateAgent("agent1"), new AggregateAgent("agent2"));
+        checkAggregateAgents(new AgentDeclaration("agent1"), new AgentDeclaration("agent2"));
     }
 
 
@@ -473,7 +473,7 @@ public class KappaModelTest {
 
         checkVariables(model, "'label' cytosol[2] ([agent1:cytosol[2]()])");
         checkOrderedVariableNames(model, "label");
-        checkAggregateAgents(new AggregateAgent("agent1"));
+        checkAggregateAgents(new AgentDeclaration("agent1"));
 
         model.addVariable(getList(new Agent("agent1", new Location("cytosol", INDEX_0)), 
                 new Agent("agent2")), "label2", location, false);
@@ -481,7 +481,7 @@ public class KappaModelTest {
         checkVariables(model, "'label' cytosol[2] ([agent1:cytosol[2]()])", 
                 "'label2' cytosol[2] ([agent1:cytosol[0](), agent2:cytosol[2]()])");
         checkOrderedVariableNames(model, "label", "label2");
-        checkAggregateAgents(new AggregateAgent("agent1"), new AggregateAgent("agent2"));
+        checkAggregateAgents(new AgentDeclaration("agent1"), new AgentDeclaration("agent2"));
 
         model.addVariable(getList(new Agent("agent3")), "label3", new Location("cytosol"), true);
 
@@ -521,8 +521,8 @@ public class KappaModelTest {
         assertNotNull(model.getAgentDeclarationMap());
         assertEquals(0, model.getAgentDeclarationMap().size());
 
-        AggregateAgent agent1 = new AggregateAgent("name1");
-        AggregateAgent agent2 = new AggregateAgent("name2");
+        AgentDeclaration agent1 = new AgentDeclaration("name1");
+        AgentDeclaration agent2 = new AgentDeclaration("name2");
         model.addAgentDeclaration(agent1);
         model.addAgentDeclaration(agent2);
         assertEquals(2, model.getAgentDeclarationMap().size());
@@ -615,11 +615,11 @@ public class KappaModelTest {
     }
 
 
-    private void checkAggregateAgents(AggregateAgent... expectedAgents) {
+    private void checkAggregateAgents(AgentDeclaration... expectedAgents) {
         assertEquals(expectedAgents.length, model.getAggregateAgentMap().size());
 
-        for (AggregateAgent expectedAgent : expectedAgents) {
-            AggregateAgent agent = model.getAggregateAgentMap().get(expectedAgent.getName());
+        for (AgentDeclaration expectedAgent : expectedAgents) {
+            AgentDeclaration agent = model.getAggregateAgentMap().get(expectedAgent.getName());
             assertNotNull(agent);
             assertEquals(expectedAgent.getName(), agent.getName());
             assertEquals(expectedAgent.getSites().size(), agent.getSites().size());
@@ -718,7 +718,7 @@ public class KappaModelTest {
         
         // Plot reference to transition
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addCompartment(new Compartment("known"));
         model.addChannel(new Channel("channel", new Location("known"), new Location("known")));
         model.addTransition("transitionRef", null, null, "channel", null, Utils.getList(new Agent("agent1")), new VariableExpression(2f));
@@ -727,7 +727,7 @@ public class KappaModelTest {
         
         // Plot reference to kappa expression
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addVariable(Utils.getList(new Agent("agent1")), "kappaRef", NOT_LOCATED, false);
         model.addPlot("kappaRef");
         model.validate();
@@ -754,13 +754,13 @@ public class KappaModelTest {
         
         // Initial value reference to variable
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addVariable(new VariableExpression(2f), "variableRef");
         model.addInitialValue(Utils.getList(new Agent("agent1")), new VariableReference("variableRef"), NOT_LOCATED);
         model.validate();
         
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addVariable(new VariableExpression(2f), "variableRef");
         model.addVariable(new VariableExpression(new VariableReference("variableRef")), "other");
         model.addInitialValue(Utils.getList(new Agent("agent1")), new VariableReference("other"), NOT_LOCATED);
@@ -768,7 +768,7 @@ public class KappaModelTest {
         
         // Initial value concrete
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addInitialValue(Utils.getList(new Agent("agent1")), "1000", NOT_LOCATED);
         model.validate();
     }
@@ -799,7 +799,7 @@ public class KappaModelTest {
         checkValidate_failure("Reference 'variableRef' not fixed");
         
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addCompartment(new Compartment("known"));
         model.addChannel(new Channel("channel", new Location("known"), new Location("known")));
         model.addTransition("transportRef", null, Utils.getList(new Agent("agent1")), "channel", null, 
@@ -807,7 +807,7 @@ public class KappaModelTest {
         model.validate();
 
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addCompartment(new Compartment("known"));
         model.addChannel(new Channel("channel", new Location("known"), new Location("known")));
         model.addTransition("transportRef", null, Utils.getList(new Agent("agent1")), "channel", null, 
@@ -815,7 +815,7 @@ public class KappaModelTest {
         model.validate();
         
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addCompartment(new Compartment("known"));
         model.addChannel(new Channel("channel", new Location("known"), new Location("known")));
         model.addVariable(new VariableExpression(2), "variableRef");
@@ -829,21 +829,21 @@ public class KappaModelTest {
     public void testValidate_transform() {
         // Missing transform reference
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addTransition(null, NOT_LOCATED, Utils.getList(new Agent("agent1")), null, null, null,
                 new VariableExpression(new VariableReference("unknown")));
         checkValidate_failure("Reference 'unknown' not found");
         
         // Non fixed transform reference
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addVariable(new VariableExpression(SimulationToken.EVENTS), "variableRef");
         model.addTransition(null, NOT_LOCATED, Utils.getList(new Agent("agent1")), null, null, null, 
                 new VariableExpression(new VariableReference("variableRef")));
         checkValidate_failure("Reference 'variableRef' not fixed");
         
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addTransition(null, NOT_LOCATED, Utils.getList(new Agent("agent1")), null, null, null, 
                 new VariableExpression(Constant.INFINITY));
         model.validate();
@@ -875,7 +875,7 @@ public class KappaModelTest {
         
         // Variable reference to kappa expression
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("agent1"));
+        model.addAgentDeclaration(new AgentDeclaration("agent1"));
         model.addVariable(Utils.getList(new Agent("agent1")), "kappaRef", NOT_LOCATED, false);
         model.addVariable(new VariableExpression(new VariableReference("kappaRef")), "label");
         model.validate();
@@ -884,7 +884,7 @@ public class KappaModelTest {
     @Test
     public void testValidate_variable_recordVoxels() {
         Compartment compartment = new Compartment("loc1", 4);
-        AggregateAgent agentDeclaration = new AggregateAgent("agent1", new AggregateSite("x", null, "1"));
+        AgentDeclaration agentDeclaration = new AgentDeclaration("agent1", new AggregateSite("x", null, "1"));
         
         // Test variable.validate() is called
         model = new KappaModel();
@@ -927,8 +927,8 @@ public class KappaModelTest {
     @Test
     public void testValidate_agentDeclaration() {
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("A"));
-        model.addAgentDeclaration(new AggregateAgent("B", new AggregateSite("site1", "x", null)));
+        model.addAgentDeclaration(new AgentDeclaration("A"));
+        model.addAgentDeclaration(new AgentDeclaration("B", new AggregateSite("site1", "x", null)));
         model.validate();
     }
     
@@ -939,12 +939,12 @@ public class KappaModelTest {
         checkValidate_failure("Agent 'A' not declared");
 
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("A", new AggregateSite("site2", (String) null, null)));
+        model.addAgentDeclaration(new AgentDeclaration("A", new AggregateSite("site2", (String) null, null)));
         model.addVariable(Utils.getList(new Agent("A", new AgentSite("site1", null, null))), "test", NOT_LOCATED, false);
         checkValidate_failure("Agent site A(site1) not declared");
         
         model = new KappaModel();
-        model.addAgentDeclaration(new AggregateAgent("A", new AggregateSite("site1", "x", null)));
+        model.addAgentDeclaration(new AgentDeclaration("A", new AggregateSite("site1", "x", null)));
         model.addVariable(Utils.getList(new Agent("A", new AgentSite("site1", "y", null))), "test", NOT_LOCATED, false);
         checkValidate_failure("Agent state A(site1~y) not declared");
         
@@ -1143,11 +1143,11 @@ public class KappaModelTest {
         assertEquals(new Variable("label"), model.getVariables().get("label"));
 
         checkAggregateAgents(
-                new AggregateAgent("agent1", new AggregateSite("interface1", "state1", "link1"), 
+                new AgentDeclaration("agent1", new AggregateSite("interface1", "state1", "link1"), 
                         new AggregateSite("interface2", "state2", "link1")), 
-                new AggregateAgent("agent2"),
-                new AggregateAgent("agent3"),
-                new AggregateAgent("agent4"));
+                new AgentDeclaration("agent2"),
+                new AgentDeclaration("agent3"),
+                new AgentDeclaration("agent4"));
 
         // No locations
         
@@ -1246,11 +1246,11 @@ public class KappaModelTest {
         assertEquals(new Variable("label"), model.getVariables().get("label"));
 
         checkAggregateAgents(
-                new AggregateAgent("agent1", new AggregateSite("interface1", "state1", "link1"), 
+                new AgentDeclaration("agent1", new AggregateSite("interface1", "state1", "link1"), 
                         new AggregateSite("interface2", "state2", "link1")), 
-                new AggregateAgent("agent2"),
-                new AggregateAgent("agent3"),
-                new AggregateAgent("agent4"));
+                new AgentDeclaration("agent2"),
+                new AgentDeclaration("agent3"),
+                new AgentDeclaration("agent4"));
 
         // No locations
         

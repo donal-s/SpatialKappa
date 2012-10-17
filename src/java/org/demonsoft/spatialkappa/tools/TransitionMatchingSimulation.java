@@ -59,6 +59,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     final Map<Variable, Integer> transitionsFiredMap = new HashMap<Variable, Integer>();
     private final Map<Complex, List<Complex>> complexComponentMap = new HashMap<Complex, List<Complex>>();
     private final Map<Complex, List<Transition>> complexTransitionMap = new HashMap<Complex, List<Transition>>();
+    private final Map<Complex, List<TransitionInstance>> complexTransitionInstanceMap = new HashMap<Complex, List<TransitionInstance>>();
     private final Map<Complex, List<ComplexMapping>> componentComplexMappingMap = new HashMap<Complex, List<ComplexMapping>>();
     final Map<Transition, List<TransitionInstance>> transitionInstanceMap = new HashMap<Transition, List<TransitionInstance>>();
     final Map<Complex, Integer> complexStore = new HashMap<Complex, Integer>();
@@ -89,8 +90,8 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         }
 
         for (Transition transition : kappaModel.getTransitions()) {
-            transition.checkSimpleRate(kappaModel.getVariables());
-            if (transition.getRate().isInfinite(kappaModel.getVariables())) {
+            transition.applyVariables(kappaModel.getVariables());
+            if (transition.isInfiniteRate(kappaModel.getVariables())) {
                 infiniteRateTransitions.add(transition);
             }
             else {
@@ -342,7 +343,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     }
 
 
-    private void updateTransitionActivity(Transition transition, boolean rateChanged) {
+    void updateTransitionActivity(Transition transition, boolean rateChanged) {
         if (rateChanged) {
             if (transition.isInfiniteRate(kappaModel.getVariables())) {
                 finiteRateTransitionActivityMap.remove(transition);
@@ -366,7 +367,12 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         else {
             float totalTransitionRate = 0;
             if (transition.sourceComplexes.size() == 0 && transition.channelName == null) {
-                totalTransitionRate = transition.getRate().evaluate(this).value;
+                if (transition.hasSimpleRate) {
+                    totalTransitionRate = transition.simpleRate;
+                }
+                else {
+                    totalTransitionRate = transition.getRate().evaluate(this).value;
+                }
                 // TODO invalid transition if using content based rate with no content defined
             }
             else {
@@ -374,7 +380,8 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
                 for (TransitionInstance transitionInstance : transitionInstances) {
                     int instanceActivity = getTransitionInstanceActivity(transitionInstance);
                     float instanceRate = getTransitionInstanceRate(transitionInstance, transition);
-                    totalTransitionRate += instanceActivity * instanceRate;
+                    transitionInstance.totalRate = instanceActivity * instanceRate;
+                    totalTransitionRate += transitionInstance.totalRate;
                 }
             }
             finiteRateTransitionActivityMap.put(transition, totalTransitionRate);
@@ -407,11 +414,20 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
 
 
     int getTransitionInstanceActivity(TransitionInstance transitionInstance) {
+        if (!transitionInstance.isActivitySet) {
+            throw new IllegalStateException();
+        }
+        return transitionInstance.activity;
+    }
+
+    void updateTransitionInstanceActivity(TransitionInstance transitionInstance) {
         int result = 1;
         for (Map.Entry<Complex, Integer> countEntry : transitionInstance.requiredComplexCounts.entrySet()) {
-            int availableCount = complexStore.get(countEntry.getKey());
-            if (countEntry.getValue() > availableCount) {
-                return 0;
+            Integer availableCount = complexStore.get(countEntry.getKey());
+            if (availableCount == null || countEntry.getValue() > availableCount) {
+                transitionInstance.activity = 0;
+                transitionInstance.isActivitySet = true;
+                return;
             }
             for (int index=0; index < countEntry.getValue(); index++) {
                 result *= (availableCount--);
@@ -419,7 +435,8 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         }
         
         result *= transitionInstance.targetLocationCount;
-        return result;
+        transitionInstance.activity = result;
+        transitionInstance.isActivitySet = true;
     }
 
     private Set<Transition> getAllTransitions() {
@@ -717,38 +734,44 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
             return null;
         }
 
-        boolean infiniteRate = transition.getRate().isInfinite(getVariables());
-        float[] allTransitionInstanceRates = new float[transitionInstances.size()];
-        float totalTransitionInstanceRate = 0;
-        for (int index = 0; index < allTransitionInstanceRates.length; index++) {
-            TransitionInstance transitionInstance = transitionInstances.get(index);
-            int activity = getTransitionInstanceActivity(transitionInstance);
-            float instanceRate = infiniteRate ? 1 : getTransitionInstanceRate(transitionInstance, transition);
-            allTransitionInstanceRates[index] = activity * instanceRate;
-            totalTransitionInstanceRate += activity * instanceRate;
+        boolean infiniteRate = transition.isInfiniteRate(getVariables());
+        float totalTransitionRate = 0;
+        if (infiniteRate) {
+            // TODO - worth caching this ?
+            for (TransitionInstance transitionInstance : transitionInstances) {
+                totalTransitionRate += transitionInstance.activity;
+            }
         }
-        
-        
+        else {
+            totalTransitionRate = finiteRateTransitionActivityMap.get(transition);
+        }
+
         TransitionInstance lastInstance = null;
-        float randomValue = (float) (totalTransitionInstanceRate * Math.random());
-        for (int index = 0; index < allTransitionInstanceRates.length; index++) {
-            if (allTransitionInstanceRates[index] > 0) {
-                lastInstance = transitionInstances.get(index);
-                if (randomValue < allTransitionInstanceRates[index]) {
+        float randomValue = (float) (totalTransitionRate * Math.random());
+        for (TransitionInstance transitionInstance : transitionInstances) {
+            float rate = infiniteRate ? transitionInstance.activity : transitionInstance.totalRate;
+            if (rate > 0) {
+                lastInstance = transitionInstance;
+                if (randomValue < rate) {
                     break;
                 }
-                randomValue -= allTransitionInstanceRates[index];
+                randomValue -= rate;
             }
         }
         return lastInstance;
     }
 
     private void increaseTransitionActivities(Complex complex, boolean isNewComplex) {
+        List<TransitionInstance> affectedTransitionInstances;
+        List<Transition> affectedTransitions;
+        
         if (isNewComplex) {
             List<Complex> affectedTransitionComponents = new ArrayList<Complex>();
-            List<Transition> affectedTransitions = new ArrayList<Transition>();
+            affectedTransitions = new ArrayList<Transition>();
+            affectedTransitionInstances = new ArrayList<TransitionInstance>();
             complexComponentMap.put(complex, affectedTransitionComponents);
             complexTransitionMap.put(complex, affectedTransitions);
+            complexTransitionInstanceMap.put(complex, affectedTransitionInstances);
     
             for (Transition transition : getAllTransitions()) {
                 boolean found = false;
@@ -780,18 +803,23 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
                 }
                 if (found) {
                     affectedTransitions.add(transition);
+                    affectedTransitionInstances.addAll(newTransitionInstances);
                     transitionInstanceMap.get(transition).addAll(newTransitionInstances);
-                    updateTransitionActivity(transition, false);
                 }
             }
     
             addComplexToObservables(complex);
         }
         else {
-            List<Transition> affectedTransitions = complexTransitionMap.get(complex);
-            for (Transition transition : affectedTransitions) {
-                updateTransitionActivity(transition, false);
-            }
+            affectedTransitionInstances = complexTransitionInstanceMap.get(complex);
+            affectedTransitions = complexTransitionMap.get(complex);
+        }
+        
+        for (TransitionInstance transitionInstance : affectedTransitionInstances) {
+            updateTransitionInstanceActivity(transitionInstance);
+        }
+        for (Transition transition : affectedTransitions) {
+            updateTransitionActivity(transition, false);
         }
     }
 
@@ -918,6 +946,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         return true;
     }
 
+    // TODO on the list to be removed...
     void removeTransitionInstances(List<TransitionInstance> transitionInstances, Complex complex) {
         if (transitionInstances == null || complex == null) {
             throw new NullPointerException();
@@ -939,6 +968,7 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
             List<Complex> affectedTransitionComponents = complexComponentMap.get(complex);
             complexComponentMap.remove(complex);
             complexTransitionMap.remove(complex);
+            complexTransitionInstanceMap.remove(complex);
     
             for (Complex transitionComponent : affectedTransitionComponents) {
                 ListIterator<ComplexMapping> iter = componentComplexMappingMap.get(transitionComponent).listIterator();
@@ -958,7 +988,12 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
             
             complexStore.remove(complex);
         }
-    
+        else {
+            List<TransitionInstance> affectedTransitionInstances = complexTransitionInstanceMap.get(complex);
+            for (TransitionInstance transitionInstance : affectedTransitionInstances) {
+                updateTransitionInstanceActivity(transitionInstance);
+            }
+        }
         for (Transition transition : affectedTransitions) {
             updateTransitionActivity(transition, false);
         }

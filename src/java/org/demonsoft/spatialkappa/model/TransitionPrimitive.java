@@ -15,6 +15,9 @@ public abstract class TransitionPrimitive {
         DELETE_LINK, DELETE_AGENT, CREATE_COMPLEX, MERGE_COMPLEXES, CREATE_AGENT, CREATE_LINK, CHANGE_STATE, MOVE_COMPLEX, MOVE_AGENTS
     }
 
+    protected static final List<List<Location>> NO_LOCATIONS = new ArrayList<List<Location>>();
+    protected static final List<ChannelConstraint> NO_CONSTRAINTS = new ArrayList<ChannelConstraint>();
+
     public final TransitionPrimitive.Type type;
     public final Agent sourceAgent;
     public final Agent targetAgent;
@@ -455,10 +458,10 @@ public abstract class TransitionPrimitive {
             private List<List<Location>> getPossibleChannelApplications(List<ChannelConstraint> channelConstraints, List<Channel> channels,
                     List<Compartment> compartments) {
                 
-                Channel channel = getChannel(channels, channelName);
                 if (channelConstraints.size() == 0) {
-                    return new ArrayList<List<Location>>(); // TODO constant
+                    return NO_LOCATIONS;
                 }
+                Channel channel = getChannel(channels, channelName);
                 return channel.applyChannel(channelConstraints, compartments);
             }
             
@@ -468,13 +471,13 @@ public abstract class TransitionPrimitive {
                 for (int index=0; index<sourceAgents.size(); index++) {
                     @SuppressWarnings("hiding")
                     Agent sourceAgent = sourceAgents.get(index);
-                    Location targetConstraint = targetLocations.get(index);
                     Agent realAgent = transformMap.get(sourceAgent);
                     Location oldLocation = realAgent.location;
                     
                     if (!oldLocation.equals(sourceAgent.location) && !sourceAgent.location.isRefinement(oldLocation)) {
-                        return new ArrayList<ChannelConstraint>(); // TODO constant
+                        return NO_CONSTRAINTS;
                     }
+                    Location targetConstraint = targetLocations.get(index);
                     ChannelConstraint channelConstraint = new ChannelConstraint(oldLocation, targetConstraint);
                     if (!result.contains(channelConstraint)) {
                         result.add(channelConstraint);

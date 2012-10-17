@@ -101,11 +101,14 @@ public class Transition {
 
     public final void setRate(VariableExpression rate, Map<String, Variable> variables) {
         this.rate = rate;
-        checkSimpleRate(variables);
-        this.hasSimpleRate = false;
+        applyVariables(variables);
     }
 
-    public void checkSimpleRate(Map<String, Variable> variables) {
+    /**
+     * Will attempt to pre-evaluate transition rate and cache until rate is changed using setRate()
+     * @param variables
+     */
+    public void applyVariables(Map<String, Variable> variables) {
         if (rate.isFixed(variables)) {
             hasSimpleRate = true;
             simpleRate = rate.evaluate(variables);
@@ -113,12 +116,13 @@ public class Transition {
         else {
             hasSimpleRate = false;
         }
-        
     }
 
     public final boolean isInfiniteRate(Map<String, Variable> variables) {
+        if (hasSimpleRate) {
+            return Float.POSITIVE_INFINITY == simpleRate;
+        }
         return rate.isInfinite(variables);
-        // TODO - use simple rate ?
     }
 
 

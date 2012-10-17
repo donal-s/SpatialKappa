@@ -23,7 +23,7 @@ public interface IKappaModel {
 
     public void addChannel(Channel link);
 
-    public void addAgentDeclaration(AggregateAgent agent);
+    public void addAgentDeclaration(AgentDeclaration agent);
 
     public void validate();
     
@@ -43,7 +43,7 @@ public interface IKappaModel {
     public Channel getChannel(String channelName);
 
     
-    public Map<String, AggregateAgent> getAgentDeclarationMap();
+    public Map<String, AgentDeclaration> getAgentDeclarationMap();
     
     public List<Perturbation> getPerturbations();
     

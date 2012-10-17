@@ -30,8 +30,8 @@ public class KappaModel implements IKappaModel {
 
     private static final ComplexMatcher matcher = new ComplexMatcher();
     
-    private final Map<String, AggregateAgent> agentDeclarationMap = new HashMap<String, AggregateAgent>();
-    private final Map<String, AggregateAgent> aggregateAgentMap = new HashMap<String, AggregateAgent>();
+    private final Map<String, AgentDeclaration> agentDeclarationMap = new HashMap<String, AgentDeclaration>();
+    private final Map<String, AgentDeclaration> aggregateAgentMap = new HashMap<String, AgentDeclaration>();
     private final List<InitialValue> initialValues = new ArrayList<InitialValue>();
     private final List<Perturbation> perturbations = new ArrayList<Perturbation>();
     private final List<Compartment> compartments = new ArrayList<Compartment>();
@@ -44,7 +44,7 @@ public class KappaModel implements IKappaModel {
 
     private void aggregateAgent(Agent agent) {
         if (aggregateAgentMap.get(agent.name) == null) {
-            aggregateAgentMap.put(agent.name, new AggregateAgent(agent.name));
+            aggregateAgentMap.put(agent.name, new AgentDeclaration(agent.name));
         }
         aggregateAgentMap.get(agent.name).addSites(agent.getSites());
     }
@@ -162,7 +162,7 @@ public class KappaModel implements IKappaModel {
             result.append(transition).append("\n");
         }
         result.append("\nAGENTS\n");
-        for (AggregateAgent agent : aggregateAgentMap.values()) {
+        for (AgentDeclaration agent : aggregateAgentMap.values()) {
             result.append(agent).append("\n");
         }
         result.append("\nINITIAL VALUES\n");
@@ -213,7 +213,7 @@ public class KappaModel implements IKappaModel {
     }
 
     private void addDefaultAgentSites(Agent agent) {
-        AggregateAgent aggregateAgent = agentDeclarationMap.get(agent.name);
+        AgentDeclaration aggregateAgent = agentDeclarationMap.get(agent.name);
 
         if (aggregateAgent == null) {
             throw new IllegalStateException("Agent '" + agent.name + "' not found");
@@ -371,7 +371,7 @@ public class KappaModel implements IKappaModel {
         return channels;
     }
     
-    Map<String, AggregateAgent> getAggregateAgentMap() {
+    Map<String, AgentDeclaration> getAggregateAgentMap() {
         return aggregateAgentMap;
     }
     
@@ -446,7 +446,7 @@ public class KappaModel implements IKappaModel {
         }
         
         for (Transition transition : transitions) {
-            VariableReference reference = transition.rate.reference;
+            VariableReference reference = transition.getRate().reference;
             if (reference != null) {
                 Variable variable = variables.get(reference.variableName);
                 if (variable == null) {
@@ -483,11 +483,11 @@ public class KappaModel implements IKappaModel {
             }
         }
         
-    	for (AggregateAgent agent : aggregateAgentMap.values()) {
+    	for (AgentDeclaration agent : aggregateAgentMap.values()) {
     		if (!agentDeclarationMap.containsKey(agent.getName())) {
                 throw new IllegalStateException("Agent '" + agent.getName() + "' not declared");
     		}
-    		AggregateAgent declaredAgent = agentDeclarationMap.get(agent.getName());
+    		AgentDeclaration declaredAgent = agentDeclarationMap.get(agent.getName());
     		Map<String, AggregateSite> declaredSites = new HashMap<String, AggregateSite>();
     		for (AggregateSite site : declaredAgent.getSites()) {
     			declaredSites.put(site.getName(), site);
@@ -635,11 +635,11 @@ public class KappaModel implements IKappaModel {
         
     }
 
-	public void addAgentDeclaration(AggregateAgent agent) {
+	public void addAgentDeclaration(AgentDeclaration agent) {
         agentDeclarationMap.put(agent.getName(), agent);
 	}
 
-	public Map<String, AggregateAgent> getAgentDeclarationMap() {
+	public Map<String, AgentDeclaration> getAgentDeclarationMap() {
 		return agentDeclarationMap;
 	}
 

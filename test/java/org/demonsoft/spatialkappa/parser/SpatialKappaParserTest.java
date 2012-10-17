@@ -552,8 +552,6 @@ public class SpatialKappaParserTest {
                 ")");
         
         
-        // TODO handle x-1 as x - 1
-        
         runParserRuleFail("channelDecl", "%channel: label compartment1 -> compartment2");
         runParserRuleFail("channelDecl", "%channel: label :compartment1 <- :compartment2");
         runParserRuleFail("channelDecl", "%channel: label ()");

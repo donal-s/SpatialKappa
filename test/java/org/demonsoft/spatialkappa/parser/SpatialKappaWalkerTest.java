@@ -26,7 +26,7 @@ import org.antlr.runtime.Parser;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.demonsoft.spatialkappa.model.Agent;
-import org.demonsoft.spatialkappa.model.AggregateAgent;
+import org.demonsoft.spatialkappa.model.AgentDeclaration;
 import org.demonsoft.spatialkappa.model.BooleanExpression;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Channel;
@@ -516,7 +516,7 @@ public class SpatialKappaWalkerTest {
 
     
     private void checkAgentDecl(String expected, String inputText) throws Exception {
-        Capture<AggregateAgent> agent = new Capture<AggregateAgent>();
+        Capture<AgentDeclaration> agent = new Capture<AgentDeclaration>();
         reset(mocks);
         kappaModel.addAgentDeclaration(capture(agent));
         replay(mocks);

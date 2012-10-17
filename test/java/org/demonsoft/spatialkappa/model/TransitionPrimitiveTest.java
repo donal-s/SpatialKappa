@@ -138,14 +138,14 @@ public class TransitionPrimitiveTest {
                 new String[] { "[agent:target(a!1), other:target(b!1)]" });
 
         
-//        // Mixed location complex - should do nothing // TODO 
-//        realSourceAgent = new Agent("agent", new Location("source"), new AgentSite("a", null, "1"));
-//        realSourceComplex = new Complex(
-//                new Agent("agent", new Location("source"), new AgentSite("a", null, "1")),
-//                new Agent("other", new Location("source"), new AgentSite("b", null, "1")));
-//
-//        checkApplyMoveAgents(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
-//                new String[] { "[agent:target(a!1), other:target(b!1)]" });
+        // Mixed location complex - should do nothing - using channel as a domain link
+        realSourceAgent = new Agent("agent", new Location("source"), new AgentSite("a", null, "1", "channel"));
+        realSourceComplex = new Complex(
+                realSourceAgent,
+                new Agent("other", new Location("target"), new AgentSite("b", null, "1")));
+
+        checkApplyMoveAgents(leftAgent, NOT_LOCATED, "channel",  realSourceAgent, channels, compartments,
+                new String[] { "[agent:source(a!1:channel), other:target(b!1)]" });
 
         compartments = getList(new Compartment("cytosol", 2));
         channels = getList(new Channel("intra", new Location("cytosol", INDEX_0), new Location("cytosol", INDEX_1)));

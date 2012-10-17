@@ -47,7 +47,7 @@ public class DiffusionTest {
     @Test
     public void testOpenSpineCase() throws Exception {
         simulation = createSimulation(OPEN_SPINE_INPUT);
-        simulation.runByEvent(1, 100000);
+        simulation.runByEvent(1, 200000);
         checkNonZeroDistribution("membrane", new String[] {"A()", "B()"});
     }
     

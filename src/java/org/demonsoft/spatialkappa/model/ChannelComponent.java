@@ -27,48 +27,38 @@ public class ChannelComponent {
     
     private static final List<List<ChannelConstraint>> NO_CONSTRAINTS = new ArrayList<List<ChannelConstraint>>();
     
-    public final String channelType;
     public final List<ChannelConstraint> templateConstraints = new ArrayList<ChannelConstraint>();
     
     // Constructor for unit tests
     public ChannelComponent(Location sourceLocation, Location targetLocation) {
-        this(null, getList(sourceLocation), getList(targetLocation));
+        this(getList(sourceLocation), getList(targetLocation));
     }
     
     public ChannelComponent(List<Location> sourceLocations, List<Location> targetLocations) {
-        this(null, sourceLocations, targetLocations);
-    }
-    
-    ChannelComponent(String channelType, List<Location> sourceLocations, List<Location> targetLocations) {
         if (sourceLocations == null || targetLocations == null) {
             throw new NullPointerException();
         }
         if (sourceLocations.size() == 0 || sourceLocations.size() != targetLocations.size()) {
             throw new IllegalArgumentException();
         }
-        this.channelType = channelType;
         for (int index=0; index < sourceLocations.size(); index++) {
             templateConstraints.add(new ChannelConstraint(sourceLocations.get(index), targetLocations.get(index)));
         }
     }
     
-    ChannelComponent(String channelType, List<ChannelConstraint> constraints) {
+    ChannelComponent(List<ChannelConstraint> constraints) {
         if (constraints == null) {
             throw new NullPointerException();
         }
         if (constraints.size() == 0) {
             throw new IllegalArgumentException();
         }
-        this.channelType = channelType;
         templateConstraints.addAll(constraints);
     }
     
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        if (channelType != null) {
-            builder.append("(").append(channelType).append(") ");
-        }
         builder.append(templateConstraints);
         return builder.toString();
     }
@@ -79,7 +69,6 @@ public class ChannelComponent {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((channelType == null) ? 0 : channelType.hashCode());
         result = prime * result + ((templateConstraints == null) ? 0 : templateConstraints.hashCode());
         return result;
     }
@@ -93,12 +82,6 @@ public class ChannelComponent {
         if (getClass() != obj.getClass())
             return false;
         ChannelComponent other = (ChannelComponent) obj;
-        if (channelType == null) {
-            if (other.channelType != null)
-                return false;
-        }
-        else if (!channelType.equals(other.channelType))
-            return false;
         if (templateConstraints == null) {
             if (other.templateConstraints != null)
                 return false;
@@ -161,12 +144,6 @@ public class ChannelComponent {
                             }
                         }
                         
-                        Compartment sourceCompartment = getCompartment(compartments, templateSourceLocation.getName());
-
-                        if (isNesting(sourceCompartment, targetCompartment)) {
-                            Compartment.translate(sourceCompartment, targetCompartment, targetIndices);
-                        }
-
                         if (targetCompartment == null || targetCompartment.isValidVoxel(targetIndices)) {
                             Location targetLocation = new Location(templateTargetLocation.getName(), targetIndices);
                             Location targetConstraint = constraint.targetConstraint;
@@ -395,8 +372,14 @@ public class ChannelComponent {
     
     static abstract class PredefinedChannelComponent extends ChannelComponent {
 
+        private final String channelType;
+
         public PredefinedChannelComponent(String channelType, List<Location> sourceLocations, List<Location> targetLocations) {
-            super(channelType, sourceLocations, targetLocations);
+            super(sourceLocations, targetLocations);
+            if (channelType == null) {
+                throw new NullPointerException();
+            }
+            this.channelType = channelType;
             for (Location location : sourceLocations) {
                 if (!location.isCompartment()) {
                     throw new IllegalArgumentException("Channel location must be compartment only: " + location);
@@ -502,6 +485,138 @@ public class ChannelComponent {
         
         protected abstract List<int[]> getNewLocations3D(int[] inputIndices, Compartment compartment);
 
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("(").append(channelType).append(") ").append(templateConstraints);
+            return builder.toString();
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((channelType == null) ? 0 : channelType.hashCode());
+            result = prime * result + ((templateConstraints == null) ? 0 : templateConstraints.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            PredefinedChannelComponent other = (PredefinedChannelComponent) obj;
+            if (channelType == null) {
+                if (other.channelType != null)
+                    return false;
+            }
+            else if (!channelType.equals(other.channelType))
+                return false;
+            if (templateConstraints == null) {
+                if (other.templateConstraints != null)
+                    return false;
+            }
+            else if (!templateConstraints.equals(other.templateConstraints))
+                return false;
+            return true;
+        }
+        
+        @Override
+        public void validate(List<Compartment> compartments) {
+            if (compartments == null) {
+                throw new NullPointerException();
+            }
+            for (ChannelConstraint constraint : templateConstraints) {
+                Compartment sourceCompartment = getCompartment(compartments, constraint.sourceLocation.getName());
+                Compartment targetCompartment = getCompartment(compartments, constraint.targetConstraint.getName());
+                
+                if (!isValidCompartmentDimension(sourceCompartment.dimensions.length) ||
+                        !isValidCompartmentDimension(targetCompartment.dimensions.length) ||
+                        sourceCompartment.dimensions.length != targetCompartment.dimensions.length) {
+                    throw new IllegalStateException("Component has wrong number of dimensions for channel");
+                }
+                
+                if (isNesting(sourceCompartment, targetCompartment)) {
+                    if (!isValidNesting(sourceCompartment, targetCompartment)) {
+                        throw new IllegalStateException("Compartments not compatible for nesting: '" + 
+                                sourceCompartment + "', '" + targetCompartment + "'");
+                    }
+                }
+            }
+        }
+
+        protected abstract boolean isValidCompartmentDimension(int dimensions);
+
+        private boolean isNesting(Compartment sourceCompartment, Compartment targetCompartment) {
+            return sourceCompartment != targetCompartment;
+        }
+        
+
+        private boolean isValidNesting(Compartment sourceCompartment, Compartment targetCompartment) {
+            Compartment inner;
+            Compartment outer;
+            
+            if (sourceCompartment.getDimensions()[0] < targetCompartment.getDimensions()[0]) {
+                inner = sourceCompartment;
+                outer = targetCompartment;
+            }
+            else {
+                outer = sourceCompartment;
+                inner = targetCompartment;
+            }
+            
+            if (OpenRectangle.class == outer.getClass()) {
+                if (Compartment.class == inner.getClass() && inner.dimensions.length == 2 || 
+                        OpenRectangle.class == inner.getClass()) {
+                    return isCorrectNestedDimensions(inner, outer, 2);
+                }
+            }
+            else if (OpenCuboid.class == outer.getClass()) {
+                if (Compartment.class == inner.getClass() && inner.dimensions.length == 3 || 
+                        OpenCuboid.class == inner.getClass()) {
+                    return isCorrectNestedDimensions(inner, outer, 3);
+                }
+            }
+            else if (OpenCircle.class == outer.getClass()) {
+                if (OpenCircle.class == inner.getClass() || SolidCircle.class == inner.getClass()) {
+                    return isCorrectNestedDimensions(inner, outer, 1);
+                }
+            }
+            else if (OpenSphere.class == outer.getClass()) {
+                if (OpenSphere.class == inner.getClass() || SolidSphere.class == inner.getClass()) {
+                    return isCorrectNestedDimensions(inner, outer, 1);
+                }
+            }
+            else if (OpenCylinder.class == outer.getClass()) {
+                if (OpenCylinder.class == inner.getClass() || SolidCylinder.class == inner.getClass()) {
+                    return isCorrectNestedDimensions(inner, outer, 3);
+                }
+            }
+            else if (OpenSpine.class == outer.getClass()) {
+                if (OpenSpine.class == inner.getClass() || SolidSpine.class == inner.getClass()) {
+                    return isCorrectNestedDimensions(inner, outer, 3) && 
+                            ((Spine) inner).getCylinderDiameter() + 2*outer.getThickness() == ((Spine) outer).getCylinderDiameter();
+                }
+            }
+            
+            return false;
+        }
+
+        private boolean isCorrectNestedDimensions(Compartment inner, Compartment outer, int dimensionCount) {
+            int thickness = outer.getThickness();
+            
+            for (int index=0; index < dimensionCount; index++) {
+                if (inner.getDimensions()[index] + 2*thickness != outer.getDimensions()[index]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
     }
     
     public static class EdgeNeighbourComponent extends PredefinedChannelComponent {
@@ -510,7 +625,6 @@ public class ChannelComponent {
         
         public EdgeNeighbourComponent(List<Location> sourceLocations, List<Location> targetLocations) {
             super(NAME, sourceLocations, targetLocations);
-            // TODO test dimensions
         }
         
         @Override
@@ -528,7 +642,12 @@ public class ChannelComponent {
 
         @Override
         protected List<int[]> getNewLocations3D(int[] location, Compartment compartment) {
-            return null;
+            throw new IllegalStateException();
+        }
+
+        @Override
+        protected boolean isValidCompartmentDimension(int dimensions) {
+            return dimensions == 2;
         }
 
     }
@@ -594,6 +713,11 @@ public class ChannelComponent {
 
             return result;
         }
+        
+        @Override
+        protected boolean isValidCompartmentDimension(int dimensions) {
+            return dimensions == 2 || dimensions == 3;
+        }
     }
     
     public static class HexagonalComponent extends PredefinedChannelComponent {
@@ -624,7 +748,12 @@ public class ChannelComponent {
 
         @Override
         protected List<int[]> getNewLocations3D(int[] location, Compartment compartment) {
-            return null;
+            throw new IllegalStateException();
+        }
+
+        @Override
+        protected boolean isValidCompartmentDimension(int dimensions) {
+            return dimensions == 2;
         }
 
     }
@@ -635,13 +764,12 @@ public class ChannelComponent {
         
         public FaceNeighbourComponent(List<Location> sourceLocations, List<Location> targetLocations) {
             super(NAME, sourceLocations, targetLocations);
-            // TODO test dimensions
         }
         
         
         @Override
         protected List<int[]> getNewLocations2D(int[] location, Compartment compartment) {
-            return null;
+            throw new IllegalStateException();
         }
 
         @Override
@@ -661,6 +789,10 @@ public class ChannelComponent {
             return result;
         }
 
+        @Override
+        protected boolean isValidCompartmentDimension(int dimensions) {
+            return dimensions == 3;
+        }
     }
 
     public static class RadialComponent extends PredefinedChannelComponent {
@@ -669,7 +801,6 @@ public class ChannelComponent {
         
         public RadialComponent(List<Location> sourceLocations, List<Location> targetLocations) {
             super(NAME, sourceLocations, targetLocations);
-            // TODO test dimensions
         }
         
         @Override
@@ -812,7 +943,11 @@ public class ChannelComponent {
             
             return result;
         }
-
+        
+        @Override
+        protected boolean isValidCompartmentDimension(int dimensions) {
+            return dimensions == 2 || dimensions == 3;
+        }
     }
 
     public static class RadialOutComponent extends PredefinedChannelComponent {
@@ -821,7 +956,6 @@ public class ChannelComponent {
         
         public RadialOutComponent(List<Location> sourceLocations, List<Location> targetLocations) {
             super(NAME, sourceLocations, targetLocations);
-            // TODO test dimensions
         }
         
         @Override
@@ -933,7 +1067,11 @@ public class ChannelComponent {
             }
             return result;
         }
-
+        
+        @Override
+        protected boolean isValidCompartmentDimension(int dimensions) {
+            return dimensions == 2 || dimensions == 3;
+        }
     }
 
     public static class RadialInComponent extends PredefinedChannelComponent {
@@ -942,7 +1080,6 @@ public class ChannelComponent {
         
         public RadialInComponent(List<Location> sourceLocations, List<Location> targetLocations) {
             super(NAME, sourceLocations, targetLocations);
-            // TODO test dimensions
         }
         
         @Override
@@ -995,7 +1132,11 @@ public class ChannelComponent {
             result.add(new int[] {newIndexY, newIndexX, newIndexZ});
             return result;
         }
-
+        
+        @Override
+        protected boolean isValidCompartmentDimension(int dimensions) {
+            return dimensions == 2 || dimensions == 3;
+        }
     }
 
     public static class LateralComponent extends PredefinedChannelComponent {
@@ -1004,7 +1145,6 @@ public class ChannelComponent {
         
         public LateralComponent(List<Location> sourceLocations, List<Location> targetLocations) {
             super(NAME, sourceLocations, targetLocations);
-            // TODO test dimensions
         }
         
         @Override
@@ -1096,6 +1236,11 @@ public class ChannelComponent {
             float doubleDeltaZ = location[2] - compartment.dimensions[2]/2f + 0.5f;
             return (float) Math.sqrt(doubleDeltaX*doubleDeltaX + doubleDeltaY*doubleDeltaY + doubleDeltaZ*doubleDeltaZ);
         }
+        
+        @Override
+        protected boolean isValidCompartmentDimension(int dimensions) {
+            return dimensions == 2 || dimensions == 3;
+        }
     }
     
     
@@ -1138,89 +1283,17 @@ public class ChannelComponent {
         for (ChannelConstraint constraint : templateConstraints) {
             Compartment sourceCompartment = getCompartment(compartments, constraint.sourceLocation.getName());
             Location location = constraint.sourceLocation;
-            int dimensions = location.isConcreteLocation() ? location.getFixedIndices().length : location.getIndices().length;
+            int dimensions = location.getDimensionCount();
             if (dimensions != 0 && dimensions != sourceCompartment.dimensions.length) {
                 throw new IllegalStateException("Not a valid voxel for compartment '" + sourceCompartment + "'");
             }
             Compartment targetCompartment = getCompartment(compartments, constraint.targetConstraint.getName());
             location = constraint.targetConstraint;
-            dimensions = location.isConcreteLocation() ? location.getFixedIndices().length : location.getIndices().length;
+            dimensions = location.getDimensionCount();
             if (dimensions != 0 && dimensions != targetCompartment.dimensions.length) {
                 throw new IllegalStateException("Not a valid voxel for compartment '" + targetCompartment + "'");
             }
-            
-            if (isNesting(sourceCompartment, targetCompartment)) {
-                if (!isValidNesting(sourceCompartment, targetCompartment)) {
-                    throw new IllegalStateException("Compartments not compatible for nesting: '" + sourceCompartment + "', '" + targetCompartment + "'");
-                }
-            }
-            
         }
-    }
-
-    protected boolean isNesting(Compartment sourceCompartment, Compartment targetCompartment) {
-        return channelType != null && sourceCompartment != targetCompartment;
-    }
-
-    private boolean isValidNesting(Compartment sourceCompartment, Compartment targetCompartment) {
-        Compartment inner;
-        Compartment outer;
-        
-        if (sourceCompartment.getDimensions()[0] < targetCompartment.getDimensions()[0]) {
-            inner = sourceCompartment;
-            outer = targetCompartment;
-        }
-        else {
-            outer = sourceCompartment;
-            inner = targetCompartment;
-        }
-        
-        if (OpenRectangle.class == outer.getClass()) {
-            if (Compartment.class == inner.getClass() && inner.dimensions.length == 2 || 
-                    OpenRectangle.class == inner.getClass()) {
-                return isCorrectNestedDimensions(inner, outer, 2);
-            }
-        }
-        else if (OpenCuboid.class == outer.getClass()) {
-            if (Compartment.class == inner.getClass() && inner.dimensions.length == 3 || 
-                    OpenCuboid.class == inner.getClass()) {
-                return isCorrectNestedDimensions(inner, outer, 3);
-            }
-        }
-        else if (OpenCircle.class == outer.getClass()) {
-            if (OpenCircle.class == inner.getClass() || SolidCircle.class == inner.getClass()) {
-                return isCorrectNestedDimensions(inner, outer, 1);
-            }
-        }
-        else if (OpenSphere.class == outer.getClass()) {
-            if (OpenSphere.class == inner.getClass() || SolidSphere.class == inner.getClass()) {
-                return isCorrectNestedDimensions(inner, outer, 1);
-            }
-        }
-        else if (OpenCylinder.class == outer.getClass()) {
-            if (OpenCylinder.class == inner.getClass() || SolidCylinder.class == inner.getClass()) {
-                return isCorrectNestedDimensions(inner, outer, 3);
-            }
-        }
-        else if (OpenSpine.class == outer.getClass()) {
-            if (OpenSpine.class == inner.getClass() || SolidSpine.class == inner.getClass()) {
-                return isCorrectNestedDimensions(inner, outer, 3) && 
-                        ((Spine) inner).getCylinderDiameter() + 2*outer.getThickness() == ((Spine) outer).getCylinderDiameter();
-            }
-        }
-        
-        return false;
-    }
-
-    private boolean isCorrectNestedDimensions(Compartment inner, Compartment outer, int dimensionCount) {
-        int thickness = outer.getThickness();
-        
-        for (int index=0; index < dimensionCount; index++) {
-            if (inner.getDimensions()[index] + 2*thickness != outer.getDimensions()[index]) {
-                return false;
-            }
-        }
-        return true;
     }
 
 }

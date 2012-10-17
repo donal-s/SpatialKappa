@@ -20,7 +20,7 @@ import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
-import org.demonsoft.spatialkappa.model.AggregateAgent;
+import org.demonsoft.spatialkappa.model.AgentDeclaration;
 import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.Channel;
 import org.demonsoft.spatialkappa.model.ChannelConstraint;
@@ -174,7 +174,7 @@ public class SpatialTranslator {
         return result.toString();
     }
 
-    private Object getKappaString(AggregateAgent agent, String agentDeclLocationState) {
+    private Object getKappaString(AgentDeclaration agent, String agentDeclLocationState) {
         StringBuilder builder = new StringBuilder();
         builder.append("%agent: ").append(agent.getName()).append("(");
 
@@ -198,7 +198,7 @@ public class SpatialTranslator {
         return builder.toString();
     }
 
-    private List<Agent> getAggregateAgents(Map<String, AggregateAgent> aggregateAgentMap) {
+    private List<Agent> getAggregateAgents(Map<String, AgentDeclaration> aggregateAgentMap) {
         List<Agent> result = new ArrayList<Agent>();
         for (String agentName : aggregateAgentMap.keySet()) {
             result.add(new Agent(agentName));
@@ -392,7 +392,7 @@ public class SpatialTranslator {
 
     
     private int writeAgents(StringBuilder builder, String[][] stateSuffixPairs, Transition transition,
-            List<Agent> agents, int startLabelSuffix, Map<String, AggregateAgent> aggregateAgentMap, boolean forceSuffix) {
+            List<Agent> agents, int startLabelSuffix, Map<String, AgentDeclaration> aggregateAgentMap, boolean forceSuffix) {
 
         int labelSuffix = startLabelSuffix;
         List<Agent> isolatedAgents = getIsolatedAgents(agents, aggregateAgentMap);
@@ -416,14 +416,14 @@ public class SpatialTranslator {
         return labelSuffix;
     }
 
-    private List<Agent> getIsolatedAgents(List<Agent> agents, Map<String, AggregateAgent> aggregateAgentMap) {
+    private List<Agent> getIsolatedAgents(List<Agent> agents, Map<String, AgentDeclaration> aggregateAgentMap) {
         List<Agent> result = new ArrayList<Agent>();
         for (Agent agent : agents) {
             List<AgentSite> isolatedSites = new ArrayList<AgentSite>();
             isolatedSites.addAll(agent.getSites()); // Sites are cloned - no
                                                     // problem here
 
-            AggregateAgent aggregateAgent = aggregateAgentMap.get(agent.name);
+            AgentDeclaration aggregateAgent = aggregateAgentMap.get(agent.name);
             for (AggregateSite site : aggregateAgent.getSites()) {
                 if (site.getLinks().size() > 0 && agent.getSite(site.getName()) == null) {
                     isolatedSites.add(new AgentSite(site.getName(), null, null));

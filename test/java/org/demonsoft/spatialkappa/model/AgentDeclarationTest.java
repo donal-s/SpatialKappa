@@ -10,33 +10,33 @@ import java.util.List;
 
 import org.junit.Test;
 
-public class AggregateAgentTest {
+public class AgentDeclarationTest {
 
     @SuppressWarnings("unused")
     @Test
-    public void testAggregateAgent() {
+    public void testAgentDeclaration() {
         try {
-            new AggregateAgent(null);
+            new AgentDeclaration(null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
         
-        AggregateAgent agent = new AggregateAgent("name");
+        AgentDeclaration agent = new AgentDeclaration("name");
         assertEquals("name", agent.getName());
         assertTrue(agent.getSites().isEmpty());
     }
 
     @SuppressWarnings("unused")
     @Test
-    public void testAggregateAgent_nameAndInterfaces_varArgs() {
+    public void testAgentDeclaration_nameAndInterfaces_varArgs() {
         Collection<AggregateSite> interfaces = new ArrayList<AggregateSite>();
         interfaces.add(new AggregateSite("interface1", "state1", "link1"));
         interfaces.add(new AggregateSite("interface2", "state2", "link2"));
         
         try {
-            new AggregateAgent(null, new AggregateSite("interface1", "state1", "link1"), new AggregateSite("interface2", "state2", "link2"));
+            new AgentDeclaration(null, new AggregateSite("interface1", "state1", "link1"), new AggregateSite("interface2", "state2", "link2"));
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -44,14 +44,14 @@ public class AggregateAgentTest {
         }
         
         try {
-            new AggregateAgent("name", (AggregateSite) null);
+            new AgentDeclaration("name", (AggregateSite) null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
         
-        AggregateAgent agent = new AggregateAgent("name", new AggregateSite("interface1", "state1", "link1"), new AggregateSite("interface2", "state2", "link2"));
+        AgentDeclaration agent = new AgentDeclaration("name", new AggregateSite("interface1", "state1", "link1"), new AggregateSite("interface2", "state2", "link2"));
         assertEquals("name", agent.getName());
         assertEquals(2, agent.getSites().size());
         assertTrue(agent.getSites().containsAll(interfaces));
@@ -60,14 +60,14 @@ public class AggregateAgentTest {
     @Test
     public void testAddInterfaces() {
         try {
-            new AggregateAgent("name").addSites(null);
+            new AgentDeclaration("name").addSites(null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
             // Expected exception
         }
         
-        AggregateAgent agent = new AggregateAgent("name", new AggregateSite("interface1", "state1", "link1"), new AggregateSite("interface2", "state2", "link2"));
+        AgentDeclaration agent = new AgentDeclaration("name", new AggregateSite("interface1", "state1", "link1"), new AggregateSite("interface2", "state2", "link2"));
 
         List<AggregateSite> expected = new ArrayList<AggregateSite>();
         expected.add(new AggregateSite("interface1", "state1", "link1"));

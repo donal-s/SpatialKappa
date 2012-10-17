@@ -28,7 +28,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
-import org.demonsoft.spatialkappa.model.AggregateAgent;
+import org.demonsoft.spatialkappa.model.AgentDeclaration;
 import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Channel;
@@ -89,8 +89,8 @@ public class TransitionMatchingSimulationTest {
 
     @Test
     public void testGetCurrentObservation_singleCellCompartment() {
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent1"));
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent2"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent1"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent2"));
 
         kappaModel.addCompartment("cytosol", null, new ArrayList<Integer>());
         kappaModel.addCompartment("nucleus", null, getList(1));
@@ -118,7 +118,7 @@ public class TransitionMatchingSimulationTest {
     
     @Test
     public void testGetCurrentObservation_1DCompartment() {
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent1"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent1"));
         kappaModel.addCompartment("cytosol", null, getList(4));
         
         kappaModel.addVariable(getList(new Agent("agent1")), "observable1", new Location("cytosol"), true);
@@ -139,9 +139,9 @@ public class TransitionMatchingSimulationTest {
 
     @Test
     public void testGetCurrentObservation_voxelObservationsSplitAcrossVoxels() {
-        kappaModel.addAgentDeclaration(new AggregateAgent("A", 
+        kappaModel.addAgentDeclaration(new AgentDeclaration("A", 
                 new AggregateSite("x", (String) null, null), new AggregateSite("y", (String) null, null)));
-        kappaModel.addAgentDeclaration(new AggregateAgent("B", 
+        kappaModel.addAgentDeclaration(new AgentDeclaration("B", 
                 new AggregateSite("x", (String) null, null), new AggregateSite("y", (String) null, null)));
         kappaModel.addCompartment("loc1", null, getList(4));
         kappaModel.addCompartment(new Compartment("loc2"));
@@ -216,7 +216,7 @@ public class TransitionMatchingSimulationTest {
 
     @Test
     public void testGetCurrentObservation_2DCompartment() {
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent1"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent1"));
         List<Integer> dimensions = getList(3, 2);
         kappaModel.addCompartment("cytosol", null, dimensions);
         
@@ -276,11 +276,11 @@ public class TransitionMatchingSimulationTest {
 
     @Test
     public void testGetQuantity_noCompartments() {
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent1"));
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent2"));
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent3"));
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent4"));
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent5"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent1"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent2"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent3"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent4"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent5"));
         
         try {
             simulation.getComplexQuantity(null);
@@ -322,8 +322,8 @@ public class TransitionMatchingSimulationTest {
     
     @Test
     public void testGetQuantity_singleCellCompartment() {
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent1"));
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent2"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent1"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent2"));
         kappaModel.addCompartment("cytosol", null, new ArrayList<Integer>());
         List<Integer> dimensions = getList(1);
         kappaModel.addCompartment("nucleus", null, dimensions);
@@ -347,7 +347,7 @@ public class TransitionMatchingSimulationTest {
 
     @Test
     public void testGetQuantity_1DCompartment() {
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent1"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent1"));
         List<Integer> dimensions = getList(4);
         kappaModel.addCompartment("cytosol", null, dimensions);
         
@@ -366,7 +366,7 @@ public class TransitionMatchingSimulationTest {
 
     @Test
     public void testGetQuantity_2DCompartment() {
-        kappaModel.addAgentDeclaration(new AggregateAgent("agent1"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("agent1"));
         List<Integer> dimensions = getList(3, 2);
         kappaModel.addCompartment("cytosol", null, dimensions);
         
@@ -658,31 +658,27 @@ public class TransitionMatchingSimulationTest {
         
         
         // Single list of single mapping
-        simulation.transitionInstanceMap.put(transition, 
-                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1)));
-        assertTrue(simulation.isTransitionActive(transition));
+        
+        List<TransitionInstance> instances = getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1));
+        checkIsTransitionActive(transition, instances, true);
         
         // Single list of multiple mappings
-        simulation.transitionInstanceMap.put(transition, 
-                getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1)));
-        assertTrue(simulation.isTransitionActive(transition));
+        checkIsTransitionActive(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1)), true);
         
         // Multiple lists of single mappings
-        simulation.transitionInstanceMap.put(transition, 
+        checkIsTransitionActive(transition, 
                 getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1),
-                        new TransitionInstance(getList(new ComplexMapping(complex2)), 1)));
-        assertTrue(simulation.isTransitionActive(transition));
+                        new TransitionInstance(getList(new ComplexMapping(complex2)), 1)), true);
         
         // Multiple lists of multiple mappings
-        simulation.transitionInstanceMap.put(transition, 
+        checkIsTransitionActive(transition, 
                 getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1),
-                        new TransitionInstance(getList(new ComplexMapping(complex3), new ComplexMapping(complex4)), 1)));
-        assertTrue(simulation.isTransitionActive(transition));
+                        new TransitionInstance(getList(new ComplexMapping(complex3), new ComplexMapping(complex4)), 1)), true);
         
         // Multiple target locations per mapping
-        simulation.transitionInstanceMap.put(transition, 
-                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 2)));
-        assertTrue(simulation.isTransitionActive(transition));
+        checkIsTransitionActive(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 2)), true);
         
         transition = new Transition("createComplex", null, null, getList(new Agent("newAgent")), 1f);
         assertTrue(simulation.isTransitionActive(transition));
@@ -691,37 +687,44 @@ public class TransitionMatchingSimulationTest {
         simulation.complexStore.put(complex1, 0);
         
         // Single list of single mapping
-        simulation.transitionInstanceMap.put(transition, 
-                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1)));
-        assertFalse(simulation.isTransitionActive(transition));
+        checkIsTransitionActive(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1)), false);
         
         // Single list of multiple mappings
-        simulation.transitionInstanceMap.put(transition, 
-                getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1)));
-        assertFalse(simulation.isTransitionActive(transition));
+        checkIsTransitionActive(transition, 
+                getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1)), false);
         
         // Multiple lists of single mappings
-        simulation.transitionInstanceMap.put(transition, 
+        checkIsTransitionActive(transition, 
                 getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 1),
-                        new TransitionInstance(getList(new ComplexMapping(complex2)), 1)));
-        assertTrue(simulation.isTransitionActive(transition));
+                        new TransitionInstance(getList(new ComplexMapping(complex2)), 1)), true);
         
         // Multiple lists of multiple mappings
-        simulation.transitionInstanceMap.put(transition, 
+        checkIsTransitionActive(transition, 
                 getList(new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1),
-                        new TransitionInstance(getList(new ComplexMapping(complex3), new ComplexMapping(complex4)), 1)));
-        assertTrue(simulation.isTransitionActive(transition));
+                        new TransitionInstance(getList(new ComplexMapping(complex3), new ComplexMapping(complex4)), 1)), true);
         
         // Multiple target locations per mapping
-        simulation.transitionInstanceMap.put(transition, 
-                getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 2)));
-        assertFalse(simulation.isTransitionActive(transition));
+        checkIsTransitionActive(transition, getList(new TransitionInstance(getList(new ComplexMapping(complex1)), 2)), false);
         
         transition = new Transition("createComplex", null, null, getList(new Agent("newAgent")), 1f);
         assertTrue(simulation.isTransitionActive(transition));
     }
     
     
+    
+    private void checkIsTransitionActive(Transition transition, List<TransitionInstance> transitionInstances, boolean expectedActive) {
+        updateTransitionInstanceActivities(transitionInstances);
+        simulation.transitionInstanceMap.put(transition, transitionInstances);
+        assertEquals(expectedActive, simulation.isTransitionActive(transition));
+    }
+
+    private void updateTransitionInstanceActivities(List<TransitionInstance> instances) {
+        for (TransitionInstance instance : instances) {
+            simulation.updateTransitionInstanceActivity(instance);
+        }
+    }
+
     @Test
     public void testGetTransitionInstanceActivity() {
         try {
@@ -742,16 +745,28 @@ public class TransitionMatchingSimulationTest {
         simulation.complexStore.put(complex4, 2);
         
         
-        // Single list of single mapping
+        // Check if updateTransitionInstanceActivity not called
         TransitionInstance instance = new TransitionInstance(getList(new ComplexMapping(complex1)), 1);
+        try {
+            simulation.getTransitionInstanceActivity(instance);
+            fail("uninitialised should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
+        
+        // Single list of single mapping
+        simulation.updateTransitionInstanceActivity(instance);
         assertEquals(3, simulation.getTransitionInstanceActivity(instance));
         
         // Single list of multiple mappings
         instance = new TransitionInstance(getList(new ComplexMapping(complex1), new ComplexMapping(complex2)), 1);
+        simulation.updateTransitionInstanceActivity(instance);
         assertEquals(21, simulation.getTransitionInstanceActivity(instance));
         
         // Multiple target locations per mapping
         instance = new TransitionInstance(getList(new ComplexMapping(complex1)), 2);
+        simulation.updateTransitionInstanceActivity(instance);
         assertEquals(6, simulation.getTransitionInstanceActivity(instance));
     }
     
@@ -925,6 +940,10 @@ public class TransitionMatchingSimulationTest {
 
     private void checkPickTransitionInstance(Transition transition, int runCount, int error,
             List<TransitionInstance> transitionInstances, int[] expectedDistribution) {
+        
+        updateTransitionInstanceActivities(transitionInstances);
+        simulation.updateTransitionActivity(transition, false);
+        
         int[] actualDistribution = new int[expectedDistribution.length];
         
         for (int run=0; run < runCount; run++) {
@@ -1096,7 +1115,7 @@ public class TransitionMatchingSimulationTest {
         assertFalse(expectedFile.exists());
         
         kappaModel.addCompartment(new Compartment("location", 5, 4));
-        kappaModel.addAgentDeclaration(new AggregateAgent("A"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("A"));
         kappaModel.addInitialValue(getList(new Agent("A")), "7", new Location("location", INDEX_0, INDEX_1));
         simulation = new TransitionMatchingSimulation(kappaModel);
         simulation.eventCount = 444;
@@ -1107,7 +1126,7 @@ public class TransitionMatchingSimulationTest {
             String output = FileUtils.readFileToString(expectedFile);
             assertEquals("%init: 7 A:location[0][1]()\n", output);
 
-            kappaModel.addAgentDeclaration(new AggregateAgent("B"));
+            kappaModel.addAgentDeclaration(new AgentDeclaration("B"));
             kappaModel.addInitialValue(getList(new Agent("B")), "9", new Location("location", INDEX_1, INDEX_0));
             simulation = new TransitionMatchingSimulation(kappaModel);
             simulation.eventCount = 444;
@@ -1138,7 +1157,7 @@ public class TransitionMatchingSimulationTest {
             kappaModel = new KappaModel();
             kappaModel.addCompartment(new Compartment.SolidSphere("cytosol", 2));
             kappaModel.addCompartment(new Compartment.OpenSphere("membrane", 4, 1));
-            kappaModel.addAgentDeclaration(new AggregateAgent("A1", new AggregateSite("d", (String) null, null)));
+            kappaModel.addAgentDeclaration(new AgentDeclaration("A1", new AggregateSite("d", (String) null, null)));
             kappaModel.addInitialValue(getList(
                     new Agent("A1", new Location("membrane", INDEX_0, INDEX_1, INDEX_1), new AgentSite("d", null, "1")),
                     new Agent("A1", new Location("cytosol"), new AgentSite("d", null, "1", "domainLink"))), 

@@ -9,25 +9,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// TODO rename to AgentDeclaration
-public class AggregateAgent {
+public class AgentDeclaration {
     
     private final Map<String, AggregateSite> sites = new HashMap<String, AggregateSite>();
     private final List<String> siteNames = new ArrayList<String>();
     private final String name;
     
-    public AggregateAgent(String name) {
+    public AgentDeclaration(String name) {
         if (name == null) {
             throw new NullPointerException();
         }
         this.name = name;
     }
     
-    public AggregateAgent(String name, AggregateSite... sites) {
+    public AgentDeclaration(String name, AggregateSite... sites) {
         this(name, Arrays.asList(sites));
     }
     
-    public AggregateAgent(String name, List<AggregateSite> sites) {
+    public AgentDeclaration(String name, List<AggregateSite> sites) {
         this(name);
         for (AggregateSite site : sites) {
             this.sites.put(site.getName(), site);
