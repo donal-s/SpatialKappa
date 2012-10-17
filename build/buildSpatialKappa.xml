@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project SpatialKappa with Jar-in-Jar Loader" basedir="..">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard (then tweaked) -->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <property name="VERSION" value="v2.0.10"/> <!-- Remember to update this -->
+        
+    	<property name="JAR_FILENAME" value="SpatialKappa-${VERSION}.jar"/>
+    	
+    	<delete file="${JAR_FILENAME}" failonerror="false"/>
+    	
+    	<jar destfile="${JAR_FILENAME}">
+            <manifest>
+                <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
+                <attribute name="Rsrc-Main-Class" value="org.demonsoft.spatialkappa.ui.SpatialKappaSimulator"/>
+                <attribute name="Class-Path" value="."/>
+                <attribute name="Rsrc-Class-Path" value="./ jlfgr-1_0.jar antlr-3.2.jar commons-io-1.4.jar jcommon-1.0.16.jar jfreechart-1.0.13.jar"/>
+            </manifest>
+            <zipfileset src="build/jar-in-jar-loader.zip"/>
+        	<fileset dir="bin">
+        		<include name="org/demonsoft/spatialkappa/**/*.class"/>
+        		<exclude name="**/*Test*"/>
+        		<exclude name="**/*CompartmentViewPanel*"/>
+			</fileset>
+            <zipfileset dir="src/lib" includes="jlfgr-1_0.jar"/>
+            <zipfileset dir="src/lib" includes="antlr-3.2.jar"/>
+            <zipfileset dir="src/lib" includes="commons-io-1.4.jar"/>
+            <zipfileset dir="src/lib" includes="jcommon-1.0.16.jar"/>
+            <zipfileset dir="src/lib" includes="jfreechart-1.0.13.jar"/>
+        </jar>
+    	
+    	<chmod file="${JAR_FILENAME}" perm="ugo+x"/>
+    </target>
+</project>
