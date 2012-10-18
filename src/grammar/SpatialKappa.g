@@ -451,7 +451,9 @@ options {backtrack=true;}
   
 id
   :
-    ( INT | ID_FRAGMENT ) 
+  'inf' | 'pi' | 'T' | 'E' | 'Tmax' | 'Tsim' | 'Emax' | 'repeat' | 'until' | 'do'
+  | 'set' | 'true' | 'false' | 'not' | 'mod' | 'log' | 'sin' | 'cos' | 'tan' | 'sqrt' | 'exp' | 'int' 
+  | ( INT | ID_FRAGMENT ) 
    ->
     {new CommonTree(new CommonToken(ID,$id.text.toString()))} // Avoid lexing as mutiple tokens
   ;

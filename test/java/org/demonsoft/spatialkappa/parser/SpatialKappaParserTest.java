@@ -674,9 +674,21 @@ public class SpatialKappaParserTest {
 //        runParserRule("id", "A _ new", "A _ new"); // TODO check
 //        runParserRule("id", "A - new", "A - new");
         
+        
+        String[] keywords = new String[] {
+                "inf", "pi", "T", "E", "Tmax", "Tsim", "Emax", "repeat", "until", "do", 
+                "set", "true", "false", "not", "mod", "log", "sin", "cos", "tan", "sqrt", "exp", "int",
+                };
+        for (String keyword : keywords) {
+            runParserRule("id", keyword, keyword); 
+        }
+
         // Invalid characters
         runParserRule("id", "A^new", "A");
-
+        
+        // Reserved keywords
+        runParserRuleFail("id", "fixed");
+        runParserRuleFail("id", "voxel");
     }
     
     @Test

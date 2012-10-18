@@ -11,7 +11,7 @@ package org.demonsoft.spatialkappa.parser;
 
 import org.demonsoft.spatialkappa.model.Agent;
 import org.demonsoft.spatialkappa.model.AgentSite;
-import org.demonsoft.spatialkappa.model.AggregateAgent;
+import org.demonsoft.spatialkappa.model.AgentDeclaration;
 import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.BooleanExpression;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
@@ -187,7 +187,7 @@ agentDecl
     )*
   )
   {
-    kappaModel.addAgentDeclaration(new AggregateAgent($id.text, sites));
+    kappaModel.addAgentDeclaration(new AgentDeclaration($id.text, sites));
   }
   ;
   
