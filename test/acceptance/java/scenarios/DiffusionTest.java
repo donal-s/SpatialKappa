@@ -130,7 +130,7 @@ public class DiffusionTest {
             "'diffusion A' A() ->:diffusion A() @ 1.0\n" + 
             "'diffusion B' B() ->:diffusion B() @ 1.0\n" + 
             "%init: 2000 :membrane [3][3][0] A() \n" + // Top
-            "%init: 2000 :membrane [3][3][8] B() \n" + // Bottom
+            "%init: 2000 :membrane [3][1][8] B() \n" + // Bottom edge
             "%obs: voxel 'A()' :membrane A() \n" + 
             "%obs: voxel 'B()' :membrane B() \n" + 
             "";
@@ -138,7 +138,7 @@ public class DiffusionTest {
     private static final String NESTED_SPINE_INPUT = 
             "%agent: A_Membrane(d)\n" + 
             "%agent: A_Cytosol(d)\n" + 
-            "%compartment: cytosol SolidSpine [3][3][1]\n" +
+            "%compartment: cytosol SolidSpine [3][3][2]\n" +
             "%compartment: membrane OpenSpine [5][5][1][1]\n" +
             "%channel: diffusion Neighbour :cytosol, :membrane -> :cytosol, :membrane\n" + 
             "%channel: domainLink Neighbour :membrane -> :cytosol\n" + 

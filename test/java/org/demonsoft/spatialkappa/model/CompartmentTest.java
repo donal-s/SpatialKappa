@@ -376,8 +376,8 @@ public class CompartmentTest {
         checkCompartmentReferences3D(compartment.getDistributedCellReferences(), compartment,
                 new String[][] {
                     {"       ", " xxxxxx", " xxxxxx", "       "}, 
-                    {" xxxxxx", "x     x", "x     x", " xxxxxx"}, 
-                    {" xxxxxx", "x     x", "x     x", " xxxxxx"},
+                    {" xxxxxx", "x      ", "x      ", " xxxxxx"}, 
+                    {" xxxxxx", "x      ", "x      ", " xxxxxx"},
                     {"       ", " xxxxxx", " xxxxxx", "       "}, 
                 }
         );
@@ -388,7 +388,7 @@ public class CompartmentTest {
                     {"           ", "           ", "  xxx      ", "  xxx      ", "  xxx      ", "           ", "           "}, 
                     {"           ", " xxxxx     ", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxx     ", "           "}, 
                     {"  xxx      ", " xxxxxxxxxx", "xxx xxxxxxx", "xx   xxxxxx", "xxx xxxxxxx", " xxxxxxxxxx", "  xxx      "}, 
-                    {"  xxx      ", " xxxxxxxxxx", "xx   xxxxxx", "xx       xx", "xx   xxxxxx", " xxxxxxxxxx", "  xxx      "}, 
+                    {"  xxx      ", " xxxxxxxxxx", "xx   xxxxxx", "xx         ", "xx   xxxxxx", " xxxxxxxxxx", "  xxx      "}, 
                     {"  xxx      ", " xxxxxxxxxx", "xxx xxxxxxx", "xx   xxxxxx", "xxx xxxxxxx", " xxxxxxxxxx", "  xxx      "}, 
                     {"           ", " xxxxx     ", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxxxxxxx", " xxxxx     ", "           "}, 
                     {"           ", "           ", "  xxx      ", "  xxx      ", "  xxx      ", "           ", "           "}, 
@@ -519,9 +519,14 @@ public class CompartmentTest {
         assertTrue(compartment.isValidVoxel(3, 3, 1));
         assertFalse(compartment.isValidVoxel(3, 3, 2));
         assertFalse(compartment.isValidVoxel(3, 3, 8));
-        assertTrue(compartment.isValidVoxel(3, 3, 9));
-        assertTrue(compartment.isValidVoxel(3, 3, 10));
+        assertFalse(compartment.isValidVoxel(3, 3, 9));
+        assertFalse(compartment.isValidVoxel(3, 3, 10));
         assertFalse(compartment.isValidVoxel(3, 3, 11));
+        
+        assertTrue(compartment.isValidVoxel(3, 2, 8));
+        assertTrue(compartment.isValidVoxel(3, 2, 9));
+        assertTrue(compartment.isValidVoxel(3, 2, 10));
+        assertFalse(compartment.isValidVoxel(3, 2, 11));
     }
 
 

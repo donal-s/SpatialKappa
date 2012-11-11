@@ -43,11 +43,6 @@ import org.junit.Test;
 
 public class ChannelComponentTest {
 
-    public static CellIndexExpression INDEX_3 = new CellIndexExpression("3");
-    public static CellIndexExpression INDEX_4 = new CellIndexExpression("4");
-    public static CellIndexExpression INDEX_6 = new CellIndexExpression("6");
-
-
     @SuppressWarnings({ "unused" })
     @Test
     public void testConstructor() {
@@ -137,12 +132,12 @@ public class ChannelComponentTest {
         
         // Single cell-cell link
         compartments.clear();
-        reference1 = new Location("a", INDEX_1);
-        reference2 = new Location("a", INDEX_2);
+        reference1 = new Location("a", 1);
+        reference2 = new Location("a", 2);
         component = new ChannelComponent(reference1, reference2);
         compartments.add(new Compartment("a", 4));
         
-        assertEquals(getList(new ChannelConstraint(new Location("a", INDEX_1), new Location("a", INDEX_2))), 
+        assertEquals(getList(new ChannelConstraint(new Location("a", 1), new Location("a", 2))), 
                 component.getCellReferencePairs(compartments));
 
         VariableReference refX = new VariableReference("x");
@@ -155,9 +150,9 @@ public class ChannelComponentTest {
         compartments.add(new Compartment("a", 4));
         
         assertEquals(getList(
-                new ChannelConstraint(new Location("a", INDEX_0), new Location("a", INDEX_1)),
-                new ChannelConstraint(new Location("a", INDEX_1), new Location("a", INDEX_2)),
-                new ChannelConstraint(new Location("a", INDEX_2), new Location("a", new CellIndexExpression("3")))),
+                new ChannelConstraint(new Location("a", 0), new Location("a", 1)),
+                new ChannelConstraint(new Location("a", 1), new Location("a", 2)),
+                new ChannelConstraint(new Location("a", 2), new Location("a", new CellIndexExpression("3")))),
                 component.getCellReferencePairs(compartments));
 
         // Linear array negative
@@ -168,9 +163,9 @@ public class ChannelComponentTest {
         compartments.add(new Compartment("a", 4));
         
         assertEquals(getList(
-                new ChannelConstraint(new Location("a", INDEX_1), new Location("a", INDEX_0)),
-                new ChannelConstraint(new Location("a", INDEX_2), new Location("a", INDEX_1)),
-                new ChannelConstraint(new Location("a", new CellIndexExpression("3")), new Location("a", INDEX_2))),
+                new ChannelConstraint(new Location("a", 1), new Location("a", 0)),
+                new ChannelConstraint(new Location("a", 2), new Location("a", 1)),
+                new ChannelConstraint(new Location("a", new CellIndexExpression("3")), new Location("a", 2))),
                 component.getCellReferencePairs(compartments));
 
         // TODO channel type tests
@@ -192,7 +187,7 @@ public class ChannelComponentTest {
         }
 
         try {
-            component.applyChannel(getList(new ChannelConstraint(new Location("a", INDEX_1), new Location("a"))), null);
+            component.applyChannel(getList(new ChannelConstraint(new Location("a", 1), new Location("a"))), null);
             fail("null should have failed");
         }
         catch (NullPointerException ex) {
@@ -203,7 +198,7 @@ public class ChannelComponentTest {
             // Unknown compartment
             ChannelComponent component2 = new ChannelComponent(new Location("a", INDEX_X), 
                     new Location("c", INDEX_X_PLUS_1));
-            component2.applyChannel(getList(new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED)), compartments);
+            component2.applyChannel(getList(new ChannelConstraint(new Location("a", 1), NOT_LOCATED)), compartments);
             fail("missing compartment should have failed");
         }
         catch (IllegalStateException ex) {
@@ -214,7 +209,7 @@ public class ChannelComponentTest {
             // Unknown compartment
             ChannelComponent component2 = new ChannelComponent(new Location("c", INDEX_X), 
                     new Location("a", INDEX_X_PLUS_1));
-            component2.applyChannel(getList(new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED)), compartments);
+            component2.applyChannel(getList(new ChannelConstraint(new Location("a", 1), NOT_LOCATED)), compartments);
             fail("missing compartment should have failed");
         }
         catch (IllegalStateException ex) {
@@ -223,21 +218,21 @@ public class ChannelComponentTest {
 
         List<Location> expected = new ArrayList<Location>();
 
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_X), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", new CellIndexExpression("3")), NOT_LOCATED, compartments));
         
-        expected.add(new Location("a", INDEX_2));
+        expected.add(new Location("a", 2));
         assertEquals(expected, component.applyChannel(new Location("a", 1), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), new Location("a"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), new Location("a", INDEX_2), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), new Location("a", 2), compartments));
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), new Location("a", INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), new Location("a", 0), compartments));
         
         compartments.clear();
         compartments.add(new Compartment("a", 3));
@@ -247,10 +242,10 @@ public class ChannelComponentTest {
         component = new ChannelComponent(reference1, reference2);
 
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0), NOT_LOCATED, compartments));
 
-        expected.add(new Location("a", INDEX_0));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), NOT_LOCATED, compartments));
         
         compartments.clear();
         compartments.add(new Compartment("a", 5, 5, 5));
@@ -260,25 +255,25 @@ public class ChannelComponentTest {
         component = new ChannelComponent(reference1, reference2);
 
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 1, 1), NOT_LOCATED, compartments));
 
-        expected.add(new Location("a", new CellIndexExpression("3"), new CellIndexExpression("4"), INDEX_2));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 3, 4, 2));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 0), NOT_LOCATED, compartments));
     }
     
     
     @Test
     public void testApplyChannel_fixedTarget() {
-        Location reference1 = new Location("b", INDEX_0);
-        Location reference2 = new Location("b", INDEX_1);
+        Location reference1 = new Location("b", 0);
+        Location reference2 = new Location("b", 1);
         ChannelComponent component = new ChannelComponent(reference1, reference2);
         List<Compartment> compartments = getList(new Compartment("b", 2));
         
-        List<ChannelConstraint> constraints = getList(new ChannelConstraint(new Location("b", INDEX_0), new Location("b", INDEX_1)), 
-                new ChannelConstraint(new Location("b", INDEX_0), FIXED_LOCATION));
+        List<ChannelConstraint> constraints = getList(new ChannelConstraint(new Location("b", 0), new Location("b", 1)), 
+                new ChannelConstraint(new Location("b", 0), FIXED_LOCATION));
 
         List<List<Location>> expected = new ArrayList<List<Location>>();
-        expected.add(getList(new Location("b", INDEX_1), new Location("b", INDEX_0)));
+        expected.add(getList(new Location("b", 1), new Location("b", 0)));
 
         assertEquals(expected, component.applyChannel(constraints, compartments));
     }
@@ -293,35 +288,35 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_X), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, new CellIndexExpression("4")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 4), NOT_LOCATED, compartments));
         
         // Corner voxel
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 1));
+        expected.add(new Location("a", 1, 0));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("a", INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("a", 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("a", INDEX_0, INDEX_1), compartments));
+        expected.add(new Location("a", 0, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("a", 0, 1), compartments));
 
         // Inner voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 1));
+        expected.add(new Location("a", 1, 0));
+        expected.add(new Location("a", 1, 2));
+        expected.add(new Location("a", 2, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
         
     }
     
@@ -333,39 +328,39 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("outer", INDEX_0, INDEX_3), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("outer", 0, 3), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("inner"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("inner", 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("inner", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("inner", INDEX_X), NOT_LOCATED, compartments));
         
         // Inner voxel
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("inner", 1, 1), NOT_LOCATED, compartments));
         
         // Edge voxel
-        expected.add(new Location("outer", INDEX_1, INDEX_3));
-        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("outer", 1, 3));
+        assertEquals(expected, component.applyChannel(new Location("inner", 0, 1), NOT_LOCATED, compartments));
         
         // Corner voxel
         expected.clear();
-        expected.add(new Location("outer", INDEX_1, INDEX_2));
-        expected.add(new Location("outer", INDEX_2, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("outer", 1, 2));
+        expected.add(new Location("outer", 2, 1));
+        assertEquals(expected, component.applyChannel(new Location("inner", 0, 0), NOT_LOCATED, compartments));
         
         // Check target location constraints
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_0), new Location("inner"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("inner", 0, 0), new Location("inner"), compartments));
         
-        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("inner", 0, 0), new Location("outer", 0, 0), compartments));
         
-        expected.add(new Location("outer", INDEX_1, INDEX_2));
-        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_2), compartments));
+        expected.add(new Location("outer", 1, 2));
+        assertEquals(expected, component.applyChannel(new Location("inner", 0, 0), new Location("outer", 1, 2), compartments));
         
         expected.clear();
-        expected.add(new Location("outer", INDEX_1, INDEX_2));
-        expected.add(new Location("outer", INDEX_2, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("inner", INDEX_0, INDEX_0), new Location("outer"), compartments));
+        expected.add(new Location("outer", 1, 2));
+        expected.add(new Location("outer", 2, 1));
+        assertEquals(expected, component.applyChannel(new Location("inner", 0, 0), new Location("outer"), compartments));
     }
     
 
@@ -381,38 +376,38 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_X, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_1, new CellIndexExpression("4")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 1, 4), NOT_LOCATED, compartments));
         
         // Corner voxel
-        expected.add(new Location("a", INDEX_0, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_0));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 0, 1));
+        expected.add(new Location("a", 0, 1, 0));
+        expected.add(new Location("a", 1, 0, 0));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0, 0), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0, INDEX_0), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0, 0), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0, INDEX_0), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0, INDEX_0), new Location("a", INDEX_0, INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0, 0), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0, 0), new Location("a", 0, 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_0, INDEX_0, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0, INDEX_0), new Location("a", INDEX_0, INDEX_0, INDEX_1), compartments));
+        expected.add(new Location("a", 0, 0, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0, 0), new Location("a", 0, 0, 1), compartments));
 
         // Inner voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 1, 1));
+        expected.add(new Location("a", 1, 0, 1));
+        expected.add(new Location("a", 1, 1, 0));
+        expected.add(new Location("a", 1, 1, 2));
+        expected.add(new Location("a", 1, 2, 1));
+        expected.add(new Location("a", 2, 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         
     }
     
@@ -426,62 +421,62 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_X, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_1, new CellIndexExpression("4")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 1, 4), NOT_LOCATED, compartments));
         
         // Corner voxel
-        expected.add(new Location("a", INDEX_0, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 0, 1));
+        expected.add(new Location("a", 0, 1, 0));
+        expected.add(new Location("a", 0, 1, 1));
+        expected.add(new Location("a", 1, 0, 0));
+        expected.add(new Location("a", 1, 0, 1));
+        expected.add(new Location("a", 1, 1, 0));
+        expected.add(new Location("a", 1, 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0, 0), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0, INDEX_0), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0, 0), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0, INDEX_0), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0, INDEX_0), new Location("a", INDEX_0, INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0, 0), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0, 0), new Location("a", 0, 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_0, INDEX_0, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0, INDEX_0), new Location("a", INDEX_0, INDEX_0, INDEX_1), compartments));
+        expected.add(new Location("a", 0, 0, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0, 0), new Location("a", 0, 0, 1), compartments));
 
         // Inner voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_0, INDEX_0, INDEX_2));
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_0, INDEX_2, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_0, INDEX_2, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_2, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_0, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_2, INDEX_0));
-        expected.add(new Location("a", INDEX_2, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_2, INDEX_2));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 0, 0));
+        expected.add(new Location("a", 0, 0, 1));
+        expected.add(new Location("a", 0, 0, 2));
+        expected.add(new Location("a", 0, 1, 0));
+        expected.add(new Location("a", 0, 1, 1));
+        expected.add(new Location("a", 0, 1, 2));
+        expected.add(new Location("a", 0, 2, 0));
+        expected.add(new Location("a", 0, 2, 1));
+        expected.add(new Location("a", 0, 2, 2));
+        expected.add(new Location("a", 1, 0, 0));
+        expected.add(new Location("a", 1, 0, 1));
+        expected.add(new Location("a", 1, 0, 2));
+        expected.add(new Location("a", 1, 1, 0));
+        expected.add(new Location("a", 1, 1, 2));
+        expected.add(new Location("a", 1, 2, 0));
+        expected.add(new Location("a", 1, 2, 1));
+        expected.add(new Location("a", 1, 2, 2));
+        expected.add(new Location("a", 2, 0, 0));
+        expected.add(new Location("a", 2, 0, 1));
+        expected.add(new Location("a", 2, 0, 2));
+        expected.add(new Location("a", 2, 1, 0));
+        expected.add(new Location("a", 2, 1, 1));
+        expected.add(new Location("a", 2, 1, 2));
+        expected.add(new Location("a", 2, 2, 0));
+        expected.add(new Location("a", 2, 2, 1));
+        expected.add(new Location("a", 2, 2, 2));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         
     }
     
@@ -496,38 +491,38 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_X), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, new CellIndexExpression("4")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 4), NOT_LOCATED, compartments));
         
         // Corner voxel
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 1));
+        expected.add(new Location("a", 1, 0));
+        expected.add(new Location("a", 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("a", INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("a", 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("a", INDEX_0, INDEX_1), compartments));
+        expected.add(new Location("a", 0, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("a", 0, 1), compartments));
 
         // Inner voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_0));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 0));
+        expected.add(new Location("a", 0, 1));
+        expected.add(new Location("a", 1, 0));
+        expected.add(new Location("a", 1, 2));
+        expected.add(new Location("a", 2, 1));
+        expected.add(new Location("a", 2, 0));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
         
     }
     
@@ -542,40 +537,40 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_X), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, new CellIndexExpression("4")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 4), NOT_LOCATED, compartments));
         
         // Corner voxel
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 1));
+        expected.add(new Location("a", 1, 0));
+        expected.add(new Location("a", 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("a", INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("a", 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("a", INDEX_0, INDEX_1), compartments));
+        expected.add(new Location("a", 0, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("a", 0, 1), compartments));
 
         // Inner voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_0, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_0));
-        expected.add(new Location("a", INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_2));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 0));
+        expected.add(new Location("a", 0, 1));
+        expected.add(new Location("a", 0, 2));
+        expected.add(new Location("a", 1, 0));
+        expected.add(new Location("a", 1, 2));
+        expected.add(new Location("a", 2, 0));
+        expected.add(new Location("a", 2, 1));
+        expected.add(new Location("a", 2, 2));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
         
     }
 
@@ -591,40 +586,40 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_X), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, new CellIndexExpression("4")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 5), NOT_LOCATED, compartments));
         
         // Inner voxel
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
 
         // Edge voxel
-        expected.add(new Location("b", INDEX_6, INDEX_2));
-        expected.add(new Location("b", INDEX_6, INDEX_3));
-        expected.add(new Location("b", INDEX_6, INDEX_4));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_3, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("b", 6, 2));
+        expected.add(new Location("b", 6, 3));
+        expected.add(new Location("b", 6, 4));
+        assertEquals(expected, component.applyChannel(new Location("a", 3, 1), NOT_LOCATED, compartments));
         
         // Corner voxel
         expected.clear();
-        expected.add(new Location("b", INDEX_1, INDEX_1));
-        expected.add(new Location("b", INDEX_1, INDEX_2));
-        expected.add(new Location("b", INDEX_1, INDEX_3));
-        expected.add(new Location("b", INDEX_2, INDEX_1));
-        expected.add(new Location("b", INDEX_3, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("b", 1, 1));
+        expected.add(new Location("b", 1, 2));
+        expected.add(new Location("b", 1, 3));
+        expected.add(new Location("b", 2, 1));
+        expected.add(new Location("b", 3, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("b"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("a"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("b", INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("b", 0, 0), compartments));
         
-        expected.add(new Location("b", INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, INDEX_0), new Location("b", INDEX_1, INDEX_1), compartments));
+        expected.add(new Location("b", 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 0), new Location("b", 1, 1), compartments));
     }
 
     @Test
@@ -636,46 +631,46 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_X), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, new CellIndexExpression("54")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 5), NOT_LOCATED, compartments));
         
         // Central voxel
-        expected.add(new Location("a", INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_3));
-        expected.add(new Location("a", INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_3));
-        expected.add(new Location("a", INDEX_3, INDEX_1));
-        expected.add(new Location("a", INDEX_3, INDEX_2));
-        expected.add(new Location("a", INDEX_3, INDEX_3));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 1, 1));
+        expected.add(new Location("a", 1, 2));
+        expected.add(new Location("a", 1, 3));
+        expected.add(new Location("a", 2, 1));
+        expected.add(new Location("a", 2, 3));
+        expected.add(new Location("a", 3, 1));
+        expected.add(new Location("a", 3, 2));
+        expected.add(new Location("a", 3, 3));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), new Location("a", INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), new Location("a", 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), new Location("a", INDEX_1, INDEX_1), compartments));
+        expected.add(new Location("a", 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), new Location("a", 1, 1), compartments));
 
         // Midway voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_2, INDEX_2));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 1));
+        expected.add(new Location("a", 1, 0));
+        expected.add(new Location("a", 0, 0));
+        expected.add(new Location("a", 2, 2));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
         
         // Outer voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), NOT_LOCATED, compartments));
     }
 
     @Test
@@ -687,44 +682,44 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_X), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, new CellIndexExpression("54")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 5), NOT_LOCATED, compartments));
         
         // Central voxel
-        expected.add(new Location("a", INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_3));
-        expected.add(new Location("a", INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_3));
-        expected.add(new Location("a", INDEX_3, INDEX_1));
-        expected.add(new Location("a", INDEX_3, INDEX_2));
-        expected.add(new Location("a", INDEX_3, INDEX_3));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 1, 1));
+        expected.add(new Location("a", 1, 2));
+        expected.add(new Location("a", 1, 3));
+        expected.add(new Location("a", 2, 1));
+        expected.add(new Location("a", 2, 3));
+        expected.add(new Location("a", 3, 1));
+        expected.add(new Location("a", 3, 2));
+        expected.add(new Location("a", 3, 3));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), new Location("a", INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), new Location("a", 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), new Location("a", INDEX_1, INDEX_1), compartments));
+        expected.add(new Location("a", 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), new Location("a", 1, 1), compartments));
 
         // Midway voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_0));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 1));
+        expected.add(new Location("a", 1, 0));
+        expected.add(new Location("a", 0, 0));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
         
         // Outer voxel
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), NOT_LOCATED, compartments));
     }
 
 
@@ -737,37 +732,37 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_X), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, new CellIndexExpression("54")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 0, 5), NOT_LOCATED, compartments));
         
         // Central voxel
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), NOT_LOCATED, compartments));
 
         // Midway voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 1, 2));
+        expected.add(new Location("a", 2, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
         
         // Outer voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_0));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 1));
+        expected.add(new Location("a", 2, 0));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), new Location("a", INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), new Location("a", 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_0, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), new Location("a", INDEX_0, INDEX_1), compartments));
+        expected.add(new Location("a", 0, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), new Location("a", 0, 1), compartments));
     }
 
     @Test
@@ -779,48 +774,48 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_X), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0, new CellIndexExpression("5")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0, 5), NOT_LOCATED, compartments));
         
         // Central voxel
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), NOT_LOCATED, compartments));
 
         // Midway voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_2, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_0, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_2, INDEX_0));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 2, 2));
+        expected.add(new Location("a", 1, 1, 2));
+        expected.add(new Location("a", 1, 2, 1));
+        expected.add(new Location("a", 2, 0, 2));
+        expected.add(new Location("a", 2, 1, 1));
+        expected.add(new Location("a", 2, 2, 0));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         
         // Outer voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_0, INDEX_2, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_0));
-        expected.add(new Location("a", INDEX_2, INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_2, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_2, INDEX_2, INDEX_0));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 1, 1));
+        expected.add(new Location("a", 0, 2, 0));
+        expected.add(new Location("a", 0, 2, 1));
+        expected.add(new Location("a", 1, 0, 1));
+        expected.add(new Location("a", 1, 2, 0));
+        expected.add(new Location("a", 2, 0, 0));
+        expected.add(new Location("a", 2, 0, 1));
+        expected.add(new Location("a", 2, 1, 0));
+        expected.add(new Location("a", 2, 2, 0));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), new Location("a", INDEX_0, INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), new Location("a", 0, 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), new Location("a", INDEX_1, INDEX_0, INDEX_1), compartments));
+        expected.add(new Location("a", 1, 0, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), new Location("a", 1, 0, 1), compartments));
     }
 
     @Test
@@ -832,35 +827,35 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_X), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0, new CellIndexExpression("5")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0, 5), NOT_LOCATED, compartments));
         
         // Central voxel
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), NOT_LOCATED, compartments));
 
         // Midway voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_2, INDEX_2, INDEX_2));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 2, 2, 2));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         
         // Outer voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 1, 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), new Location("a", INDEX_0, INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), new Location("a", 0, 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), new Location("a", INDEX_1, INDEX_1, INDEX_1), compartments));
+        expected.add(new Location("a", 1, 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), new Location("a", 1, 1, 1), compartments));
     }
 
 
@@ -873,66 +868,66 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_X), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0, new CellIndexExpression("5")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0, 5), NOT_LOCATED, compartments));
         
         // Central voxel
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_3));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_3));
-        expected.add(new Location("a", INDEX_1, INDEX_3, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_3, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_3, INDEX_3));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_3));
-        expected.add(new Location("a", INDEX_2, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_2, INDEX_3));
-        expected.add(new Location("a", INDEX_2, INDEX_3, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_3, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_3, INDEX_3));
-        expected.add(new Location("a", INDEX_3, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_3, INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_3, INDEX_1, INDEX_3));
-        expected.add(new Location("a", INDEX_3, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_3, INDEX_2, INDEX_2));
-        expected.add(new Location("a", INDEX_3, INDEX_2, INDEX_3));
-        expected.add(new Location("a", INDEX_3, INDEX_3, INDEX_1));
-        expected.add(new Location("a", INDEX_3, INDEX_3, INDEX_2));
-        expected.add(new Location("a", INDEX_3, INDEX_3, INDEX_3));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 1, 1, 1));
+        expected.add(new Location("a", 1, 1, 2));
+        expected.add(new Location("a", 1, 1, 3));
+        expected.add(new Location("a", 1, 2, 1));
+        expected.add(new Location("a", 1, 2, 2));
+        expected.add(new Location("a", 1, 2, 3));
+        expected.add(new Location("a", 1, 3, 1));
+        expected.add(new Location("a", 1, 3, 2));
+        expected.add(new Location("a", 1, 3, 3));
+        expected.add(new Location("a", 2, 1, 1));
+        expected.add(new Location("a", 2, 1, 2));
+        expected.add(new Location("a", 2, 1, 3));
+        expected.add(new Location("a", 2, 2, 1));
+        expected.add(new Location("a", 2, 2, 3));
+        expected.add(new Location("a", 2, 3, 1));
+        expected.add(new Location("a", 2, 3, 2));
+        expected.add(new Location("a", 2, 3, 3));
+        expected.add(new Location("a", 3, 1, 1));
+        expected.add(new Location("a", 3, 1, 2));
+        expected.add(new Location("a", 3, 1, 3));
+        expected.add(new Location("a", 3, 2, 1));
+        expected.add(new Location("a", 3, 2, 2));
+        expected.add(new Location("a", 3, 2, 3));
+        expected.add(new Location("a", 3, 3, 1));
+        expected.add(new Location("a", 3, 3, 2));
+        expected.add(new Location("a", 3, 3, 3));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), new Location("a", INDEX_0, INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), new Location("a", 0, 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), new Location("a", INDEX_1, INDEX_1, INDEX_1), compartments));
+        expected.add(new Location("a", 1, 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), new Location("a", 1, 1, 1), compartments));
 
         // Midway voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_0));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 0, 0));
+        expected.add(new Location("a", 0, 0, 1));
+        expected.add(new Location("a", 0, 1, 0));
+        expected.add(new Location("a", 0, 1, 1));
+        expected.add(new Location("a", 1, 0, 0));
+        expected.add(new Location("a", 1, 0, 1));
+        expected.add(new Location("a", 1, 1, 0));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         
         // Outer voxel
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), NOT_LOCATED, compartments));
     }
 
     @Test
@@ -944,68 +939,68 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("b", 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1, 1), NOT_LOCATED, compartments));
         assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_X), NOT_LOCATED, compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0, new CellIndexExpression("5")), NOT_LOCATED, compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0, 5), NOT_LOCATED, compartments));
         
         // Central voxel
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_3));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_2, INDEX_3));
-        expected.add(new Location("a", INDEX_1, INDEX_3, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_3, INDEX_2));
-        expected.add(new Location("a", INDEX_1, INDEX_3, INDEX_3));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_1, INDEX_3));
-        expected.add(new Location("a", INDEX_2, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_2, INDEX_3));
-        expected.add(new Location("a", INDEX_2, INDEX_3, INDEX_1));
-        expected.add(new Location("a", INDEX_2, INDEX_3, INDEX_2));
-        expected.add(new Location("a", INDEX_2, INDEX_3, INDEX_3));
-        expected.add(new Location("a", INDEX_3, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_3, INDEX_1, INDEX_2));
-        expected.add(new Location("a", INDEX_3, INDEX_1, INDEX_3));
-        expected.add(new Location("a", INDEX_3, INDEX_2, INDEX_1));
-        expected.add(new Location("a", INDEX_3, INDEX_2, INDEX_2));
-        expected.add(new Location("a", INDEX_3, INDEX_2, INDEX_3));
-        expected.add(new Location("a", INDEX_3, INDEX_3, INDEX_1));
-        expected.add(new Location("a", INDEX_3, INDEX_3, INDEX_2));
-        expected.add(new Location("a", INDEX_3, INDEX_3, INDEX_3));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 1, 1, 1));
+        expected.add(new Location("a", 1, 1, 2));
+        expected.add(new Location("a", 1, 1, 3));
+        expected.add(new Location("a", 1, 2, 1));
+        expected.add(new Location("a", 1, 2, 2));
+        expected.add(new Location("a", 1, 2, 3));
+        expected.add(new Location("a", 1, 3, 1));
+        expected.add(new Location("a", 1, 3, 2));
+        expected.add(new Location("a", 1, 3, 3));
+        expected.add(new Location("a", 2, 1, 1));
+        expected.add(new Location("a", 2, 1, 2));
+        expected.add(new Location("a", 2, 1, 3));
+        expected.add(new Location("a", 2, 2, 1));
+        expected.add(new Location("a", 2, 2, 3));
+        expected.add(new Location("a", 2, 3, 1));
+        expected.add(new Location("a", 2, 3, 2));
+        expected.add(new Location("a", 2, 3, 3));
+        expected.add(new Location("a", 3, 1, 1));
+        expected.add(new Location("a", 3, 1, 2));
+        expected.add(new Location("a", 3, 1, 3));
+        expected.add(new Location("a", 3, 2, 1));
+        expected.add(new Location("a", 3, 2, 2));
+        expected.add(new Location("a", 3, 2, 3));
+        expected.add(new Location("a", 3, 3, 1));
+        expected.add(new Location("a", 3, 3, 2));
+        expected.add(new Location("a", 3, 3, 3));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), new Location("a", INDEX_0, INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), new Location("a", 0, 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2, INDEX_2), new Location("a", INDEX_1, INDEX_1, INDEX_1), compartments));
+        expected.add(new Location("a", 1, 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 2, 2, 2), new Location("a", 1, 1, 1), compartments));
 
         // Midway voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_0, INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_0, INDEX_1, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_0));
-        expected.add(new Location("a", INDEX_1, INDEX_0, INDEX_1));
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_0));
-        expected.add(new Location("a", INDEX_2, INDEX_2, INDEX_2));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 0, 0, 0));
+        expected.add(new Location("a", 0, 0, 1));
+        expected.add(new Location("a", 0, 1, 0));
+        expected.add(new Location("a", 0, 1, 1));
+        expected.add(new Location("a", 1, 0, 0));
+        expected.add(new Location("a", 1, 0, 1));
+        expected.add(new Location("a", 1, 1, 0));
+        expected.add(new Location("a", 2, 2, 2));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
         
         // Outer voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_1, INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 1, 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 0), NOT_LOCATED, compartments));
     }
 
     @Test
@@ -1017,35 +1012,35 @@ public class ChannelComponentTest {
         List<Location> expected = new ArrayList<Location>();
 
         // Invalid input locations
-//        assertEquals(expected, component.applyChannel(new Location("b", INDEX_1), NOT_LOCATED, compartments));
+//        assertEquals(expected, component.applyChannel(new Location("b", 1), NOT_LOCATED, compartments));
 //        assertEquals(expected, component.applyChannel(new Location("a"), NOT_LOCATED, compartments));
-//        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1), NOT_LOCATED, compartments));
-//        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+//        assertEquals(expected, component.applyChannel(new Location("a", 1), NOT_LOCATED, compartments));
+//        assertEquals(expected, component.applyChannel(new Location("a", 1, 1, 1), NOT_LOCATED, compartments));
 //        assertEquals(expected, component.applyChannel(new Location("a", INDEX_X), NOT_LOCATED, compartments));
-//        assertEquals(expected, component.applyChannel(new Location("a", INDEX_0, new CellIndexExpression("54")), NOT_LOCATED, compartments));
+//        assertEquals(expected, component.applyChannel(new Location("a", 0, new CellIndexExpression("54")), NOT_LOCATED, compartments));
 //        
 //        // Central voxel
-//        assertEquals(expected, component.applyChannel(new Location("a", INDEX_2, INDEX_2), NOT_LOCATED, compartments));
+//        assertEquals(expected, component.applyChannel(new Location("a", 2, 2), NOT_LOCATED, compartments));
 
         // Midway voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_2, INDEX_2));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_1), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 2, 2));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 1), NOT_LOCATED, compartments));
         
         // Outer voxel
         expected.clear();
-        expected.add(new Location("a", INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), NOT_LOCATED, compartments));
+        expected.add(new Location("a", 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), NOT_LOCATED, compartments));
         
         // Check target location constraints
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), new Location("a"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), new Location("a"), compartments));
         
         expected.clear();
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), new Location("b"), compartments));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), new Location("a", INDEX_0, INDEX_0), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), new Location("b"), compartments));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), new Location("a", 0, 0), compartments));
         
-        expected.add(new Location("a", INDEX_1, INDEX_1));
-        assertEquals(expected, component.applyChannel(new Location("a", INDEX_1, INDEX_0), new Location("a", INDEX_1, INDEX_1), compartments));
+        expected.add(new Location("a", 1, 1));
+        assertEquals(expected, component.applyChannel(new Location("a", 1, 0), new Location("a", 1, 1), compartments));
     }
 
     @SuppressWarnings("unchecked")
@@ -1057,31 +1052,31 @@ public class ChannelComponentTest {
         
         // No match
         List<List<Location>> results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED)), compartments);
+                new ChannelConstraint(new Location("a", 1), NOT_LOCATED)), compartments);
         List<List<Location>> expected = new ArrayList<List<Location>>();
         assertEquals(expected, results);
         
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED),
-                new ChannelConstraint(new Location("b", INDEX_2), NOT_LOCATED)), compartments);
+                new ChannelConstraint(new Location("a", 1), NOT_LOCATED),
+                new ChannelConstraint(new Location("b", 2), NOT_LOCATED)), compartments);
         assertEquals(expected, results);
         
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED),
-                new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED)), compartments);
+                new ChannelConstraint(new Location("a", 1), NOT_LOCATED),
+                new ChannelConstraint(new Location("a", 1), NOT_LOCATED)), compartments);
         assertEquals(expected, results);
         
         // No match - geometry mismatch
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_2), NOT_LOCATED),
-                new ChannelConstraint(new Location("b", INDEX_2), NOT_LOCATED)), compartments);
+                new ChannelConstraint(new Location("a", 2), NOT_LOCATED),
+                new ChannelConstraint(new Location("b", 2), NOT_LOCATED)), compartments);
         assertEquals(expected, results);
         
         // Variable linked
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED),
-                new ChannelConstraint(new Location("b", INDEX_1), NOT_LOCATED)), compartments);
-        expected = getList(getList(new Location("a", INDEX_2), new Location("b", INDEX_2)));
+                new ChannelConstraint(new Location("a", 1), NOT_LOCATED),
+                new ChannelConstraint(new Location("b", 1), NOT_LOCATED)), compartments);
+        expected = getList(getList(new Location("a", 2), new Location("b", 2)));
         assertEquals(expected, results);
 
         
@@ -1090,15 +1085,15 @@ public class ChannelComponentTest {
                 getList(new Location("a", INDEX_X_PLUS_1), new Location("b", INDEX_Y_PLUS_1)));
         
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED),
-                new ChannelConstraint(new Location("b", INDEX_1), NOT_LOCATED)), compartments);
-        expected = getList(getList(new Location("a", INDEX_2), new Location("b", INDEX_2)));
+                new ChannelConstraint(new Location("a", 1), NOT_LOCATED),
+                new ChannelConstraint(new Location("b", 1), NOT_LOCATED)), compartments);
+        expected = getList(getList(new Location("a", 2), new Location("b", 2)));
         assertEquals(expected, results);
 
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED),
-                new ChannelConstraint(new Location("b", INDEX_0), NOT_LOCATED)), compartments);
-        expected = getList(getList(new Location("a", INDEX_2), new Location("b", INDEX_1)));
+                new ChannelConstraint(new Location("a", 1), NOT_LOCATED),
+                new ChannelConstraint(new Location("b", 0), NOT_LOCATED)), compartments);
+        expected = getList(getList(new Location("a", 2), new Location("b", 1)));
         assertEquals(expected, results);
 
         
@@ -1107,21 +1102,21 @@ public class ChannelComponentTest {
                 getList(new Location("b", INDEX_X), new Location("a", INDEX_Y)));
         
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED),
-                new ChannelConstraint(new Location("b", INDEX_0), NOT_LOCATED)), compartments);
-        expected = getList(getList(new Location("b", INDEX_1), new Location("a", INDEX_0)));
+                new ChannelConstraint(new Location("a", 1), NOT_LOCATED),
+                new ChannelConstraint(new Location("b", 0), NOT_LOCATED)), compartments);
+        expected = getList(getList(new Location("b", 1), new Location("a", 0)));
         assertEquals(expected, results);
 
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("b", INDEX_1), NOT_LOCATED),
-                new ChannelConstraint(new Location("a", INDEX_0), NOT_LOCATED)), compartments);
-        expected = getList(getList(new Location("a", INDEX_1), new Location("b", INDEX_0)));
+                new ChannelConstraint(new Location("b", 1), NOT_LOCATED),
+                new ChannelConstraint(new Location("a", 0), NOT_LOCATED)), compartments);
+        expected = getList(getList(new Location("a", 1), new Location("b", 0)));
         assertEquals(expected, results);
         
         // Target invalid - no results
         results = component.applyChannel(getList(
                 new ChannelConstraint(new Location("a", new CellIndexExpression("3")), NOT_LOCATED),
-                new ChannelConstraint(new Location("b", INDEX_0), NOT_LOCATED)), compartments);
+                new ChannelConstraint(new Location("b", 0), NOT_LOCATED)), compartments);
         expected.clear();
         assertEquals(expected, results);
                 
@@ -1130,26 +1125,26 @@ public class ChannelComponentTest {
                 getList(new Location("a", INDEX_X_PLUS_1), new Location("b", INDEX_Y_PLUS_1)));
 
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_1), new Location("a")),
-                new ChannelConstraint(new Location("b", INDEX_1), new Location("b", INDEX_2))), compartments);
-        expected = getList(getList(new Location("a", INDEX_2), new Location("b", INDEX_2)));
+                new ChannelConstraint(new Location("a", 1), new Location("a")),
+                new ChannelConstraint(new Location("b", 1), new Location("b", 2))), compartments);
+        expected = getList(getList(new Location("a", 2), new Location("b", 2)));
         assertEquals(expected, results);
 
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_1), new Location("a")),
-                new ChannelConstraint(new Location("b", INDEX_2), new Location("b", INDEX_2))), compartments);
+                new ChannelConstraint(new Location("a", 1), new Location("a")),
+                new ChannelConstraint(new Location("b", 2), new Location("b", 2))), compartments);
         expected.clear();
         assertEquals(expected, results);
 
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_1), new Location("a", INDEX_2)),
-                new ChannelConstraint(new Location("b", INDEX_1), NOT_LOCATED)), compartments);
-        expected = getList(getList(new Location("a", INDEX_2), new Location("b", INDEX_2)));
+                new ChannelConstraint(new Location("a", 1), new Location("a", 2)),
+                new ChannelConstraint(new Location("b", 1), NOT_LOCATED)), compartments);
+        expected = getList(getList(new Location("a", 2), new Location("b", 2)));
         assertEquals(expected, results);
 
         results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("a", INDEX_2), new Location("a", INDEX_2)),
-                new ChannelConstraint(new Location("b", INDEX_2), NOT_LOCATED)), compartments);
+                new ChannelConstraint(new Location("a", 2), new Location("a", 2)),
+                new ChannelConstraint(new Location("b", 2), NOT_LOCATED)), compartments);
         expected.clear();
         assertEquals(expected, results);
 
@@ -1165,35 +1160,35 @@ public class ChannelComponentTest {
         
         // No match
         List<List<Location>> results = component.applyChannel(getList(
-                new ChannelConstraint(new Location("inner", INDEX_0, INDEX_0), NOT_LOCATED),
-                new ChannelConstraint(new Location("outer", INDEX_0, INDEX_1), NOT_LOCATED)), compartments);
+                new ChannelConstraint(new Location("inner", 0, 0), NOT_LOCATED),
+                new ChannelConstraint(new Location("outer", 0, 1), NOT_LOCATED)), compartments);
         List<List<Location>> expected = new ArrayList<List<Location>>();
-        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_0)));
-        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_2)));
-        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_0)));
-        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("inner", 0, 0), new Location("outer", 0, 0)));
+        expected.add(getList(new Location("inner", 0, 0), new Location("outer", 0, 2)));
+        expected.add(getList(new Location("inner", 0, 0), new Location("outer", 1, 0)));
+        expected.add(getList(new Location("inner", 0, 0), new Location("outer", 1, 2)));
         assertEquals(expected, results);
     }
     
     @Test
     public void testRemoveMotionlessResults() {
         List<ChannelConstraint> originalConstraints = getList(
-                new ChannelConstraint(new Location("inner", INDEX_0, INDEX_0), NOT_LOCATED),
-                new ChannelConstraint(new Location("outer", INDEX_0, INDEX_1), NOT_LOCATED));
+                new ChannelConstraint(new Location("inner", 0, 0), NOT_LOCATED),
+                new ChannelConstraint(new Location("outer", 0, 1), NOT_LOCATED));
         List<List<Location>> newLocations = new ArrayList<List<Location>>();
-        newLocations.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_0)));
-        newLocations.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_1)));
-        newLocations.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_2)));
-        newLocations.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_0)));
-        newLocations.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_2)));
+        newLocations.add(getList(new Location("inner", 0, 0), new Location("outer", 0, 0)));
+        newLocations.add(getList(new Location("inner", 0, 0), new Location("outer", 0, 1)));
+        newLocations.add(getList(new Location("inner", 0, 0), new Location("outer", 0, 2)));
+        newLocations.add(getList(new Location("inner", 0, 0), new Location("outer", 1, 0)));
+        newLocations.add(getList(new Location("inner", 0, 0), new Location("outer", 1, 2)));
 
         ChannelComponent.removeMotionlessResults(originalConstraints, newLocations);
 
         List<List<Location>> expected = new ArrayList<List<Location>>();
-        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_0)));
-        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_0, INDEX_2)));
-        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_0)));
-        expected.add(getList(new Location("inner", INDEX_0, INDEX_0), new Location("outer", INDEX_1, INDEX_2)));
+        expected.add(getList(new Location("inner", 0, 0), new Location("outer", 0, 0)));
+        expected.add(getList(new Location("inner", 0, 0), new Location("outer", 0, 2)));
+        expected.add(getList(new Location("inner", 0, 0), new Location("outer", 1, 0)));
+        expected.add(getList(new Location("inner", 0, 0), new Location("outer", 1, 2)));
         assertEquals(expected, newLocations);
     }
     
@@ -1206,37 +1201,37 @@ public class ChannelComponentTest {
                 getList(new Location("c", INDEX_X_PLUS_1)));
 
         assertTrue(component.isValidSourceLocations(getList(new ChannelConstraint(new Location("a", INDEX_X), NOT_LOCATED)),
-                getList(new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED)), compartments));
+                getList(new ChannelConstraint(new Location("a", 1), NOT_LOCATED)), compartments));
 
         assertFalse(component.isValidSourceLocations(
                 getList(new ChannelConstraint(new Location("a", INDEX_X), NOT_LOCATED),
                         FIXED_CONSTRAINT),
-                getList(new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED), 
-                        new ChannelConstraint(new Location("a", INDEX_2), NOT_LOCATED)), compartments));
+                getList(new ChannelConstraint(new Location("a", 1), NOT_LOCATED), 
+                        new ChannelConstraint(new Location("a", 2), NOT_LOCATED)), compartments));
 
         assertFalse(component.isValidSourceLocations(
                 getList(new ChannelConstraint(new Location("a", INDEX_X), NOT_LOCATED),
                         FIXED_CONSTRAINT),
-                getList(new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED), 
-                        new ChannelConstraint(new Location("a", INDEX_2), new Location("a"))), compartments));
+                getList(new ChannelConstraint(new Location("a", 1), NOT_LOCATED), 
+                        new ChannelConstraint(new Location("a", 2), new Location("a"))), compartments));
 
         assertFalse(component.isValidSourceLocations(
                 getList(new ChannelConstraint(new Location("a", INDEX_X), NOT_LOCATED),
                         FIXED_CONSTRAINT),
-                getList(new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED), 
-                        new ChannelConstraint(new Location("a", INDEX_2), new Location("a", INDEX_1))), compartments));
+                getList(new ChannelConstraint(new Location("a", 1), NOT_LOCATED), 
+                        new ChannelConstraint(new Location("a", 2), new Location("a", 1))), compartments));
 
         assertTrue(component.isValidSourceLocations(
                 getList(new ChannelConstraint(new Location("a", INDEX_X), NOT_LOCATED),
                         FIXED_CONSTRAINT),
-                getList(new ChannelConstraint(new Location("a", INDEX_1), NOT_LOCATED), 
-                        new ChannelConstraint(new Location("a", INDEX_2), new Location("a", INDEX_2))), compartments));
+                getList(new ChannelConstraint(new Location("a", 1), NOT_LOCATED), 
+                        new ChannelConstraint(new Location("a", 2), new Location("a", 2))), compartments));
 
         assertTrue(component.isValidSourceLocations(
-                getList(new ChannelConstraint(new Location("b", INDEX_0), new Location("b", INDEX_1)),
+                getList(new ChannelConstraint(new Location("b", 0), new Location("b", 1)),
                         FIXED_CONSTRAINT),
-                getList(new ChannelConstraint(new Location("b", INDEX_0), new Location("b", INDEX_1)), 
-                        new ChannelConstraint(new Location("b", INDEX_0), FIXED_LOCATION)), compartments));
+                getList(new ChannelConstraint(new Location("b", 0), new Location("b", 1)), 
+                        new ChannelConstraint(new Location("b", 0), FIXED_LOCATION)), compartments));
     }
     
     @Test
@@ -1244,7 +1239,7 @@ public class ChannelComponentTest {
         List<Compartment> compartments = getList(new Compartment("a", 4), new Compartment("b", 2));
         ChannelComponent component = new ChannelComponent(getList(new Location("a", INDEX_X)), getList(new Location("c", INDEX_X_PLUS_1)));
 
-        assertTrue(component.isValidSourceLocation(new Location("a", INDEX_X), new Location("a", INDEX_1), compartments));
+        assertTrue(component.isValidSourceLocation(new Location("a", INDEX_X), new Location("a", 1), compartments));
     }
     
     
@@ -1387,7 +1382,7 @@ public class ChannelComponentTest {
     private void checkCreateChannelComponent(String channelType) {
         Location location1 = new Location("a");
         Location location2 = new Location("b");
-        Location location3 = new Location("a", INDEX_0);
+        Location location3 = new Location("a", 0);
         
         try {
             ChannelComponent.createChannelComponent(channelType, getList(location1), null);
@@ -1470,7 +1465,7 @@ public class ChannelComponentTest {
         component = new ChannelComponent(new Location("known"), new Location("known"));
         component.validate(compartments);
 
-        component = new ChannelComponent(new Location("known", INDEX_0), new Location("known"));
+        component = new ChannelComponent(new Location("known", 0), new Location("known"));
         try {
             component.validate(compartments);
             fail("validation should have failed");
@@ -1480,7 +1475,7 @@ public class ChannelComponentTest {
             assertEquals("Not a valid voxel for compartment 'known'", ex.getMessage());
         }
         
-        component = new ChannelComponent(new Location("known"), new Location("known", INDEX_0));
+        component = new ChannelComponent(new Location("known"), new Location("known", 0));
         try {
             component.validate(compartments);
             fail("validation should have failed");
@@ -1616,18 +1611,18 @@ public class ChannelComponentTest {
         checkValidateFail_nesting(component, getList(new OpenCylinder("inner", 3, 5, 1), new OpenCylinder("outer", 8, 9, 2), other));
         
         // 3D spines
-        component.validate(getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 4, 1), other));
-        component.validate(getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 7, 5, 2), other));
+        component.validate(getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 3, 1), other));
+        component.validate(getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 7, 3, 2), other));
         
-        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 9, 5, 4, 1), other));
-        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 7, 4, 1), other));
-        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 3, 1), other));
-        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 5, 1), other));
-        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 4, 2), other));
-        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 7, 7, 5, 2), other));
-        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 9, 5, 2), other));
-        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 7, 4, 2), other));
-        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 7, 5, 1), other));
+        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 9, 5, 3, 1), other));
+        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 7, 3, 1), other));
+        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 2, 1), other));
+        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 4, 1), other));
+        checkValidateFail_nesting(component, getList(new SolidSpine("inner", 5, 3, 4), new OpenSpine("outer", 7, 5, 3, 2), other));
+        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 7, 7, 4, 2), other));
+        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 9, 4, 2), other));
+        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 7, 2, 2), other));
+        checkValidateFail_nesting(component, getList(new OpenSpine("inner", 5, 3, 5, 1), new OpenSpine("outer", 9, 7, 3, 1), other));
         
         // Shape mismatch
         checkValidateFail_nesting(component, getList(new Compartment("inner", 2, 3, 5), new OpenSphere("outer", 4, 1)));

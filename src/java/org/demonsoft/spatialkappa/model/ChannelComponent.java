@@ -598,7 +598,8 @@ public class ChannelComponent {
             }
             else if (OpenSpine.class == outer.getClass()) {
                 if (OpenSpine.class == inner.getClass() || SolidSpine.class == inner.getClass()) {
-                    return isCorrectNestedDimensions(inner, outer, 3) && 
+                    return isCorrectNestedDimensions(inner, outer, 2) && 
+                            (inner.getDimensions()[2] + outer.getThickness() == outer.getDimensions()[2]) &&
                             ((Spine) inner).getCylinderDiameter() + 2*outer.getThickness() == ((Spine) outer).getCylinderDiameter();
                 }
             }

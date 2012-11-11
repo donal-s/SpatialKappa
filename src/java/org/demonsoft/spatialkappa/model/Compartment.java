@@ -740,7 +740,7 @@ public class Compartment {
 
             boolean insideInnerSphere = centreX*centreX + centreY*centreY + centreZ*centreZ <= rSquaredInnerSphere;
             boolean insideInnerCylinder = (centreX*centreX + centreY*centreY  <= rSquaredInnerCylinder) && 
-                    dimensions[2] - indices[2] > thickness;
+                    dimensions[2] > indices[2];
 
             if (centreZ > 0) {
                 return insideOuterSphere && !insideInnerSphere;
