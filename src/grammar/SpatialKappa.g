@@ -18,11 +18,12 @@ tokens {
   CHANNEL;
   COMPARTMENT;
   CONDITION;
-  COS;
   DIMENSION;
   EFFECT;
+  EFFECTS;
+  ELAPSED_TIME;
   EVENTS;
-  EXP;
+  OP_EXP;
   FALSE;
   FIXED;
   ID;
@@ -34,13 +35,28 @@ tokens {
   LOCATION;
   LOCATION_PAIR;
   LOCATIONS;
-  LOG;
-  MODULUS;
+  MAX_EVENTS;
+  MAX_TIME;
+  MODEL;
   NOT;
   OBSERVATION;
   OCCUPIED;
+  OCCUPIED_SITE;
+  OP_ABS;
+  OP_COS;
+  OP_DIVIDE;
+  OP_LOG;
+  OP_MINUS;
+  OP_MODULUS;
+  OP_MULTIPLY;
+  OP_PLUS;
+  OP_POWER;
+  OP_SIN;
+  OP_SQRT;
+  OP_TAN;
   OR;
   PERTURBATION;
+  PERTURBATION_EXPR;
   PI;
   PLOT;
   RATE;
@@ -48,12 +64,9 @@ tokens {
   RHS;
   RULE;
   SET;
-  SIN;
   SNAPSHOT;
-  SQRT;
   STATE;
   STOP;
-  TAN;
   TARGET;
   TIME;
   TRANSITION;
@@ -93,6 +106,8 @@ tokens {
 prog
   :
   (line)*
+    -> 
+      ^(MODEL line*)
   ;
 
 line
@@ -150,6 +165,10 @@ options {backtrack=true;}
 
 agentGroup
   :
+  '(' agentGroup ')'
+    ->
+      agentGroup
+  |
   location? agent (',' agent)*
     ->
       ^(AGENTS location? agent+)
@@ -157,7 +176,7 @@ agentGroup
 
 agent
   :
-  id (location)? ('(' (agentInterface (',' agentInterface)*)? ')')?
+  id (location)? '(' (agentInterface (',' agentInterface)*)? ')'
     ->
       ^(AGENT id location? agentInterface*)
   ;
@@ -171,9 +190,9 @@ agentInterface
 
 state
   :
-  '~' id
+  '~' stateId
     ->
-      ^(STATE id)
+      ^(STATE stateId)
   ;
 
 link
@@ -184,6 +203,9 @@ link
   | '!' '_' (':' channelName=id)?
     ->
       ^(LINK ^(CHANNEL $channelName)? OCCUPIED)
+  | '!' interfaceName=id '.' agentName=id (':' channelName=id)?
+    ->
+      ^(LINK ^(CHANNEL $channelName)? ^(OCCUPIED_SITE ^(AGENT $agentName ^(INTERFACE $interfaceName))))
   | '?'
     ->
       ^(LINK ANY)
@@ -205,7 +227,7 @@ initDecl
 
 agentDecl
   :
-  '%agent:' agentName=id ('(' (agentDeclInterface (',' agentDeclInterface)*)? ')')?
+  '%agent:' agentName=id '(' (agentDeclInterface (',' agentDeclInterface)*)? ')'
     ->
      ^(AGENT_DECL $agentName agentDeclInterface*)
   ;
@@ -275,14 +297,19 @@ plotDecl
   ;
 
 obsDecl
+options {backtrack=true;}
   :
-  '%obs:' 'voxel' label? agentGroup
+  '%obs:' label varAlgebraExpr
     ->
-      ^(OBSERVATION VOXEL agentGroup label?)
+      ^(OBSERVATION varAlgebraExpr label)
+   |
+  '%obs:' 'voxel' label agentGroup
+    ->
+      ^(OBSERVATION VOXEL agentGroup label)
   |
-  '%obs:' label? agentGroup
+  '%obs:' label agentGroup
     ->
-      ^(OBSERVATION agentGroup label?)
+      ^(OBSERVATION agentGroup label)
   ;
 
 varDecl
@@ -312,14 +339,8 @@ varAlgebraMultExpr
   ;
   
 varAlgebraExpExpr
-options {backtrack=true;}
   :
-  a=varAlgebraAtom operator_exp b=varAlgebraExpExpr
-    ->
-      ^(VAR_EXPR operator_exp $a $b)
-  | a=varAlgebraAtom
-    ->
-      $a
+  (a=varAlgebraAtom -> $a) ('^' b=varAlgebraAtom -> ^(VAR_EXPR OP_POWER $varAlgebraExpExpr $b) )*
   ;
   
 varAlgebraAtom
@@ -339,6 +360,15 @@ varAlgebraAtom
   | '[' 'pi' ']'
     ->
       ^(VAR_EXPR PI)
+  | '[' 'Tsim' ']'
+    ->
+      ^(VAR_EXPR ELAPSED_TIME)
+  | '[' 'Tmax' ']'
+    ->
+      ^(VAR_EXPR MAX_TIME)
+  | '[' 'Emax' ']'
+    ->
+      ^(VAR_EXPR MAX_EVENTS)
   | '[' 'T' ']'
     ->
       ^(VAR_EXPR TIME)
@@ -355,11 +385,27 @@ varAlgebraAtom
   
 modDecl
   :
-  '%mod:' booleanExpression 'do' effect until?
+  '%mod:' 'repeat' perturbationExpression 'until' booleanExpression
     ->
-      ^(PERTURBATION ^(CONDITION booleanExpression) effect until?)
+      ^(PERTURBATION perturbationExpression ^(UNTIL booleanExpression))
+  |
+  '%mod:' perturbationExpression
+    ->
+      ^(PERTURBATION perturbationExpression)
   ;
-  
+
+perturbationExpression
+options {backtrack=true;}
+  :
+  '(' perturbationExpression ')'
+    ->
+      perturbationExpression
+  |
+  booleanExpression 'do' effects
+    ->
+      ^(PERTURBATION_EXPR ^(CONDITION booleanExpression) effects)
+  ;
+
 
 booleanExpression
   :
@@ -374,7 +420,7 @@ booleanOperator
 
 relationalOperator
   :
-  '<' | '>' | '='
+  '<' | '>' | '=' | '<>'
   ;
 
   
@@ -398,9 +444,17 @@ options {backtrack=true;}
       ^(BOOL_EXPR relationalOperator $a $b)
   ;
 
+effects
+  : '(' effects ')'
+    ->
+      effects
+  | effect (';' effect)*
+    ->
+      ^(EFFECTS effect+)
+  ;
+
 effect
-  :
-  '$SNAPSHOT'
+  : '$SNAPSHOT'
     ->
       ^(EFFECT SNAPSHOT)
   | '$STOP'
@@ -412,22 +466,14 @@ effect
   | '$DEL' varAlgebraExpr agentGroup
     ->
       ^(EFFECT REMOVE varAlgebraExpr agentGroup)
-  | label ':=' varAlgebraExpr
+  | '$UPDATE' label varAlgebraExpr
     ->
       ^(EFFECT SET ^(TARGET label) varAlgebraExpr)
   ;
   
-until
-  :
-  'until' booleanExpression
-    ->
-      ^(UNTIL booleanExpression)
-  ;
-  
 cellIndexExpr
 options {backtrack=true;}
-  :
-  a=cellIndexAtom operator_cell_index b=cellIndexAtom
+  : a=cellIndexAtom operator_cell_index b=cellIndexAtom
     ->
       ^(CELL_INDEX_EXPR operator_cell_index $a $b)
   | a=cellIndexAtom
@@ -451,18 +497,28 @@ options {backtrack=true;}
   
 id
   :
-  'inf' | 'pi' | 'T' | 'E' | 'Tmax' | 'Tsim' | 'Emax' | 'repeat' | 'until' | 'do'
+  ( 'inf' | 'pi' | 'T' | 'E' | 'Tmax' | 'Tsim' | 'Emax' | 'repeat' | 'until' | 'do'
   | 'set' | 'true' | 'false' | 'not' | 'mod' | 'log' | 'sin' | 'cos' | 'tan' | 'sqrt' | 'exp' | 'int' 
-  | ( INT | ID_FRAGMENT ) 
+  | ID_FRAGMENT | COMMON_ID_FRAGMENT )
    ->
-    {new CommonTree(new CommonToken(ID,$id.text.toString()))} // Avoid lexing as mutiple tokens
+    {new CommonTree(new CommonToken(ID,$id.text.toString()))} // Avoid lexing as multiple tokens
+  ;
+
+stateId
+  :
+  ( 'inf' | 'pi' | 'T' | 'E' | 'Tmax' | 'Tsim' | 'Emax' | 'repeat' | 'until' | 'do'
+  | 'set' | 'true' | 'false' | 'not' | 'mod' | 'log' | 'sin' | 'cos' | 'tan' | 'sqrt' | 'exp' | 'int' 
+  | STATE_ID_FRAGMENT | INT | COMMON_ID_FRAGMENT )
+   ->
+    {new CommonTree(new CommonToken(ID,$stateId.text.toString()))} // Avoid lexing as multiple tokens
   ;
 
 label
   :
   LABEL
    ->
-    {new CommonTree(new CommonToken(LABEL, $label.text.substring(1, $label.text.length() - 1)))}
+    {new CommonTree(new CommonToken(LABEL, ($label.text != null && $label.text.length() >= 2) ? 
+      $label.text.substring(1, $label.text.length() - 1) : $label.text))}
   ;
 
 number
@@ -483,32 +539,28 @@ operator_cell_index
   | '^'
   ;
 
-operator_exp
-  :
-  | '^'
-  ;
-
 operator_unary
   :
-  '[' 'log' ']' -> LOG
-  | '[' 'sin' ']' -> SIN
-  | '[' 'cos' ']' -> COS
-  | '[' 'tan' ']' -> TAN
-  | '[' 'sqrt' ']' -> SQRT
-  | '[' 'exp' ']' -> EXP
+  '[' 'log' ']' -> OP_LOG
+  | '[' 'sin' ']' -> OP_SIN
+  | '[' 'cos' ']' -> OP_COS
+  | '[' 'tan' ']' -> OP_TAN
+  | '[' 'sqrt' ']' -> OP_SQRT
+  | '[' 'exp' ']' -> OP_EXP
+  | '[' 'int' ']' -> OP_ABS
   ;
 
 operator_mult
   :
-  '*'
-  | '/'
-  | '[' 'mod' ']' -> MODULUS
+  '*' -> OP_MULTIPLY
+  | '/' -> OP_DIVIDE
+  | '[' 'mod' ']' -> OP_MODULUS
   ;
 
 operator_add
   :
-  '+'
-  | '-'
+  '+' -> OP_PLUS
+  | '-' -> OP_MINUS
   ;
 
 
@@ -533,15 +585,29 @@ FLOAT
     |   NUMERIC EXPONENT
     ;
 
+COMMON_ID_FRAGMENT
+  :
+  (
+    'a'..'z' | 'A'..'Z'
+  ) 
+  ALPHANUMERIC?
+  ;
+
+STATE_ID_FRAGMENT
+  :
+  NUMERIC ALPHANUMERIC?
+  ;
+
 ID_FRAGMENT
   :
   (
-    ALPHANUMERIC
+    'a'..'z' | 'A'..'Z'
   ) 
   (
     ALPHANUMERIC
     | '_'
     | '-'
+    | '+'
   )*
   ;
 

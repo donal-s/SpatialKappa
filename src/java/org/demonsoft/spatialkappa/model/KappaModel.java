@@ -510,7 +510,11 @@ public class KappaModel implements IKappaModel {
     	    checkLocations(initialValue.complexes);
     	}
         for (Perturbation perturbation : perturbations) {
-            checkAgentLocations(perturbation.effect.agents, false);
+            for (PerturbationEffect effect : perturbation.effects) {
+                checkAgentLocations(effect.agents, false);
+                // TODO check labels exist for $UPDATE effects
+                // TODO check labels unique across rules and variables
+            }
         }
         checkLocations(canonicalComplexes);
         for (Variable variable : variables.values()) {
@@ -597,6 +601,18 @@ public class KappaModel implements IKappaModel {
             throw new IllegalStateException("Should not be called");
         }
 
+        public float getElapsedTime() {
+            throw new IllegalStateException("Should not be called");
+        }
+        
+        public float getMaximumTime() {
+            throw new IllegalStateException("Should not be called");
+        }
+        
+        public int getMaximumEventCount() {
+            throw new IllegalStateException("Should not be called");
+        }
+        
         public Variable getVariable(String label) {
             return variables.get(label);
         }
@@ -621,7 +637,7 @@ public class KappaModel implements IKappaModel {
             throw new IllegalStateException("Should not be called");
         }
 
-        public void setTransitionRate(String transitionName, VariableExpression expression) {
+        public void setTransitionRateOrVariable(String name, VariableExpression rateExpression) {
             throw new IllegalStateException("Should not be called");
         }
 
@@ -632,7 +648,7 @@ public class KappaModel implements IKappaModel {
         public void snapshot() {
             throw new IllegalStateException("Should not be called");
         }
-        
+
     }
 
 	public void addAgentDeclaration(AgentDeclaration agent) {

@@ -2,6 +2,9 @@ package org.demonsoft.spatialkappa.model;
 
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,6 +13,14 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Stack;
+
+import org.antlr.runtime.ANTLRInputStream;
+import org.antlr.runtime.CommonTokenStream;
+import org.antlr.runtime.tree.CommonTree;
+import org.antlr.runtime.tree.CommonTreeNodeStream;
+import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
+import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
+import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
 
 public class Utils {
 
@@ -251,6 +262,38 @@ public class Utils {
         }
 
         return true;
+    }
+
+    public static IKappaModel createKappaModel(File inputFile) throws Exception {
+        return createKappaModel(new FileInputStream(inputFile), "Problems parsing model file: " + inputFile.getPath());
+    }
+
+    public static IKappaModel createKappaModel(InputStream inputStream) throws Exception {
+        return createKappaModel(inputStream, "Problems parsing model");
+    }
+
+    private static IKappaModel createKappaModel(InputStream inputStream, String errorMessage) throws Exception {
+        ANTLRInputStream input = new ANTLRInputStream(inputStream);
+        SpatialKappaLexer lexer = new SpatialKappaLexer(input);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        SpatialKappaParser parser = new SpatialKappaParser(tokens);
+        SpatialKappaParser.prog_return r = parser.prog();
+        
+        List<String> parseErrors = lexer.getErrors();
+        parseErrors.addAll(parser.getErrors());
+        if (parseErrors.size() > 0) {
+            for (String error : parseErrors) {
+                System.err.println(error);
+            }
+            throw new Exception(errorMessage);
+        }
+        
+        CommonTree t = (CommonTree) r.getTree();
+
+        CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
+        nodes.setTokenStream(tokens);
+        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
+        return walker.prog();
     }
 
 }

@@ -1,6 +1,6 @@
 ### PSD Project Stage 4 acceptance tests
 ### Test 4.2 - Complex composition affects diffusion rate - heteropolymers
-### Last modified 07-09-2012
+### Last modified 02-11-2012
 
 %compartment: array [10] # Think of gel electrophoresis
 
@@ -12,7 +12,7 @@
 %init: 100 :array[0] B(x,y!1), B(x!1,y!2), B(x!2,y!3), B(x!3,y)
 %init: 100 :array[0] B(x,y!1), B(x!1,y!2), A(x!2,y!3), A(x!3,y)
 
-%channel: diffusion :array[x] -> :array[x+1]
+%channel: diffusion :array[x] -> :array[x +1]
 
 'diffusion AX' A(x) ->:diffusion A(x) @ 1 / (|A()| + 10 * |B()|)
 'diffusion BX' B(x) ->:diffusion B(x) @ 1 / (|A()| + 10 * |B()|)

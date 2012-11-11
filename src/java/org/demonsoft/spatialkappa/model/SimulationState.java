@@ -6,8 +6,12 @@ import java.util.Map;
 public interface SimulationState {
 
     float getTime();
+    float getElapsedTime();
+    float getMaximumTime();
     int getEventCount();
-
+    int getMaximumEventCount();
+    
+    
     Map<String, Variable> getVariables();
     Variable getVariable(String label);
 
@@ -15,7 +19,7 @@ public interface SimulationState {
     ObservationElement getTransitionFiredCount(Variable variable);
 
     void addComplexInstances(List<Agent> agents, int amount);
-    void setTransitionRate(String transitionName, VariableExpression rateExpression);
+    void setTransitionRateOrVariable(String name, VariableExpression rateExpression);
     void stop();
     void snapshot();
 }

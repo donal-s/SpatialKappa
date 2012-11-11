@@ -86,7 +86,7 @@ public class PerturbationEffectTest {
         
         effect = new PerturbationEffect("label", expression);
         assertEquals(Type.SET, effect.type);
-        assertEquals("'label' := 2.0", effect.toString());
+        assertEquals("$UPDATE 'label' 2.0", effect.toString());
         
         assertEquals(Type.FIXED, PerturbationEffect.SNAPSHOT.type);
         assertEquals("$SNAPSHOT", PerturbationEffect.SNAPSHOT.toString());
@@ -123,7 +123,7 @@ public class PerturbationEffectTest {
         verify(state);
 
         reset(state);
-        state.setTransitionRate("label", expression);
+        state.setTransitionRateOrVariable("label", expression);
         
         replay(state);
         new PerturbationEffect("label", expression).apply(state);
@@ -142,6 +142,8 @@ public class PerturbationEffectTest {
         replay(state);
         PerturbationEffect.SNAPSHOT.apply(state);
         verify(state);
+        
+        // TODO Test setting both transition rates and variables
     }
 
 }

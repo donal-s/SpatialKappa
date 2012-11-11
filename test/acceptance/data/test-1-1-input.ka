@@ -6,10 +6,10 @@
 
 'break'    :cytosol A(s!1),A(s!1) -> A(s),A(s) @ 'break-rate' # Location per rule
 
-%init: 1000 A:cytosol # Location per agent
-%init: 500 :cytosol A # Location per init
-%init: 250 A:cytosol[0] # Location per agent
-%init: 250 :cytosol[1] A # Location per init
+%init: 1000 A:cytosol() # Location per agent
+%init: 500 :cytosol A() # Location per init
+%init: 250 A:cytosol[0]() # Location per agent
+%init: 250 :cytosol[1] A() # Location per init
 
 %var: 'break-rate' 50.0
 

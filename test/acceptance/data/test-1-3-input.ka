@@ -14,10 +14,10 @@
 'break AB'    A:cytosol(s!1:cross),B:membrane(s!1) -> A:cytosol(s),B:membrane(s) @ 'break-rate'
 'break BA'    A:membrane(s!1:cross),B:cytosol(s!1) -> A:membrane(s),B:cytosol(s) @ 'break-rate'
 
-%init: 1000 A:cytosol
-%init: 1000 A:membrane
-%init: 1000 B:cytosol
-%init: 1000 B:membrane
+%init: 1000 A:cytosol()
+%init: 1000 A:membrane()
+%init: 1000 B:cytosol()
+%init: 1000 B:membrane()
 
 %var: 'break-rate' 50.0
 

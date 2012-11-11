@@ -104,6 +104,18 @@ public class BooleanExpressionTest {
         assertEquals(Type.VARIABLE_RELATION, expression.type);
         assertEquals("(2.0 > 3.0)", expression.toString());
 
+        expression = new BooleanExpression(RelationalOperator.LESS, expr1, expr2);
+        assertEquals(Type.VARIABLE_RELATION, expression.type);
+        assertEquals("(2.0 < 3.0)", expression.toString());
+
+        expression = new BooleanExpression(RelationalOperator.EQUAL, expr1, expr2);
+        assertEquals(Type.VARIABLE_RELATION, expression.type);
+        assertEquals("(2.0 = 3.0)", expression.toString());
+
+        expression = new BooleanExpression(RelationalOperator.NOT_EQUAL, expr1, expr2);
+        assertEquals(Type.VARIABLE_RELATION, expression.type);
+        assertEquals("(2.0 <> 3.0)", expression.toString());
+
         expression = new BooleanExpression(Operator.AND, boolExpr1, boolExpr2);
         assertEquals(Type.BOOLEAN_RELATION, expression.type);
         assertEquals("([true] && [false])", expression.toString());
@@ -166,6 +178,10 @@ public class BooleanExpressionTest {
         assertFalse(new BooleanExpression(RelationalOperator.EQUAL, expr1, new VariableExpression(4)).evaluate(state));
         assertTrue(new BooleanExpression(RelationalOperator.EQUAL, expr1, new VariableExpression(5)).evaluate(state));
         assertFalse(new BooleanExpression(RelationalOperator.EQUAL, expr1, new VariableExpression(6)).evaluate(state));
+
+        assertTrue(new BooleanExpression(RelationalOperator.NOT_EQUAL, expr1, new VariableExpression(4)).evaluate(state));
+        assertFalse(new BooleanExpression(RelationalOperator.NOT_EQUAL, expr1, new VariableExpression(5)).evaluate(state));
+        assertTrue(new BooleanExpression(RelationalOperator.NOT_EQUAL, expr1, new VariableExpression(6)).evaluate(state));
 
         assertFalse(new BooleanExpression(RelationalOperator.LESS, expr1, new VariableExpression(4)).evaluate(state));
         assertFalse(new BooleanExpression(RelationalOperator.LESS, expr1, new VariableExpression(5)).evaluate(state));

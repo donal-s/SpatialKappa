@@ -4,17 +4,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
-import java.io.FileInputStream;
 
-import org.antlr.runtime.ANTLRInputStream;
-import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.tree.CommonTree;
-import org.antlr.runtime.tree.CommonTreeNodeStream;
+import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationListener;
-import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
-import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
-import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
+import org.demonsoft.spatialkappa.model.TestUtils;
 import org.demonsoft.spatialkappa.tools.TransitionMatchingSimulation;
 import org.junit.Test;
 
@@ -292,16 +286,8 @@ public class SimulationTest {
     }
 
     private final TransitionMatchingSimulation createSimulation(String inputModelFilename) throws Exception {
-        ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(
-                new File(TEST_DATA_DIRECTORY, inputModelFilename)));
-        CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));
-        SpatialKappaParser.prog_return r = new SpatialKappaParser(tokens).prog();
-
-        CommonTree t = (CommonTree) r.getTree();
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
-        nodes.setTokenStream(tokens);
-        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
-        simulation = new TransitionMatchingSimulation(walker.prog());
+        String inputText = FileUtils.readFileToString(new File(TEST_DATA_DIRECTORY, inputModelFilename));
+        simulation = new TransitionMatchingSimulation(TestUtils.createKappaModel(inputText));
         currentObservation = simulation.getCurrentObservation();
         
         simulation.addObservationListener(new ObservationListener() {

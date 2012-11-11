@@ -2,11 +2,11 @@
 
 %compartment: cytosol [4][4]
 
-%channel: links1 :cytosol [x][y] -> :cytosol [x][y+1]
-%channel: links2 :cytosol [x][y] -> :cytosol [x+1][y]
-%channel: links3 :cytosol [x][y] -> :cytosol [x+1][(y+1)-(2*(x%2))]
+%channel: links1 :cytosol [x][y] -> :cytosol [x][y +1]
+%channel: links2 :cytosol [x][y] -> :cytosol [x +1][y]
+%channel: links3 :cytosol [x][y] -> :cytosol [x +1][(y +1)-(2*(x%2))]
 
-%init: 16 A:cytosol
+%init: 16 A:cytosol()
 
 :cytosol A(l1),A(l4) -> A(l1!1:links1),A(l4!1) @ 'link rate'
 :cytosol A(l2),A(l5) -> A(l2!1:links2),A(l5!1) @ 'link rate'

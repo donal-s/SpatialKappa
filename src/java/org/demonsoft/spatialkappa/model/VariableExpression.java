@@ -196,6 +196,16 @@ public class VariableExpression implements Serializable {
             float eval(float x) {
                 return (float) Math.exp(x);
             }
+        },
+        ABS("[int]") {
+            @Override
+            ObservationElement eval(ObservationElement x) {
+                return x.abs();
+            }
+            @Override
+            float eval(float x) {
+                return (float) Math.floor(Math.abs(x));
+            }
         };
 
         private final String text;
@@ -243,6 +253,24 @@ public class VariableExpression implements Serializable {
             @Override
             public String toString() {
                 return "[T]";
+            }
+        },
+        ELAPSED_TIME {
+            @Override
+            public String toString() {
+                return "[Tsim]";
+            }
+        },
+        MAX_TIME {
+            @Override
+            public String toString() {
+                return "[Tmax]";
+            }
+        },
+        MAX_EVENTS {
+            @Override
+            public String toString() {
+                return "[Emax]";
             }
         },
     }
@@ -373,10 +401,8 @@ public class VariableExpression implements Serializable {
         case AGENT_GROUP:
             return "|" + complexes.toString() + "|";
             
-        default:
-            throw new IllegalStateException("Unknown expression");
         }
-        
+        throw new IllegalStateException("Unknown expression");
     }
 
 
@@ -463,9 +489,16 @@ public class VariableExpression implements Serializable {
             case TIME:
                 return new ObservationElement(state.getTime());
 
-            default:
-                throw new IllegalStateException("Unknown expression");
+            case MAX_TIME:
+                return new ObservationElement(state.getMaximumTime());
+
+            case MAX_EVENTS:
+                return new ObservationElement(state.getMaximumEventCount());
+
+            case ELAPSED_TIME:
+                return new ObservationElement(state.getElapsedTime());
             }
+            break;
             
         case UNARY_EXPRESSION:
             return unaryOperator.eval(lhsExpression.evaluate(state));
@@ -480,9 +513,8 @@ public class VariableExpression implements Serializable {
         case AGENT_GROUP:
             return new ObservationElement(0);
             
-        default:
-            throw new IllegalStateException("Unknown expression");
         }
+        throw new IllegalStateException("Unknown expression");
     }
 
     public float evaluate(Map<String, Variable> variables) {
@@ -527,25 +559,9 @@ public class VariableExpression implements Serializable {
             return operator.eval(lhsExpression.evaluate(state, transitionInstance), rhsExpression.evaluate(state, transitionInstance));
             
         case CONSTANT:
-            if (constant == Constant.INFINITY) {
-                throw new IllegalStateException();
-            }
-            return new ObservationElement(constant.value);
-            
         case NUMBER:
-            return new ObservationElement(value);
-            
         case SIMULATION_TOKEN:
-            switch (simulationToken) {
-            case EVENTS:
-                return new ObservationElement(state.getEventCount());
-
-            case TIME:
-                return new ObservationElement(state.getTime());
-
-            default:
-                throw new IllegalStateException("Unknown expression");
-            }
+            return evaluate(state);
             
         case UNARY_EXPRESSION:
             return unaryOperator.eval(lhsExpression.evaluate(state, transitionInstance));
@@ -559,12 +575,9 @@ public class VariableExpression implements Serializable {
             
         case AGENT_GROUP:
             return new ObservationElement(getAgentGroupCountInTransitionInstance(transitionInstance));
-            
-            
-        default:
-            throw new IllegalStateException("Unknown expression");
-        }
 
+        }
+        throw new IllegalStateException("Unknown expression");
     }
     
 
@@ -604,9 +617,8 @@ public class VariableExpression implements Serializable {
             Variable target = variables.get(reference.variableName);
             return target.type == Variable.Type.VARIABLE_EXPRESSION && target.expression.isInfinite(variables);
             
-        default:
-            throw new IllegalStateException("Unknown expression");
         }
+        throw new IllegalStateException("Unknown expression");
     }
 
 
@@ -635,9 +647,8 @@ public class VariableExpression implements Serializable {
             }
             return variables.get(reference.variableName).expression.isFixed(variables);
             
-        default:
-            throw new IllegalStateException("Unknown expression");
         }
+        throw new IllegalStateException("Unknown expression");
     }
 
     public int evaluate(IKappaModel kappaModel) {
@@ -670,9 +681,11 @@ public class VariableExpression implements Serializable {
         case AGENT_GROUP:
             return 0;
             
-        default:
-            throw new IllegalStateException("Unknown expression");
+        case SIMULATION_TOKEN:
+            break;
+            
         }
+        throw new IllegalStateException("Unknown expression");
     }
 
 }

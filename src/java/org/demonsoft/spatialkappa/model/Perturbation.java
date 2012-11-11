@@ -1,18 +1,23 @@
 package org.demonsoft.spatialkappa.model;
 
+import java.util.List;
+
 
 public class Perturbation {
 
     public final BooleanExpression condition;
-    public final PerturbationEffect effect;
+    public final List<PerturbationEffect> effects;
     public final BooleanExpression untilCondition;
     
-    public Perturbation(BooleanExpression condition, PerturbationEffect effect, BooleanExpression untilCondition) {
-        if (condition == null || effect == null) {
+    public Perturbation(BooleanExpression condition, List<PerturbationEffect> effects, BooleanExpression untilCondition) {
+        if (condition == null || effects == null) {
             throw new NullPointerException();
         }
+        if (effects.size() == 0) {
+            throw new IllegalArgumentException("No effects supplied");
+        }
         this.condition = condition;
-        this.effect = effect;
+        this.effects = effects;
         this.untilCondition = untilCondition;
     }
 
@@ -34,13 +39,15 @@ public class Perturbation {
         if (simulationState == null) {
             throw new NullPointerException();
         }
-        effect.apply(simulationState);
+        for (PerturbationEffect effect : effects) {
+            effect.apply(simulationState);
+        }
     }
     
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(condition).append(" do ").append(effect);
+        builder.append(condition).append(" do ").append(effects);
         if (untilCondition != null) {
             builder.append(" until ").append(untilCondition);
         }

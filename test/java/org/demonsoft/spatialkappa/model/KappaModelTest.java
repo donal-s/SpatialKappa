@@ -578,6 +578,14 @@ public class KappaModelTest {
             // Expected exception
         }
 
+        try {
+            model.addCompartment("invalid", null, getList(0));
+            fail("invalid should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
         assertNotNull(model.getCompartments());
         assertEquals(0, model.getCompartments().size());
 

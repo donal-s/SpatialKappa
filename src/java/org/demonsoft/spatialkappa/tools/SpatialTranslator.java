@@ -5,22 +5,16 @@ import static org.demonsoft.spatialkappa.model.Utils.getChannel;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import org.antlr.runtime.ANTLRInputStream;
-import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.tree.CommonTree;
-import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.model.Agent;
-import org.demonsoft.spatialkappa.model.AgentSite;
 import org.demonsoft.spatialkappa.model.AgentDeclaration;
+import org.demonsoft.spatialkappa.model.AgentSite;
 import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.Channel;
 import org.demonsoft.spatialkappa.model.ChannelConstraint;
@@ -32,11 +26,9 @@ import org.demonsoft.spatialkappa.model.InitialValue;
 import org.demonsoft.spatialkappa.model.KappaModel;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Transition;
+import org.demonsoft.spatialkappa.model.Utils;
 import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.Variable.Type;
-import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
-import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
-import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
 
 public class SpatialTranslator {
 
@@ -46,14 +38,14 @@ public class SpatialTranslator {
         if (inputFile == null) {
             throw new NullPointerException();
         }
-        kappaModel = getKappaModel(new FileInputStream(inputFile));
+        kappaModel = Utils.createKappaModel(inputFile);
     }
 
     SpatialTranslator(String input) throws Exception {
         if (input == null) {
             throw new NullPointerException();
         }
-        kappaModel = getKappaModel(new ByteArrayInputStream(input.getBytes()));
+        kappaModel = Utils.createKappaModel(new ByteArrayInputStream(input.getBytes()));
     }
 
     SpatialTranslator(IKappaModel kappaModel) {
@@ -61,22 +53,6 @@ public class SpatialTranslator {
             throw new NullPointerException();
         }
         this.kappaModel = kappaModel;
-    }
-
-    private static IKappaModel getKappaModel(InputStream inputStream) throws Exception {
-        ANTLRInputStream input = new ANTLRInputStream(inputStream);
-        CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));
-        SpatialKappaParser.prog_return r = new SpatialKappaParser(tokens).prog();
-
-        CommonTree t = (CommonTree) r.getTree();
-
-        if (t == null) {
-            return new KappaModel();
-        }
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
-        nodes.setTokenStream(tokens);
-        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
-        return walker.prog();
     }
 
     public String translateToKappa() {

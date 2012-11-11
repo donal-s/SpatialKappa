@@ -1,41 +1,41 @@
 ### PSD Project Stage 3 acceptance tests
 ### Test 3.4 - Non-omnidirectional diffusion within geometric primitives 3D
-### Last modified 05-08-2012
+### Last modified 02-11-2012
 
-%agent: A
-%agent: B
-%agent: C
-%agent: D
+%agent: A()
+%agent: B()
+%agent: C()
+%agent: D()
 
 %compartment: solidCube[5][5][5] # [height][width][depth]
-%init: 1000 :solidCube[1][1][1] A, B, C, D
+%init: 1000 :solidCube[1][1][1] A(), B(), C(), D()
 
 %channel: radial Radial :solidCube -> :solidCube
 %channel: radialIn RadialIn :solidCube -> :solidCube
 %channel: radialOut RadialOut :solidCube -> :solidCube
 %channel: lateral Lateral :solidCube -> :solidCube
 
-A ->:radial    A @ 42.0
-B ->:radialIn  B @ 336.0
-C ->:radialOut C @ 48.0
-D ->:lateral   D @ 56.0
+A() ->:radial    A() @ 42.0
+B() ->:radialIn  B() @ 336.0
+C() ->:radialOut C() @ 48.0
+D() ->:lateral   D() @ 56.0
 
-%obs: 'A'    A:solidCube[1][1][1]
-%obs: 'A O'  A:solidCube[0][0][0] # Further out from centre
-%obs: 'A I'  A:solidCube[2][2][2] # Closer in to centre
-%obs: 'A L'  A:solidCube[1][1][2] # Lateral
+%obs: 'A'    A:solidCube[1][1][1]()
+%obs: 'A O'  A:solidCube[0][0][0]() # Further out from centre
+%obs: 'A I'  A:solidCube[2][2][2]() # Closer in to centre
+%obs: 'A L'  A:solidCube[1][1][2]() # Lateral
 
-%obs: 'B'    B:solidCube[1][1][1]
-%obs: 'B O'  B:solidCube[0][0][0] # Further out from centre
-%obs: 'B I'  B:solidCube[2][2][2] # Closer in to centre
-%obs: 'B L'  B:solidCube[1][1][2] # Lateral
+%obs: 'B'    B:solidCube[1][1][1]()
+%obs: 'B O'  B:solidCube[0][0][0]() # Further out from centre
+%obs: 'B I'  B:solidCube[2][2][2]() # Closer in to centre
+%obs: 'B L'  B:solidCube[1][1][2]() # Lateral
 
-%obs: 'C'    C:solidCube[1][1][1]
-%obs: 'C O'  C:solidCube[0][0][0] # Further out from centre
-%obs: 'C I'  C:solidCube[2][2][2] # Closer in to centre
-%obs: 'C L'  C:solidCube[1][1][2] # Lateral
+%obs: 'C'    C:solidCube[1][1][1]()
+%obs: 'C O'  C:solidCube[0][0][0]() # Further out from centre
+%obs: 'C I'  C:solidCube[2][2][2]() # Closer in to centre
+%obs: 'C L'  C:solidCube[1][1][2]() # Lateral
 
-%obs: 'D'    D:solidCube[1][1][1]
-%obs: 'D O'  D:solidCube[0][0][0] # Further out from centre
-%obs: 'D I'  D:solidCube[2][2][2] # Closer in to centre
-%obs: 'D L'  D:solidCube[1][1][2] # Lateral
+%obs: 'D'    D:solidCube[1][1][1]()
+%obs: 'D O'  D:solidCube[0][0][0]() # Further out from centre
+%obs: 'D I'  D:solidCube[2][2][2]() # Closer in to centre
+%obs: 'D L'  D:solidCube[1][1][2]() # Lateral

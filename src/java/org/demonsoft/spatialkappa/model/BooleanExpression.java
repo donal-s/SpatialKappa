@@ -50,6 +50,12 @@ public class BooleanExpression {
                 return x.value == y.value;
             }
         },
+        NOT_EQUAL("<>") {
+            @Override
+            boolean eval(ObservationElement x, ObservationElement y) {
+                return x.value != y.value;
+            }
+        },
         LESS("<") {
             @Override
             boolean eval(ObservationElement x, ObservationElement y) {

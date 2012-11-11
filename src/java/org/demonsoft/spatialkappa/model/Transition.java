@@ -108,7 +108,7 @@ public class Transition {
      * Will attempt to pre-evaluate transition rate and cache until rate is changed using setRate()
      * @param variables
      */
-    public void applyVariables(Map<String, Variable> variables) {
+    public boolean applyVariables(Map<String, Variable> variables) {
         if (rate.isFixed(variables)) {
             hasSimpleRate = true;
             simpleRate = rate.evaluate(variables);
@@ -116,6 +116,7 @@ public class Transition {
         else {
             hasSimpleRate = false;
         }
+        return true; // TODO performance improvement: should return true only if rate has changed
     }
 
     public final boolean isInfiniteRate(Map<String, Variable> variables) {

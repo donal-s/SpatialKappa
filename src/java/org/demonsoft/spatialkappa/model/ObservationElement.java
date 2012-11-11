@@ -275,6 +275,14 @@ public class ObservationElement implements Serializable {
         return new ObservationElement((float) Math.exp(value));
     }
 
+    public ObservationElement abs() {
+        if (isCompartment) {
+            throw new RuntimeException("not implemented");
+        }
+        
+        return new ObservationElement((float) Math.floor(Math.abs(value)));
+    }
+
     public float getMean() {
         if (!isCompartment) {
             return value;

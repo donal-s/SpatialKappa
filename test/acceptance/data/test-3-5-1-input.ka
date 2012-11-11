@@ -1,15 +1,15 @@
 ### PSD Project Stage 3 acceptance tests
 ### Test 3.5 - Diffusion between geometric primitives 2D
-### Last modified 04-09-2012
+### Last modified 02-11-2012
 
-%agent: A
+%agent: A()
 
 %compartment: layer1               [5][5] # [height][width]
 %compartment: layer2 OpenCircle    [5][1] # [diameter] [thickness]
 %compartment: layer3 OpenRectangle [5][5] [2] # [height][width] [thickness]
 %compartment: layer4               [5][5] # [height][width]
 
-%init: 100 :layer1[2][2] A
+%init: 100 :layer1[2][2] A()
 
 %channel: layer1Channel Hexagonal :layer1 -> :layer1
 %channel: layer2Channel Neighbour :layer2 -> :layer2
@@ -19,24 +19,24 @@
 %channel: layer1layer2 :layer1[x][y] -> :layer2[x][y]
 %channel: layer2layer3 (:layer2[x][y] -> :layer3[x -1][y -1]) + \
                        (:layer2[x][y] -> :layer3[x][y -1]) + \
-                       (:layer2[x][y] -> :layer3[x+1][y -1]) + \
+                       (:layer2[x][y] -> :layer3[x +1][y -1]) + \
                        (:layer2[x][y] -> :layer3[x -1][y]) + \
                        (:layer2[x][y] -> :layer3[x][y]) + \
-                       (:layer2[x][y] -> :layer3[x+1][y]) + \
-                       (:layer2[x][y] -> :layer3[x -1][y+1]) + \
-                       (:layer2[x][y] -> :layer3[x][y+1]) + \
-                       (:layer2[x][y] -> :layer3[x+1][y+1])
+                       (:layer2[x][y] -> :layer3[x +1][y]) + \
+                       (:layer2[x][y] -> :layer3[x -1][y +1]) + \
+                       (:layer2[x][y] -> :layer3[x][y +1]) + \
+                       (:layer2[x][y] -> :layer3[x +1][y +1])
 %channel: layer3layer4 :layer3[x][y] -> :layer4[x][y]
 
-A ->:layer1Channel A @ 0.1
-A ->:layer2Channel A @ 0.1
-A ->:layer3Channel A @ 0.1
-A ->:layer4Channel A @ 0.1
-A ->:layer1layer2 A @ 1.0
-A ->:layer2layer3 A @ 1.0
-A ->:layer3layer4 A @ 1.0
+A() ->:layer1Channel A() @ 0.1
+A() ->:layer2Channel A() @ 0.1
+A() ->:layer3Channel A() @ 0.1
+A() ->:layer4Channel A() @ 0.1
+A() ->:layer1layer2 A() @ 1.0
+A() ->:layer2layer3 A() @ 1.0
+A() ->:layer3layer4 A() @ 1.0
 
-%obs: 'A layer1' A:layer1
-%obs: 'A layer2' A:layer2
-%obs: 'A layer3' A:layer3
-%obs: 'A layer4' A:layer4
+%obs: 'A layer1' A:layer1()
+%obs: 'A layer2' A:layer2()
+%obs: 'A layer3' A:layer3()
+%obs: 'A layer4' A:layer4()

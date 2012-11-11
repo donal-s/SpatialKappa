@@ -3,18 +3,10 @@ package scenarios;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.ByteArrayInputStream;
-
-import org.antlr.runtime.ANTLRInputStream;
-import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.tree.CommonTree;
-import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationListener;
-import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
-import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
-import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
+import org.demonsoft.spatialkappa.model.TestUtils;
 import org.demonsoft.spatialkappa.tools.TransitionMatchingSimulation;
 import org.junit.Test;
 
@@ -210,14 +202,15 @@ public class GeneralSimulationTest {
         }
     }
     
+    // TODO test !x.y link types
 
 
     private static final String SIMPLE_STATE_INPUT = 
         "%agent: A(x~s~t)\n" +
         "A(x~s) -> A(x~t) @ 0.1\n" + 
         "%init: 1000 A(x~s)\n" + 
-        "%obs: A(x~s)\n" + 
-        "%obs: A(x~t)\n";
+        "%obs: '[A(x~s)]' A(x~s)\n" + 
+        "%obs: '[A(x~t)]' A(x~t)\n";
     
     private static final String VARIABLE_REFERENCE_COMPLEX_INPUT = 
         "%agent: A(x~s)\n" +
@@ -229,17 +222,17 @@ public class GeneralSimulationTest {
         "%agent: A(x~s~t)\n" +
         "A(x~s) -> A(x~t) @ [inf]\n" + 
         "%init: 1000 A(x~s)\n" + 
-        "%obs: A(x~s)\n" + 
-        "%obs: A(x~t)\n";
+        "%obs: '[A(x~s)]' A(x~s)\n" + 
+        "%obs: '[A(x~t)]' A(x~t)\n";
     
     private static final String INFINITE_RATE_GRADUAL_SUBSTRATE_INPUT = 
         "%agent: A(x~s~t~u)\n" +
         "A(x~s) -> A(x~t) @ 0.1\n" + 
         "A(x~t) -> A(x~u) @ [inf]\n" + 
         "%init: 1000 A(x~s)\n" + 
-        "%obs: A(x~s)\n" + 
-        "%obs: A(x~t)\n" +
-        "%obs: A(x~u)\n";
+        "%obs: '[A(x~s)]' A(x~s)\n" + 
+        "%obs: '[A(x~t)]' A(x~t)\n" + 
+        "%obs: '[A(x~u)]' A(x~u)\n";
     
     private static final String ERROR_CASE1_INPUT = 
         "%agent: A(a,b)\n" +
@@ -247,18 +240,18 @@ public class GeneralSimulationTest {
         "A(a), B(a) -> A(a!1),B(a!1) @ 1\n" + 
         "%init: 1000 A(a,b) \n" + 
         "%init: 1000 A(a!2, b!1), B(a, c!1, b), B(a!2, c, b) \n" + 
-        "%obs: A(a) \n" + 
+        "%obs: '[A(a)]' A(a) \n" + 
         "%obs: 'result' A(a!2, b!1), B(a!3, c!1, b), B(a!2, c, b), A(a!3, b)\n";
     
     private static final String ADDITIONAL_STATE_INPUT = 
         "%agent: A(x~s~t,y~a)\n" +
         "A(x~s) -> A(x~t) @ 0.1\n" + 
         "%init: 1000 A(x~s,y~a)\n" + 
-        "%obs: A(x~s)\n" + 
-        "%obs: A(x~t,y~a)\n";
+        "%obs: '[A(x~s)]' A(x~s)\n" + 
+        "%obs: '[A(x~t,y~a)]' A(x~t,y~a)\n";
     
     private static final String MATH_FUNCTIONS_INPUT = 
-        "%agent: A\n" +
+        "%agent: A()\n" +
         " -> A() @ 1\n" + 
         "%var: 'log' [log] (([E] * 10) + 1)\n" + 
         "%var: 'sin' [sin] [E]\n" + 
@@ -276,7 +269,7 @@ public class GeneralSimulationTest {
         "%plot: 'pi'\n";
     
     private static final String SIMULATION_TOKENS_INPUT = 
-        "%agent: A\n" +
+        "%agent: A()\n" +
         " -> A() @ 20\n" + 
         "%var: 'events' [E]\n" + 
         "%var: 'time' [T]\n" + // TODO - handle obs
@@ -284,15 +277,15 @@ public class GeneralSimulationTest {
         "%plot: 'time'\n";
     
     private static final String STOPPED_SIMULATION_INPUT = 
-        "%agent: A\n" +
+        "%agent: A()\n" +
         " -> A() @ 1\n" + 
         "%var: 'events' [E]\n" + 
         "%plot: 'events'\n" +
         "%mod: [E] = 150 do $STOP\n";
     
     private static final String TRANSITIONS_FIRED_INPUT = 
-        "%agent: A\n" +
-        "%agent: B\n" +
+        "%agent: A()\n" +
+        "%agent: B()\n" +
         "'A created' -> A() @ 2\n" + 
         "'B created' -> B() @ 1\n" + 
         "%plot: 'A created'\n" + 
@@ -303,8 +296,8 @@ public class GeneralSimulationTest {
         "%agent: B(y)\n" +
         "A(x),B(y) -> A(x!1),B(y!1) @ 0.1\n" + 
         "%init: 10000 A(x),B(y)\n" + 
-        "%obs: A(x)\n" + 
-        "%obs: A(x!_)\n";
+        "%obs: '[A(x)]' A(x)\n" + 
+        "%obs: '[A(x!_)]' A(x!_)\n";
     
     private static final String TIMED_PERTURBATION_INPUT = 
         "%agent: A(x~a~b)\n" +
@@ -312,9 +305,9 @@ public class GeneralSimulationTest {
         "A(x~a) -> A(x~b) @ 0.1\n" + 
         "'triggered' C(z~a) -> C(z~b) @ 0\n" + 
         "%init: 10000 A(x~a),C(z~a)\n" + 
-        "%obs: A(x~a)\n" +
-        "%obs: C(z~a)\n" +
-        "%mod: [T] > 7 do 'triggered' := 0.1\n";
+        "%obs: '[A(x~a)]' A(x~a)\n" +
+        "%obs: '[C(z~a)]' C(z~a)\n" +
+        "%mod: [T] > 7 do $UPDATE 'triggered' 0.1\n";
     
     private static final String TIMED_INFINITE_RATE_PERTURBATION_INPUT = 
         "%agent: A(x~a~b)\n" +
@@ -322,17 +315,17 @@ public class GeneralSimulationTest {
         "A(x~a) -> A(x~b) @ 0.1\n" + 
         "'triggered' C(z~a) -> C(z~b) @ 0\n" + 
         "%init: 10000 A(x~a),C(z~a)\n" + 
-        "%obs: A(x~a)\n" +
-        "%obs: C(z~a)\n" +
-        "%mod: [T] > 3 do 'triggered' := [inf]\n";
+        "%obs: '[A(x~a)]' A(x~a)\n" +
+        "%obs: '[C(z~a)]' C(z~a)\n" +
+        "%mod: [T] > 3 do $UPDATE 'triggered' [inf]\n";
     
     private static final String CREATE_AGENT_LINK_INPUT = 
         "%agent: A(x)\n" +
         "%agent: B(y)\n" +
         "A(x) -> A(x!1),B(y!1) @ 0.1\n" + 
         "%init: 10000 A(x)\n" + 
-        "%obs: A(x)\n" + 
-        "%obs: A(x!1),B(y!1)\n";
+        "%obs: '[A(x)]' A(x)\n" + 
+        "%obs: '[A(x!1), B(y!1)]' A(x!1),B(y!1)\n";
     
     private static final String CREATE_COMPLEX_INPUT = 
         "%agent: A(x)\n" +
@@ -340,36 +333,36 @@ public class GeneralSimulationTest {
         "%agent: C(z)\n" +
         "A(x) -> A(x),B(y!1),C(z!1) @ 0.1\n" + 
         "%init: 10000 A(x)\n" + 
-        "%obs: A(x)\n" + 
-        "%obs: B(y!1),C(z!1)\n";
+        "%obs: '[A(x)]' A(x)\n" + 
+        "%obs: '[B(y!1), C(z!1)]' B(y!1),C(z!1)\n";
     
     private static final String DELETE_LINK_INPUT = 
         "%agent: A(x)\n" +
         "%agent: B(y)\n" +
         "A(x!1),B(y!1) -> A(x),B(y)  @ 0.1\n" + 
         "%init: 10000 A(x!1),B(y!1)\n" + 
-        "%obs: B(y)\n" + 
-        "%obs: A(x!_)\n";
+        "%obs: '[B(y)]' B(y)\n" + 
+        "%obs: '[A(x!_)]' A(x!_)\n";
     
     private static final String DELETE_AGENT_LINK_INPUT = 
         "%agent: A(x)\n" +
         "%agent: B(y)\n" +
         "A(x!1),B(y!1) -> A(x) @ 0.1\n" + 
         "%init: 10000 A(x!1),B(y!1)\n" + 
-        "%obs: B(y?)\n";
+        "%obs: '[B(y?)]' B(y?)\n";
     
     private static final String DELETE_COMPLEX_INPUT = 
         "%agent: A(x)\n" +
         "A(x) ->  @ 0.1\n" + 
         "%init: 10000 A(x)\n" + 
-        "%obs: A(x)\n" + 
-        "%obs: A(x!_)\n";
+        "%obs: '[A(x)]' A(x)\n" + 
+        "%obs: '[A(x!_)]' A(x!_)\n";
     
     private static final String DELETE_COMPLEX_INPUT_NO_SITES = 
-        "%agent: A\n" +
+        "%agent: A()\n" +
         "A() ->  @ 0.1\n" + 
         "%init: 10000 A()\n" + 
-        "%obs: A()\n";
+        "%obs: '[A()]' A()\n";
     
     private static final String SIMPLE_LINK_EQUILIBRIUM_INPUT = 
         "%agent: A(x)\n" +
@@ -377,19 +370,11 @@ public class GeneralSimulationTest {
         "A(x),B(y) -> A(x!1),B(y!1) @ 1\n" + 
         "A(x!1),B(y!1) -> A(x),B(y) @ 1\n" + 
         "%init: 10000 A(x),B(y)\n" + 
-        "%obs: A(x)\n" + 
-        "%obs: A(x!_)\n";
+        "%obs: '[A(x)]' A(x)\n" + 
+        "%obs: '[A(x!_)]' A(x!_)\n";
 
     private final TransitionMatchingSimulation createSimulation(String inputText) throws Exception {
-        ANTLRInputStream input = new ANTLRInputStream(new ByteArrayInputStream(inputText.getBytes()));
-        CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));
-        SpatialKappaParser.prog_return r = new SpatialKappaParser(tokens).prog();
-
-        CommonTree t = (CommonTree) r.getTree();
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
-        nodes.setTokenStream(tokens);
-        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
-        simulation = createSimulation(walker.prog());
+        simulation = createSimulation(TestUtils.createKappaModel(inputText));
         currentObservation = simulation.getCurrentObservation();
         
         simulation.addObservationListener(new ObservationListener() {
@@ -482,7 +467,7 @@ public class GeneralSimulationTest {
             "%agent: B(d)\n" +
             "%compartment: cytosol [2]\n" + 
             "%compartment: membrane [2]\n" + 
-            "%channel: diffusion :cytosol [x], :membrane [u] -> :cytosol [x+1], :membrane [u+1]\n" + 
+            "%channel: diffusion :cytosol [x], :membrane [u] -> :cytosol [x +1], :membrane [u +1]\n" + 
             "%channel: domainLink :cytosol [x] -> :membrane [x]\n" + 
             "'diffusion-all' A(d!1:domainLink),B(d!1) ->:diffusion A(d!1:domainLink),B(d!1) @ 0.1\n" + 
             "%init: 10 :cytosol[0] A:cytosol[0](d!1:domainLink),B:membrane[0](d!1) \n" + 
@@ -493,7 +478,7 @@ public class GeneralSimulationTest {
     private static final String VERY_SIMPLE_TRANSPORT_INPUT = 
             "%agent: A()\n" +
             "%compartment: cytosol [2]\n" + 
-            "%channel: intra-cytosol :cytosol [x] -> :cytosol [x+1]\n" + 
+            "%channel: intra-cytosol :cytosol [x] -> :cytosol [x +1]\n" + 
             "'diffusion-all' ->:intra-cytosol @ 0.1\n" + 
             "%init: 10 :cytosol[0] A() \n" + 
             "%obs: 'val[0]' :cytosol[0] A() \n" + 
@@ -505,7 +490,7 @@ public class GeneralSimulationTest {
     private static final String SIMPLE_TRANSPORT_INPUT = 
         "%agent: A()\n" +
         "%compartment: cytosol [4]\n" + 
-        "%channel: intra-cytosol (:cytosol [x] -> :cytosol [x+1]) + (:cytosol [x] -> :cytosol [x -1])\n" + 
+        "%channel: intra-cytosol (:cytosol [x] -> :cytosol [x +1]) + (:cytosol [x] -> :cytosol [x -1])\n" + 
         "'diffusion-all' ->:intra-cytosol @ 0.1\n" + 
         "%init: 2000 :cytosol[0] A() \n" + 
         "%obs: 'val[0]' :cytosol[0] A() \n" + 
@@ -518,7 +503,7 @@ public class GeneralSimulationTest {
         "%agent: A()\n" +
         "%agent: B()\n" +
         "%compartment: cytosol [3]\n" + 
-        "%channel: forward :cytosol [x] -> :cytosol [x+1]\n" + 
+        "%channel: forward :cytosol [x] -> :cytosol [x +1]\n" + 
         "%channel: backward :cytosol [x] -> :cytosol [x -1]\n" + 
         "'forward'  A() ->:forward  A() @ 0.1\n" + 
         "'backward' B() ->:backward B() @ 0.1\n" + 
@@ -601,7 +586,7 @@ public class GeneralSimulationTest {
     private static final String STEADY_STATE_CONCENTRATION_GRADIENT_INPUT = 
         "%agent: A()\n" +
         "%compartment: cytosol [4]\n" + 
-        "%channel: intra-cytosol :cytosol [x] -> :cytosol [x+1]\n" + 
+        "%channel: intra-cytosol :cytosol [x] -> :cytosol [x +1]\n" + 
         "'diffusion-all' ->:intra-cytosol @ 1\n" + 
         "'source' -> :cytosol[0] A() @ 150\n" + 
         "'sink' :cytosol[3] A() -> @ [inf]\n" + 

@@ -61,7 +61,7 @@ public class PerturbationEffect {
             state.addComplexInstances(agents, - (int) expression.evaluate(state).value);
             break;
         case SET:
-            state.setTransitionRate(transitionName, expression);
+            state.setTransitionRateOrVariable(transitionName, expression);
             break;
         case FIXED:
             if ("$STOP".equals(event)) {
@@ -85,7 +85,7 @@ public class PerturbationEffect {
         case REMOVE:
             return "$DEL " + expression + " " + agents;
         case SET:
-            return "'" + transitionName + "' := " + expression;
+            return "$UPDATE '" + transitionName + "' " + expression;
         case FIXED:
             return event;
 

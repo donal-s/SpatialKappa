@@ -77,10 +77,10 @@
 %agent: egfr-outside(l,dl) # dl = domain link
 %agent: egfr-inside(dl,r,Y1068~Y~pY,Y1148~Y~pY)
 
-%init: 'egf_tot' egf:extracellular
-%init: 'Grb2_tot' Grb2:cytosol
-%init: 'Shc_tot' Shc:cytosol
-%init: 'Sos_tot' Sos:cytosol
+%init: 'egf_tot' egf:extracellular()
+%init: 'Grb2_tot' Grb2:cytosol()
+%init: 'Shc_tot' Shc:cytosol()
+%init: 'Sos_tot' Sos:cytosol()
 %init: 'egfr_tot' egfr-outside:extracellular(dl!1:cross),egfr-inside:cytosol(dl!1)
 %init: 'Grb2_Sos_tot' :cytosol Grb2(SH3!1),Sos(dom!1)
 
@@ -167,8 +167,8 @@ egfr-outside(l!_,dl!1:cross),egfr-inside:cytosol(dl!1,r!3),egfr-outside(l!_,dl!2
 # Strong differences are seen for R_G_S in comparison with path model
 %obs: 'R_S_G_S' egfr-inside(Y1148~pY!1),Shc(PTB!1,Y317~pY!2),Grb2(SH2!2,SH3!3),Sos(dom!3)
 
-%obs: 'Efgr_total' egfr-inside
-%obs: 'Shc_total' Shc
-%obs: 'Sos_total' Sos
-%obs: 'Grb2_total' Grb2
+%obs: 'Efgr_total' egfr-inside()
+%obs: 'Shc_total' Shc()
+%obs: 'Sos_total' Sos()
+%obs: 'Grb2_total' Grb2()
 

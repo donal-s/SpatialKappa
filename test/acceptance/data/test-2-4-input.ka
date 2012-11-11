@@ -1,6 +1,6 @@
 ### PSD Project Stage 2 acceptance tests
 ### Test 2.4 - Membrane bound scaffold (1D)
-### Last modified 09-07-2012
+### Last modified 02-11-2012
 
 ### Combined trace of multiple compartment definitions
 
@@ -19,7 +19,7 @@
 %compartment: membrane1
 %compartment: cytosol1 [1]
 
-%channel: diffusion1       (:cytosol1 [x] -> :cytosol1 [x+1]) + (:cytosol1 [x] -> :cytosol1 [x - 1])
+%channel: diffusion1       (:cytosol1 [x] -> :cytosol1 [x +1]) + (:cytosol1 [x] -> :cytosol1 [x - 1])
 %channel: membraneBinding1 (:cytosol1 [0] -> :membrane1) + (:membrane1 -> :cytosol1 [0])
 
 'diffusion' ->:diffusion1 @ 1.0
@@ -28,8 +28,8 @@
 'BS bind' B(s), S(s) -> B(s!1:membraneBinding1), S(s!1) @ 'catalysedRate'
 'BSA bind' B(s!1:membraneBinding1), S(s!1), A(s) -> B(s!1), S(s), A(s!1) @ 'catalysedRate'
 
-%init: 1000 :cytosol1 A,B
-%init: 1 :membrane1 S
+%init: 1000 :cytosol1 A(),B()
+%init: 1 :membrane1 S()
 
 
 ### cytosol[5]
@@ -37,7 +37,7 @@
 %compartment: membrane5
 %compartment: cytosol5 [5]
 
-%channel: diffusion5       (:cytosol5 [x] -> :cytosol5 [x+1]) + (:cytosol5 [x] -> :cytosol5 [x - 1])
+%channel: diffusion5       (:cytosol5 [x] -> :cytosol5 [x +1]) + (:cytosol5 [x] -> :cytosol5 [x - 1])
 %channel: membraneBinding5 (:cytosol5 [0] -> :membrane5) + (:membrane5 -> :cytosol5 [0])
 
 'diffusion' ->:diffusion5 @ 1.0
@@ -46,8 +46,8 @@
 'BS bind' B(s), S(s) -> B(s!1:membraneBinding5), S(s!1) @ 'catalysedRate'
 'BSA bind' B(s!1:membraneBinding5), S(s!1), A(s) -> B(s!1), S(s), A(s!1) @ 'catalysedRate'
 
-%init: 1000 :cytosol5 A,B
-%init: 1 :membrane5 S
+%init: 1000 :cytosol5 A(),B()
+%init: 1 :membrane5 S()
 
 
 ### cytosol[10]
@@ -55,7 +55,7 @@
 %compartment: membrane10
 %compartment: cytosol10 [10]
 
-%channel: diffusion10       (:cytosol10 [x] -> :cytosol10 [x+1]) + (:cytosol10 [x] -> :cytosol10 [x - 1])
+%channel: diffusion10       (:cytosol10 [x] -> :cytosol10 [x +1]) + (:cytosol10 [x] -> :cytosol10 [x - 1])
 %channel: membraneBinding10 (:cytosol10 [0] -> :membrane10) + (:membrane10 -> :cytosol10 [0])
 
 'diffusion' ->:diffusion10 @ 1.0
@@ -64,8 +64,8 @@
 'BS bind' B(s), S(s) -> B(s!1:membraneBinding10), S(s!1) @ 'catalysedRate'
 'BSA bind' B(s!1:membraneBinding10), S(s!1), A(s) -> B(s!1), S(s), A(s!1) @ 'catalysedRate'
 
-%init: 1000 :cytosol10 A,B
-%init: 1 :membrane10 S
+%init: 1000 :cytosol10 A(),B()
+%init: 1 :membrane10 S()
 
 
 ### cytosol[50]
@@ -73,7 +73,7 @@
 %compartment: membrane20
 %compartment: cytosol20 [20]
 
-%channel: diffusion20       (:cytosol20 [x] -> :cytosol20 [x+1]) + (:cytosol20 [x] -> :cytosol20 [x - 1])
+%channel: diffusion20       (:cytosol20 [x] -> :cytosol20 [x +1]) + (:cytosol20 [x] -> :cytosol20 [x - 1])
 %channel: membraneBinding20 (:cytosol20 [0] -> :membrane20) + (:membrane20 -> :cytosol20 [0])
 
 'diffusion' ->:diffusion20 @ 1.0
@@ -82,8 +82,8 @@
 'BS bind' B(s), S(s) -> B(s!1:membraneBinding20), S(s!1) @ 'catalysedRate'
 'BSA bind' B(s!1:membraneBinding20), S(s!1), A(s) -> B(s!1), S(s), A(s!1) @ 'catalysedRate'
 
-%init: 1000 :cytosol20 A,B
-%init: 1 :membrane20 S
+%init: 1000 :cytosol20 A(),B()
+%init: 1 :membrane20 S()
 
 
 ### All observations

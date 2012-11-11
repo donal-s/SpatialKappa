@@ -11,8 +11,8 @@
 'break AB'    A:cytosol[0](s!1:cl),B:cytosol[1](s!1) -> A:cytosol[0](s),B:cytosol[1](s) @ 'break-rate'
 'break BA'    A:cytosol[1](s!1:cl),B:cytosol[0](s!1) -> A:cytosol[1](s),B:cytosol[0](s) @ 'break-rate'
 
-%init: 1000 A:cytosol # Location per agent
-%init: 1000 B:cytosol # Location per agent
+%init: 1000 A:cytosol() # Location per agent
+%init: 1000 B:cytosol() # Location per agent
 
 %var: 'break-rate' 50.0
 

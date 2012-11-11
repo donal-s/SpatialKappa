@@ -4,24 +4,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
-
-import org.antlr.runtime.ANTLRInputStream;
-import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.tree.CommonTree;
-import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.demonsoft.spatialkappa.model.Compartment;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.Location;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.ObservationListener;
+import org.demonsoft.spatialkappa.model.TestUtils;
 import org.demonsoft.spatialkappa.model.Utils;
-import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
-import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
-import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
 import org.demonsoft.spatialkappa.tools.TransitionMatchingSimulation;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 
@@ -158,15 +149,7 @@ public class DiffusionTest {
             "";
 
     private final TransitionMatchingSimulation createSimulation(String inputText) throws Exception {
-        ANTLRInputStream input = new ANTLRInputStream(new ByteArrayInputStream(inputText.getBytes()));
-        CommonTokenStream tokens = new CommonTokenStream(new SpatialKappaLexer(input));
-        SpatialKappaParser.prog_return r = new SpatialKappaParser(tokens).prog();
-
-        CommonTree t = (CommonTree) r.getTree();
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
-        nodes.setTokenStream(tokens);
-        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
-        kappaModel = walker.prog();
+        kappaModel = TestUtils.createKappaModel(inputText);
         simulation = new TransitionMatchingSimulation(kappaModel);
         currentObservation = simulation.getCurrentObservation();
         

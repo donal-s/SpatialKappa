@@ -1,6 +1,6 @@
 ### PSD Project Stage 2 acceptance tests
 ### Test 2.3 - Diffusion between compartments of different dimensions
-### Last modified 09-07-2012
+### Last modified 02-11-2012
 
 %agent: A(s)
 %agent: B(s)
@@ -8,7 +8,7 @@
 %compartment: membrane
 %compartment: cytosol[3]
 
-%channel: intra (:cytosol[x] -> :cytosol[x+1]) + (:cytosol[x] -> :cytosol[x - 1]) + \
+%channel: intra (:cytosol[x] -> :cytosol[x +1]) + (:cytosol[x] -> :cytosol[x - 1]) + \
                 (:cytosol[0] -> :membrane) + (:membrane -> :cytosol [0])
 
 'diffusion' ->:intra @ 1.0

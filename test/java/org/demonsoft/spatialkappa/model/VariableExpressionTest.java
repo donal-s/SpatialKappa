@@ -6,6 +6,7 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
+import static org.easymock.EasyMock.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
 import org.demonsoft.spatialkappa.model.VariableExpression.SimulationToken;
 import org.demonsoft.spatialkappa.model.VariableExpression.Type;
 import org.demonsoft.spatialkappa.model.VariableExpression.UnaryOperator;
+import org.easymock.EasyMock;
 import org.junit.Test;
 
 
@@ -92,6 +94,22 @@ public class VariableExpressionTest {
         VariableExpression expr = new VariableExpression(SimulationToken.EVENTS);
         assertEquals(Type.SIMULATION_TOKEN, expr.type);
         assertEquals("[E]", expr.toString());
+        
+        expr = new VariableExpression(SimulationToken.TIME);
+        assertEquals(Type.SIMULATION_TOKEN, expr.type);
+        assertEquals("[T]", expr.toString());
+        
+        expr = new VariableExpression(SimulationToken.ELAPSED_TIME);
+        assertEquals(Type.SIMULATION_TOKEN, expr.type);
+        assertEquals("[Tsim]", expr.toString());
+        
+        expr = new VariableExpression(SimulationToken.MAX_EVENTS);
+        assertEquals(Type.SIMULATION_TOKEN, expr.type);
+        assertEquals("[Emax]", expr.toString());
+        
+        expr = new VariableExpression(SimulationToken.MAX_TIME);
+        assertEquals(Type.SIMULATION_TOKEN, expr.type);
+        assertEquals("[Tmax]", expr.toString());
     }
     
     @SuppressWarnings("unused")
@@ -153,6 +171,10 @@ public class VariableExpressionTest {
         expr = new VariableExpression(UnaryOperator.SQRT, expr1);
         assertEquals(Type.UNARY_EXPRESSION, expr.type);
         assertEquals("[sqrt] ('x')", expr.toString());
+        
+        expr = new VariableExpression(UnaryOperator.ABS, expr1);
+        assertEquals(Type.UNARY_EXPRESSION, expr.type);
+        assertEquals("[int] ('x')", expr.toString());
     }
     
     @SuppressWarnings("unused")
@@ -259,6 +281,10 @@ public class VariableExpressionTest {
         assertTrue(new VariableExpression("2.55e4").isFixed(variables));
         assertTrue(new VariableExpression(Constant.INFINITY).isFixed(variables));
         assertFalse(new VariableExpression(SimulationToken.EVENTS).isFixed(variables));
+        assertFalse(new VariableExpression(SimulationToken.TIME).isFixed(variables));
+        assertFalse(new VariableExpression(SimulationToken.ELAPSED_TIME).isFixed(variables));
+        assertFalse(new VariableExpression(SimulationToken.MAX_EVENTS).isFixed(variables));
+        assertFalse(new VariableExpression(SimulationToken.MAX_TIME).isFixed(variables));
         
         expr = new VariableExpression(new VariableExpression("2"), Operator.PLUS, new VariableExpression("3"));
         assertTrue(expr.isFixed(variables));
@@ -335,6 +361,10 @@ public class VariableExpressionTest {
         assertTrue(new VariableExpression(Constant.INFINITY).isInfinite(variables));
         assertFalse(new VariableExpression(Constant.PI).isInfinite(variables));
         assertFalse(new VariableExpression(SimulationToken.EVENTS).isInfinite(variables));
+        assertFalse(new VariableExpression(SimulationToken.TIME).isInfinite(variables));
+        assertFalse(new VariableExpression(SimulationToken.ELAPSED_TIME).isInfinite(variables));
+        assertFalse(new VariableExpression(SimulationToken.MAX_EVENTS).isInfinite(variables));
+        assertFalse(new VariableExpression(SimulationToken.MAX_TIME).isInfinite(variables));
         assertFalse(new VariableExpression(getList(new Agent("A")), NOT_LOCATED).isInfinite(variables));
 
         expr = new VariableExpression(new VariableExpression("2"), Operator.PLUS, new VariableExpression("3"));
@@ -397,6 +427,7 @@ public class VariableExpressionTest {
     public void testEvaluate_simulationState() {
         VariableReference referenceX = new VariableReference("x");
         VariableReference referenceY = new VariableReference("y");
+        VariableReference referenceZ = new VariableReference("z");
         VariableExpression expr = new VariableExpression(referenceX);
         Map<String, Variable> variables = new HashMap<String, Variable>();
         SimulationState state = new ModelOnlySimulationState(variables);
@@ -458,6 +489,11 @@ public class VariableExpressionTest {
         assertEquals(0.86f, new VariableExpression(UnaryOperator.COS, new VariableExpression(referenceY)).evaluate(state).value, 0.01f);
         assertEquals(-0.59f, new VariableExpression(UnaryOperator.TAN, new VariableExpression(referenceY)).evaluate(state).value, 0.01f);
         assertEquals(10.0f, new VariableExpression(UnaryOperator.SQRT, new VariableExpression(referenceY)).evaluate(state).value);
+        assertEquals(100, new VariableExpression(UnaryOperator.ABS, new VariableExpression(referenceY)).evaluate(state).value, 0.01f);
+        variables.put("z", new Variable(new VariableExpression(3.5f), "z"));
+        assertEquals(3, new VariableExpression(UnaryOperator.ABS, new VariableExpression(referenceZ)).evaluate(state).value, 0.01f);
+        variables.put("z", new Variable(new VariableExpression(-3.5f), "z"));
+        assertEquals(3, new VariableExpression(UnaryOperator.ABS, new VariableExpression(referenceZ)).evaluate(state).value, 0.01f);
         
         variables.put("y", new Variable(new VariableExpression(3), "y"));
         assertEquals(20.09f, new VariableExpression(UnaryOperator.EXP, new VariableExpression(referenceY)).evaluate(state).value, 0.01f);
@@ -466,8 +502,41 @@ public class VariableExpressionTest {
 
         // Agent based expressions should return 0
         assertEquals(0f, new VariableExpression(getList(new Agent("A")), NOT_LOCATED).evaluate(state).value, 0.01f);
+    }
+    
+    @Test
+    public void testEvaluate_simulationState_simulationTokens() {
+        SimulationState state = EasyMock.createMock(SimulationState.class);
 
-        // TODO handle simulation tokens
+        reset(state);
+        expect(state.getMaximumTime()).andReturn(5f);
+        replay(state);
+        assertEquals(5f, new VariableExpression(SimulationToken.MAX_TIME).evaluate(state).value);
+        verify(state);
+
+        reset(state);
+        expect(state.getMaximumEventCount()).andReturn(5);
+        replay(state);
+        assertEquals(5f, new VariableExpression(SimulationToken.MAX_EVENTS).evaluate(state).value);
+        verify(state);
+
+        reset(state);
+        expect(state.getTime()).andReturn(5f);
+        replay(state);
+        assertEquals(5f, new VariableExpression(SimulationToken.TIME).evaluate(state).value);
+        verify(state);
+
+        reset(state);
+        expect(state.getEventCount()).andReturn(5);
+        replay(state);
+        assertEquals(5f, new VariableExpression(SimulationToken.EVENTS).evaluate(state).value);
+        verify(state);
+
+        reset(state);
+        expect(state.getElapsedTime()).andReturn(5f);
+        replay(state);
+        assertEquals(5f, new VariableExpression(SimulationToken.ELAPSED_TIME).evaluate(state).value);
+        verify(state);
     }
     
     
@@ -544,8 +613,51 @@ public class VariableExpressionTest {
 
         // Agent based expressions should return 0
         assertEquals(0, new VariableExpression(getList(new Agent("A")), NOT_LOCATED).evaluate(model));
+    }
+    
+    @Test
+    public void testEvaluate_kappaModel_simulationTokens() {
+        IKappaModel model = new KappaModel();
         
-        // TODO handle simulation tokens
+        try {
+            new VariableExpression(SimulationToken.EVENTS).evaluate(model);
+            fail("invalid should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
+        
+        try {
+            new VariableExpression(SimulationToken.TIME).evaluate(model);
+            fail("invalid should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
+        
+        try {
+            new VariableExpression(SimulationToken.ELAPSED_TIME).evaluate(model);
+            fail("invalid should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
+        
+        try {
+            new VariableExpression(SimulationToken.MAX_EVENTS).evaluate(model);
+            fail("invalid should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
+        
+        try {
+            new VariableExpression(SimulationToken.MAX_TIME).evaluate(model);
+            fail("invalid should have failed");
+        }
+        catch (IllegalStateException ex) {
+            // Expected exception
+        }
     }
     
     @Test
@@ -631,8 +743,6 @@ public class VariableExpressionTest {
 
         assertEquals(3.14f, new VariableExpression(Constant.PI).evaluate(state, instance).value, 0.01f);
 
-        // TODO handle simulation tokens
-        
         // Agent based rates - Single agent type 
         variables.put("y", new Variable(new VariableExpression(4), "y"));
         
@@ -665,6 +775,43 @@ public class VariableExpressionTest {
         
         // TODO multiple agent types and agent state
 
+    }
+
+    @Test
+    public void testEvaluate_transitionInstance_simulationTokens() {
+        Complex complex1 = new Complex(new Agent("agent1"));
+        TransitionInstance instance = new TransitionInstance(getList(new ComplexMapping(complex1)), 1);
+        SimulationState state = EasyMock.createMock(SimulationState.class);
+
+        reset(state);
+        expect(state.getMaximumTime()).andReturn(5f);
+        replay(state);
+        assertEquals(5f, new VariableExpression(SimulationToken.MAX_TIME).evaluate(state, instance).value);
+        verify(state);
+
+        reset(state);
+        expect(state.getMaximumEventCount()).andReturn(5);
+        replay(state);
+        assertEquals(5f, new VariableExpression(SimulationToken.MAX_EVENTS).evaluate(state, instance).value);
+        verify(state);
+
+        reset(state);
+        expect(state.getTime()).andReturn(5f);
+        replay(state);
+        assertEquals(5f, new VariableExpression(SimulationToken.TIME).evaluate(state, instance).value);
+        verify(state);
+
+        reset(state);
+        expect(state.getEventCount()).andReturn(5);
+        replay(state);
+        assertEquals(5f, new VariableExpression(SimulationToken.EVENTS).evaluate(state, instance).value);
+        verify(state);
+
+        reset(state);
+        expect(state.getElapsedTime()).andReturn(5f);
+        replay(state);
+        assertEquals(5f, new VariableExpression(SimulationToken.ELAPSED_TIME).evaluate(state, instance).value);
+        verify(state);
     }
 
     private void checkEvaluate_TransitionInstance(VariableExpression expression, SimulationState state, List<Complex> instanceComplexes, float expectedRate) {

@@ -1,6 +1,6 @@
 %agent: A(state~blue~red)
 %compartment: cytosol [10]
-%channel: intra-cytosol (:cytosol [x] -> :cytosol [x+1]) + (:cytosol [x] -> :cytosol [x -1])
+%channel: intra-cytosol (:cytosol [x] -> :cytosol [x +1]) + (:cytosol [x] -> :cytosol [x -1])
 
 'diffusion-all' ->:intra-cytosol @ 0.1
 'diffusion-red' A(state~red) ->:intra-cytosol A(state~red) @ 0.1

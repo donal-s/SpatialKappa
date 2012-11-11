@@ -1,27 +1,27 @@
 ### PSD Project Stage 3 acceptance tests
 ### Test 3.3 - Diffusion within geometric primitives 3D
-### Last modified 04-08-2012
+### Last modified 02-11-2012
 
-%agent: A
-%agent: B
+%agent: A()
+%agent: B()
 
 ### 2D Shapes
 
 %compartment: solidCube[5][5][5] # [height][width]
-%init: 1000 :solidCube[2][2][2] A, B
+%init: 1000 :solidCube[2][2][2] A(), B()
 
 %channel: face FaceNeighbour :solidCube -> :solidCube
 %channel: neighbour Neighbour :solidCube -> :solidCube
 
-A ->:face A @ 13.0
-B ->:neighbour B @ 3.0
+A() ->:face A() @ 13.0
+B() ->:neighbour B() @ 3.0
 
-%obs: 'A'    A:solidCube[2][2][2]
-%obs: 'A F'  A:solidCube[1][2][2] # Face join
-%obs: 'A E'  A:solidCube[1][1][2] # Edge join
-%obs: 'A C'  A:solidCube[1][1][1] # Corner join
+%obs: 'A'    A:solidCube[2][2][2]()
+%obs: 'A F'  A:solidCube[1][2][2]() # Face join
+%obs: 'A E'  A:solidCube[1][1][2]() # Edge join
+%obs: 'A C'  A:solidCube[1][1][1]() # Corner join
 
-%obs: 'B'    B:solidCube[2][2][2]
-%obs: 'B F'  B:solidCube[1][2][2] # Face join
-%obs: 'B E'  B:solidCube[1][1][2] # Edge join
-%obs: 'B C'  B:solidCube[1][1][1] # Corner join
+%obs: 'B'    B:solidCube[2][2][2]()
+%obs: 'B F'  B:solidCube[1][2][2]() # Face join
+%obs: 'B E'  B:solidCube[1][1][2]() # Edge join
+%obs: 'B C'  B:solidCube[1][1][1]() # Corner join

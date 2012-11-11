@@ -8,7 +8,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FilterOutputStream;
@@ -18,7 +17,6 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.ButtonGroup;
@@ -37,17 +35,11 @@ import javax.swing.JToolBar;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
-import org.antlr.runtime.ANTLRInputStream;
-import org.antlr.runtime.CommonTokenStream;
-import org.antlr.runtime.tree.CommonTree;
-import org.antlr.runtime.tree.CommonTreeNodeStream;
 import org.demonsoft.spatialkappa.model.IKappaModel;
 import org.demonsoft.spatialkappa.model.Observation;
 import org.demonsoft.spatialkappa.model.ObservationElement;
 import org.demonsoft.spatialkappa.model.ObservationListener;
-import org.demonsoft.spatialkappa.parser.SpatialKappaLexer;
-import org.demonsoft.spatialkappa.parser.SpatialKappaParser;
-import org.demonsoft.spatialkappa.parser.SpatialKappaWalker;
+import org.demonsoft.spatialkappa.model.Utils;
 import org.demonsoft.spatialkappa.tools.RecordSimulation;
 import org.demonsoft.spatialkappa.tools.ReplaySimulation;
 import org.demonsoft.spatialkappa.tools.Simulation;
@@ -306,7 +298,7 @@ public class SpatialKappaSimulator implements ActionListener, ObservationListene
         replayFile = null;
 
         try {
-            model = createModel(inputFile);
+            model = Utils.createKappaModel(inputFile);
 
             textAreaData.setText(model.toString() + "\n");
 
@@ -321,30 +313,6 @@ public class SpatialKappaSimulator implements ActionListener, ObservationListene
         }
     }
     
-    public IKappaModel createModel(File inputFile) throws Exception {
-        ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(inputFile));
-        SpatialKappaLexer lexer = new SpatialKappaLexer(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        SpatialKappaParser parser = new SpatialKappaParser(tokens);
-        SpatialKappaParser.prog_return r = parser.prog();
-        
-        List<String> parseErrors = lexer.getErrors();
-        parseErrors.addAll(parser.getErrors());
-        if (parseErrors.size() > 0) {
-            for (String error : parseErrors) {
-                System.out.println(error);
-            }
-            throw new Exception("Problems parsing model file: " + inputFile.getPath());
-        }
-        
-        CommonTree t = (CommonTree) r.getTree();
-
-        CommonTreeNodeStream nodes = new CommonTreeNodeStream(t);
-        nodes.setTokenStream(tokens);
-        SpatialKappaWalker walker = new SpatialKappaWalker(nodes);
-        return walker.prog();
-    }
-
 
 
     private void removeSimulation() {

@@ -27,8 +27,8 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.demonsoft.spatialkappa.model.Agent;
-import org.demonsoft.spatialkappa.model.AgentSite;
 import org.demonsoft.spatialkappa.model.AgentDeclaration;
+import org.demonsoft.spatialkappa.model.AgentSite;
 import org.demonsoft.spatialkappa.model.AggregateSite;
 import org.demonsoft.spatialkappa.model.CellIndexExpression;
 import org.demonsoft.spatialkappa.model.Channel;
@@ -45,11 +45,14 @@ import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.VariableExpression;
 import org.demonsoft.spatialkappa.model.VariableExpression.Constant;
 import org.demonsoft.spatialkappa.model.VariableExpression.Operator;
+import org.demonsoft.spatialkappa.model.VariableReference;
 import org.junit.Before;
 import org.junit.Test;
 
 public class TransitionMatchingSimulationTest {
 
+    private static final Map<String, Variable> NO_VARIABLES = new HashMap<String, Variable>();
+    
     public static CellIndexExpression INDEX_10 = new CellIndexExpression("10");
     public static CellIndexExpression INDEX_20 = new CellIndexExpression("20");
 
@@ -212,6 +215,69 @@ public class TransitionMatchingSimulationTest {
                 new Serializable[] {0, 3 * 2, 0, 0}));
         checkObservation("AB", new ObservationElement(7 + 13, new int[] {4}, "loc1", 
                 new Serializable[] {0, 7, 0, 0}));
+    }
+
+    @Test
+    public void testSetTransitionRateOrVariable() {
+        kappaModel.addAgentDeclaration(new AgentDeclaration("A"));
+        kappaModel.addAgentDeclaration(new AgentDeclaration("B"));
+        kappaModel.addTransition("rule1", null, getList(new Agent("A")), null, null, getList(new Agent("B")), 
+                new VariableExpression(1));
+        
+        // To test dependent rate updates
+        kappaModel.addTransition("rule2", null, getList(new Agent("A")), null, null, getList(new Agent("B")), 
+                new VariableExpression(new VariableExpression(2), Operator.MULTIPLY, 
+                        new VariableExpression(new VariableReference("variable1"))));
+        kappaModel.addVariable(new VariableExpression(2), "variable1");
+
+        Transition rule1 = kappaModel.getTransitions().get(0);
+        Transition rule2 = kappaModel.getTransitions().get(1);
+        
+        simulation = new TransitionMatchingSimulation(kappaModel);
+        
+        assertEquals(1f, rule1.getRate().evaluate(NO_VARIABLES), 0.01f);
+        assertTrue(rule2.hasSimpleRate);
+        assertEquals(4f, rule2.simpleRate, 0.01f);
+        assertEquals(4f, rule2.getRate().evaluate(kappaModel.getVariables()), 0.01f);
+        assertEquals(2f, kappaModel.getVariables().get("variable1").evaluate(NO_VARIABLES), 0.01f);
+        
+        try {
+            simulation.setTransitionRateOrVariable(null, new VariableExpression(3));
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        try {
+            simulation.setTransitionRateOrVariable("variable1", null);
+            fail("null should have failed");
+        }
+        catch (NullPointerException ex) {
+            // Expected exception
+        }
+        try {
+            simulation.setTransitionRateOrVariable("unknown", new VariableExpression(3));
+            fail("unknown label should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+
+        simulation.setTransitionRateOrVariable("variable1", new VariableExpression(3));
+        
+        assertEquals(1f, rule1.getRate().evaluate(NO_VARIABLES), 0.01f);
+        assertTrue(rule2.hasSimpleRate);
+        assertEquals(6f, rule2.simpleRate, 0.01f);
+        assertEquals(6f, rule2.getRate().evaluate(kappaModel.getVariables()), 0.01f);
+        assertEquals(3f, kappaModel.getVariables().get("variable1").evaluate(NO_VARIABLES), 0.01f);
+        
+        simulation.setTransitionRateOrVariable("rule1", new VariableExpression(5));
+        
+        assertEquals(5f, rule1.getRate().evaluate(NO_VARIABLES), 0.01f);
+        assertTrue(rule2.hasSimpleRate);
+        assertEquals(6f, rule2.simpleRate, 0.01f);
+        assertEquals(6f, rule2.getRate().evaluate(kappaModel.getVariables()), 0.01f);
+        assertEquals(3f, kappaModel.getVariables().get("variable1").evaluate(NO_VARIABLES), 0.01f);
     }
 
     @Test

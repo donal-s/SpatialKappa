@@ -1,6 +1,6 @@
 ### PSD Project Stage 2 acceptance tests
 ### Test 2.7 - Lateral diffusion of membrane proteins
-### Last modified 10-07-2012
+### Last modified 02-11-2012
 
 %agent: A(s,t)
 %agent: B(s,t)
@@ -10,8 +10,8 @@
 
 %compartment: membrane [5][5]
 
-%channel: diffusion       (:membrane [x][y] -> :membrane [x+1][y]) + (:membrane [x][y] -> :membrane [x - 1][y]) + \
-		(:membrane [x][y] -> :membrane [x][y+1]) + (:membrane [x][y] -> :membrane [x][y - 1])
+%channel: diffusion       (:membrane [x][y] -> :membrane [x +1][y]) + (:membrane [x][y] -> :membrane [x - 1][y]) + \
+		(:membrane [x][y] -> :membrane [x][y +1]) + (:membrane [x][y] -> :membrane [x][y - 1])
 
 'diffusion A' A(s,t) ->:diffusion A(s,t) @ 1.0
 'diffusion B' B(s,t) ->:diffusion B(s,t) @ 1.0
@@ -26,8 +26,8 @@
 'ABAB close loop' A(s!1,t), B(s!1,t!3), A(s!2,t!3), B(s!2,t) -> A(s!1,t!4), B(s!1,t!3), A(s!2,t!3), B(s!2,t!4) @ 0.1
 
 
-%init: 1000 :membrane A,B
-%init: 1 :membrane[2][2] C
+%init: 1000 :membrane A(),B()
+%init: 1 :membrane[2][2] C()
 
 %obs: 'AB' A(s!1,t),B(s!1,t)
 %var: 'A2B2 doubled all' A(s!1,t!3),B(s!1,t!4),A(s!2,t!4),B(s!2,t!3)

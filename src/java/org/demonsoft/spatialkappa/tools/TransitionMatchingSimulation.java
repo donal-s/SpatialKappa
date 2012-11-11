@@ -74,6 +74,8 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     private final IKappaModel kappaModel;
     private final List<ObservationListener> observationListeners = new ArrayList<ObservationListener>();
     private final ComplexMatcher matcher = new ComplexMatcher();
+    private float maximumTime;
+    private int maximumEventCount;
 
     
     public TransitionMatchingSimulation(IKappaModel kappaModel) {
@@ -148,6 +150,8 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     public void runByEvent(int steps, int eventsPerStep) {
         startTime = Calendar.getInstance().getTimeInMillis();
         stop = false;
+        maximumTime = Float.POSITIVE_INFINITY;
+        maximumEventCount = steps * eventsPerStep;
 
         for (int stepCount = 0; stepCount < steps && !noTransitionsPossible && !stop; stepCount++) {
             resetTransitionsFiredCount();
@@ -170,6 +174,8 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     public void runByTime(float totalTime, float timePerStep) {
         startTime = Calendar.getInstance().getTimeInMillis();
         stop = false;
+        maximumTime = totalTime;
+        maximumEventCount = 0;
 
         do {
             resetTransitionsFiredCount();
@@ -222,6 +228,21 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
     
     public float getTime() {
         return time;
+    }
+
+    public float getElapsedTime() {
+        if (startTime == 0) {
+            return 0;
+        }
+        return (Calendar.getInstance().getTimeInMillis() - startTime) / 1000f;
+    }
+
+    public float getMaximumTime() {
+        return maximumTime;
+    }
+
+    public int getMaximumEventCount() {
+        return maximumEventCount;
     }
 
     private void resetTransitionsFiredCount() {
@@ -572,11 +593,31 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         }
     }
 
-    public void setTransitionRate(String transitionName, VariableExpression rateExpression) {
-        Transition transition = getTransition(transitionName);
+    public void setTransitionRateOrVariable(String name, VariableExpression rateExpression) {
+        if (name == null || rateExpression == null) {
+            throw new NullPointerException();
+        }
+        Transition transition = getTransition(name);
         if (transition != null) {
             transition.setRate(rateExpression, kappaModel.getVariables());
             updateTransitionActivity(transition, true);
+            return;
+        }
+        Variable variable = getVariable(name);
+        if (variable != null) {
+            kappaModel.addVariable(rateExpression, name);
+            updateVariableEffectsOnTransitions();
+            return;
+        }
+        
+        throw new IllegalArgumentException("Label not found: " + name);
+    }
+
+    private void updateVariableEffectsOnTransitions() {
+        for (Transition transition : getAllTransitions()) {
+            if (transition.applyVariables(kappaModel.getVariables())) {
+                updateTransitionActivity(transition, true);
+            }
         }
     }
 

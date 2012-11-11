@@ -36,15 +36,14 @@ public void setKappaModel(IKappaModel kappaModel) {
 } 
 }
 
+
 prog returns [IKappaModel result]
   @after {
     kappaModel.validate();
     $result = kappaModel;
   }
   :
-  (
-    line
-  )*
+  ^(MODEL (line)*)
   ;
 
 line
@@ -143,16 +142,23 @@ state returns [String result]
   }
   ;
 
-link returns [String linkName, String channelName]
+link returns [String linkName, String channelName, Agent targetSite]
   :
   ^(LINK (^(CHANNEL channelId=id))? INT)
-  {$linkName = $INT.text; $channelName = $channelId.text;}
+  {$linkName = $INT.text; $channelName = $channelId.text; $targetSite = null;}
   |
   ^(LINK (^(CHANNEL channelId=id))? OCCUPIED)
-  {$linkName = "_"; $channelName = $channelId.text;}
+  {$linkName = "_"; $channelName = $channelId.text; $targetSite = null;}
+  |
+  ^(LINK (^(CHANNEL channelId=id))? ^(OCCUPIED_SITE ^(AGENT agentName=id ^(INTERFACE interfaceName=id))))
+  {
+  $linkName = "_"; $channelName = $channelId.text; 
+  $targetSite = new Agent($agentName.text, Location.NOT_LOCATED, new AgentSite($interfaceName.text, null, null));
+  throw new RuntimeException("!x.y syntax not supported yet");
+  }
   |
   ^(LINK ANY)
-  {$linkName = "?"; $channelName = null;}
+  {$linkName = "?"; $channelName = null; $targetSite = null;}
   ;
 
 rate returns [VariableExpression rate]
@@ -283,17 +289,10 @@ plotDecl
 
 obsDecl
 options {backtrack=true;}
-  :
-  ^(OBSERVATION VOXEL agentGroup)
+  : ^(OBSERVATION varAlgebraExpr label)
   {
-    kappaModel.addVariable($agentGroup.agents, $agentGroup.agents.toString(), $agentGroup.location, true);
-    kappaModel.addPlot($agentGroup.agents.toString());
-  }
-  |
-  ^(OBSERVATION agentGroup)
-  {
-    kappaModel.addVariable($agentGroup.agents, $agentGroup.agents.toString(), $agentGroup.location, false);
-    kappaModel.addPlot($agentGroup.agents.toString());
+    kappaModel.addVariable($varAlgebraExpr.result, $label.result);
+    kappaModel.addPlot($label.result);
   }
   | ^(OBSERVATION VOXEL agentGroup label)
   {
@@ -355,45 +354,61 @@ varAlgebraExpr returns [VariableExpression result]
   {
     $result = new VariableExpression(SimulationToken.TIME);
   }  
+  | ^(VAR_EXPR ELAPSED_TIME)
+  {
+    $result = new VariableExpression(SimulationToken.ELAPSED_TIME);
+  }  
+  | ^(VAR_EXPR MAX_TIME)
+  {
+    $result = new VariableExpression(SimulationToken.MAX_TIME);
+  }  
   | ^(VAR_EXPR EVENTS)
   {
     $result = new VariableExpression(SimulationToken.EVENTS);
   }  
-  | ^(VAR_EXPR LOG a=varAlgebraExpr)
+  | ^(VAR_EXPR MAX_EVENTS)
+  {
+    $result = new VariableExpression(SimulationToken.MAX_EVENTS);
+  }  
+  | ^(VAR_EXPR OP_LOG a=varAlgebraExpr)
   {
     $result = new VariableExpression(VariableExpression.UnaryOperator.LOG, $a.result);
   }  
-  | ^(VAR_EXPR SIN a=varAlgebraExpr)
+  | ^(VAR_EXPR OP_SIN a=varAlgebraExpr)
   {
     $result = new VariableExpression(VariableExpression.UnaryOperator.SIN, $a.result);
   }  
-  | ^(VAR_EXPR COS a=varAlgebraExpr)
+  | ^(VAR_EXPR OP_COS a=varAlgebraExpr)
   {
     $result = new VariableExpression(VariableExpression.UnaryOperator.COS, $a.result);
   }  
-  | ^(VAR_EXPR TAN a=varAlgebraExpr)
+  | ^(VAR_EXPR OP_TAN a=varAlgebraExpr)
   {
     $result = new VariableExpression(VariableExpression.UnaryOperator.TAN, $a.result);
   }  
-  | ^(VAR_EXPR SQRT a=varAlgebraExpr)
+  | ^(VAR_EXPR OP_SQRT a=varAlgebraExpr)
   {
     $result = new VariableExpression(VariableExpression.UnaryOperator.SQRT, $a.result);
   }  
-  | ^(VAR_EXPR EXP a=varAlgebraExpr)
+  | ^(VAR_EXPR OP_EXP a=varAlgebraExpr)
   {
     $result = new VariableExpression(VariableExpression.UnaryOperator.EXP, $a.result);
   }  
-  | ^(VAR_EXPR MODULUS a=varAlgebraExpr b=varAlgebraExpr)
+  | ^(VAR_EXPR OP_ABS a=varAlgebraExpr)
   {
-    $result = new VariableExpression($a.result, VariableExpression.Operator.MODULUS, $b.result);
+    $result = new VariableExpression(VariableExpression.UnaryOperator.ABS, $a.result);
+  }  
+  | ^(VAR_EXPR OP_POWER a=varAlgebraExpr b=varAlgebraExpr)
+  {
+    $result = new VariableExpression($a.result, VariableExpression.Operator.POWER, $b.result);
   }  
   ;
 
 modDecl
   :
-  ^(PERTURBATION ^(CONDITION booleanExpression) effect until?)
+  ^(PERTURBATION ^(PERTURBATION_EXPR ^(CONDITION booleanExpression) effects) until?)
   {
-    kappaModel.addPerturbation(new Perturbation($booleanExpression.result, $effect.result, $until.result));
+    kappaModel.addPerturbation(new Perturbation($booleanExpression.result, $effects.result, $until.result));
   }
   ;
 
@@ -427,7 +442,21 @@ booleanExpression returns [BooleanExpression result]
   
 relationalOperator
   :
-  '<' | '>' | '='
+  '<' | '>' | '=' | '<>'
+  ;
+
+
+effects returns [List<PerturbationEffect> result]
+  @init {
+  result = new ArrayList<PerturbationEffect>();
+  }
+  :
+  ^(
+    EFFECTS
+    (
+      e=effect {result.add($e.result);}
+    )+
+   )
   ;
 
 effect returns [PerturbationEffect result]
@@ -466,9 +495,9 @@ until returns [BooleanExpression result]
 
 cellIndexExpr returns [CellIndexExpression result]
   :
-  ^(CELL_INDEX_EXPR operator a=cellIndexExpr b=cellIndexExpr)
+  ^(CELL_INDEX_EXPR op=operator_cell_index a=cellIndexExpr b=cellIndexExpr)
   {
-    $result = new CellIndexExpression($a.result, CellIndexExpression.Operator.getOperator($operator.text), $b.result);
+    $result = new CellIndexExpression($a.result, CellIndexExpression.Operator.getOperator($op.text), $b.result);
   }    
   | ^(CELL_INDEX_EXPR INT)
   {
@@ -500,5 +529,15 @@ number
     
 operator
   :
-  ( '+' | '*' | '-' | '/' | '%' | '^' )
+  ( OP_PLUS | OP_MULTIPLY | OP_MINUS | OP_DIVIDE | OP_MODULUS )
+  ;
+  
+operator_cell_index
+  :
+  '+'
+  | '*'
+  | '-'
+  | '/'
+  | '%'
+  | '^'
   ;
