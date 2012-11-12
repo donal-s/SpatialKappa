@@ -216,7 +216,19 @@ public class Agent implements Serializable {
         else {
             Compartment compartment = getCompartment(compartments, location.getName());
             if (location.isVoxel(compartment)) {
-                result.add(this.clone());
+                if (!location.isWildcard()) {
+                    result.add(this.clone());
+                }
+                else { // using wildcard [1][2][?] syntax
+                    Location[] locations = compartment.getDistributedCellReferences();
+                    for (Location currentLocation : locations) {
+                        if (location.isRefinement(currentLocation)) {
+                            Agent locatedAgent = clone();
+                            locatedAgent.location = currentLocation;
+                            result.add(locatedAgent);
+                        }
+                    }
+                }
             }
             else {
                 Location[] locations = compartment.getDistributedCellReferences();

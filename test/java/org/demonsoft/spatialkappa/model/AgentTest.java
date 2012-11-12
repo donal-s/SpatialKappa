@@ -1,7 +1,7 @@
 package org.demonsoft.spatialkappa.model;
 
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
-import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.*;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -243,6 +243,27 @@ public class AgentTest {
         checkGetLocatedAgents(agent, compartments, agent);
 
         agent.location = new Location("cytosol");
+        checkGetLocatedAgents(agent, compartments, 
+                new Agent("name", new Location("cytosol", INDEX_0, INDEX_0), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_1, INDEX_0), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_0, INDEX_1), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_1, INDEX_1), site1, site2)
+                );
+
+        // Using wildcards
+        agent.location = new Location("cytosol", WILDCARD, INDEX_1);
+        checkGetLocatedAgents(agent, compartments, 
+                new Agent("name", new Location("cytosol", INDEX_0, INDEX_1), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_1, INDEX_1), site1, site2)
+                );
+
+        agent.location = new Location("cytosol", INDEX_1, WILDCARD);
+        checkGetLocatedAgents(agent, compartments, 
+                new Agent("name", new Location("cytosol", INDEX_1, INDEX_0), site1, site2),
+                new Agent("name", new Location("cytosol", INDEX_1, INDEX_1), site1, site2)
+                );
+
+        agent.location = new Location("cytosol", WILDCARD, WILDCARD);
         checkGetLocatedAgents(agent, compartments, 
                 new Agent("name", new Location("cytosol", INDEX_0, INDEX_0), site1, site2),
                 new Agent("name", new Location("cytosol", INDEX_1, INDEX_0), site1, site2),

@@ -625,9 +625,16 @@ public class Complex implements Serializable {
                 result.add(sourceLocation);
             }
             else {
-                boolean matchNameOnly = locationConstraint.isCompartment();
-                if (sourceLocation.matches(locationConstraint, matchNameOnly)) {
-                    result.add(sourceLocation);
+                if (!locationConstraint.isWildcard()) {
+                    boolean matchNameOnly = locationConstraint.isCompartment();
+                    if (sourceLocation.matches(locationConstraint, matchNameOnly)) {
+                        result.add(sourceLocation);
+                    }
+                }
+                else { // Wildcard location
+                    if (locationConstraint.isRefinement(sourceLocation)) {
+                        result.add(sourceLocation);
+                    }
                 }
             }
         }
@@ -637,10 +644,19 @@ public class Complex implements Serializable {
                 result.addAll(targetLocations);
             }
             else {
-                boolean matchNameOnly = locationConstraint.isCompartment();
-                for (Location targetLocation : targetLocations) {
-                    if (targetLocation.matches(locationConstraint, matchNameOnly)) {
-                        result.add(targetLocation);
+                if (!locationConstraint.isWildcard()) {
+                    boolean matchNameOnly = locationConstraint.isCompartment();
+                    for (Location targetLocation : targetLocations) {
+                        if (targetLocation.matches(locationConstraint, matchNameOnly)) {
+                            result.add(targetLocation);
+                        }
+                    }
+                }
+                else { // Wildcard location
+                    for (Location targetLocation : targetLocations) {
+                        if (locationConstraint.isRefinement(targetLocation)) {
+                            result.add(targetLocation);
+                        }
                     }
                 }
             }

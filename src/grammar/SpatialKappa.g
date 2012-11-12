@@ -77,6 +77,7 @@ tokens {
   VAR_INFINITY;
   VARIABLE;
   VOXEL;
+  WILDCARD;
 }
 
 @header        {package org.demonsoft.spatialkappa.parser;}
@@ -265,68 +266,60 @@ channel
   ;
 
 locations
-  :
-  location (',' location)*
+  : location (',' location)*
     ->
      ^(LOCATIONS location+)
   ;
 
 location
-  :
-  ':' 'fixed'
+  : ':' 'fixed'
     ->
       ^(LOCATION FIXED)
-  |
-  ':' sourceCompartment=id compartmentIndexExpr*
+  | ':' sourceCompartment=id compartmentIndexExpr*
     ->
       ^(LOCATION $sourceCompartment compartmentIndexExpr*)
   ;
 
 compartmentIndexExpr
-  :
-  '[' cellIndexExpr ']'
+  : '[' '?' ']'
+    ->
+      ^(INDEX ^(CELL_INDEX_EXPR WILDCARD))
+  | '[' cellIndexExpr ']'
     ->
       ^(INDEX cellIndexExpr)
   ;
 
 plotDecl
-  :
-  '%plot:' label
+  : '%plot:' label
     ->
       ^(PLOT label)
   ;
 
 obsDecl
 options {backtrack=true;}
-  :
-  '%obs:' label varAlgebraExpr
+  : '%obs:' label varAlgebraExpr
     ->
       ^(OBSERVATION varAlgebraExpr label)
-   |
-  '%obs:' 'voxel' label agentGroup
+  | '%obs:' 'voxel' label agentGroup
     ->
       ^(OBSERVATION VOXEL agentGroup label)
-  |
-  '%obs:' label agentGroup
+  | '%obs:' label agentGroup
     ->
       ^(OBSERVATION agentGroup label)
   ;
 
 varDecl
 options {backtrack=true;}
-  :
-  '%var:' label varAlgebraExpr
+  : '%var:' label varAlgebraExpr
     ->
       ^(VARIABLE varAlgebraExpr label)
-   |
-  '%var:' 'voxel' label agentGroup
+  | '%var:' 'voxel' label agentGroup
     ->
       ^(VARIABLE VOXEL agentGroup label)
-   |
-  '%var:' label agentGroup
+  | '%var:' label agentGroup
     ->
       ^(VARIABLE agentGroup label)
- ;
+  ;
 
 varAlgebraExpr
   :

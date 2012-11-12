@@ -8,6 +8,7 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_MINUS
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_PLUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y_PLUS_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.WILDCARD;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getCompartment;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
@@ -53,6 +54,7 @@ public class LocationTest {
         assertEquals(0, location.getFixedIndices().length);
         assertEquals("name", location.toString());
         assertTrue(location.isConcreteLocation());
+        assertFalse(location.isWildcard());
         
         location = new Location("name", INDEX_2, new CellIndexExpression("3"));
         assertEquals("name", location.getName());
@@ -60,6 +62,7 @@ public class LocationTest {
         assertArrayEquals(new int[] {2, 3}, location.getFixedIndices());
         assertEquals("name[2][3]", location.toString());
         assertTrue(location.isConcreteLocation());
+        assertFalse(location.isWildcard());
         
         location = new Location("name", new CellIndexExpression[] {INDEX_2, new CellIndexExpression("3")});
         assertEquals("name", location.getName());
@@ -67,6 +70,7 @@ public class LocationTest {
         assertArrayEquals(new int[] {2, 3}, location.getFixedIndices());
         assertEquals("name[2][3]", location.toString());
         assertTrue(location.isConcreteLocation());
+        assertFalse(location.isWildcard());
 
         location = new Location("label", INDEX_2, INDEX_X);
         assertEquals("label", location.getName());
@@ -74,6 +78,7 @@ public class LocationTest {
         assertArrayEquals(new CellIndexExpression[] {INDEX_2, INDEX_X}, location.getIndices());
         assertEquals("label[2][x]", location.toString());
         assertFalse(location.isConcreteLocation());
+        assertFalse(location.isWildcard());
 
         location = new Location("label", 
                 new CellIndexExpression(INDEX_2, Operator.PLUS, INDEX_2), 
@@ -82,6 +87,26 @@ public class LocationTest {
         assertArrayEquals(new int[] {4, 5}, location.getFixedIndices());
         assertEquals("label[4][5]", location.toString());
         assertTrue(location.isConcreteLocation());
+        assertFalse(location.isWildcard());
+        
+        // Wildcard locations
+        location = new Location("label", INDEX_2, WILDCARD);
+        assertEquals("label", location.getName());
+        assertNull(location.getFixedIndices());
+        assertArrayEquals(new CellIndexExpression[] {INDEX_2, WILDCARD}, location.getIndices());
+        assertEquals("label[2][?]", location.toString());
+        assertFalse(location.isConcreteLocation());
+        assertTrue(location.isWildcard());
+
+        try {
+            new Location("label", INDEX_X, WILDCARD);
+            fail("mixing variables and wildcard should have failed");
+        }
+        catch (IllegalArgumentException ex) {
+            // Expected exception
+        }
+        
+        
 	}
 
     @Test
@@ -162,7 +187,7 @@ public class LocationTest {
     }
     
     @Test
-    public void testIsRefinement() {
+    public void testIsRefinement_nonWildcard() {
         Location compartment1 = new Location("cytosol");
         Location compartment2 = new Location("nucleus");
         Location voxel1 = new Location("cytosol", INDEX_0);
@@ -190,6 +215,37 @@ public class LocationTest {
         assertFalse(voxel1.isRefinement(voxel1));
         assertFalse(voxel1.isRefinement(voxel2));
         assertFalse(voxel1.isRefinement(NOT_LOCATED));
+    }
+    
+    @Test
+    public void testIsRefinement_wildcard() {
+        Location wildcard = new Location("cytosol", INDEX_0, WILDCARD, WILDCARD);
+        
+        assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_X, INDEX_Y)));
+        assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, INDEX_Y)));
+        assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, WILDCARD)));
+        assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_1, INDEX_1, INDEX_1)));
+        assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1)));
+        assertTrue(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, INDEX_1)));
+        assertFalse(wildcard.isRefinement(new Location("cytosol")));
+        assertFalse(wildcard.isRefinement(new Location("nucleus", INDEX_0, INDEX_1, INDEX_1)));
+        
+        wildcard = new Location("cytosol", WILDCARD, INDEX_1, INDEX_2);
+        
+        assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, WILDCARD)));
+        assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, INDEX_Y)));
+        assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_1, INDEX_1, INDEX_1)));
+        assertTrue(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, INDEX_2)));
+    }
+    
+    @Test
+    public void testIsWildcard() {
+        assertTrue(new Location("cytosol", INDEX_0, WILDCARD, WILDCARD).isWildcard());
+        assertTrue(new Location("cytosol", WILDCARD).isWildcard());
+        assertFalse(new Location("cytosol", INDEX_0, INDEX_X, INDEX_Y).isWildcard());
+        assertFalse(new Location("cytosol", INDEX_Y).isWildcard());
+        assertFalse(new Location("cytosol", INDEX_0, INDEX_1).isWildcard());
+        assertFalse(new Location("cytosol").isWildcard());
     }
     
     @Test

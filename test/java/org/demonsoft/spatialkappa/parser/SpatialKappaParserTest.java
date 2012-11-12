@@ -198,6 +198,8 @@ public class SpatialKappaParserTest {
                 "(LOCATION label (INDEX (CELL_INDEX_EXPR 1)))");
         runParserRule("location", ":label[1][20 + x]", 
                 "(LOCATION label (INDEX (CELL_INDEX_EXPR 1)) (INDEX (CELL_INDEX_EXPR + (CELL_INDEX_EXPR 20) (CELL_INDEX_EXPR x))))");
+        runParserRule("location", ":label[1][?]", 
+                "(LOCATION label (INDEX (CELL_INDEX_EXPR 1)) (INDEX (CELL_INDEX_EXPR WILDCARD)))");
     }
 
     @Test
@@ -778,6 +780,7 @@ public class SpatialKappaParserTest {
         
         // Invalid characters
         runParserRuleFail("cellIndexExpr", "'x'");
+        runParserRuleFail("cellIndexExpr", "?");
     }
 
     @Test
@@ -821,6 +824,9 @@ public class SpatialKappaParserTest {
                 "(INIT (AGENTS (LOCATION cytosol) (AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
         runParserRule("initDecl", "%init: 'label' :cytosol[0][1] A(x~a),B(y~d)", 
                 "(INIT (AGENTS (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR 1))) " +
+                "(AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
+        runParserRule("initDecl", "%init: 'label' :cytosol[0][x] A(x~a),B(y~d)", 
+                "(INIT (AGENTS (LOCATION cytosol (INDEX (CELL_INDEX_EXPR 0)) (INDEX (CELL_INDEX_EXPR x))) " +
                 "(AGENT A (INTERFACE x (STATE a))) (AGENT B (INTERFACE y (STATE d)))) label)");
         
         runParserRuleFail("initDecl", "%init: :cytosol A(x~a) 5");

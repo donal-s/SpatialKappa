@@ -92,6 +92,13 @@ public class CellIndexExpressionTest {
     }
     
     @Test
+    public void testWildcard() {
+        assertEquals(Type.NUMBER, CellIndexExpression.WILDCARD.type);
+        assertEquals("?", CellIndexExpression.WILDCARD.toString());
+        assertTrue(CellIndexExpression.WILDCARD.isFixed());
+    }
+    
+    @Test
     public void testGetDeltaIndex() {
         CellIndexExpression expr = new CellIndexExpression(new VariableReference("x"));
         assertEquals("(x + 1)", expr.getDeltaIndex(1).toString());

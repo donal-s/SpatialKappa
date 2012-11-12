@@ -20,6 +20,7 @@ public class Location implements Serializable {
     private final CellIndexExpression[] indices;
     private final int[] fixedIndices;
     private int hashCode;
+    private final boolean wildcard;
 
     public Location(String name, List<CellIndexExpression> indices) {
         this(name, indices.toArray(new CellIndexExpression[indices.size()]));
@@ -36,12 +37,19 @@ public class Location implements Serializable {
         this.name = name;
 
         boolean fixed = true;
+        boolean wildcardIndexFound = false;
         for (CellIndexExpression index : indices) {
             if (!index.isFixed()) {
                 fixed = false;
             }
+            if (CellIndexExpression.WILDCARD == index) {
+                wildcardIndexFound = true;
+            }
         }
-        if (fixed) {
+        if (!fixed && wildcardIndexFound) {
+            throw new IllegalArgumentException("Mixed variable and wildcard indices not allowed: " + name);
+        }
+        if (fixed && !wildcardIndexFound) {
             fixedIndices = new int[indices.length];
             for (int i=0; i < indices.length; i++) {
                 fixedIndices[i] = indices[i].evaluateIndex(NO_VARIABLES);
@@ -52,6 +60,7 @@ public class Location implements Serializable {
             this.fixedIndices = null;
             this.indices = indices;
         }
+        this.wildcard = wildcardIndexFound;
         calculateHashCode();
     }
     
@@ -62,6 +71,7 @@ public class Location implements Serializable {
         this.name = name;
         this.indices = null;
         this.fixedIndices = indices;
+        this.wildcard = false;
         calculateHashCode();
     }
     
@@ -185,12 +195,19 @@ public class Location implements Serializable {
         if (this == NOT_LOCATED && location != NOT_LOCATED) {
             return true;
         }
+
+        if (wildcard) {
+            return isWildcardRefinement(location);
+        }
+        
         if (this.name.equals(location.name)) {
             int indexSize = isConcreteLocation() ? fixedIndices.length : indices.length;
             int otherIndexSize = location.isConcreteLocation() ? location.fixedIndices.length : location.indices.length;
             return (indexSize < otherIndexSize);
         }
         return false;
+        
+
     }
 
     public int[] getFixedIndices() {
@@ -204,6 +221,25 @@ public class Location implements Serializable {
     public int getDimensionCount() {
         return (fixedIndices != null) ? fixedIndices.length : indices.length;
     }
-    
+
+    private boolean isWildcardRefinement(Location location) {
+        if (!location.isConcreteLocation() || location.getDimensionCount() != getDimensionCount()) {
+            return false;
+        }
+        if (!this.name.equals(location.name)) {
+            return false;
+        }
+        for (int index = 0; index < getDimensionCount(); index++) {
+            
+            if (CellIndexExpression.WILDCARD != indices[index] && indices[index].evaluateIndex() != location.fixedIndices[index]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean isWildcard() {
+        return wildcard;
+    }
 
 }

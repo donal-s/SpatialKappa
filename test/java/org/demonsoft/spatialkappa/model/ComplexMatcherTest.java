@@ -2,6 +2,9 @@ package org.demonsoft.spatialkappa.model;
 
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_2;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.WILDCARD;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -476,6 +479,35 @@ public class ComplexMatcherTest {
         target = new Complex(agent1);
         expected.clear();
         checkPartialMatches(template, target);
+        
+        // Check with location wildcards
+        agent2 = new Agent("A", new Location("cytosol", INDEX_0, WILDCARD, WILDCARD));
+        template = new Complex(agent2);
+        
+        agent1 = new Agent("A", new Location("cytosol", INDEX_0, INDEX_1, INDEX_1));
+        target = new Complex(agent1);
+        expected.clear();
+        expected.put(agent2, agent1);
+        checkPartialMatches(template, target, expected);
+        
+        checkPartialMatches(template, new Complex(new Agent("A", new Location("cytosol", INDEX_0, INDEX_1, INDEX_Y))));
+        checkPartialMatches(template, new Complex(new Agent("A", new Location("cytosol", INDEX_0, INDEX_1, WILDCARD))));
+        checkPartialMatches(template, new Complex(new Agent("A", new Location("cytosol", INDEX_1, INDEX_1, INDEX_Y))));
+        checkPartialMatches(template, new Complex(new Agent("A", new Location("cytosol", INDEX_0, INDEX_1))));
+        checkPartialMatches(template, new Complex(new Agent("A", new Location("nucleus", INDEX_0, INDEX_1, INDEX_Y))));
+        
+        
+        agent2 = new Agent("A", new Location("cytosol", WILDCARD, INDEX_1, INDEX_2));
+        template = new Complex(agent2);
+        
+        agent1 = new Agent("A", new Location("cytosol", INDEX_0, INDEX_1, INDEX_2));
+        target = new Complex(agent1);
+        expected.clear();
+        expected.put(agent2, agent1);
+        checkPartialMatches(template, target, expected);
+        
+        checkPartialMatches(template, new Complex(new Agent("A", new Location("cytosol", INDEX_0, INDEX_1, WILDCARD))));
+        checkPartialMatches(template, new Complex(new Agent("A", new Location("cytosol", INDEX_1, INDEX_1, INDEX_1))));
     }
 
     private void checkPartialMatches(Complex template, Complex target, Map<Agent, Agent>... expectedMaps) {

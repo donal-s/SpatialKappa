@@ -499,6 +499,10 @@ cellIndexExpr returns [CellIndexExpression result]
   {
     $result = new CellIndexExpression($a.result, CellIndexExpression.Operator.getOperator($op.text), $b.result);
   }    
+  | ^(CELL_INDEX_EXPR WILDCARD)
+  {
+    $result = CellIndexExpression.WILDCARD;
+  }    
   | ^(CELL_INDEX_EXPR INT)
   {
     $result = new CellIndexExpression($INT.text);

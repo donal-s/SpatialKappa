@@ -7,6 +7,7 @@ import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_MINUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_PLUS_1;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_Y;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.WILDCARD;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.junit.Assert.assertEquals;
@@ -802,6 +803,10 @@ public class ComplexTest {
         assertEquals(expected, Complex.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc2", INDEX_2), null, compartments));
         assertEquals(expected, Complex.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc1"), null, compartments));
 
+        // No channel, but wildcard constraints
+        expected.add(new Location("loc2", INDEX_1));
+        assertEquals(expected, Complex.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc2", WILDCARD), null, compartments));
+
         // Matching channel - no constraints
         Channel channel = new Channel("label", new Location("loc2", INDEX_1), new Location("loc2", INDEX_2));
         expected.clear();
@@ -827,12 +832,19 @@ public class ComplexTest {
         assertEquals(expected, Complex.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc2", INDEX_1), channel, compartments));
         assertEquals(expected, Complex.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc1"), channel, compartments));
         
+        // Matching channel - wildcard constraints
+        channel = new Channel("label", new Location("loc2", INDEX_1), new Location("loc2", INDEX_2));
+        expected.clear();
+        expected.add(new Location("loc2", INDEX_2));
+        assertEquals(expected, Complex.getPossibleLocations(new Location("loc2", INDEX_1), new Location("loc2", WILDCARD), channel, compartments));
+        
         // Non matching channel
         channel = new Channel("label", new Location("loc2", INDEX_X), new Location("loc2", INDEX_X_PLUS_1));
         expected.clear();
         assertEquals(expected, Complex.getPossibleLocations(new Location("loc2", new CellIndexExpression("4")), NOT_LOCATED, channel, compartments));
 
         assertEquals(expected, Complex.getPossibleLocations(new Location("loc1"), NOT_LOCATED, channel, compartments));
+    
     }
     
 

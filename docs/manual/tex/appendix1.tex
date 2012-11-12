@@ -32,16 +32,17 @@ transition :
   | (a=agentGroup)? FORWARD_TRANSITION (b=agentGroup)?
   
 agentGroup :
-  \newbnf{location?} agent (',' agent)*
+  '(' agentGroup ')'
+  | \newbnf{location?} agent (',' agent)*
 
 agent :
-  id \newbnf{(location)?} ('(' (agentInterface (',' agentInterface)*)? ')')?
+  id \newbnf{(location)?} '(' (agentInterface (',' agentInterface)*)? ')'
 
 agentInterface :
   id state? link?
 
 state :
-  '~' id
+  '~' stateId
 
 link :
   '!' INT \newbnf{(':' channelName=id)?}
@@ -55,7 +56,7 @@ initDecl :
   '\%init:' (INT | label) agentGroup
 
 agentDecl :
-  '\%agent:' agentName=id ('(' (agentDeclInterface (',' agentDeclInterface)*)? ')')?
+  '\%agent:' agentName=id '(' (agentDeclInterface (',' agentDeclInterface)*)? ')'
 
 agentDeclInterface :
   id state*
@@ -78,17 +79,19 @@ agentDeclInterface :
   \newbnf{| ':' sourceCompartment=id compartmentIndexExpr*}
 
 \newbnf{compartmentIndexExpr :}
-  \newbnf{'[' cellIndexExpr ']'}
+  \newbnf{'[' '?' ']'}
+  | \newbnf{'[' cellIndexExpr ']'}
 
 plotDecl :
   '\%plot:' label
 
 obsDecl :
-  '\%obs:' \newbnf{voxel?} label? agentGroup
+  '\%obs:' label varAlgebraExpr
+  | '\%obs:' \newbnf{voxel?} label? agentGroup
 
 varDecl :
   '\%var:' label varAlgebraExpr
-   | '\%var:' \newbnf{voxel?} label agentGroup
+  | '\%var:' \newbnf{voxel?} label agentGroup
 
 varAlgebraExpr :
   a=varAlgebraMultExpr (op=operator_add b=varAlgebraMultExpr )*
@@ -97,8 +100,7 @@ varAlgebraMultExpr :
   a=varAlgebraExpExpr (op=operator_mult b=varAlgebraExpExpr )*
   
 varAlgebraExpExpr :
-  a=varAlgebraAtom operator_exp b=varAlgebraExpExpr
-  | a=varAlgebraAtom
+  a=varAlgebraAtom ('^' b=varAlgebraExpExpr )*
   
 varAlgebraAtom :
   '(' varAlgebraExpr ')'
@@ -106,14 +108,22 @@ varAlgebraAtom :
   | label
   | '[' 'inf' ']'
   | '[' 'pi' ']'
+  | '[' 'Tsim' ']'
+  | '[' 'Tmax' ']'
+  | '[' 'Emax' ']'
   | '[' 'T' ']'
   | '[' 'E' ']'
   | operator_unary varAlgebraAtom
   | \newbnf{'|' agentGroup '|'}
   
 modDecl :
-  '\%mod:' booleanExpression 'do' effect until?
-  
+  '\%mod:' 'repeat' perturbationExpression 'until' booleanExpression
+  | '\%mod:' perturbationExpression
+
+perturbationExpression
+  '(' perturbationExpression ')'
+  | booleanExpression 'do' effects
+
 booleanExpression :
   a=booleanAtom (op=booleanOperator b=booleanAtom )*
   
@@ -121,7 +131,7 @@ booleanOperator :
   '&&' | '||'
 
 relationalOperator :
-  '<' | '>' | '='
+  '<' | '>' | '=' | '<>'
 
 booleanAtom :
   '(' booleanExpression ')'
@@ -130,15 +140,16 @@ booleanAtom :
   | '[' 'not' ']' booleanAtom
   | a=varAlgebraExpr relationalOperator b=varAlgebraExpr
 
+effects
+  '(' effects ')'
+  | effect (';' effect)*
+
 effect :
   '\$SNAPSHOT'
   | '\$STOP'
   | '\$ADD' varAlgebraExpr agentGroup
   | '\$DEL' varAlgebraExpr agentGroup
-  | label ':=' varAlgebraExpr
-  
-until :
-  'until' booleanExpression
+  | '\$UPDATE' label varAlgebraExpr
   
 \newbnf{cellIndexExpr :}
   \newbnf{a=cellIndexAtom operator_cell_index b=cellIndexAtom}
@@ -150,7 +161,10 @@ until :
   \newbnf{| id}
   
 id :
-  ALPHANUMERIC ( ALPHANUMERIC | '_' | '-' )* 
+  ( 'a'..'z' | 'A'..'Z' ) ( ALPHANUMERIC | '_' | '-' | '+' )*
+
+stateId :
+  ALPHANUMERIC
 
 label :
   LABEL
@@ -159,10 +173,7 @@ number :
   ( INT | FLOAT )
   
 \newbnf{operator_cell_index :}
-  \newbnf{( '+' | '*' | '-' | '/' | '\%' )}
-
-operator_exp :
-  | '^'
+  \newbnf{( '+' | '*' | '-' | '/' | '\%' | '^' )}
 
 operator_unary :
   '[' 'log' ']'
@@ -171,6 +182,7 @@ operator_unary :
   | '[' 'tan' ']'
   | '[' 'sqrt' ']'
   | '[' 'exp' ']'
+  | '[' 'int' ']'
 
 operator_mult :
   '*' | '/' | '[' 'mod' ']'

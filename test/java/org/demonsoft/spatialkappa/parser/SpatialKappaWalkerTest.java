@@ -2,6 +2,7 @@ package org.demonsoft.spatialkappa.parser;
 
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
+import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
 import static org.demonsoft.spatialkappa.model.Utils.getList;
 import static org.easymock.EasyMock.capture;
@@ -158,11 +159,13 @@ public class SpatialKappaWalkerTest {
 
         checkInitDecl_value("%init: 5 :cytosol A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, new Location("cytosol"));
         checkInitDecl_value("%init: 5 :cytosol[0][1] A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, 
-                new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")));
+                new Location("cytosol", 0, 1));
+        checkInitDecl_value("%init: 5 :cytosol[x][1] A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", 5, 
+                new Location("cytosol", INDEX_X, INDEX_1));
         
         checkInitDecl_reference("%init: 'label' :cytosol A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", new Location("cytosol"));
         checkInitDecl_reference("%init: 'label' :cytosol[0][1] A(x~a,a!1),B(y~d,a!1)", "[A(a!1,x~a), B(a!1,y~d)]", "label", 
-                new Location("cytosol", new CellIndexExpression("0"), new CellIndexExpression("1")));
+                new Location("cytosol", 0, 1));
     }
     
     //TODO test agent specific locations
@@ -563,6 +566,13 @@ public class SpatialKappaWalkerTest {
     }
 
     @Test
+    public void testCompartmentIndexExpr() throws Throwable {
+        assertSame(CellIndexExpression.WILDCARD, runParserRule("compartmentIndexExpr", "[?]"));
+        checkCellIndexExpression("1", (CellIndexExpression) runParserRule("compartmentIndexExpr", "[1]"));
+        checkCellIndexExpression("x", (CellIndexExpression) runParserRule("compartmentIndexExpr", "[x]"));
+    }
+
+    @Test
     public void testCellIndexExpr() throws Throwable {
         checkCellIndexExpression("1", (CellIndexExpression) runParserRule("cellIndexExpr", "1"));
         checkCellIndexExpression("x", (CellIndexExpression) runParserRule("cellIndexExpr", "x"));
@@ -641,6 +651,7 @@ public class SpatialKappaWalkerTest {
         assertSame(Location.FIXED_LOCATION, runParserRule("location", ":fixed"));
         checkLocation("label", (Location) runParserRule("location", ":label"));
         checkLocation("label[1]", (Location) runParserRule("location", ":label[1]"));
+        checkLocation("label[1][?]", (Location) runParserRule("location", ":label[1][?]"));
         checkLocation("label[1][(20 + x)]", (Location) runParserRule("location", ":label[1][20 + x]"));
     }
     

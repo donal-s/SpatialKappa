@@ -13,8 +13,18 @@ public class CellIndexExpression extends VariableExpression {
     private static final long serialVersionUID = 1L;
 
     private static final Map<String, Integer> NO_VARIABLES = new HashMap<String, Integer>();
+
     
     // Commonly used indices
+    public static final CellIndexExpression WILDCARD = new CellIndexExpression("-1") {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public String toString() {
+            return "?";
+        }
+    };
+    
     public static CellIndexExpression INDEX_0 = new CellIndexExpression("0");
     public static CellIndexExpression INDEX_1 = new CellIndexExpression("1");
     public static CellIndexExpression INDEX_2 = new CellIndexExpression("2");

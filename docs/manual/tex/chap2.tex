@@ -4,7 +4,7 @@ Note on terminology. In the following 'voxel' means a subunit of a defined compa
 
 \section{Existing Kappa language}
 
-The current Kappa language consists of the following constructs, as described in the KaSim 2.01 documentation \citep{KaSimManual2012}. A more formal description of the language grammar (including the spatial extensions) is given in Appendix \ref{chap:spatialGrammar}.
+The current Kappa language consists of the following constructs, as described in the KaSim 3.1 documentation \citep{KaSimManual2012}. A more formal description of the language grammar (including the spatial extensions) is given in Appendix \ref{chap:spatialGrammar}.
 
 \bigskip 
 \textbf{Comments}:
@@ -100,9 +100,9 @@ Compartments are defined as single voxels or regular multidimensional arrays of 
 For example
 \begin{kappasource}
 \%compartment: SingleCell 
-\%compartment: 1dArray' [10]       # 10 voxels in size 
-\%compartment: 2dArray' [10][5]    # 10x5 voxels in size 
-\%compartment: 3dArray' [10][5][4] # 10x5x4 voxels in size 
+\%compartment: line  [10]       # 10 voxels in size
+\%compartment: plane [10][5]    # 10x5 voxels in size
+\%compartment: box   [10][5][4] # 10x5x4 voxels in size
 \end{kappasource}
 
 Compartments or individual voxels within a compartment can be referenced using the following location syntax
@@ -130,7 +130,7 @@ For example
 :myCompartment [4]                 # the fifth voxel in a 1d linear arrays
 
 :myCompartment [x][y][z]           # variable name usage described in
-:myCompartment [x*2][y -1][z+(x*3)] #   channel section below
+:myCompartment [x*2][y -1][z +(x*3)] #   channel section below
 \end{kappasource}
 
 In all situations where locations are used, it is only legal to refer to the compartment as a whole by omitting the cell indices, or refer to a single voxel, by fully defining the correct number of cell indices to match the dimensions of the compartment. Also, variable names are only permitted in locations within channel definitions, described below.
@@ -217,17 +217,17 @@ locations :
 \end{bnfsource}
 Where \verb|location| is as described above. For example
 \begin{kappasource}
-\%compartment: 2dArray [10][200]    # 10x200 voxels in size 
+\%compartment: torus [10][200]    # 10x200 voxels in size
 
 # Link all voxels to their horizontally adjacent neighbours
 # Link all voxels to their vertically adjacent neighbours
 # Wrap around the voxels on the left and right edges to create a cylinder
 # Wrap around the voxels on the top and bottom edges to create a torus
 \%channel: meshlinks {\textbackslash}
-    (:2dArray[x][y] -> :2dArray[x+1][y]) + (:2dArray[x][y] -> :2dArray[x -1][y]) +{\textbackslash}
-    (:2dArray[x][y] -> :2dArray[x][y+1]) + (:2dArray[x][y] -> :2dArray[x][y -1]) +{\textbackslash}
-    (:2dArray[0][y] -> :2dArray[9][y])   + (:2dArray[9][y] -> :2dArray[0][y]) +{\textbackslash}
-    (:2dArray[x][0] -> :2dArray[x][199]) + (:2dArray[x][199] -> :2dArray[x][0])
+    (:torus[x][y] -> :torus[x +1][y]) + (:torus[x][y] -> :torus[x -1][y]) +{\textbackslash}
+    (:torus[x][y] -> :torus[x][y +1]) + (:torus[x][y] -> :torus[x][y -1]) +{\textbackslash}
+    (:torus[0][y] -> :torus[9][y])   + (:torus[9][y] -> :torus[0][y]) +{\textbackslash}
+    (:torus[x][0] -> :torus[x][199]) + (:torus[x][199] -> :torus[x][0])
 \end{kappasource}
 
 The above code defines a thin torus composed of a 2d mesh.
@@ -241,9 +241,9 @@ Channels can make use of multiple source voxels simultaneously. For example if a
 \%compartment: cytosol [5][5][5]
 
 \%channel: diffusion {\textbackslash}
-    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x+1][y], :cytosol [u+1][v][0]) + {\textbackslash}
+    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x +1][y], :cytosol [u +1][v][0]) + {\textbackslash}
     (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x -1][y], :cytosol [u -1][v][0]) + {\textbackslash}
-    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y+1], :cytosol [u][v+1][0]) + {\textbackslash}
+    (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y +1], :cytosol [u][v +1][0]) + {\textbackslash}
     (:membrane [x][y], :cytosol [u][v][0] -> :membrane [x][y -1], :cytosol [u][v -1][0])
 \end{kappasource}
 
@@ -287,13 +287,7 @@ Neighbour & 26 neighbours which share a face, edge or corner in grid \\
 
 There are also predefined directional channel types usable in both 2D and 3D compartments
 
-
-%channel: radial Radial :solidRectangle -> :solidRectangle
-%channel: radialIn RadialIn :solidRectangle -> :solidRectangle
-%channel: radialOut RadialOut :solidRectangle -> :solidRectangle
-%channel: lateral Lateral :solidRectangle -> :solidRectangle
-
-\medskip 
+\medskip
 
 \begin{tabular}{|c|l|}
 \hline
@@ -329,7 +323,6 @@ channel :
 \end{bnfsource}
 Where \verb|locations| is as described above. For example
 \begin{kappasource}
-\%compartment: 2dArray [10][200]    # 10x200 voxels in size 
 \%compartment: solidRectangle[5][5] # [height][width]
 
 \%channel: radial Radial :solidRectangle -> :solidRectangle
@@ -370,6 +363,16 @@ In addition, individual agents can have a specified location. For example
 \end{kappasource}
 
 When locations are specified both for agent groups and individual agents, the individual agent location takes precedence. This allows for concise definition of agent groups where all but one of the agents in the group share a location.
+
+Voxel wildcards may also be used when specifying agent location. For example
+
+\begin{kappasource}
+\%compartment: cytosol [5][5][5]
+
+\%init: 1000 :cytosol[5][5][?] A # A distributed along a single edge of compartment
+\%init: 1000 :cytosol[?][?][2] B # B distributed in a plane across middle of compartment
+\end{kappasource}
+
 
 \subsection{Agent links}
 

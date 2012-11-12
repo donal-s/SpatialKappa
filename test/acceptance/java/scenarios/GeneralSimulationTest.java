@@ -462,6 +462,16 @@ public class GeneralSimulationTest {
         });
     }
     
+    @Test
+    public void testLocationWildcards() throws Exception {
+        checkEventSimulation(LOCATION_WILDCARDS_INPUT, 
+                new String[] {"voxel A", "line A", "plane A", "voxel B", "line B", "plane B"}, 20000, 50, new float[][] {
+                {0, 0, 0, 0, 40, 0},
+                {8, 40, 200, 8, 40, 200},
+        });
+    }
+
+    
     private static final String MULTI_COMPARTMENT_DIFFUSION_INPUT = 
             "%agent: A(d)\n" +
             "%agent: B(d)\n" +
@@ -545,17 +555,33 @@ public class GeneralSimulationTest {
         "";
     
     private static final String COMPARTMENT_LIMITED_TRANSFORM_INPUT = 
-        "%agent: A(S~x~y)\n" +
-        "%compartment: cytosol [2]\n" + 
-        "%compartment: membrane\n" + 
-        "'react' :cytosol A(S~x) -> A(S~y) @ 0.1\n" + 
-        "%init: 2000 :cytosol A(S~x) \n" + 
-        "%init: 500 :membrane A(S~x) \n" + 
-        "%obs: 'cytosol[0]' :cytosol[0] A(S~x) \n" + 
-        "%obs: 'cytosol[1]' :cytosol[1] A(S~x) \n" + 
-        "%obs: 'membrane[1]' :membrane A(S~x) \n" + 
-        "";
-    
+            "%agent: A(S~x~y)\n" +
+            "%compartment: cytosol [2]\n" + 
+            "%compartment: membrane\n" + 
+            "'react' :cytosol A(S~x) -> A(S~y) @ 0.1\n" + 
+            "%init: 2000 :cytosol A(S~x) \n" + 
+            "%init: 500 :membrane A(S~x) \n" + 
+            "%obs: 'cytosol[0]' :cytosol[0] A(S~x) \n" + 
+            "%obs: 'cytosol[1]' :cytosol[1] A(S~x) \n" + 
+            "%obs: 'membrane[1]' :membrane A(S~x) \n" + 
+            "";
+        
+    private static final String LOCATION_WILDCARDS_INPUT = 
+            "%agent: A()\n" +
+            "%agent: B()\n" +
+            "%compartment: cytosol [5][5][5]\n" +
+            "%channel: diffusion Neighbour :cytosol -> :cytosol\n" + 
+            " ->:diffusion @ 0.1\n" + 
+            "%init: 1000 :cytosol[0][0][?] A() \n" + 
+            "%init: 1000 :cytosol[4][?][?] B() \n" + 
+            "%obs: 'voxel A' :cytosol[2][2][2] A() \n" + 
+            "%obs: 'line A'  :cytosol[?][2][2] A() \n" + 
+            "%obs: 'plane A' :cytosol[2][?][?] A() \n" + 
+            "%obs: 'voxel B' :cytosol[2][2][2] B() \n" + 
+            "%obs: 'line B'  :cytosol[?][2][2] B() \n" + 
+            "%obs: 'plane B' :cytosol[2][?][?] B() \n" + 
+            "";
+        
     private static final String UNLIMITED_TRANSFORM_INPUT = 
         "%agent: A(S~x~y)\n" +
         "%compartment: cytosol [2]\n" + 
