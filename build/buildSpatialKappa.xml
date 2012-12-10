@@ -3,7 +3,7 @@
     <!--this file was created by Eclipse Runnable JAR Export Wizard (then tweaked) -->
     <!--ANT 1.7 is required                                        -->
     <target name="create_run_jar">
-        <property name="VERSION" value="v2.1.0"/> <!-- Remember to update this -->
+        <property name="VERSION" value="v2.1.1"/> <!-- Remember to update this -->
         
     	<property name="JAR_FILENAME" value="SpatialKappa-${VERSION}.jar"/>
     	

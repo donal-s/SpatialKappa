@@ -837,6 +837,13 @@ public class Compartment {
                 sourceCompartment.dimensions.length != voxelIndices.length) {
             throw new IllegalArgumentException("Compartment dimension mismatch");
         }
+        if (sourceCompartment instanceof OpenSpine || targetCompartment instanceof OpenSpine) {
+            voxelIndices[0] +=  (targetCompartment.dimensions[0] - sourceCompartment.dimensions[0]) / 2;
+            voxelIndices[1] +=  (targetCompartment.dimensions[1] - sourceCompartment.dimensions[1]) / 2;
+            // Open ended spine changes the calculations
+            voxelIndices[2] +=  (targetCompartment.dimensions[2] - sourceCompartment.dimensions[2]);
+            return;
+        }
         for (int index=0; index < voxelIndices.length; index++) {
             voxelIndices[index] += (targetCompartment.dimensions[index] - sourceCompartment.dimensions[index]) / 2;
         }

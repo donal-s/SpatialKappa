@@ -30,6 +30,10 @@ import org.demonsoft.spatialkappa.model.Utils;
 import org.demonsoft.spatialkappa.model.Variable;
 import org.demonsoft.spatialkappa.model.Variable.Type;
 
+// Conversion of any moderately complex Spatial Kappa model can produce huge 
+// number of potential rules, so maintaining this translator is not worth
+// the effort at the moment
+@Deprecated 
 public class SpatialTranslator {
 
     private final IKappaModel kappaModel;

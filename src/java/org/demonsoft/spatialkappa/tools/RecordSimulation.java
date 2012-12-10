@@ -50,6 +50,10 @@ public class RecordSimulation implements Simulation, ObservationListener {
         simulation.stop();
     }
 
+    public Simulation getSimulation() {
+        return simulation;
+    }
+    
     public String getDebugOutput() {
         return simulation.getDebugOutput();
     }

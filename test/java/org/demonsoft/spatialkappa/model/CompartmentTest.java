@@ -541,6 +541,31 @@ public class CompartmentTest {
     }
     
     @Test
+    public void testTranslate_spines() {
+        Compartment inner = new Compartment.SolidSpine("inner", 7, 5, 6);
+        Compartment outer = new Compartment.OpenSpine("outer", 11, 9, 4, 2);
+        
+        int[] indices = new int[] {0, 0, 0};
+        Compartment.translate(inner, outer, indices);
+        assertArrayEquals(new int[] {2, 2, 2}, indices);
+        
+        indices = new int[] {0, 0, 0};
+        Compartment.translate(outer, inner, indices);
+        assertArrayEquals(new int[] {-2, -2, -2}, indices);
+
+        inner = new Compartment.OpenSpine("inner", 6, 4, 6, 1);
+        outer = new Compartment.OpenSpine("outer", 10, 8, 4, 2);
+        
+        indices = new int[] {0, 0, 0};
+        Compartment.translate(inner, outer, indices);
+        assertArrayEquals(new int[] {2, 2, 2}, indices);
+        
+        indices = new int[] {0, 0, 0};
+        Compartment.translate(outer, inner, indices);
+        assertArrayEquals(new int[] {-2, -2, -2}, indices);
+    }
+    
+    @Test
     public void testCreateCompartment() {
         try {
             Compartment.createCompartment(null, "type", new ArrayList<Integer>());

@@ -113,6 +113,11 @@ public class TransitionMatchingSimulation implements Simulation, SimulationState
         return kappaModel.toString();
     }
 
+    public IKappaModel getModel() {
+        return kappaModel;
+    }
+    
+    
     public void stop() {
         stop = true;
     }

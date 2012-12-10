@@ -529,6 +529,7 @@ public class KappaModel implements IKappaModel {
         }
         
         // TODO add validation of when its possible to use variable expression agent groups
+        // TODO add validation of allowing wildcard locations only in appropriate constructs
     }
     
     private void checkAgentLocations(Collection<Agent> agents, boolean allowFixed) {

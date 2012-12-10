@@ -1,9 +1,5 @@
 package org.demonsoft.spatialkappa.tools;
 
-import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_0;
-import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_1;
-import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_2;
-import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_3;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X;
 import static org.demonsoft.spatialkappa.model.CellIndexExpression.INDEX_X_PLUS_1;
 import static org.demonsoft.spatialkappa.model.Location.NOT_LOCATED;
@@ -128,10 +124,10 @@ public class TransitionMatchingSimulationTest {
         kappaModel.addPlot("observable1");
         kappaModel.addVariable(getList(new Agent("agent1")), "observable3", new Location("cytosol"), false);
         kappaModel.addPlot("observable3");
-        kappaModel.addVariable(getList(new Agent("agent1")), "observable2", new Location("cytosol", INDEX_0), false);
+        kappaModel.addVariable(getList(new Agent("agent1")), "observable2", new Location("cytosol", 0), false);
         kappaModel.addPlot("observable2");
-        kappaModel.addInitialValue(getList(new Agent("agent1")), "5", new Location("cytosol", INDEX_0));
-        kappaModel.addInitialValue(getList(new Agent("agent1")), "7", new Location("cytosol", INDEX_3));
+        kappaModel.addInitialValue(getList(new Agent("agent1")), "5", new Location("cytosol", 0));
+        kappaModel.addInitialValue(getList(new Agent("agent1")), "7", new Location("cytosol", 3));
         
         simulation = new TransitionMatchingSimulation(kappaModel);
         
@@ -156,26 +152,26 @@ public class TransitionMatchingSimulationTest {
         kappaModel.addChannel(inter);
         
         kappaModel.addInitialValue(getList(
-                new Agent("A", new Location("loc1", INDEX_0))),
+                new Agent("A", new Location("loc1", 0))),
                 "5", NOT_LOCATED);
         kappaModel.addInitialValue(getList(
-                new Agent("A", new Location("loc1", INDEX_1), new AgentSite("x", null, "1")),
-                new Agent("A", new Location("loc1", INDEX_1), new AgentSite("x", null, "1"))), 
+                new Agent("A", new Location("loc1", 1), new AgentSite("x", null, "1")),
+                new Agent("A", new Location("loc1", 1), new AgentSite("x", null, "1"))), 
                 "3", NOT_LOCATED);
         kappaModel.addInitialValue(getList(
-                new Agent("A", new Location("loc1", INDEX_1), new AgentSite("x", null, "1")),
-                new Agent("B", new Location("loc1", INDEX_1), new AgentSite("x", null, "1"))), 
+                new Agent("A", new Location("loc1", 1), new AgentSite("x", null, "1")),
+                new Agent("B", new Location("loc1", 1), new AgentSite("x", null, "1"))), 
                 "7", NOT_LOCATED);
         kappaModel.addInitialValue(getList(
-                new Agent("A", new Location("loc1", INDEX_2), new AgentSite("x", null, "1", "intra")),
-                new Agent("A", new Location("loc1", INDEX_3), new AgentSite("x", null, "1"))), 
+                new Agent("A", new Location("loc1", 2), new AgentSite("x", null, "1", "intra")),
+                new Agent("A", new Location("loc1", 3), new AgentSite("x", null, "1"))), 
                 "11", NOT_LOCATED);
         kappaModel.addInitialValue(getList(
-                new Agent("A", new Location("loc1", INDEX_2), new AgentSite("x", null, "1", "intra")),
-                new Agent("B", new Location("loc1", INDEX_3), new AgentSite("x", null, "1"))), 
+                new Agent("A", new Location("loc1", 2), new AgentSite("x", null, "1", "intra")),
+                new Agent("B", new Location("loc1", 3), new AgentSite("x", null, "1"))), 
                 "13", NOT_LOCATED);
         kappaModel.addInitialValue(getList(
-                new Agent("A", new Location("loc1", INDEX_2), new AgentSite("x", null, "1", "inter")),
+                new Agent("A", new Location("loc1", 2), new AgentSite("x", null, "1", "inter")),
                 new Agent("A", new Location("loc2"), new AgentSite("x", null, "1"))), 
                 "19", NOT_LOCATED);
 //        kappaModel.addInitialValue(getList(
@@ -290,10 +286,10 @@ public class TransitionMatchingSimulationTest {
         kappaModel.addPlot("observable1");
         kappaModel.addVariable(getList(new Agent("agent1")), "observable3", new Location("cytosol"), false);
         kappaModel.addPlot("observable3");
-        kappaModel.addVariable(getList(new Agent("agent1")), "observable2", new Location("cytosol", INDEX_0, INDEX_0), false);
+        kappaModel.addVariable(getList(new Agent("agent1")), "observable2", new Location("cytosol", 0, 0), false);
         kappaModel.addPlot("observable2");
-        kappaModel.addInitialValue(getList(new Agent("agent1")), "5", new Location("cytosol", INDEX_0, INDEX_0));
-        kappaModel.addInitialValue(getList(new Agent("agent1")), "7", new Location("cytosol", INDEX_2, INDEX_1));
+        kappaModel.addInitialValue(getList(new Agent("agent1")), "5", new Location("cytosol", 0, 0));
+        kappaModel.addInitialValue(getList(new Agent("agent1")), "7", new Location("cytosol", 2, 1));
         
         simulation = new TransitionMatchingSimulation(kappaModel);
         
@@ -419,9 +415,9 @@ public class TransitionMatchingSimulationTest {
         
         kappaModel.addVariable(getList(new Agent("agent1")), "observable1", new Location("cytosol"), true);
         kappaModel.addVariable(getList(new Agent("agent1")), "observable3", new Location("cytosol"), false);
-        kappaModel.addVariable(getList(new Agent("agent1")), "observable2", new Location("cytosol", INDEX_0), false);
-        kappaModel.addInitialValue(getList(new Agent("agent1")), "5", new Location("cytosol", INDEX_0));
-        kappaModel.addInitialValue(getList(new Agent("agent1")), "7", new Location("cytosol", INDEX_3));
+        kappaModel.addVariable(getList(new Agent("agent1")), "observable2", new Location("cytosol", 0), false);
+        kappaModel.addInitialValue(getList(new Agent("agent1")), "5", new Location("cytosol", 0));
+        kappaModel.addInitialValue(getList(new Agent("agent1")), "7", new Location("cytosol", 3));
         
         simulation = new TransitionMatchingSimulation(kappaModel);
         
@@ -438,9 +434,9 @@ public class TransitionMatchingSimulationTest {
         
         kappaModel.addVariable(getList(new Agent("agent1")), "observable1", new Location("cytosol"), true);
         kappaModel.addVariable(getList(new Agent("agent1")), "observable3", new Location("cytosol"), false);
-        kappaModel.addVariable(getList(new Agent("agent1")), "observable2", new Location("cytosol", INDEX_0, INDEX_0), false);
-        kappaModel.addInitialValue(getList(new Agent("agent1")), "5", new Location("cytosol", INDEX_0, INDEX_0));
-        kappaModel.addInitialValue(getList(new Agent("agent1")), "7", new Location("cytosol", INDEX_2, INDEX_1));
+        kappaModel.addVariable(getList(new Agent("agent1")), "observable2", new Location("cytosol", 0, 0), false);
+        kappaModel.addInitialValue(getList(new Agent("agent1")), "5", new Location("cytosol", 0, 0));
+        kappaModel.addInitialValue(getList(new Agent("agent1")), "7", new Location("cytosol", 2, 1));
         
         simulation = new TransitionMatchingSimulation(kappaModel);
         
@@ -1112,9 +1108,9 @@ public class TransitionMatchingSimulationTest {
         
         // Co located targets should be compatible
         complexMappings.clear();
-        targetAgentA = new Agent("A", new Location("cytosol", INDEX_1), new AgentSite("s", null, null));
+        targetAgentA = new Agent("A", new Location("cytosol", 1), new AgentSite("s", null, null));
         targetComplexA = new Complex(targetAgentA);
-        targetAgentB = new Agent("B", new Location("cytosol", INDEX_1), new AgentSite("s", null, null));
+        targetAgentB = new Agent("B", new Location("cytosol", 1), new AgentSite("s", null, null));
         targetComplexB = new Complex(targetAgentB);
 
         mapping = new HashMap<Agent, Agent>();
@@ -1129,9 +1125,9 @@ public class TransitionMatchingSimulationTest {
         
         // Differently located targets should not be compatible
         complexMappings.clear();
-        targetAgentA = new Agent("A", new Location("cytosol", INDEX_1), new AgentSite("s", null, null));
+        targetAgentA = new Agent("A", new Location("cytosol", 1), new AgentSite("s", null, null));
         targetComplexA = new Complex(targetAgentA);
-        targetAgentB = new Agent("B", new Location("cytosol", INDEX_0), new AgentSite("s", null, null));
+        targetAgentB = new Agent("B", new Location("cytosol", 0), new AgentSite("s", null, null));
         targetComplexB = new Complex(targetAgentB);
 
         mapping = new HashMap<Agent, Agent>();
@@ -1182,7 +1178,7 @@ public class TransitionMatchingSimulationTest {
         
         kappaModel.addCompartment(new Compartment("location", 5, 4));
         kappaModel.addAgentDeclaration(new AgentDeclaration("A"));
-        kappaModel.addInitialValue(getList(new Agent("A")), "7", new Location("location", INDEX_0, INDEX_1));
+        kappaModel.addInitialValue(getList(new Agent("A")), "7", new Location("location", 0, 1));
         simulation = new TransitionMatchingSimulation(kappaModel);
         simulation.eventCount = 444;
         
@@ -1193,7 +1189,7 @@ public class TransitionMatchingSimulationTest {
             assertEquals("%init: 7 A:location[0][1]()\n", output);
 
             kappaModel.addAgentDeclaration(new AgentDeclaration("B"));
-            kappaModel.addInitialValue(getList(new Agent("B")), "9", new Location("location", INDEX_1, INDEX_0));
+            kappaModel.addInitialValue(getList(new Agent("B")), "9", new Location("location", 1, 0));
             simulation = new TransitionMatchingSimulation(kappaModel);
             simulation.eventCount = 444;
             
@@ -1225,7 +1221,7 @@ public class TransitionMatchingSimulationTest {
             kappaModel.addCompartment(new Compartment.OpenSphere("membrane", 4, 1));
             kappaModel.addAgentDeclaration(new AgentDeclaration("A1", new AggregateSite("d", (String) null, null)));
             kappaModel.addInitialValue(getList(
-                    new Agent("A1", new Location("membrane", INDEX_0, INDEX_1, INDEX_1), new AgentSite("d", null, "1")),
+                    new Agent("A1", new Location("membrane", 0, 1, 1), new AgentSite("d", null, "1")),
                     new Agent("A1", new Location("cytosol"), new AgentSite("d", null, "1", "domainLink"))), 
                     "1", NOT_LOCATED);
             

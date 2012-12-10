@@ -56,6 +56,7 @@ public class LocationTest {
         assertTrue(location.isConcreteLocation());
         assertFalse(location.isWildcard());
         
+        // CellIndexExpression constructor with fixed values
         location = new Location("name", INDEX_2, new CellIndexExpression("3"));
         assertEquals("name", location.getName());
         assertNull(location.getIndices());
@@ -65,6 +66,23 @@ public class LocationTest {
         assertFalse(location.isWildcard());
         
         location = new Location("name", new CellIndexExpression[] {INDEX_2, new CellIndexExpression("3")});
+        assertEquals("name", location.getName());
+        assertNull(location.getIndices());
+        assertArrayEquals(new int[] {2, 3}, location.getFixedIndices());
+        assertEquals("name[2][3]", location.toString());
+        assertTrue(location.isConcreteLocation());
+        assertFalse(location.isWildcard());
+
+        // int constructor with fixed values
+        location = new Location("name", 2, 3);
+        assertEquals("name", location.getName());
+        assertNull(location.getIndices());
+        assertArrayEquals(new int[] {2, 3}, location.getFixedIndices());
+        assertEquals("name[2][3]", location.toString());
+        assertTrue(location.isConcreteLocation());
+        assertFalse(location.isWildcard());
+        
+        location = new Location("name", new int[] {2, 3});
         assertEquals("name", location.getName());
         assertNull(location.getIndices());
         assertArrayEquals(new int[] {2, 3}, location.getFixedIndices());
@@ -106,13 +124,12 @@ public class LocationTest {
             // Expected exception
         }
         
-        
 	}
 
     @Test
     public void testGetLinkedLocations() {
 
-        Location location = new Location("unknown", new CellIndexExpression("2"), new CellIndexExpression("3"));
+        Location location = new Location("unknown", 2, 3);
 
         List<Compartment> compartments = new ArrayList<Compartment>();
         compartments.add(new Compartment("nucleus"));
@@ -148,19 +165,19 @@ public class LocationTest {
         List<Location> expected = new ArrayList<Location>();
         assertEquals(expected, location.getLinkedLocations(compartments, channelCytosol, channelMembraneX));
         
-        location = new Location("cytosol", INDEX_1, INDEX_1);
+        location = new Location("cytosol", 1, 1);
         
-        expected.add(new Location("cytosol", INDEX_2, INDEX_1));
-        expected.add(new Location("cytosol", INDEX_1, INDEX_2));
+        expected.add(new Location("cytosol", 2, 1));
+        expected.add(new Location("cytosol", 1, 2));
         
         assertEquals(expected, location.getLinkedLocations(compartments, channelCytosol));
         
-        location = new Location("cytosol", INDEX_1, INDEX_0);
+        location = new Location("cytosol", 1, 0);
 
         expected.clear();
-        expected.add(new Location("cytosol", INDEX_2, INDEX_0));
-        expected.add(new Location("cytosol", INDEX_1, INDEX_1));
-        expected.add(new Location("membrane", INDEX_1));
+        expected.add(new Location("cytosol", 2, 0));
+        expected.add(new Location("cytosol", 1, 1));
+        expected.add(new Location("membrane", 1));
         
         assertEquals(expected, location.getLinkedLocations(compartments, channelCytosol, channelMembraneTransport));
         
@@ -168,17 +185,17 @@ public class LocationTest {
         
         Channel complexChannel = new Channel("horiz");
         // Ensure more than the first pair get processed
-        complexChannel.addChannelComponent(null, getList(new Location("cytosol", new CellIndexExpression("100"), INDEX_0)), 
-                getList(new Location("cytosol", new CellIndexExpression("101"), INDEX_0)));
+        complexChannel.addChannelComponent(null, getList(new Location("cytosol", 100, 0)), 
+                getList(new Location("cytosol", 101, 0)));
         complexChannel.addChannelComponent(null, getList(new Location("cytosol", INDEX_X, INDEX_Y)), 
                 getList(new Location("cytosol", INDEX_X_MINUS_1, INDEX_Y)));
         complexChannel.addChannelComponent(null, getList(new Location("cytosol", INDEX_X, INDEX_Y)), 
                 getList(new Location("cytosol", INDEX_X_PLUS_1, INDEX_Y)));
         
-        location = new Location("cytosol", INDEX_0, INDEX_0);
+        location = new Location("cytosol", 0, 0);
 
         expected.clear();
-        expected.add(new Location("cytosol", INDEX_1, INDEX_0));
+        expected.add(new Location("cytosol", 1, 0));
 
         assertEquals(expected, location.getLinkedLocations(compartments, complexChannel));
 
@@ -190,8 +207,8 @@ public class LocationTest {
     public void testIsRefinement_nonWildcard() {
         Location compartment1 = new Location("cytosol");
         Location compartment2 = new Location("nucleus");
-        Location voxel1 = new Location("cytosol", INDEX_0);
-        Location voxel2 = new Location("nucleus", INDEX_1);
+        Location voxel1 = new Location("cytosol", 0);
+        Location voxel2 = new Location("nucleus", 1);
         
         try {
             compartment1.isRefinement(null);
@@ -224,18 +241,18 @@ public class LocationTest {
         assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_X, INDEX_Y)));
         assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, INDEX_Y)));
         assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, WILDCARD)));
-        assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_1, INDEX_1, INDEX_1)));
-        assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1)));
-        assertTrue(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, INDEX_1)));
+        assertFalse(wildcard.isRefinement(new Location("cytosol", 1, 1, 1)));
+        assertFalse(wildcard.isRefinement(new Location("cytosol", 0, 1)));
+        assertTrue(wildcard.isRefinement(new Location("cytosol", 0, 1, 1)));
         assertFalse(wildcard.isRefinement(new Location("cytosol")));
-        assertFalse(wildcard.isRefinement(new Location("nucleus", INDEX_0, INDEX_1, INDEX_1)));
+        assertFalse(wildcard.isRefinement(new Location("nucleus", 0, 1, 1)));
         
         wildcard = new Location("cytosol", WILDCARD, INDEX_1, INDEX_2);
         
         assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, WILDCARD)));
         assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, INDEX_Y)));
-        assertFalse(wildcard.isRefinement(new Location("cytosol", INDEX_1, INDEX_1, INDEX_1)));
-        assertTrue(wildcard.isRefinement(new Location("cytosol", INDEX_0, INDEX_1, INDEX_2)));
+        assertFalse(wildcard.isRefinement(new Location("cytosol", 1, 1, 1)));
+        assertTrue(wildcard.isRefinement(new Location("cytosol", 0, 1, 2)));
     }
     
     @Test
@@ -244,7 +261,7 @@ public class LocationTest {
         assertTrue(new Location("cytosol", WILDCARD).isWildcard());
         assertFalse(new Location("cytosol", INDEX_0, INDEX_X, INDEX_Y).isWildcard());
         assertFalse(new Location("cytosol", INDEX_Y).isWildcard());
-        assertFalse(new Location("cytosol", INDEX_0, INDEX_1).isWildcard());
+        assertFalse(new Location("cytosol", 0, 1).isWildcard());
         assertFalse(new Location("cytosol").isWildcard());
     }
     
@@ -254,8 +271,8 @@ public class LocationTest {
         Compartment compartment2 = new Compartment("nucleus");
         Location compartmentLocation1 = new Location("cytosol");
         Location compartmentLocation2 = new Location("nucleus");
-        Location voxel1 = new Location("cytosol", INDEX_0, INDEX_1);
-        Location invalidVoxel = new Location("nucleus", INDEX_0);
+        Location voxel1 = new Location("cytosol", 0, 1);
+        Location invalidVoxel = new Location("nucleus", 0);
         
         try {
             compartmentLocation1.isVoxel(null);
